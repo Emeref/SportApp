@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -37,8 +38,10 @@ import com.example.sportapp.presentation.theme.SportAppTheme
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.maps.android.compose.CameraPositionState
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -173,7 +176,7 @@ fun MapScreen() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 26.dp),
+                    .padding(top = 5.dp, start = 95.dp),
                 contentAlignment = Alignment.TopCenter
             ) {
                 CompactButton(
@@ -190,27 +193,59 @@ fun MapScreen() {
                 }
             }
 
-            // Slider do zoomu po prawej stronie
+            // Kontener dla wskaźnika zoomu po prawej stronie
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(end = 2.dp, bottom = 20.dp),
-                contentAlignment = Alignment.BottomCenter
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.CenterEnd
             ) {
-                InlineSlider(
+                val zoomProgress = (cameraPositionState.position.zoom - 2f) / 18f
+                // 1. WIZUALIZACJA (Łuk)
+                CircularProgressIndicator(
+                    // Odwracamy postęp: 1f - zoomProgress
+                    // Dzięki temu przy zoomie 2 (progress 0) pasek jest "pełny",
+                    // a przy zoomie 20 (progress 1) pasek "znika" w stronę góry.
+                    progress = 1f - zoomProgress,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(6.dp),
+                    startAngle = 320f, // Start na górze (godzina 2)
+                    endAngle = 40f,    // Koniec na dole (godzina 4)
+                    strokeWidth = 10.dp,
+
+                    // KLUCZ KOLORÓW:
+                    // indicatorColor (ten który się skraca od dołu do góry) ustawiamy na kolor tła.
+                    indicatorColor = Color.DarkGray.copy(alpha = 0.5f),
+
+                    // trackColor (tło, które jest pod spodem) ustawiamy na jasny.
+                    // Ponieważ wskaźnik powyżej się skraca (odkrywa dół),
+                    // jasny kolor pod spodem wygląda jakby "rósł" od dołu do góry.
+                    trackColor = Color.LightGray.copy(alpha = 0.9f)
+                )
+
+                // 2. LOGIKA DOTYKU (Stepper)
+                val scope = rememberCoroutineScope()
+                Stepper(
                     value = cameraPositionState.position.zoom,
-                    onValueChange = { newZoom: Float ->
-                        cameraPositionState.move(CameraUpdateFactory.zoomTo(newZoom))
+                    onValueChange = { newZoom ->
+                        scope.launch {
+                            cameraPositionState.animate(
+                                update = CameraUpdateFactory.zoomTo(newZoom),
+                                durationMs = 200
+                            )
+                        }
                     },
                     valueRange = 2f..20f,
-                    steps = 9,
+                    steps = 18,
+                    increaseIcon = { },
+                    decreaseIcon = { }, // Usunięto '+' dla czystego wyglądu
                     modifier = Modifier
-                        .width(130.dp)
-                        .height(10.dp)
-                        .rotate(0f),
-                    increaseIcon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Zwiększ") },
-                    decreaseIcon = { Icon(imageVector = Icons.Default.Remove, contentDescription = "Zmniejsz") }
-                )
+                        .fillMaxHeight()
+                        .width(60.dp),
+                    backgroundColor = Color.Transparent,
+                    contentColor = Color.Transparent
+                ) {
+                    // Puste wnętrze
+                }
             }
         }
     } else {
