@@ -47,7 +47,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    wearApp(project(":wear"))
     implementation("androidx.wear:wear:1.3.0")
     implementation("com.google.android.gms:play-services-wearable:18.1.0")
 }
