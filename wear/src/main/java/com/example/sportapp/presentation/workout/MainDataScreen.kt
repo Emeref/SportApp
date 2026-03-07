@@ -14,9 +14,12 @@ import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import com.example.sportapp.presentation.components.SportDataRow
+import com.example.sportapp.presentation.sensors.rememberHeartRate
 
 @Composable
 fun MainDataScreen() {
+    val heartRate = rememberHeartRate()
+
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background),
@@ -34,6 +37,13 @@ fun MainDataScreen() {
         }
         item { SportDataRow("Kroki", "1250", Color.Green) }
         item { SportDataRow("Dystans", "0.85 km", Color.Cyan) }
-        item { SportDataRow("Tętno", "72 BPM", Color.Red, true) }
+        item { 
+            SportDataRow(
+                label = "Tętno", 
+                value = if (heartRate > 0) "${heartRate.toInt()} BPM" else "-- BPM", 
+                color = Color.Red, 
+                isBold = true
+            ) 
+        }
     }
 }
