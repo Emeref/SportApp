@@ -26,7 +26,7 @@ import kotlin.math.sin
 
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
-fun WalkingWorkoutScreen(mapType: MapType) {
+fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?) {
     val pageCount = 2
     val pagerState = rememberPagerState(pageCount = { pageCount })
     val focusRequester = rememberActiveFocusRequester()
@@ -55,7 +55,6 @@ fun WalkingWorkoutScreen(mapType: MapType) {
         val radius = (screenWidthPx / 2) - dotMarginFromEdge
         
         val angleBetweenDots = 10f
-        // Zmieniona logika startAngle i odejmowania kąta, aby kropki szły od LEWEJ do PRAWEJ
         val startAngle = 90f + (angleBetweenDots * (pageCount - 1) / 2f)
 
         repeat(pageCount) { index ->
@@ -63,7 +62,6 @@ fun WalkingWorkoutScreen(mapType: MapType) {
             val size by animateDpAsState(targetValue = if (isSelected) 8.dp else 5.dp, label = "dotSize")
             val color = if (isSelected) Color.White else Color.Gray.copy(alpha = 0.5f)
             
-            // Odejmujemy kąt, aby poruszać się zgodnie z ruchem wskazówek zegara (od lewej do prawej na dole)
             val currentAngle = startAngle - (index * angleBetweenDots)
             val angleRad = Math.toRadians(currentAngle.toDouble())
             
@@ -81,16 +79,18 @@ fun WalkingWorkoutScreen(mapType: MapType) {
         }
         
         // Zegar
-        Box(
-            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            TimeText(
-                timeTextStyle = MaterialTheme.typography.caption1.copy(
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold
+        if (clockColor != null) {
+            Box(
+                modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                TimeText(
+                    timeTextStyle = MaterialTheme.typography.caption1.copy(
+                        color = clockColor,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
-            )
+            }
         }
     }
 }
