@@ -13,6 +13,7 @@ import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import com.example.sportapp.presentation.components.SportDataRow
+import com.example.sportapp.presentation.sensors.WorkoutTimerState
 import java.util.*
 
 @Composable
@@ -21,7 +22,7 @@ fun MainDataScreen(
     stepCount: Int,
     distanceMeters: Float,
     speedKmH: Float,
-    workoutTime: String
+    workoutTimerState: WorkoutTimerState
 ) {
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
@@ -38,7 +39,7 @@ fun MainDataScreen(
                     color = Color.Gray
                 )
                 Text(
-                    text = workoutTime,
+                    text = workoutTimerState.formattedTime,
                     style = MaterialTheme.typography.title1,
                     color = Color.White,
                     fontSize = 28.sp

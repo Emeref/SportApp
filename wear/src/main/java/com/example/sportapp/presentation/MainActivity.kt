@@ -15,6 +15,7 @@ import com.example.sportapp.presentation.menu.ChooseSportScreen
 import com.example.sportapp.presentation.menu.MainMenuScreen
 import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.theme.SportAppTheme
+import com.example.sportapp.presentation.workout.ClimbingWorkoutScreen
 import com.example.sportapp.presentation.workout.WalkingWorkoutScreen
 import com.google.maps.android.compose.MapType
 
@@ -105,7 +106,7 @@ class MainActivity : ComponentActivity() {
                         composable("health_resting_hr") {
                             NumericInputScreen(
                                 value = healthData.restingHR,
-                                range = 30..200, // Zwiększony zakres
+                                range = 30..200,
                                 onValueChange = { healthData = healthData.copy(restingHR = it) },
                                 onDone = { navController.popBackStack() }
                             )
@@ -113,7 +114,7 @@ class MainActivity : ComponentActivity() {
                         composable("health_max_hr") {
                             NumericInputScreen(
                                 value = healthData.maxHR,
-                                range = 100..240, // Zwiększony zakres
+                                range = 100..240,
                                 onValueChange = { healthData = healthData.copy(maxHR = it) },
                                 onDone = { navController.popBackStack() }
                             )
@@ -121,7 +122,9 @@ class MainActivity : ComponentActivity() {
                         
                         // Sporty
                         composable("workout_walking") { WalkingWorkoutScreen(selectedMapType, selectedClockColor) }
-                        composable("workout_climbing") { PlaceholderScreen("Wspinaczka") }
+                        composable("workout_climbing") { 
+                            ClimbingWorkoutScreen(selectedClockColor, healthData)
+                        }
                         composable("workout_tennis") { PlaceholderScreen("Tenis") }
                         composable("workout_gym") { PlaceholderScreen("Siłownia") }
                         composable("workout_pool") { PlaceholderScreen("Basen") }

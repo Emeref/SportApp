@@ -39,7 +39,7 @@ fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?) {
     val stepCount = rememberStepCount()
     val distanceMeters = rememberDistance()
     val speedKmH = rememberSpeed()
-    val workoutTime = rememberWorkoutTimer()
+    val workoutTimerState = rememberWorkoutTimer()
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Główny Pager
@@ -58,7 +58,7 @@ fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?) {
                     stepCount = stepCount,
                     distanceMeters = distanceMeters,
                     speedKmH = speedKmH,
-                    workoutTime = workoutTime
+                    workoutTimerState = workoutTimerState
                 )
                 1 -> MapScreen(mapType, focusRequester)
             }
@@ -67,7 +67,9 @@ fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?) {
         // INDYKATOR KROPEK PO ŁUKU
         val dotMarginFromEdge = 12.dp
         val radius = (screenWidthPx / 2) - dotMarginFromEdge
+        
         val angleBetweenDots = 10f
+        // Zmieniona logika startAngle i odejmowania kąta, aby kropki szły od LEWEJ do PRAWEJ
         val startAngle = 90f + (angleBetweenDots * (pageCount - 1) / 2f)
 
         repeat(pageCount) { index ->
@@ -75,6 +77,7 @@ fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?) {
             val size by animateDpAsState(targetValue = if (isSelected) 8.dp else 5.dp, label = "dotSize")
             val color = if (isSelected) Color.White else Color.Gray.copy(alpha = 0.5f)
             
+            // Odejmujemy kąt, aby poruszać się zgodnie z ruchem wskazówek zegara (od lewej do prawej na dole)
             val currentAngle = startAngle - (index * angleBetweenDots)
             val angleRad = Math.toRadians(currentAngle.toDouble())
             
