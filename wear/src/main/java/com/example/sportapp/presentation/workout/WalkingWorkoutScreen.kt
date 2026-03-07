@@ -4,8 +4,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -14,6 +13,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
+import androidx.wear.compose.foundation.pager.HorizontalPager
 import androidx.wear.compose.foundation.pager.VerticalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.foundation.rememberActiveFocusRequester
@@ -27,85 +27,82 @@ import kotlin.math.sin
 
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
-fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?) {
-    val pageCount = 2
-    val pagerState = rememberPagerState(pageCount = { pageCount })
-    val focusRequester = rememberActiveFocusRequester()
-    val configuration = LocalConfiguration.current
-    val screenWidthPx = configuration.screenWidthDp.dp
-
-    // SENSORY URUCHOMIONE TUTAJ - DZIAŁAJĄ PRZEZ CAŁY TRENING
+fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?, onEndWorkout: () -> Unit) {
+    var workoutStatus by remember { mutableStateOf(WorkoutStatus.ACTIVE) }
+    
+    // HorizontalPager dla ekranu kontrolnego (lewo) i treningu (prawo)
+    val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
+    
+    // Sensory reagujące na status
     val heartRate = rememberHeartRate()
-    val stepCount = rememberStepCount()
-    val distanceMeters = rememberDistance()
-    val speedKmH = rememberSpeed()
-    val workoutTimerState = rememberWorkoutTimer()
+    val stepCount = rememberStepCount(workoutStatus)
+    val distanceMeters = rememberDistance(workoutStatus)
+    val speedKmH = rememberSpeed() // Prędkość chwilowa z GPS
+    val workoutTimerState = rememberWorkoutTimer(workoutStatus)
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Główny Pager
-        VerticalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxSize()
-                .rotaryScrollable(
-                    behavior = RotaryScrollableDefaults.behavior(pagerState),
-                    focusRequester = focusRequester
+        HorizontalPager(state = horizontalPagerState) { hPage ->
+            if (hPage == 0) {
+                // EKRAN KONTROLNY (Pauza/Zakończ)
+                WorkoutControlScreen(
+                    status = workoutStatus,
+                    onTogglePause = {
+                        workoutStatus = if (workoutStatus == WorkoutStatus.ACTIVE) 
+                            WorkoutStatus.PAUSED else WorkoutStatus.ACTIVE
+                    },
+                    onEnd = onEndWorkout // Wywołujemy akcję zakończenia i powrotu
                 )
-        ) { page ->
-            when (page) {
-                0 -> MainDataScreen(
-                    heartRate = heartRate,
-                    stepCount = stepCount,
-                    distanceMeters = distanceMeters,
-                    speedKmH = speedKmH,
-                    workoutTimerState = workoutTimerState
-                )
-                1 -> MapScreen(mapType, focusRequester)
+            } else {
+                // EKRAN TRENINGU (Dane/Mapa)
+                val verticalPagerState = rememberPagerState(pageCount = { 2 })
+                val focusRequester = rememberActiveFocusRequester()
+                val configuration = LocalConfiguration.current
+                val screenWidthPx = configuration.screenWidthDp.dp
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    VerticalPager(
+                        state = verticalPagerState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .rotaryScrollable(
+                                behavior = RotaryScrollableDefaults.behavior(verticalPagerState),
+                                focusRequester = focusRequester
+                            )
+                    ) { vPage ->
+                        when (vPage) {
+                            0 -> MainDataScreen(
+                                heartRate = heartRate,
+                                stepCount = stepCount,
+                                distanceMeters = distanceMeters,
+                                speedKmH = speedKmH,
+                                workoutTimerState = workoutTimerState
+                            )
+                            1 -> MapScreen(mapType, focusRequester)
+                        }
+                    }
+
+                    // Kropki po łuku (tylko na ekranie treningu)
+                    val radius = (screenWidthPx / 2) - 12.dp
+                    val angleBetweenDots = 10f
+                    val startAngle = 90f + (angleBetweenDots * (2 - 1) / 2f)
+                    repeat(2) { index ->
+                        val isSelected = verticalPagerState.currentPage == index
+                        val size by animateDpAsState(targetValue = if (isSelected) 8.dp else 5.dp, label = "dotSize")
+                        val color = if (isSelected) Color.White else Color.Gray.copy(alpha = 0.5f)
+                        val angleRad = Math.toRadians((startAngle - (index * angleBetweenDots)).toDouble())
+                        Box(
+                            modifier = Modifier.align(Alignment.Center)
+                                .offset(x = (radius.value * cos(angleRad)).dp, y = (radius.value * sin(angleRad)).dp)
+                                .size(size).clip(CircleShape).background(color)
+                        )
+                    }
+                }
             }
         }
-
-        // INDYKATOR KROPEK PO ŁUKU
-        val dotMarginFromEdge = 12.dp
-        val radius = (screenWidthPx / 2) - dotMarginFromEdge
         
-        val angleBetweenDots = 10f
-        // Zmieniona logika startAngle i odejmowania kąta, aby kropki szły od LEWEJ do PRAWEJ
-        val startAngle = 90f + (angleBetweenDots * (pageCount - 1) / 2f)
-
-        repeat(pageCount) { index ->
-            val isSelected = pagerState.currentPage == index
-            val size by animateDpAsState(targetValue = if (isSelected) 8.dp else 5.dp, label = "dotSize")
-            val color = if (isSelected) Color.White else Color.Gray.copy(alpha = 0.5f)
-            
-            // Odejmujemy kąt, aby poruszać się zgodnie z ruchem wskazówek zegara (od lewej do prawej na dole)
-            val currentAngle = startAngle - (index * angleBetweenDots)
-            val angleRad = Math.toRadians(currentAngle.toDouble())
-            
-            val xOffset = (radius.value * cos(angleRad)).dp
-            val yOffset = (radius.value * sin(angleRad)).dp
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(x = xOffset, y = yOffset)
-                    .size(size)
-                    .clip(CircleShape)
-                    .background(color)
-            )
-        }
-        
-        // Zegar
         if (clockColor != null) {
-            Box(
-                modifier = Modifier.fillMaxWidth().wrapContentHeight(),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                TimeText(
-                    timeTextStyle = MaterialTheme.typography.caption1.copy(
-                        color = clockColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
+            Box(modifier = Modifier.fillMaxWidth().wrapContentHeight(), contentAlignment = Alignment.TopCenter) {
+                TimeText(timeTextStyle = MaterialTheme.typography.caption1.copy(color = clockColor, fontWeight = FontWeight.Bold))
             }
         }
     }

@@ -7,7 +7,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
@@ -15,16 +14,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 
 @Composable
-fun rememberStepCount(): Int {
+fun rememberStepCount(status: WorkoutStatus): Int {
     val context = LocalContext.current
     var stepCount by remember { mutableIntStateOf(0) }
     var initialSteps by remember { mutableIntStateOf(-1) }
+    var pausedSteps by remember { mutableIntStateOf(0) }
     
-    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        Manifest.permission.ACTIVITY_RECOGNITION
-    } else {
-        "com.google.android.gms.permission.ACTIVITY_RECOGNITION"
-    }
+    val permission = Manifest.permission.ACTIVITY_RECOGNITION
 
     var hasPermission by remember {
         mutableStateOf(
@@ -44,27 +40,46 @@ fun rememberStepCount(): Int {
         }
     }
 
+    LaunchedEffect(status) {
+        if (status == WorkoutStatus.IDLE) {
+            stepCount = 0
+            initialSteps = -1
+            pausedSteps = 0
+        }
+    }
+
     if (hasPermission) {
         val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
         val stepSensor = remember { sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) }
 
-        DisposableEffect(Unit) {
+        DisposableEffect(status) {
             val listener = object : SensorEventListener {
                 override fun onSensorChanged(event: SensorEvent?) {
                     event?.let {
                         if (it.sensor.type == Sensor.TYPE_STEP_COUNTER && it.values.isNotEmpty()) {
                             val totalSteps = it.values[0].toInt()
-                            if (initialSteps == -1) {
-                                initialSteps = totalSteps
+                            
+                            if (status == WorkoutStatus.ACTIVE) {
+                                if (initialSteps == -1) {
+                                    initialSteps = totalSteps
+                                }
+                                stepCount = (totalSteps - initialSteps) - pausedSteps
+                            } else if (status == WorkoutStatus.PAUSED) {
+                                // Obliczamy ile kroków przybyło podczas pauzy, aby odjąć je później
+                                if (initialSteps != -1) {
+                                    val currentWorkoutSteps = totalSteps - initialSteps
+                                    pausedSteps = currentWorkoutSteps - stepCount
+                                }
                             }
-                            stepCount = totalSteps - initialSteps
                         }
                     }
                 }
                 override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
             }
 
-            sensorManager.registerListener(listener, stepSensor, SensorManager.SENSOR_DELAY_UI)
+            if (status != WorkoutStatus.IDLE) {
+                sensorManager.registerListener(listener, stepSensor, SensorManager.SENSOR_DELAY_UI)
+            }
 
             onDispose {
                 sensorManager.unregisterListener(listener)

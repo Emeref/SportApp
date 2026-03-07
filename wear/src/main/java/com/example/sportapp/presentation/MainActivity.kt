@@ -121,9 +121,19 @@ class MainActivity : ComponentActivity() {
                         }
                         
                         // Sporty
-                        composable("workout_walking") { WalkingWorkoutScreen(selectedMapType, selectedClockColor) }
+                        composable("workout_walking") { 
+                            WalkingWorkoutScreen(
+                                mapType = selectedMapType, 
+                                clockColor = selectedClockColor,
+                                onEndWorkout = { navController.popBackStack() }
+                            ) 
+                        }
                         composable("workout_climbing") { 
-                            ClimbingWorkoutScreen(selectedClockColor, healthData)
+                            ClimbingWorkoutScreen(
+                                clockColor = selectedClockColor, 
+                                healthData = healthData,
+                                onEndWorkout = { navController.popBackStack() }
+                            )
                         }
                         composable("workout_tennis") { PlaceholderScreen("Tenis") }
                         composable("workout_gym") { PlaceholderScreen("Siłownia") }
