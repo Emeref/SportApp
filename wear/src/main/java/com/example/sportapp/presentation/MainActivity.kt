@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +29,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
 import androidx.wear.compose.material.*
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.pager.VerticalPager
@@ -60,20 +64,43 @@ fun WearApp() {
         val focusRequester = rememberActiveFocusRequester()
 
         Scaffold(
-            timeText = { TimeText() }
+            timeText = {} // Usuwa systemowe wyszarzenie/nakładkę
         ) {
-            VerticalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .rotaryScrollable(
-                        behavior = RotaryScrollableDefaults.behavior(pagerState),
-                        focusRequester = focusRequester
+            Box(modifier = Modifier.fillMaxSize()) {
+                // 1. PAGER (Mapa i dane)
+                VerticalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .rotaryScrollable(
+                            behavior = RotaryScrollableDefaults.behavior(pagerState),
+                            focusRequester = focusRequester
+                        )
+                ) { page ->
+                    when (page) {
+                        0 -> MainDataScreen()
+                        1 -> MapScreen()
+                    }
+                }
+
+                // 2. CZERWONY ZEGAR (Bez tła i wyszarzenia)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    TimeText(
+                        modifier = Modifier.padding(top = 5.dp),
+                        timeSource = TimeTextDefaults.timeSource(
+                            TimeTextDefaults.timeFormat()
+                        ),
+                        // Ustawiamy kolor tekstu na czerwony
+                        timeTextStyle = androidx.wear.compose.material.Typography().caption1.copy(
+                            color = Color.Red,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
-            ) { page ->
-                when (page) {
-                    0 -> MainDataScreen()
-                    1 -> MapScreen()
                 }
             }
         }
@@ -83,7 +110,7 @@ fun WearApp() {
 @Composable
 fun MainDataScreen() {
     val listState = rememberScalingLazyListState()
-    
+
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -142,7 +169,7 @@ fun MapScreen() {
 
     if (hasLocationPermission) {
         val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-        
+
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(LatLng(52.2297, 21.0122), 10f)
         }
@@ -151,7 +178,7 @@ fun MapScreen() {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 location?.let {
                     cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                        LatLng(it.latitude, it.longitude), 
+                        LatLng(it.latitude, it.longitude),
                         15f
                     )
                 }
@@ -223,27 +250,29 @@ fun MapScreen() {
                 )
 
                 // 2. LOGIKA DOTYKU (Stepper)
+                // 2. LOGIKA DOTYKU (Przeciąganie palcem po prawej krawędzi)
                 val scope = rememberCoroutineScope()
-                Stepper(
-                    value = cameraPositionState.position.zoom,
-                    onValueChange = { newZoom ->
-                        scope.launch {
-                            cameraPositionState.animate(
-                                update = CameraUpdateFactory.zoomTo(newZoom),
-                                durationMs = 200
-                            )
-                        }
-                    },
-                    valueRange = 2f..20f,
-                    steps = 18,
-                    increaseIcon = { },
-                    decreaseIcon = { }, // Usunięto '+' dla czystego wyglądu
+                Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(60.dp),
-                    backgroundColor = Color.Transparent,
-                    contentColor = Color.Transparent
-                ) {
+                        .width(50.dp) // Ograniczamy szerokość interakcji do krawędzi
+                        .align(Alignment.CenterEnd)
+                        .pointerInput(Unit) {
+                            detectVerticalDragGestures { change, dragAmount ->
+                                change.consume()
+
+                                // Obliczamy zmianę zoomu na podstawie przesunięcia (dragAmount)
+                                // dragAmount jest ujemny przy przesuwaniu w górę
+                                val sensitivity = 0.05f // Czułość przewijania
+                                val newZoom = (cameraPositionState.position.zoom - dragAmount * sensitivity)
+                                    .coerceIn(2f, 20f)
+
+                                scope.launch {
+                                    cameraPositionState.move(CameraUpdateFactory.zoomTo(newZoom))
+                                }
+                            }
+                        }
+                ){
                     // Puste wnętrze
                 }
             }
