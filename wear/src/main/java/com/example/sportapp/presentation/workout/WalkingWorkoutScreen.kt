@@ -46,7 +46,7 @@ fun WalkingWorkoutScreen(mapType: MapType) {
         ) { page ->
             when (page) {
                 0 -> MainDataScreen()
-                1 -> MapScreen(mapType)
+                1 -> MapScreen(mapType, focusRequester)
             }
         }
 
