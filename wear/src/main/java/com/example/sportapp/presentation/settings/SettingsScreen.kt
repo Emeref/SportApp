@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.runtime.Composable
@@ -29,6 +30,16 @@ fun SettingsScreen(navController: NavHostController, currentMapType: MapType, cu
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item { ListHeader { Text("Ustawienia") } }
+        
+        item {
+            Chip(
+                label = { Text("Dane zdrowotne") },
+                onClick = { navController.navigate("health_data") },
+                icon = { Icon(Icons.Default.HealthAndSafety, contentDescription = "Dane zdrowotne") },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+            )
+        }
+
         item {
             val mapTypeLabel = when (currentMapType) {
                 MapType.NORMAL -> "Normalna"
@@ -42,7 +53,7 @@ fun SettingsScreen(navController: NavHostController, currentMapType: MapType, cu
                 secondaryLabel = { Text(mapTypeLabel) },
                 onClick = { navController.navigate("map_type_selection") },
                 icon = { Icon(Icons.Default.Map, contentDescription = "Rodzaj mapy") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
         item {
@@ -61,7 +72,7 @@ fun SettingsScreen(navController: NavHostController, currentMapType: MapType, cu
                 secondaryLabel = { Text(colorLabel) },
                 onClick = { navController.navigate("clock_color_selection") },
                 icon = { Icon(Icons.Default.Schedule, contentDescription = "Kolor zegara") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
         }
     }
