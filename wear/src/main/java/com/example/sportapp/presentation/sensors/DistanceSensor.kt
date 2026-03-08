@@ -12,12 +12,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 
+data class DistanceState(
+    val totalDistance: Float = 0f,
+    val currentLat: Double? = null,
+    val currentLon: Double? = null
+)
+
 @SuppressLint("MissingPermission")
 @Composable
-fun rememberDistance(status: WorkoutStatus): Float {
+fun rememberDistance(status: WorkoutStatus): DistanceState {
     val context = LocalContext.current
     var totalDistance by remember { mutableFloatStateOf(0f) }
     var lastLocation by remember { mutableStateOf<Location?>(null) }
+    var currentLat by remember { mutableStateOf<Double?>(null) }
+    var currentLon by remember { mutableStateOf<Double?>(null) }
     
     var hasPermission by remember {
         mutableStateOf(
@@ -41,6 +49,8 @@ fun rememberDistance(status: WorkoutStatus): Float {
         if (status == WorkoutStatus.IDLE) {
             totalDistance = 0f
             lastLocation = null
+            currentLat = null
+            currentLon = null
         }
     }
 
@@ -62,6 +72,8 @@ fun rememberDistance(status: WorkoutStatus): Float {
                             totalDistance += distance
                         }
                         lastLocation = location
+                        currentLat = location.latitude
+                        currentLon = location.longitude
                     }
                 }
             }
@@ -80,5 +92,5 @@ fun rememberDistance(status: WorkoutStatus): Float {
         }
     }
 
-    return totalDistance
+    return DistanceState(totalDistance, currentLat, currentLon)
 }

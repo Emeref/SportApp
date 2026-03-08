@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<workout name="Spacer">
+    <sensors>
+        <sensor id="timer">
+            <position>1</position>
+        </sensor>
+        <sensor id="steps">
+            <position>2_1</position>
+        </sensor>
+        <sensor id="distance">
+            <position>2_2</position>
+        </sensor>
+        <sensor id="speed">
+            <position>3_1</position>
+        </sensor>
+        <sensor id="heart_rate">
+            <position>3_2</position>
+        </sensor>
+    </sensors>
+</workout>

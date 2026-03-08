@@ -3,9 +3,11 @@ package com.example.sportapp.presentation.workout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
@@ -22,69 +24,67 @@ fun MainDataScreen(
     stepCount: Int,
     distanceMeters: Float,
     speedKmH: Float,
-    workoutTimerState: WorkoutTimerState
+    workoutTimerState: WorkoutTimerState,
+    configFileName: String = "workout_walking.xml"
 ) {
+    val context = LocalContext.current
+    val config = remember(configFileName) {
+        ActivityConfigParser.parse(context, configFileName)
+    }
+
     val listState = rememberScalingLazyListState()
+    
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background),
         state = listState,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        item {
+        config?.rows?.forEach { row ->
+            item {
+                if (row.sensors.size == 1) {
+                    // Jeden czujnik w wierszu
+                    SensorDispatcher(row.sensors[0].id, heartRate, stepCount, distanceMeters, speedKmH, workoutTimerState)
+                } else {
+                    // Wiele czujników w wierszu (Row)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        row.sensors.forEach { sensor ->
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                SensorDispatcher(sensor.id, heartRate, stepCount, distanceMeters, speedKmH, workoutTimerState)
+                            }
+                        }
+                    }
+                }
+            }
+            item { Spacer(modifier = Modifier.height(4.dp)) }
+        } ?: item {
+            Text("Błąd konfiguracji", color = Color.Red)
+        }
+    }
+}
+
+@Composable
+fun SensorDispatcher(
+    id: String,
+    heartRate: Float,
+    stepCount: Int,
+    distanceMeters: Float,
+    speedKmH: Float,
+    workoutTimerState: WorkoutTimerState
+) {
+    when (id) {
+        "timer" -> {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "CZAS AKTYWNOŚCI",
-                    style = MaterialTheme.typography.caption2,
-                    color = Color.Gray
-                )
-                Text(
-                    text = workoutTimerState.formattedTime,
-                    style = MaterialTheme.typography.title1,
-                    color = Color.White,
-                    fontSize = 28.sp
-                )
+                Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
+                Text(workoutTimerState.formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
             }
         }
-
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                SportDataRow(
-                    label = "Kroki",
-                    value = "$stepCount",
-                    color = Color.Green
-                )
-                val distanceKm = distanceMeters / 1000f
-                SportDataRow(
-                    label = "Dystans",
-                    value = String.format(Locale.US, "%.2f km", distanceKm),
-                    color = Color.Cyan
-                )
-            }
-        }
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                SportDataRow(
-                    label = "Prędkość",
-                    value = String.format(Locale.US, "%.1f km/h", speedKmH),
-                    color = Color.Yellow
-                )
-                SportDataRow(
-                    label = "Tętno",
-                    value = if (heartRate > 0) "${heartRate.toInt()} BPM" else "-- BPM",
-                    color = Color.Red,
-                    isBold = true
-                )
-            }
-        }
+        "steps" -> SportDataRow("Kroki", "$stepCount", Color.Green)
+        "distance" -> SportDataRow("Dystans", String.format(Locale.US, "%.2f km", distanceMeters / 1000f), Color.Cyan)
+        "speed" -> SportDataRow("Prędkość", String.format(Locale.US, "%.1f km/h", speedKmH), Color.Yellow)
+        "heart_rate" -> SportDataRow("Tętno", if (heartRate > 0) "${heartRate.toInt()} BPM" else "-- BPM", Color.Red, true)
     }
 }

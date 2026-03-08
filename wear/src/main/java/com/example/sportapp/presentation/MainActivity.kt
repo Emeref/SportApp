@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavHostController
+import androidx.compose.ui.platform.LocalContext
 import androidx.wear.compose.material.*
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
@@ -19,17 +19,29 @@ import com.example.sportapp.presentation.workout.ClimbingWorkoutScreen
 import com.example.sportapp.presentation.workout.WalkingWorkoutScreen
 import com.example.sportapp.presentation.workout.WorkoutSummaryScreen
 import com.google.maps.android.compose.MapType
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val context = LocalContext.current
             val navController = rememberSwipeDismissableNavController()
+            val settingsManager = remember { SettingsManager(context) }
+            val scope = rememberCoroutineScope()
+            
+            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData()))
+            
             var selectedMapType by remember { mutableStateOf(MapType.NORMAL) }
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
             var healthData by remember { mutableStateOf(HealthData()) }
+
+            LaunchedEffect(settingsState) {
+                selectedMapType = settingsState.mapType
+                selectedClockColor = settingsState.clockColor
+                healthData = settingsState.healthData
+            }
             
-            // Tymczasowy stan podsumowania
             var currentSummaryData by remember { mutableStateOf<Pair<String, List<Pair<String, String>>>?>(null) }
 
             SportAppTheme {
@@ -51,14 +63,26 @@ class MainActivity : ComponentActivity() {
                         composable("main_menu") { MainMenuScreen(navController) }
                         composable("choose_sport") { ChooseSportScreen(navController) }
                         composable("statistics") { PlaceholderScreen("Statystyki") }
-                        composable("settings") { SettingsScreen(navController, selectedMapType, selectedClockColor) }
+                        composable("settings") { 
+                            SettingsScreen(
+                                navController = navController, 
+                                currentMapType = selectedMapType, 
+                                currentClockColor = selectedClockColor
+                            ) 
+                        }
                         
                         composable("map_type_selection") { 
-                            MapTypeSelectionScreen(selectedMapType) { selectedMapType = it } 
+                            MapTypeSelectionScreen(selectedMapType) { 
+                                selectedMapType = it
+                                scope.launch { settingsManager.saveMapType(it) }
+                            } 
                         }
                         
                         composable("clock_color_selection") {
-                            ClockColorSelectionScreen(selectedClockColor) { selectedClockColor = it }
+                            ClockColorSelectionScreen(selectedClockColor) { 
+                                selectedClockColor = it
+                                scope.launch { settingsManager.saveClockColor(it) }
+                            }
                         }
                         
                         // Dane Zdrowotne
@@ -75,13 +99,19 @@ class MainActivity : ComponentActivity() {
                             ) 
                         }
                         composable("health_gender") {
-                            GenderSelectionScreen(healthData.gender) { healthData = healthData.copy(gender = it) }
+                            GenderSelectionScreen(healthData.gender) { 
+                                healthData = healthData.copy(gender = it)
+                                scope.launch { settingsManager.saveHealthData(healthData) }
+                            }
                         }
                         composable("health_age") {
                             NumericInputScreen(
                                 value = healthData.age,
                                 range = 16..120,
-                                onValueChange = { healthData = healthData.copy(age = it, maxHR = 220 - it) },
+                                onValueChange = { 
+                                    healthData = healthData.copy(age = it, maxHR = 220 - it)
+                                    scope.launch { settingsManager.saveHealthData(healthData) }
+                                },
                                 onDone = { navController.popBackStack() }
                             )
                         }
@@ -89,7 +119,10 @@ class MainActivity : ComponentActivity() {
                             NumericInputScreen(
                                 value = healthData.weight,
                                 range = 30..250,
-                                onValueChange = { healthData = healthData.copy(weight = it) },
+                                onValueChange = { 
+                                    healthData = healthData.copy(weight = it)
+                                    scope.launch { settingsManager.saveHealthData(healthData) }
+                                },
                                 onDone = { navController.popBackStack() }
                             )
                         }
@@ -97,7 +130,10 @@ class MainActivity : ComponentActivity() {
                             NumericInputScreen(
                                 value = healthData.height,
                                 range = 100..230,
-                                onValueChange = { healthData = healthData.copy(height = it) },
+                                onValueChange = { 
+                                    healthData = healthData.copy(height = it)
+                                    scope.launch { settingsManager.saveHealthData(healthData) }
+                                },
                                 onDone = { navController.popBackStack() }
                             )
                         }
@@ -105,7 +141,10 @@ class MainActivity : ComponentActivity() {
                             NumericInputScreen(
                                 value = healthData.stepLength,
                                 range = 30..130,
-                                onValueChange = { healthData = healthData.copy(stepLength = it) },
+                                onValueChange = { 
+                                    healthData = healthData.copy(stepLength = it)
+                                    scope.launch { settingsManager.saveHealthData(healthData) }
+                                },
                                 onDone = { navController.popBackStack() }
                             )
                         }
@@ -113,7 +152,10 @@ class MainActivity : ComponentActivity() {
                             NumericInputScreen(
                                 value = healthData.restingHR,
                                 range = 30..200,
-                                onValueChange = { healthData = healthData.copy(restingHR = it) },
+                                onValueChange = { 
+                                    healthData = healthData.copy(restingHR = it)
+                                    scope.launch { settingsManager.saveHealthData(healthData) }
+                                },
                                 onDone = { navController.popBackStack() }
                             )
                         }
@@ -121,7 +163,10 @@ class MainActivity : ComponentActivity() {
                             NumericInputScreen(
                                 value = healthData.maxHR,
                                 range = 100..240,
-                                onValueChange = { healthData = healthData.copy(maxHR = it) },
+                                onValueChange = { 
+                                    healthData = healthData.copy(maxHR = it)
+                                    scope.launch { settingsManager.saveHealthData(healthData) }
+                                },
                                 onDone = { navController.popBackStack() }
                             )
                         }
@@ -146,6 +191,7 @@ class MainActivity : ComponentActivity() {
                             WalkingWorkoutScreen(
                                 mapType = selectedMapType, 
                                 clockColor = selectedClockColor,
+                                healthData = healthData,
                                 onEndWorkout = { summary ->
                                     currentSummaryData = "Spacer" to summary
                                     navController.navigate("workout_summary")

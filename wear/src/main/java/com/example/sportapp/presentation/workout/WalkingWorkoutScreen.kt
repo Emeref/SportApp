@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
@@ -21,6 +22,7 @@ import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.material.*
 import com.example.sportapp.presentation.sensors.*
+import com.example.sportapp.presentation.settings.HealthData
 import com.google.maps.android.compose.MapType
 import kotlin.math.cos
 import kotlin.math.sin
@@ -31,24 +33,43 @@ import java.util.*
 fun WalkingWorkoutScreen(
     mapType: MapType, 
     clockColor: Color?, 
+    healthData: HealthData,
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ) {
+    val context = LocalContext.current
     var workoutStatus by remember { mutableStateOf(WorkoutStatus.ACTIVE) }
-    
-    // HorizontalPager dla ekranu kontrolnego (lewo) i treningu (prawo)
     val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
+    val startTime = remember { Date() }
     
-    // Sensory reagujące na status
+    // Sensory
     val heartRate = rememberHeartRate()
     val stepCount = rememberStepCount(workoutStatus)
-    val distanceMeters = rememberDistance(workoutStatus)
-    val speedKmH = rememberSpeed() // Prędkość chwilowa z GPS
+    val distanceState = rememberDistance(workoutStatus)
+    val speedKmH = rememberSpeed()
     val workoutTimerState = rememberWorkoutTimer(workoutStatus)
+    val altitude = rememberAltitude()
+
+    // Logger dla CSV
+    val logger = remember { WorkoutLogger(context, "Spacer", healthData) }
+
+    // Zapis co sekundę
+    LaunchedEffect(workoutTimerState.totalSeconds) {
+        if (workoutStatus == WorkoutStatus.ACTIVE) {
+            logger.logData(
+                lat = distanceState.currentLat,
+                lon = distanceState.currentLon,
+                bpm = heartRate,
+                kroki = stepCount,
+                gpsDystans = distanceState.totalDistance,
+                predkosc = speedKmH,
+                wysokosc = altitude
+            )
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(state = horizontalPagerState) { hPage ->
             if (hPage == 0) {
-                // EKRAN KONTROLNY (Pauza/Zakończ)
                 WorkoutControlScreen(
                     status = workoutStatus,
                     onTogglePause = {
@@ -56,19 +77,43 @@ fun WalkingWorkoutScreen(
                             WorkoutStatus.PAUSED else WorkoutStatus.ACTIVE
                     },
                     onEnd = {
-                        // Przygotowanie danych do podsumowania
-                        val distanceKm = distanceMeters / 1000f
+                        val stats = logger.getFinalStats()
+                        val distanceKm = distanceState.totalDistance / 1000f
+                        
+                        // Obliczanie średnich prędkości dla podsumowania
+                        val durationHours = workoutTimerState.totalSeconds / 3600.0
+                        val distanceStepsMeters = (stepCount * healthData.stepLength / 100.0)
+                        val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
+                        val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
+
                         val summary = listOf(
                             "Czas trwania" to workoutTimerState.formattedTime,
                             "Kroki" to "$stepCount",
-                            "Dystans" to String.format(Locale.US, "%.2f km", distanceKm),
-                            "Średnie tętno" to "${heartRate.toInt()} BPM"
+                            "Dystans (GPS)" to String.format(Locale.US, "%.2f km", distanceKm),
+                            "Średnie tętno" to "${(stats["avgBpm"] as? Double)?.toInt() ?: "--"} BPM",
+                            "Przewyższenie +" to String.format(Locale.US, "%.1f m", stats["totalAscent"] as Double)
                         )
+                        
+                        // Zapis podsumowania do pliku zbiorczego (Punkt 4)
+                        SummaryManager.saveSummary(
+                            context = context,
+                            activityName = "Spacer",
+                            startTime = startTime,
+                            durationFormatted = workoutTimerState.formattedTime,
+                            steps = stepCount,
+                            distanceSteps = distanceStepsMeters,
+                            distanceGps = distanceState.totalDistance,
+                            avgSpeedSteps = avgSpeedSteps,
+                            avgSpeedGps = avgSpeedGps,
+                            totalAscent = stats["totalAscent"] as Double,
+                            totalDescent = stats["totalDescent"] as Double,
+                            avgBpm = stats["avgBpm"] as? Double
+                        )
+                        
                         onEndWorkout(summary)
                     }
                 )
             } else {
-                // EKRAN TRENINGU (Dane/Mapa)
                 val verticalPagerState = rememberPagerState(pageCount = { 2 })
                 val focusRequester = rememberActiveFocusRequester()
                 val configuration = LocalConfiguration.current
@@ -88,7 +133,7 @@ fun WalkingWorkoutScreen(
                             0 -> MainDataScreen(
                                 heartRate = heartRate,
                                 stepCount = stepCount,
-                                distanceMeters = distanceMeters,
+                                distanceMeters = distanceState.totalDistance,
                                 speedKmH = speedKmH,
                                 workoutTimerState = workoutTimerState
                             )
@@ -96,7 +141,6 @@ fun WalkingWorkoutScreen(
                         }
                     }
 
-                    // Kropki po łuku (tylko na ekranie treningu)
                     val radius = (screenWidthPx / 2) - 12.dp
                     val angleBetweenDots = 10f
                     val startAngle = 90f + (angleBetweenDots * (2 - 1) / 2f)
