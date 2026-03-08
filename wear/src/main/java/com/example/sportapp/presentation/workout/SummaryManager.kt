@@ -24,7 +24,13 @@ object SummaryManager {
         totalDescent: Double?,
         avgBpm: Double?
     ) {
-        val file = File(context.filesDir, SUMMARY_FILE_NAME)
+        // Folder 'activities' w katalogu plików aplikacji
+        val activitiesDir = File(context.filesDir, "activities")
+        if (!activitiesDir.exists()) {
+            activitiesDir.mkdirs()
+        }
+
+        val file = File(activitiesDir, SUMMARY_FILE_NAME)
         val isNewFile = !file.exists()
 
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)

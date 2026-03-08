@@ -28,7 +28,13 @@ class WorkoutLogger(
         
         val fileName = "${activityName}_${dateStr}_${genderStr}_${healthData.age}_${healthData.height}_${healthData.weight}_${healthData.stepLength}_${healthData.restingHR}_${healthData.maxHR}.csv"
         
-        file = File(context.filesDir, fileName)
+        // Tworzenie folderu 'activities' jeśli nie istnieje
+        val activitiesDir = File(context.filesDir, "activities")
+        if (!activitiesDir.exists()) {
+            activitiesDir.mkdirs()
+        }
+        
+        file = File(activitiesDir, fileName)
         startTime = System.currentTimeMillis()
         
         // Write header
