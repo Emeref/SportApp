@@ -10,6 +10,18 @@ import java.util.*
 object SummaryManager {
     private const val SUMMARY_FILE_NAME = "Podsumowanie_cwiczen.csv"
 
+    private fun formatVal(value: Any?, decimalPlaces: Int = -1): String {
+        if (value == null) return ""
+        val stringVal = when (value) {
+            is Float -> if (value == 0f) "" else if (decimalPlaces >= 0) String.format(Locale.US, "%.${decimalPlaces}f", value) else value.toString()
+            is Double -> if (value == 0.0) "" else if (decimalPlaces >= 0) String.format(Locale.US, "%.${decimalPlaces}f", value) else value.toString()
+            is Int -> if (value == 0) "" else value.toString()
+            is Long -> if (value == 0L) "" else value.toString()
+            else -> value.toString()
+        }
+        return stringVal
+    }
+
     fun saveSummary(
         context: Context,
         activityName: String,
@@ -40,14 +52,14 @@ object SummaryManager {
             append(dateStr).append(";")
             append(activityName).append(";")
             append(durationFormatted).append(";")
-            append(steps ?: "null").append(";")
-            append(distanceSteps?.let { String.format(Locale.US, "%.2f", it) } ?: "null").append(";")
-            append(distanceGps?.let { String.format(Locale.US, "%.2f", it) } ?: "null").append(";")
-            append(avgSpeedSteps?.let { String.format(Locale.US, "%.2f", it) } ?: "null").append(";")
-            append(avgSpeedGps?.let { String.format(Locale.US, "%.2f", it) } ?: "null").append(";")
-            append(totalAscent?.let { String.format(Locale.US, "%.1f", it) } ?: "null").append(";")
-            append(totalDescent?.let { String.format(Locale.US, "%.1f", it) } ?: "null").append(";")
-            append(avgBpm?.let { String.format(Locale.US, "%.1f", it) } ?: "null")
+            append(formatVal(steps)).append(";")
+            append(formatVal(distanceSteps, 2)).append(";")
+            append(formatVal(distanceGps, 2)).append(";")
+            append(formatVal(avgSpeedSteps, 2)).append(";")
+            append(formatVal(avgSpeedGps, 2)).append(";")
+            append(formatVal(totalAscent, 1)).append(";")
+            append(formatVal(totalDescent, 1)).append(";")
+            append(formatVal(avgBpm, 1))
         }.toString()
 
         try {

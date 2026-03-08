@@ -41,6 +41,18 @@ class WorkoutLogger(
         writeLine("czas;lat;lon;bpm;srednie_bpm;kroki;kroki_min;odl_kroki;gps_dystans;predkosc;wysokosc;przewyzszenia_gora;przewyzszenia_dol")
     }
 
+    private fun formatVal(value: Any?, decimalPlaces: Int = -1): String {
+        if (value == null) return ""
+        val stringVal = when (value) {
+            is Float -> if (value == 0f) "" else if (decimalPlaces >= 0) String.format(Locale.US, "%.${decimalPlaces}f", value) else value.toString()
+            is Double -> if (value == 0.0) "" else if (decimalPlaces >= 0) String.format(Locale.US, "%.${decimalPlaces}f", value) else value.toString()
+            is Int -> if (value == 0) "" else value.toString()
+            is Long -> if (value == 0L) "" else value.toString()
+            else -> value.toString()
+        }
+        return stringVal
+    }
+
     fun logData(
         lat: Double? = null,
         lon: Double? = null,
@@ -62,12 +74,12 @@ class WorkoutLogger(
         val avgBpm = if (heartRates.isNotEmpty()) heartRates.average() else null
 
         // Steps per minute
-        val stepsMin = if (kroki != null && durationMillis > 0) {
+        val stepsMin = if (kroki != null && kroki > 0 && durationMillis > 0) {
             (kroki.toDouble() / (durationMillis / 60000.0))
         } else null
 
         // Distance from steps
-        val odlKroki = if (kroki != null) {
+        val odlKroki = if (kroki != null && kroki > 0) {
             (kroki * healthData.stepLength / 100.0)
         } else null
 
@@ -83,18 +95,18 @@ class WorkoutLogger(
 
         val line = StringBuilder().apply {
             append(timeFormatted).append(";")
-            append(lat ?: "null").append(";")
-            append(lon ?: "null").append(";")
-            append(bpm?.toInt() ?: "null").append(";")
-            append(avgBpm?.let { String.format(Locale.US, "%.1f", it) } ?: "null").append(";")
-            append(kroki ?: "null").append(";")
-            append(stepsMin?.let { String.format(Locale.US, "%.1f", it) } ?: "null").append(";")
-            append(odlKroki?.let { String.format(Locale.US, "%.2f", it) } ?: "null").append(";")
-            append(gpsDystans?.let { String.format(Locale.US, "%.2f", it) } ?: "null").append(";")
-            append(predkosc?.let { String.format(Locale.US, "%.1f", it) } ?: "null").append(";")
-            append(wysokosc?.let { String.format(Locale.US, "%.1f", it) } ?: "null").append(";")
-            append(String.format(Locale.US, "%.1f", totalAscent)).append(";")
-            append(String.format(Locale.US, "%.1f", totalDescent))
+            append(formatVal(lat)).append(";")
+            append(formatVal(lon)).append(";")
+            append(formatVal(bpm?.toInt())).append(";")
+            append(formatVal(avgBpm, 1)).append(";")
+            append(formatVal(kroki)).append(";")
+            append(formatVal(stepsMin, 1)).append(";")
+            append(formatVal(odlKroki, 2)).append(";")
+            append(formatVal(gpsDystans, 2)).append(";")
+            append(formatVal(predkosc, 1)).append(";")
+            append(formatVal(wysokosc, 1)).append(";")
+            append(formatVal(totalAscent, 1)).append(";")
+            append(formatVal(totalDescent, 1))
         }.toString()
 
         writeLine(line)
