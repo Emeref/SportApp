@@ -8,10 +8,16 @@
     - [x] Wyliczanie spalonych kalorii (Modele: Keytel, MET, HRR).
     - [ ] Śledzenie trasy (GPS Location tracking - wizualizacja na mapie już jest, brak zapisu ścieżki).
 
-## 2. Logowanie i dane treningowe
-- [ ] **Zapisywanie treningów**:
-    - [ ] Zaprojektowanie formatu pliku XML/JSON do przechowywania historii.
-    - [ ] Logowanie wszystkich parametrów (czas, tętno, lokalizacja) do lokalnej bazy danych lub pliku.
+## 2. Zarządzanie danymi i plikami (OBECNY BRANCH)
+- [ ] **Zapis konfiguracji aplikacji**:
+    - [ ] Automatyczne zapisywanie i wczytywanie ustawień (mapa, zegar, dane zdrowotne) do pliku JSON.
+- [ ] **Konfiguracja aktywności (XML)**:
+    - [ ] Stworzenie parsera XML dla układu sensorów (pozycja wiersz_kolumna).
+- [ ] **Logowanie treningów (CSV)**:
+    - [ ] Rejestracja parametrów co sekundę do pliku dedykowanego dla sesji.
+    - [ ] Obliczanie średniego BPM, przewyższeń (góra/dół) i dystansu z kroków w locie.
+- [ ] **Podsumowanie zbiorcze (CSV)**:
+    - [ ] Dopisywanie wyników zakończonej sesji do pliku `Podsumowanie_cwiczen.csv`.
 
 ## 3. Komunikacja międzyurządzeniowa
 - [ ] **Aplikacja na telefon (Mobile App)**:
