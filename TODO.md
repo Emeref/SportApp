@@ -9,8 +9,8 @@
     - [ ] Śledzenie trasy (GPS Location tracking - wizualizacja na mapie już jest, brak zapisu ścieżki).
 
 ## 2. Zarządzanie danymi i plikami (OBECNY BRANCH)
-- [ ] **Zapis konfiguracji aplikacji**:
-    - [ ] Automatyczne zapisywanie i wczytywanie ustawień (mapa, zegar, dane zdrowotne) do pliku JSON.
+- [x] **Zapis konfiguracji aplikacji**:
+    - [x] Automatyczne zapisywanie i wczytywanie ustawień (mapa, zegar, dane zdrowotne) do pliku JSON.
 - [ ] **Konfiguracja aktywności (XML)**:
     - [ ] Stworzenie parsera XML dla układu sensorów (pozycja wiersz_kolumna).
 - [ ] **Logowanie treningów (CSV)**:
