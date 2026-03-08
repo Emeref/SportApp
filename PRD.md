@@ -12,7 +12,7 @@ Aplikacja ma być minimalistycznym asystentem sportowym, który gromadzi dane z 
 
 ## Kluczowe Funkcjonalności
 - Odczyt tętna (HR), kroków, odległości (GPS/Kroki), prędkości i wysokości.
-- Trzy modele obliczania spalonych kalorii: Keytel (2005), MET oraz HRR (Heart Rate Reserve).
+- Model obliczania spalonych kalorii: HRR (Heart Rate Reserve).
 - Dynamiczna mapa z wyborem typu (Satelitarna, Hybrydowa, Normalna, Terenowa).
 - System profili zdrowotnych (Płeć, Wiek, Masa, Wzrost, Tętno spoczynkowe/maksymalne).
 - Nawigacja kółkiem fizycznym (Rotary Input) i gestami.
