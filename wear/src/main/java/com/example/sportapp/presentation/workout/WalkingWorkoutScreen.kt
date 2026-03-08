@@ -24,10 +24,15 @@ import com.example.sportapp.presentation.sensors.*
 import com.google.maps.android.compose.MapType
 import kotlin.math.cos
 import kotlin.math.sin
+import java.util.*
 
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
-fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?, onEndWorkout: () -> Unit) {
+fun WalkingWorkoutScreen(
+    mapType: MapType, 
+    clockColor: Color?, 
+    onEndWorkout: (List<Pair<String, String>>) -> Unit
+) {
     var workoutStatus by remember { mutableStateOf(WorkoutStatus.ACTIVE) }
     
     // HorizontalPager dla ekranu kontrolnego (lewo) i treningu (prawo)
@@ -50,7 +55,17 @@ fun WalkingWorkoutScreen(mapType: MapType, clockColor: Color?, onEndWorkout: () 
                         workoutStatus = if (workoutStatus == WorkoutStatus.ACTIVE) 
                             WorkoutStatus.PAUSED else WorkoutStatus.ACTIVE
                     },
-                    onEnd = onEndWorkout // Wywołujemy akcję zakończenia i powrotu
+                    onEnd = {
+                        // Przygotowanie danych do podsumowania
+                        val distanceKm = distanceMeters / 1000f
+                        val summary = listOf(
+                            "Czas trwania" to workoutTimerState.formattedTime,
+                            "Kroki" to "$stepCount",
+                            "Dystans" to String.format(Locale.US, "%.2f km", distanceKm),
+                            "Średnie tętno" to "${heartRate.toInt()} BPM"
+                        )
+                        onEndWorkout(summary)
+                    }
                 )
             } else {
                 // EKRAN TRENINGU (Dane/Mapa)

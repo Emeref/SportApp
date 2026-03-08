@@ -12,10 +12,15 @@ import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.material.*
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
+import java.util.*
 
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
-fun ClimbingWorkoutScreen(clockColor: Color?, healthData: HealthData, onEndWorkout: () -> Unit) {
+fun ClimbingWorkoutScreen(
+    clockColor: Color?, 
+    healthData: HealthData, 
+    onEndWorkout: (List<Pair<String, String>>) -> Unit
+) {
     var workoutStatus by remember { mutableStateOf(WorkoutStatus.ACTIVE) }
     val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
 
@@ -23,13 +28,12 @@ fun ClimbingWorkoutScreen(clockColor: Color?, healthData: HealthData, onEndWorko
     val heartRate = rememberHeartRate()
     val workoutTimerState = rememberWorkoutTimer(workoutStatus)
     
-    // Tracker kalorii (cała logika jest teraz tutaj)
     val calorieTracker = rememberCalorieTracker(
         status = workoutStatus,
         totalSeconds = workoutTimerState.totalSeconds,
         heartRate = heartRate,
         healthData = healthData,
-        metValue = 8.0 // Stała dla wspinaczki
+        metValue = 8.0
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -41,7 +45,17 @@ fun ClimbingWorkoutScreen(clockColor: Color?, healthData: HealthData, onEndWorko
                         workoutStatus = if (workoutStatus == WorkoutStatus.ACTIVE) 
                             WorkoutStatus.PAUSED else WorkoutStatus.ACTIVE
                     },
-                    onEnd = onEndWorkout
+                    onEnd = {
+                        // Przygotowanie danych do podsumowania
+                        val summary = listOf(
+                            "Czas trwania" to workoutTimerState.formattedTime,
+                            "Tętno (ostatnie)" to "${heartRate.toInt()} BPM",
+                            "Kalorie (Keytel)" to String.format(Locale.US, "%.1f kcal", calorieTracker.keytel),
+                            "Kalorie (MET)" to String.format(Locale.US, "%.1f kcal", calorieTracker.met),
+                            "Kalorie (HRR)" to String.format(Locale.US, "%.1f kcal", calorieTracker.hrr)
+                        )
+                        onEndWorkout(summary)
+                    }
                 )
             } else {
                 ClimbingDataScreen(
