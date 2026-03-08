@@ -191,6 +191,7 @@ class MainActivity : ComponentActivity() {
                             WalkingWorkoutScreen(
                                 mapType = selectedMapType, 
                                 clockColor = selectedClockColor,
+                                healthData = healthData,
                                 onEndWorkout = { summary ->
                                     currentSummaryData = "Spacer" to summary
                                     navController.navigate("workout_summary")
