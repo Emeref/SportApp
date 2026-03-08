@@ -4,13 +4,21 @@
     <selectionStates>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-03-08T20:40:16.807170700Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\konra\.android\avd\Medium_Phone.avd" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-03-08T08:51:28.006366100Z">
+        <DropdownSelection timestamp="2026-03-08T20:39:55.437176900Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.50.96:33131;connection=6d4041c0" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\konra\.android\avd\Medium_Phone.avd" />
             </handle>
           </Target>
         </DropdownSelection>
