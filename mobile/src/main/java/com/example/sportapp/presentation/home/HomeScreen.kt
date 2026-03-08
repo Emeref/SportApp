@@ -8,27 +8,29 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel,
     onNavigateToStats: () -> Unit,
     onNavigateToActivityList: () -> Unit,
-    onSyncClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
+    val stats by viewModel.stats.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("SportApp") },
                 navigationIcon = {
-                    IconButton(onClick = onSyncClick) {
+                    IconButton(onClick = { viewModel.triggerSync() }) {
                         Icon(Icons.Default.Sync, contentDescription = "Synchronizuj")
                     }
                 },
@@ -56,11 +58,23 @@ fun HomeScreen(
 
             // Widgety statystyk
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatCard(modifier = Modifier.weight(1f), label = "Liczba aktywności", value = "5")
-                StatCard(modifier = Modifier.weight(1f), label = "Spalone kalorie", value = "1250 kcal")
+                StatCard(
+                    modifier = Modifier.weight(1f), 
+                    label = "Liczba aktywności", 
+                    value = stats["count"].toString()
+                )
+                StatCard(
+                    modifier = Modifier.weight(1f), 
+                    label = "Spalone kalorie", 
+                    value = "${stats["calories"]} kcal"
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            StatCard(modifier = Modifier.fillMaxWidth(), label = "Przebyte km (GPS)", value = "12.5 km")
+            StatCard(
+                modifier = Modifier.fillMaxWidth(), 
+                label = "Przebyte km (GPS)", 
+                value = "${stats["distance"]} km"
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 

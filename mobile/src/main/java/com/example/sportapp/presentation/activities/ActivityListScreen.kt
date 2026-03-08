@@ -14,30 +14,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-data class ActivityItem(
-    val id: String,
-    val type: String,
-    val date: String,
-    val duration: String,
-    val calories: String,
-    val distanceGps: String,
-    val distanceSteps: String
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityListScreen(
+    viewModel: ActivityListViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit
 ) {
+    val activities by viewModel.activities.collectAsState()
     var selectedActivityId by remember { mutableStateOf<String?>(null) }
-    
-    // Przykładowe dane
-    val activities = listOf(
-        ActivityItem("1", "Bieganie", "2023-10-27", "00:45:12", "450 kcal", "5.2 km", "5.1 km"),
-        ActivityItem("2", "Spacer", "2023-10-26", "01:20:00", "300 kcal", "4.0 km", "4.2 km"),
-        ActivityItem("3", "Rower", "2023-10-25", "00:30:00", "200 kcal", "10.5 km", "0.0 km")
-    )
 
     Scaffold(
         topBar = {
@@ -72,13 +57,13 @@ fun ActivityListScreen(
                     Row(modifier = Modifier.padding(vertical = 8.dp)) {
                         Text("", modifier = Modifier.width(48.dp))
                         Text("Typ", modifier = Modifier.width(100.dp), style = MaterialTheme.typography.titleSmall)
-                        Text("Data", modifier = Modifier.width(100.dp), style = MaterialTheme.typography.titleSmall)
-                        Text("Czas", modifier = Modifier.width(80.dp), style = MaterialTheme.typography.titleSmall)
+                        Text("Data", modifier = Modifier.width(150.dp), style = MaterialTheme.typography.titleSmall)
+                        Text("Czas", modifier = Modifier.width(100.dp), style = MaterialTheme.typography.titleSmall)
                         Text("Kalorie", modifier = Modifier.width(80.dp), style = MaterialTheme.typography.titleSmall)
-                        Text("Dystans (GPS)", modifier = Modifier.width(100.dp), style = MaterialTheme.typography.titleSmall)
-                        Text("Dystans (Kroki)", modifier = Modifier.width(100.dp), style = MaterialTheme.typography.titleSmall)
+                        Text("Dystans (GPS)", modifier = Modifier.width(120.dp), style = MaterialTheme.typography.titleSmall)
+                        Text("Dystans (Kroki)", modifier = Modifier.width(120.dp), style = MaterialTheme.typography.titleSmall)
                     }
-                    Divider()
+                    HorizontalDivider()
                     LazyColumn {
                         items(activities) { activity ->
                             Row(
@@ -94,13 +79,13 @@ fun ActivityListScreen(
                                     modifier = Modifier.width(48.dp)
                                 )
                                 Text(activity.type, modifier = Modifier.width(100.dp))
-                                Text(activity.date, modifier = Modifier.width(100.dp))
-                                Text(activity.duration, modifier = Modifier.width(80.dp))
+                                Text(activity.date, modifier = Modifier.width(150.dp))
+                                Text(activity.duration, modifier = Modifier.width(100.dp))
                                 Text(activity.calories, modifier = Modifier.width(80.dp))
-                                Text(activity.distanceGps, modifier = Modifier.width(100.dp))
-                                Text(activity.distanceSteps, modifier = Modifier.width(100.dp))
+                                Text(activity.distanceGps, modifier = Modifier.width(120.dp))
+                                Text(activity.distanceSteps, modifier = Modifier.width(120.dp))
                             }
-                            Divider()
+                            HorizontalDivider()
                         }
                     }
                 }
