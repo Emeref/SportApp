@@ -14,6 +14,7 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import com.example.sportapp.presentation.components.SportDataRow
 import com.example.sportapp.presentation.sensors.CalorieCalculator
+import com.example.sportapp.presentation.sensors.CalorieTrackerState
 import com.example.sportapp.presentation.sensors.WorkoutTimerState
 import com.example.sportapp.presentation.settings.HealthData
 import java.util.*
@@ -22,20 +23,13 @@ import java.util.*
 fun ClimbingDataScreen(
     heartRate: Float,
     workoutTimerState: WorkoutTimerState,
-    healthData: HealthData
+    healthData: HealthData,
+    calorieTracker: CalorieTrackerState
 ) {
-    // Modele kalorii (kcal/min)
-    // Stała MET dla wspinaczki: ok. 8.0
+    // Chwilowe modele kalorii (kcal/min) dla podglądu prędkości spalania
     val keytelKcalMin = CalorieCalculator.calculateKeytel(heartRate, healthData)
     val metKcalMin = CalorieCalculator.calculateMET(8.0, healthData.weight)
     val hrrKcalMin = CalorieCalculator.calculateHRR(heartRate, healthData)
-
-    // Obliczanie całkowitych spalonych kalorii
-    // (kcal/min * całkowity czas w sekundach) / 60
-    val timeMinutes = workoutTimerState.totalSeconds / 60.0
-    val totalKeytel = keytelKcalMin * timeMinutes
-    val totalMET = metKcalMin * timeMinutes
-    val totalHRR = hrrKcalMin * timeMinutes
 
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
@@ -71,15 +65,15 @@ fun ClimbingDataScreen(
         }
 
         item {
-            CalorieRow("Keytel", keytelKcalMin, totalKeytel, Color.Yellow)
+            CalorieRow("Keytel", keytelKcalMin, calorieTracker.keytel, Color.Yellow)
         }
 
         item {
-            CalorieRow("MET", metKcalMin, totalMET, Color.Cyan)
+            CalorieRow("MET", metKcalMin, calorieTracker.met, Color.Cyan)
         }
 
         item {
-            CalorieRow("HRR", hrrKcalMin, totalHRR, Color.Magenta)
+            CalorieRow("HRR", hrrKcalMin, calorieTracker.hrr, Color.Magenta)
         }
 
         item { Spacer(modifier = Modifier.height(8.dp)) }

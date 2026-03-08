@@ -14,7 +14,7 @@ import com.google.android.gms.location.*
 
 @SuppressLint("MissingPermission")
 @Composable
-fun rememberDistance(): Float {
+fun rememberDistance(status: WorkoutStatus): Float {
     val context = LocalContext.current
     var totalDistance by remember { mutableFloatStateOf(0f) }
     var lastLocation by remember { mutableStateOf<Location?>(null) }
@@ -37,16 +37,25 @@ fun rememberDistance(): Float {
         }
     }
 
+    LaunchedEffect(status) {
+        if (status == WorkoutStatus.IDLE) {
+            totalDistance = 0f
+            lastLocation = null
+        }
+    }
+
     if (hasPermission) {
         val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
         
-        DisposableEffect(Unit) {
+        DisposableEffect(status) {
             val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000)
                 .setMinUpdateDistanceMeters(2f)
                 .build()
 
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
+                    if (status != WorkoutStatus.ACTIVE) return
+                    
                     for (location in result.locations) {
                         lastLocation?.let {
                             val distance = it.distanceTo(location)
@@ -57,11 +66,13 @@ fun rememberDistance(): Float {
                 }
             }
 
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.getMainLooper()
-            )
+            if (status != WorkoutStatus.IDLE) {
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+                )
+            }
 
             onDispose {
                 fusedLocationClient.removeLocationUpdates(locationCallback)

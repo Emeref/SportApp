@@ -4,12 +4,22 @@ import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import java.util.*
 
+enum class WorkoutStatus {
+    ACTIVE, PAUSED, IDLE
+}
+
 @Composable
-fun rememberWorkoutTimer(): WorkoutTimerState {
+fun rememberWorkoutTimer(status: WorkoutStatus): WorkoutTimerState {
     var seconds by remember { mutableLongStateOf(0L) }
 
-    LaunchedEffect(Unit) {
-        while (true) {
+    LaunchedEffect(status) {
+        if (status == WorkoutStatus.IDLE) {
+            seconds = 0L
+        }
+    }
+
+    LaunchedEffect(status) {
+        while (status == WorkoutStatus.ACTIVE) {
             delay(1000)
             seconds++
         }

@@ -17,6 +17,7 @@ import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.theme.SportAppTheme
 import com.example.sportapp.presentation.workout.ClimbingWorkoutScreen
 import com.example.sportapp.presentation.workout.WalkingWorkoutScreen
+import com.example.sportapp.presentation.workout.WorkoutSummaryScreen
 import com.google.maps.android.compose.MapType
 
 class MainActivity : ComponentActivity() {
@@ -27,6 +28,9 @@ class MainActivity : ComponentActivity() {
             var selectedMapType by remember { mutableStateOf(MapType.NORMAL) }
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
             var healthData by remember { mutableStateOf(HealthData()) }
+            
+            // Tymczasowy stan podsumowania
+            var currentSummaryData by remember { mutableStateOf<Pair<String, List<Pair<String, String>>>?>(null) }
 
             SportAppTheme {
                 Scaffold(
@@ -70,20 +74,13 @@ class MainActivity : ComponentActivity() {
                             ) 
                         }
                         composable("health_gender") {
-                            GenderSelectionScreen(healthData.gender) { 
-                                healthData = healthData.copy(gender = it)
-                            }
+                            GenderSelectionScreen(healthData.gender) { healthData = healthData.copy(gender = it) }
                         }
                         composable("health_age") {
                             NumericInputScreen(
                                 value = healthData.age,
                                 range = 16..120,
-                                onValueChange = { 
-                                    healthData = healthData.copy(
-                                        age = it,
-                                        maxHR = 220 - it
-                                    ) 
-                                },
+                                onValueChange = { healthData = healthData.copy(age = it, maxHR = 220 - it) },
                                 onDone = { navController.popBackStack() }
                             )
                         }
@@ -120,10 +117,41 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         
+                        // Ekran Podsumowania
+                        composable("workout_summary") {
+                            currentSummaryData?.let { (title, data) ->
+                                WorkoutSummaryScreen(
+                                    title = title,
+                                    summaryData = data,
+                                    onConfirm = {
+                                        navController.navigate("choose_sport") {
+                                            popUpTo("main_menu") { inclusive = false }
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
                         // Sporty
-                        composable("workout_walking") { WalkingWorkoutScreen(selectedMapType, selectedClockColor) }
+                        composable("workout_walking") { 
+                            WalkingWorkoutScreen(
+                                mapType = selectedMapType, 
+                                clockColor = selectedClockColor,
+                                onEndWorkout = { summary ->
+                                    currentSummaryData = "Spacer" to summary
+                                    navController.navigate("workout_summary")
+                                }
+                            ) 
+                        }
                         composable("workout_climbing") { 
-                            ClimbingWorkoutScreen(selectedClockColor, healthData)
+                            ClimbingWorkoutScreen(
+                                clockColor = selectedClockColor, 
+                                healthData = healthData,
+                                onEndWorkout = { summary ->
+                                    currentSummaryData = "Wspinaczka" to summary
+                                    navController.navigate("workout_summary")
+                                }
+                            )
                         }
                         composable("workout_tennis") { PlaceholderScreen("Tenis") }
                         composable("workout_gym") { PlaceholderScreen("Siłownia") }

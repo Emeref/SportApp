@@ -1,11 +1,12 @@
 # Lista Funkcjonalności do Zakodowania - SportApp
 
 ## 1. Integracja z sensorami (Wear OS)
-- [ ] **Odczytywanie wartości z czytników**:
-    - [ ] Tętno (Heart Rate) w czasie rzeczywistym.
-    - [ ] Licznik kroków (Step Counter).
-    - [ ] Obliczanie odległości na podstawie kroków i GPS.
-    - [ ] Śledzenie trasy (GPS Location tracking).
+- [x] **Odczytywanie wartości z czytników**:
+    - [x] Tętno (Heart Rate) w czasie rzeczywistym.
+    - [x] Licznik kroków (Step Counter).
+    - [x] Obliczanie odległości na podstawie kroków i GPS.
+    - [x] Wyliczanie spalonych kalorii (Modele: Keytel, MET, HRR).
+    - [ ] Śledzenie trasy (GPS Location tracking - wizualizacja na mapie już jest, brak zapisu ścieżki).
 
 ## 2. Logowanie i dane treningowe
 - [ ] **Zapisywanie treningów**:
@@ -28,3 +29,10 @@
     - [ ] Testy jednostkowe logiki biznesowej (obliczanie dystansu, formatowanie danych).
     - [ ] Testy komponentów UI (Compose Previews i screenshot tests).
     - [ ] Testy integracyjne nawigacji.
+
+## ZREALIZOWANE ELEMENTY INFRASTRUKTURY:
+- [x] System nawigacji (SwipeDismissableNavHost).
+- [x] Zarządzanie sesją (Pauza/Zakończ).
+- [x] Ustawienia danych zdrowotnych (Wiek, Waga, Wzrost, Płeć, HR).
+- [x] Dynamiczna mapa (Google Maps) z wyborem typu w opcjach.
+- [x] Modularna architektura sensorów.
