@@ -11,7 +11,6 @@ import java.util.*
 fun rememberWorkoutSession(
     activityName: String,
     healthData: HealthData,
-    metValue: Double,
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ): WorkoutSessionState {
     val context = LocalContext.current
@@ -26,13 +25,12 @@ fun rememberWorkoutSession(
     val workoutTimerState = rememberWorkoutTimer(status)
     val altitude = rememberAltitude()
 
-    // 2. Logika kalorii
-    val calorieTracker = rememberCalorieTracker(
+    // 2. Logika kalorii (Tylko model HRR)
+    val totalCalories = rememberCalorieTracker(
         status = status,
         totalSeconds = workoutTimerState.totalSeconds,
         heartRate = heartRate,
-        healthData = healthData,
-        metValue = metValue
+        healthData = healthData
     )
 
     // 3. Logger CSV
@@ -73,7 +71,7 @@ fun rememberWorkoutSession(
         val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
         val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
 
-        // Przygotowanie danych do podsumowania (część wspólna + specyficzna dla sportu)
+        // Przygotowanie danych do podsumowania
         val summary = mutableListOf<Pair<String, String>>()
         summary.add("Czas trwania" to workoutTimerState.formattedTime)
         
@@ -86,8 +84,8 @@ fun rememberWorkoutSession(
         val totalAscent = stats["totalAscent"] as Double
         if (totalAscent > 0) summary.add("Przewyższenie +" to String.format(Locale.US, "%.1f m", totalAscent))
 
-        if (calorieTracker.keytel > 0) {
-            summary.add("Kalorie (Keytel)" to String.format(Locale.US, "%.1f kcal", calorieTracker.keytel))
+        if (totalCalories > 0) {
+            summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", totalCalories))
         }
 
         // Zapis do pliku zbiorczego
@@ -116,7 +114,7 @@ fun rememberWorkoutSession(
         distanceState = distanceState,
         speedKmH = speedKmH,
         workoutTimerState = workoutTimerState,
-        calorieTracker = calorieTracker,
+        totalCalories = totalCalories,
         togglePause = togglePause,
         endWorkout = endWorkout
     )
@@ -129,7 +127,7 @@ data class WorkoutSessionState(
     val distanceState: DistanceState,
     val speedKmH: Float,
     val workoutTimerState: WorkoutTimerState,
-    val calorieTracker: CalorieTrackerState,
+    val totalCalories: Double,
     val togglePause: () -> Unit,
     val endWorkout: () -> Unit
 )

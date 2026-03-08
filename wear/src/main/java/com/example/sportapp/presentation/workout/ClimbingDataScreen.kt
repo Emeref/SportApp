@@ -14,7 +14,6 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import com.example.sportapp.presentation.components.SportDataRow
 import com.example.sportapp.presentation.sensors.CalorieCalculator
-import com.example.sportapp.presentation.sensors.CalorieTrackerState
 import com.example.sportapp.presentation.sensors.WorkoutTimerState
 import com.example.sportapp.presentation.settings.HealthData
 import java.util.*
@@ -24,12 +23,10 @@ fun ClimbingDataScreen(
     heartRate: Float,
     workoutTimerState: WorkoutTimerState,
     healthData: HealthData,
-    calorieTracker: CalorieTrackerState
+    totalCalories: Double
 ) {
-    // Chwilowe modele kalorii (kcal/min) dla podglądu prędkości spalania
-    val keytelKcalMin = CalorieCalculator.calculateKeytel(heartRate, healthData)
-    val metKcalMin = CalorieCalculator.calculateMET(8.0, healthData.weight)
-    val hrrKcalMin = CalorieCalculator.calculateHRR(heartRate, healthData)
+    // Chwilowe spalanie (kcal/min) dla modelu HRR
+    val currentKcalMin = CalorieCalculator.calculateHRR(heartRate, healthData)
 
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
@@ -54,26 +51,23 @@ fun ClimbingDataScreen(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
 
         item {
-            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
-                Text("MODEL", Modifier.weight(1f), style = MaterialTheme.typography.caption3, color = Color.Gray)
-                Text("kcal/min", Modifier.weight(1f), style = MaterialTheme.typography.caption3, color = Color.Gray)
-                Text("TOTAL", Modifier.weight(1f), style = MaterialTheme.typography.caption3, color = Color.Gray)
-            }
+            SportDataRow(
+                label = "Spalone kalorie",
+                value = String.format(Locale.US, "%.1f kcal", totalCalories),
+                color = Color.Magenta,
+                isBold = true
+            )
         }
 
         item {
-            CalorieRow("Keytel", keytelKcalMin, calorieTracker.keytel, Color.Yellow)
-        }
-
-        item {
-            CalorieRow("MET", metKcalMin, calorieTracker.met, Color.Cyan)
-        }
-
-        item {
-            CalorieRow("HRR", hrrKcalMin, calorieTracker.hrr, Color.Magenta)
+            SportDataRow(
+                label = "Prędkość spalania",
+                value = String.format(Locale.US, "%.2f kcal/min", currentKcalMin),
+                color = Color.Cyan
+            )
         }
 
         item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -82,21 +76,8 @@ fun ClimbingDataScreen(
             SportDataRow(
                 label = "Aktualne tętno",
                 value = if (heartRate > 0) "${heartRate.toInt()} BPM" else "-- BPM",
-                color = Color.Red,
-                isBold = true
+                color = Color.Red
             )
         }
-    }
-}
-
-@Composable
-fun CalorieRow(label: String, kcalMin: Double, total: Double, color: Color) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, Modifier.weight(1f), style = MaterialTheme.typography.caption2, color = color)
-        Text(String.format(Locale.US, "%.2f", kcalMin), Modifier.weight(1f), style = MaterialTheme.typography.body2)
-        Text(String.format(Locale.US, "%.1f", total), Modifier.weight(1f), style = MaterialTheme.typography.body1, color = Color.White)
     }
 }

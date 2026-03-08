@@ -16,7 +16,10 @@ import androidx.core.content.ContextCompat
 @Composable
 fun rememberHeartRate(): Float {
     val context = LocalContext.current
-    var heartRate by remember { mutableStateOf(0f) }
+    var lastSensorValue by remember { mutableFloatStateOf(0f) }
+    var heartRateDisplay by remember { mutableFloatStateOf(0f) }
+    var lastUpdateTime by remember { mutableLongStateOf(0L) }
+    
     var hasPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED
@@ -44,7 +47,7 @@ fun rememberHeartRate(): Float {
                 override fun onSensorChanged(event: SensorEvent?) {
                     event?.let {
                         if (it.sensor.type == Sensor.TYPE_HEART_RATE && it.values.isNotEmpty()) {
-                            heartRate = it.values[0]
+                            lastSensorValue = it.values[0]
                         }
                     }
                 }
@@ -59,5 +62,15 @@ fun rememberHeartRate(): Float {
         }
     }
 
-    return heartRate
+    // Odświeżanie wartości na ekranie raz na 5 sekund
+    LaunchedEffect(Unit) {
+        while (true) {
+            if (lastSensorValue > 0) {
+                heartRateDisplay = lastSensorValue
+            }
+            kotlinx.coroutines.delay(5000)
+        }
+    }
+
+    return heartRateDisplay
 }

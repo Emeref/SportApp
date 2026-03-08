@@ -37,7 +37,6 @@ fun WalkingWorkoutScreen(
     val session = rememberWorkoutSession(
         activityName = "Spacer",
         healthData = healthData,
-        metValue = 3.5, // MET dla spaceru
         onEndWorkout = onEndWorkout
     )
 

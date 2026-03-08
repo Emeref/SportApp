@@ -194,7 +194,9 @@ class MainActivity : ComponentActivity() {
                                 healthData = healthData,
                                 onEndWorkout = { summary ->
                                     currentSummaryData = "Spacer" to summary
-                                    navController.navigate("workout_summary")
+                                    navController.navigate("workout_summary") {
+                                        popUpTo("main_menu") { inclusive = false }
+                                    }
                                 }
                             ) 
                         }
@@ -204,7 +206,9 @@ class MainActivity : ComponentActivity() {
                                 healthData = healthData,
                                 onEndWorkout = { summary ->
                                     currentSummaryData = "Wspinaczka" to summary
-                                    navController.navigate("workout_summary")
+                                    navController.navigate("workout_summary") {
+                                        popUpTo("main_menu") { inclusive = false }
+                                    }
                                 }
                             )
                         }
