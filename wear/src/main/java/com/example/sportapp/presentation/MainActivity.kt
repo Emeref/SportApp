@@ -70,7 +70,8 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToWeight = { navController.navigate("health_weight") },
                                 onNavigateToHeight = { navController.navigate("health_height") },
                                 onNavigateToRestingHR = { navController.navigate("health_resting_hr") },
-                                onNavigateToMaxHR = { navController.navigate("health_max_hr") }
+                                onNavigateToMaxHR = { navController.navigate("health_max_hr") },
+                                onNavigateToStepLength = { navController.navigate("health_step_length") }
                             ) 
                         }
                         composable("health_gender") {
@@ -97,6 +98,14 @@ class MainActivity : ComponentActivity() {
                                 value = healthData.height,
                                 range = 100..230,
                                 onValueChange = { healthData = healthData.copy(height = it) },
+                                onDone = { navController.popBackStack() }
+                            )
+                        }
+                        composable("health_step_length") {
+                            NumericInputScreen(
+                                value = healthData.stepLength,
+                                range = 30..130,
+                                onValueChange = { healthData = healthData.copy(stepLength = it) },
                                 onDone = { navController.popBackStack() }
                             )
                         }

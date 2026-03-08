@@ -27,7 +27,8 @@ fun HealthDataScreen(
     onNavigateToWeight: () -> Unit,
     onNavigateToHeight: () -> Unit,
     onNavigateToRestingHR: () -> Unit,
-    onNavigateToMaxHR: () -> Unit
+    onNavigateToMaxHR: () -> Unit,
+    onNavigateToStepLength: () -> Unit
 ) {
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
@@ -69,6 +70,15 @@ fun HealthDataScreen(
                 label = { Text("Wzrost") },
                 secondaryLabel = { Text("${data.height} cm") },
                 onClick = onNavigateToHeight,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
+            )
+        }
+
+        item {
+            Chip(
+                label = { Text("Długość kroku") },
+                secondaryLabel = { Text("${data.stepLength} cm") },
+                onClick = onNavigateToStepLength,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
             )
         }
