@@ -24,14 +24,25 @@ fun HomeScreen(
     onSettingsClick: () -> Unit
 ) {
     val stats by viewModel.stats.collectAsState()
+    val isSyncing by viewModel.isSyncing.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("SportApp") },
                 navigationIcon = {
-                    IconButton(onClick = { viewModel.triggerSync() }) {
-                        Icon(Icons.Default.Sync, contentDescription = "Synchronizuj")
+                    if (isSyncing) {
+                        Box(modifier = Modifier.padding(12.dp)) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.triggerSync() }) {
+                            Icon(Icons.Default.Sync, contentDescription = "Synchronizuj")
+                        }
                     }
                 },
                 actions = {
@@ -70,11 +81,19 @@ fun HomeScreen(
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            StatCard(
-                modifier = Modifier.fillMaxWidth(), 
-                label = "Przebyte km (GPS)", 
-                value = "${stats["distance"]} km"
-            )
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatCard(
+                    modifier = Modifier.weight(1f), 
+                    label = "Dystans (GPS)", 
+                    value = stats["distanceGps"].toString()
+                )
+                StatCard(
+                    modifier = Modifier.weight(1f), 
+                    label = "Dystans (kroki)", 
+                    value = stats["distanceSteps"].toString()
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

@@ -6,6 +6,7 @@ import com.example.sportapp.presentation.activities.ActivityItem
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.floor
 
 class WorkoutRepository(private val context: Context) {
 
@@ -28,15 +29,35 @@ class WorkoutRepository(private val context: Context) {
             }
         }
 
-        val totalCalories = recentSummaries.sumOf { (it["srednie_bpm"]?.toDoubleOrNull() ?: 0.0) * 0.1 } // Uproszczony wzór
-        val totalDistanceMeters = recentSummaries.sumOf { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 }
-        val totalDistanceKm = totalDistanceMeters / 1000.0
+        val totalCalories = recentSummaries.sumOf { it["kalorie"]?.toDoubleOrNull() ?: 0.0 }
+        val totalDistanceGpsMeters = recentSummaries.sumOf { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 }
+        val totalDistanceStepsMeters = recentSummaries.sumOf { it["kroki_dystans"]?.toDoubleOrNull() ?: 0.0 }
 
         return mapOf(
             "count" to recentSummaries.size,
-            "calories" to totalCalories.toInt(),
-            "distance" to String.format(Locale.US, "%.2f", totalDistanceKm)
+            "calories" to String.format(Locale.US, "%.1f", totalCalories),
+            "distanceGps" to formatDistance(totalDistanceGpsMeters),
+            "distanceSteps" to formatDistance(totalDistanceStepsMeters)
         )
+    }
+
+    private fun formatDistance(meters: Double): String {
+        return when {
+            meters < 1000 -> {
+                "${floor(meters).toInt()} m"
+            }
+            meters < 10000 -> {
+                val km = floor(meters / 10.0) / 100.0 // 2 decimal places, rounded down
+                String.format(Locale.US, "%.2f km", km)
+            }
+            meters < 100000 -> {
+                val km = floor(meters / 100.0) / 10.0 // 1 decimal place, rounded down
+                String.format(Locale.US, "%.1f km", km)
+            }
+            else -> {
+                "${floor(meters / 1000.0).toInt()} km"
+            }
+        }
     }
 
     fun getAllSummaries(): List<Map<String, String>> {
@@ -69,16 +90,16 @@ class WorkoutRepository(private val context: Context) {
         val summaries = getAllSummaries()
         return summaries.mapIndexed { index, map ->
             val distGpsM = map["gps_dystans"]?.toDoubleOrNull() ?: 0.0
-            val distStepsM = map["odl_kroki"]?.toDoubleOrNull() ?: 0.0
+            val distStepsM = map["kroki_dystans"]?.toDoubleOrNull() ?: 0.0
             
             ActivityItem(
                 id = index.toString(),
                 type = map["nazwa aktywnosci"] ?: "Nieznana",
                 date = map["data"] ?: "",
                 duration = map["dlugosc"] ?: "",
-                calories = "---",
-                distanceGps = String.format(Locale.US, "%.2f km", distGpsM / 1000.0),
-                distanceSteps = String.format(Locale.US, "%.2f km", distStepsM / 1000.0)
+                calories = map["kalorie"] ?: "0",
+                distanceGps = formatDistance(distGpsM),
+                distanceSteps = formatDistance(distStepsM)
             )
         }.reversed()
     }
