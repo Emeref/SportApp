@@ -39,14 +39,17 @@ fun rememberWorkoutSession(
     // Logowanie co sekundę
     LaunchedEffect(workoutTimerState.totalSeconds) {
         if (status == WorkoutStatus.ACTIVE) {
+            val calorieMin = CalorieCalculator.calculateHRR(heartRate, healthData)
             logger.logData(
                 lat = distanceState.currentLat,
                 lon = distanceState.currentLon,
                 bpm = heartRate,
                 kroki = stepCount,
                 gpsDystans = distanceState.totalDistance,
-                predkoscGps = speedKmH, // Zaktualizowana nazwa parametru
-                wysokosc = altitude
+                predkoscGps = speedKmH,
+                wysokosc = altitude,
+                calorieMin = calorieMin,
+                calorieSum = totalCalories
             )
         }
     }
@@ -71,7 +74,7 @@ fun rememberWorkoutSession(
         val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
         val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
 
-        // Przygotowanie danych do podsumowania
+        // Przygotowanie danych do podsumowania UI
         val summary = mutableListOf<Pair<String, String>>()
         summary.add("Czas trwania" to workoutTimerState.formattedTime)
         
@@ -88,7 +91,7 @@ fun rememberWorkoutSession(
             summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", totalCalories))
         }
 
-        // Zapis do pliku zbiorczego
+        // Zapis do pliku zbiorczego (CSV)
         SummaryManager.saveSummary(
             context = context,
             activityName = activityName,
@@ -101,7 +104,9 @@ fun rememberWorkoutSession(
             avgSpeedGps = if (avgSpeedGps > 0) avgSpeedGps else null,
             totalAscent = totalAscent,
             totalDescent = stats["totalDescent"] as Double,
-            avgBpm = avgBpm
+            avgBpm = avgBpm,
+            totalCalories = totalCalories,
+            durationSeconds = workoutTimerState.totalSeconds
         )
 
         onEndWorkout(summary)
