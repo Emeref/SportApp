@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -7,13 +8,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.R
+import com.example.sportapp.presentation.settings.ReportingPeriod
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,14 +27,39 @@ fun HomeScreen(
     onSettingsClick: () -> Unit
 ) {
     val stats by viewModel.stats.collectAsState()
+    val isSyncing by viewModel.isSyncing.collectAsState()
+    val settings by viewModel.settings.collectAsState()
+
+    val activeWidgets = settings.widgets.filter { it.isEnabled }
+
+    val title = if (activeWidgets.isEmpty()) {
+        "Nie masz wybranego żadnego widgeta"
+    } else {
+        when (settings.period) {
+            ReportingPeriod.TODAY -> "Wyniki z dzisiaj:"
+            ReportingPeriod.WEEK -> "Wyniki z tego tygodnia:"
+            ReportingPeriod.MONTH -> {
+                val monthName = Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.LONG, Locale("pl"))
+                "Wyniki z $monthName:"
+            }
+            ReportingPeriod.YEAR -> "Wyniki z tego roku:"
+            ReportingPeriod.CUSTOM -> if (settings.customDays == 1) "Wyniki z ostatniego dnia:" else "Wyniki z ostatnich ${settings.customDays} dni:"
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("SportApp") },
                 navigationIcon = {
-                    IconButton(onClick = { viewModel.triggerSync() }) {
-                        Icon(Icons.Default.Sync, contentDescription = "Synchronizuj")
+                    if (isSyncing) {
+                        Box(modifier = Modifier.padding(12.dp)) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.triggerSync() }) {
+                            Icon(Icons.Default.Sync, contentDescription = "Synchronizuj")
+                        }
                     }
                 },
                 actions = {
@@ -51,49 +79,64 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Wyniki ostatni tydzień:",
+                text = title,
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             )
 
-            // Widgety statystyk
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatCard(
-                    modifier = Modifier.weight(1f), 
-                    label = "Liczba aktywności", 
-                    value = stats["count"].toString()
-                )
-                StatCard(
-                    modifier = Modifier.weight(1f), 
-                    label = "Spalone kalorie", 
-                    value = "${stats["calories"]} kcal"
-                )
+            // Dynamiczne Widgety
+            activeWidgets.chunked(2).forEachIndexed { _, rowItems ->
+                if (rowItems.size == 2) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        WidgetFactory(rowItems[0].id, stats, Modifier.weight(1f))
+                        WidgetFactory(rowItems[1].id, stats, Modifier.weight(1f))
+                    }
+                } else {
+                    WidgetFactory(rowItems[0].id, stats, Modifier.fillMaxWidth())
+                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            StatCard(
-                modifier = Modifier.fillMaxWidth(), 
-                label = "Przebyte km (GPS)", 
-                value = "${stats["distance"]} km"
-            )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onNavigateToStats,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Button(onClick = onNavigateToStats, modifier = Modifier.fillMaxWidth()) {
                 Text("Statystyki ogólne")
             }
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = onNavigateToActivityList,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Button(onClick = onNavigateToActivityList, modifier = Modifier.fillMaxWidth()) {
                 Text("Szczegóły konkretnej aktywności")
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+            
+            Image(
+                painter = painterResource(id = R.drawable.logo_emeref),
+                contentDescription = "Logo Emeref",
+                modifier = Modifier.height(40.dp).padding(vertical = 8.dp)
+            )
         }
+    }
+}
+
+@Composable
+fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
+    when (id) {
+        "count" -> StatCard(modifier, "Liczba aktywności", stats["count"]?.toString() ?: "0")
+        "calories" -> StatCard(modifier, "Spalone kalorie", "${stats["calories"] ?: 0} kcal")
+        "distanceGps" -> StatCard(modifier, "Dystans (GPS)", formatDistanceUI(stats["distanceGpsM"] as? Double ?: 0.0))
+        "distanceSteps" -> StatCard(modifier, "Dystans (kroki)", formatDistanceUI(stats["distanceStepsM"] as? Double ?: 0.0))
+        "ascent" -> StatCard(modifier, "Przewyższenia +", "${stats["ascent"] ?: 0} m")
+        "descent" -> StatCard(modifier, "Przewyższenia -", "${stats["descent"] ?: 0} m")
+        "steps" -> StatCard(modifier, "Wszystkie kroki", stats["steps"]?.toString() ?: "0")
+    }
+}
+
+private fun formatDistanceUI(meters: Double): String {
+    return when {
+        meters < 1000 -> "${meters.toInt()} m"
+        meters < 10000 -> String.format(Locale.US, "%.2f km", Math.floor(meters / 10.0) / 100.0)
+        meters < 100000 -> String.format(Locale.US, "%.1f km", Math.floor(meters / 100.0) / 10.0)
+        else -> "${Math.floor(meters / 1000.0).toInt()} km"
     }
 }
 
@@ -103,10 +146,7 @@ fun StatCard(modifier: Modifier = Modifier, label: String, value: String) {
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(text = label, style = MaterialTheme.typography.labelMedium)
             Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }

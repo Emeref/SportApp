@@ -27,11 +27,14 @@
 - [ ] **Analiza danych (Mobile)**:
     - [ ] Szczegóły aktywności (Wykresy, Mapa trasy).
     - [ ] Filtrowanie statystyk ogólnych.
+- [x] **Ustawienia i Personalizacja (Mobile)**:
+    - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
+    - [x] Wybór okresu raportowania (dziś, tydzień, miesiąc, rok, inne).
 
 ## 4. Chmura i Bezpieczeństwo
 - [ ] **Integracja z Google**:
     - [ ] Dodanie logowania przez konto Google.
-    - [ ] Backup danych (Google Drive / Firebase).
+    - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań na koncie użytkownika, backup i wczytywanie danych.
 
 ## 5. Jakość i Testy
 - [ ] **Unit testy**:
@@ -42,3 +45,4 @@
 - [x] System nawigacji i zarządzanie sesją.
 - [x] Synchronizacja plików CSV między zegarkiem a telefonem.
 - [x] Material 3 UI na telefonie.
+- [x] Dynamiczne formatowanie dystansu na ekranie głównym (m/km).
