@@ -8,6 +8,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class WorkoutLogger(
@@ -17,12 +18,15 @@ class WorkoutLogger(
 ) {
     private var file: File? = null
     private var startTime: Long = 0
-    private var lastHeight: Double? = null
+    
+    // Logika przewyższeń
+    private var lastAscentRef: Double? = null
+    private var lastDescentRef: Double? = null
     private var totalAscent: Double = 0.0
     private var totalDescent: Double = 0.0
+    private val ELEVATION_THRESHOLD = 0.5 // Próg zmiany wysokości w metrach
+
     private val heartRates = mutableListOf<Float>()
-    
-    // Bufor w RAMie
     private val logBuffer = mutableListOf<String>()
     private var lastFlushTime: Long = 0
 
@@ -34,15 +38,12 @@ class WorkoutLogger(
         val fileName = "${activityName}_${dateStr}_${genderStr}_${healthData.age}_${healthData.height}_${healthData.weight}_${healthData.stepLength}_${healthData.restingHR}_${healthData.maxHR}.csv"
         
         val activitiesDir = File(context.filesDir, "activities")
-        if (!activitiesDir.exists()) {
-            activitiesDir.mkdirs()
-        }
+        if (!activitiesDir.exists()) activitiesDir.mkdirs()
         
         file = File(activitiesDir, fileName)
         startTime = System.currentTimeMillis()
         lastFlushTime = startTime
         
-        // Nagłówek zapisujemy od razu
         writeLine("czas;lat;lon;bpm;srednie_bpm;kroki;kroki_min;kroki_dystans;gps_dystans;predkosc_gps;predkosc_kroki;wysokosc;przewyzszenia_gora;przewyzszenia_dol;kalorie_min;kalorie_suma")
     }
 
@@ -72,36 +73,33 @@ class WorkoutLogger(
     ) {
         val currentTime = System.currentTimeMillis()
         val durationMillis = currentTime - startTime
-        val seconds = (durationMillis / 1000) % 60
-        val minutes = (durationMillis / (1000 * 60)) % 60
-        val hours = (durationMillis / (1000 * 60 * 60))
-        val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
+        val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", (durationMillis / 3600000), (durationMillis / 60000) % 60, (durationMillis / 1000) % 60)
 
         if (bpm != null && bpm > 0) heartRates.add(bpm)
         val avgBpm = if (heartRates.isNotEmpty()) heartRates.average() else null
-
-        val stepsMin = if (kroki != null && kroki > 0 && durationMillis > 0) {
-            (kroki.toDouble() / (durationMillis / 60000.0))
-        } else null
-
-        val predkoscKroki = if (stepsMin != null && stepsMin > 0) {
-            (stepsMin * healthData.stepLength * 60.0) / 100000.0
-        } else null
-
-        val odlKrokiActual = if (kroki != null && kroki > 0) {
-            (kroki * healthData.stepLength / 100.0)
-        } else null
-        val odlKrokiRounded = odlKrokiActual?.roundToInt()
-
+        val stepsMin = if (kroki != null && kroki > 0 && durationMillis > 0) (kroki.toDouble() / (durationMillis / 60000.0)) else null
+        val predkoscKroki = if (stepsMin != null && stepsMin > 0) (stepsMin * healthData.stepLength * 60.0) / 100000.0 else null
+        val odlKrokiRounded = (kroki?.times(healthData.stepLength / 100.0))?.roundToInt()
         val gpsDystansRounded = gpsDystans?.roundToInt()
 
+        // Nowa logika przewyższeń
         if (wysokosc != null) {
-            lastHeight?.let { last ->
-                val diff = wysokosc - last
-                if (diff > 0) totalAscent += diff
-                else if (diff < 0) totalDescent += Math.abs(diff)
+            if (lastAscentRef == null) lastAscentRef = wysokosc
+            if (lastDescentRef == null) lastDescentRef = wysokosc
+
+            // Sprawdzamy wzrost wysokości
+            if (wysokosc - lastAscentRef!! >= ELEVATION_THRESHOLD) {
+                totalAscent += wysokosc - lastAscentRef!!
+                lastAscentRef = wysokosc
+                lastDescentRef = wysokosc // Resetujemy punkt odniesienia dla spadku
             }
-            lastHeight = wysokosc
+
+            // Sprawdzamy spadek wysokości
+            if (lastDescentRef!! - wysokosc >= ELEVATION_THRESHOLD) {
+                totalDescent += lastDescentRef!! - wysokosc
+                lastDescentRef = wysokosc
+                lastAscentRef = wysokosc // Resetujemy punkt odniesienia dla wzrostu
+            }
         }
 
         val line = StringBuilder().apply {
@@ -119,41 +117,33 @@ class WorkoutLogger(
             append(formatVal(wysokosc, 1)).append(";")
             append(formatVal(totalAscent, 1)).append(";")
             append(formatVal(totalDescent, 1)).append(";")
-            append(formatVal(calorieMin, 1)).append(";") // nowa kolumna
-            append(formatVal(calorieSum, 1)) // nowa kolumna
+            append(formatVal(calorieMin, 1)).append(";")
+            append(formatVal(calorieSum, 1))
         }.toString()
 
         logBuffer.add(line)
 
-        if (forceFlush || currentTime - lastFlushTime >= 30000) {
-            flush()
-        }
+        if (forceFlush || currentTime - lastFlushTime >= 30000) flush()
     }
 
     fun flush() {
         if (logBuffer.isEmpty()) return
-        
         try {
-            val fos = FileOutputStream(file, true)
-            logBuffer.forEach { line ->
-                fos.write((line + "\n").toByteArray())
+            FileOutputStream(file, true).use { fos ->
+                logBuffer.forEach { line -> fos.write((line + "\n").toByteArray()) }
             }
-            fos.close()
             logBuffer.clear()
             lastFlushTime = System.currentTimeMillis()
-            Log.d("WorkoutLogger", "Buffer flushed to file")
         } catch (e: Exception) {
-            Log.e("WorkoutLogger", "Error flushing buffer to file", e)
+            Log.e("WorkoutLogger", "Error flushing buffer", e)
         }
     }
 
     private fun writeLine(line: String) {
         try {
-            val fos = FileOutputStream(file, true)
-            fos.write((line + "\n").toByteArray())
-            fos.close()
+            FileOutputStream(file, true).use { it.write((line + "\n").toByteArray()) }
         } catch (e: Exception) {
-            Log.e("WorkoutLogger", "Error writing line to file", e)
+            Log.e("WorkoutLogger", "Error writing line", e)
         }
     }
     
