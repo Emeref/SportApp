@@ -13,64 +13,69 @@ class WorkoutRepository(private val context: Context) {
 
     private val activitiesDir = File(context.filesDir, "activities")
 
+    fun getUniqueActivityTypes(): List<String> {
+        return getAllSummaries().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
+    }
+
     fun getStatsForPeriod(period: ReportingPeriod, customDays: Int): Map<String, Any> {
-        val summaries = getAllSummaries()
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val now = Calendar.getInstance()
-        
-        val filtered = summaries.filter { 
-            try {
-                val date = sdf.parse(it["data"] ?: "")
-                if (date == null) false else {
-                    val activityCal = Calendar.getInstance().apply { time = date }
-                    when (period) {
-                        ReportingPeriod.TODAY -> {
-                            activityCal.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-                            activityCal.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
-                        }
-                        ReportingPeriod.WEEK -> {
-                            // Tydzień od ostatniego poniedziałku
-                            val monday = Calendar.getInstance().apply {
-                                firstDayOfWeek = Calendar.MONDAY
-                                set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-                                set(Calendar.HOUR_OF_DAY, 0)
-                                set(Calendar.MINUTE, 0)
-                                set(Calendar.SECOND, 0)
-                            }
-                            activityCal.after(monday)
-                        }
-                        ReportingPeriod.MONTH -> {
-                            activityCal.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-                            activityCal.get(Calendar.MONTH) == now.get(Calendar.MONTH)
-                        }
-                        ReportingPeriod.YEAR -> {
-                            activityCal.get(Calendar.YEAR) == now.get(Calendar.YEAR)
-                        }
-                        ReportingPeriod.CUSTOM -> {
-                            val limit = Calendar.getInstance().apply {
-                                add(Calendar.DAY_OF_YEAR, -customDays)
-                            }
-                            activityCal.after(limit)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                false
+        val startDate: Date
+        val endDate: Date
+
+        when (period) {
+            ReportingPeriod.TODAY -> {
+                startDate = now.apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
+                endDate = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1); set(Calendar.HOUR_OF_DAY, 0) }.time
             }
+            ReportingPeriod.WEEK -> {
+                startDate = now.apply { firstDayOfWeek = Calendar.MONDAY; set(Calendar.DAY_OF_WEEK, Calendar.MONDAY); set(Calendar.HOUR_OF_DAY, 0) }.time
+                endDate = Calendar.getInstance().apply { add(Calendar.WEEK_OF_YEAR, 1) }.time
+            }
+            ReportingPeriod.MONTH -> {
+                startDate = now.apply { set(Calendar.DAY_OF_MONTH, 1); set(Calendar.HOUR_OF_DAY, 0) }.time
+                endDate = Calendar.getInstance().apply { add(Calendar.MONTH, 1); set(Calendar.DAY_OF_MONTH, 1) }.time
+            }
+            ReportingPeriod.YEAR -> {
+                startDate = now.apply { set(Calendar.DAY_OF_YEAR, 1); set(Calendar.HOUR_OF_DAY, 0) }.time
+                endDate = Calendar.getInstance().apply { add(Calendar.YEAR, 1) }.time
+            }
+            ReportingPeriod.CUSTOM -> {
+                endDate = Calendar.getInstance().time
+                startDate = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -customDays) }.time
+            }
+        }
+        return getFilteredStats(startDate = startDate, endDate = endDate)
+    }
+
+    fun getFilteredStats(
+        activityType: String? = null,
+        startDate: Date? = null,
+        endDate: Date? = null
+    ): Map<String, Any> {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+        
+        val filtered = getAllSummaries().filter { summary ->
+            val typeMatch = activityType == null || summary["nazwa aktywnosci"] == activityType
+            val dateMatch = try {
+                val date = sdf.parse(summary["data"] ?: "")
+                (startDate == null || date?.after(startDate) == true) && (endDate == null || date?.before(endDate) == true)
+            } catch (e: Exception) { false }
+
+            typeMatch && dateMatch
         }
 
         return mapOf(
             "count" to filtered.size,
-            "calories" to String.format(Locale.US, "%.1f", filtered.sumOf { it["kalorie"]?.toDoubleOrNull() ?: 0.0 }),
+            "calories" to filtered.sumOf { it["kalorie"]?.toDoubleOrNull() ?: 0.0 },
             "distanceGpsM" to filtered.sumOf { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 },
             "distanceStepsM" to filtered.sumOf { it["kroki_dystans"]?.toDoubleOrNull() ?: 0.0 },
-            "ascent" to String.format(Locale.US, "%.1f", filtered.sumOf { it["przewyzszenia_gora"]?.toDoubleOrNull() ?: 0.0 }),
-            "descent" to String.format(Locale.US, "%.1f", filtered.sumOf { it["przewyzszenia_dol"]?.toDoubleOrNull() ?: 0.0 }),
-            "steps" to filtered.sumOf { it["kroki"]?.toLongOrNull() ?: 0L }
+            "ascent" to filtered.sumOf { it["przewyzszenia_gora"]?.toDoubleOrNull() ?: 0.0 },
+            "descent" to filtered.sumOf { it["przewyzszenia_dol"]?.toDoubleOrNull() ?: 0.0 },
+            "steps" to filtered.sumOf { it["kroki"]?.toLongOrNull() ?: 0L },
+            "raw_data" to filtered // Dodajemy surowe dane do wykresów
         )
     }
 
-    // Pozostawiam pomocniczą metodę do formatowania dla UI
     fun formatDistance(meters: Double): String {
         return when {
             meters < 1000 -> "${floor(meters).toInt()} m"
@@ -103,7 +108,7 @@ class WorkoutRepository(private val context: Context) {
         } catch (e: Exception) {
             Log.e("WorkoutRepository", "Error reading summary file", e)
         }
-        return results
+        return results.sortedBy { it["data"] } // Sortujemy od najstarszych do najnowszych
     }
 
     fun getActivityItems(): List<ActivityItem> {
