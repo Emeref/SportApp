@@ -6,6 +6,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 object SummaryManager {
     private const val SUMMARY_FILE_NAME = "Podsumowanie_cwiczen.csv"
@@ -34,9 +35,10 @@ object SummaryManager {
         avgSpeedGps: Double?,
         totalAscent: Double?,
         totalDescent: Double?,
-        avgBpm: Double?
+        avgBpm: Double?,
+        totalCalories: Double?,
+        durationSeconds: Long
     ) {
-        // Folder 'activities' w katalogu plików aplikacji
         val activitiesDir = File(context.filesDir, "activities")
         if (!activitiesDir.exists()) {
             activitiesDir.mkdirs()
@@ -48,24 +50,34 @@ object SummaryManager {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val dateStr = sdf.format(startTime)
 
+        val distanceStepsRounded = distanceSteps?.roundToInt()
+        val distanceGpsRounded = distanceGps?.roundToInt()
+
+        // Wyliczenie średnich kalorii na minutę
+        val calorieMinAvg = if (totalCalories != null && durationSeconds > 0) {
+            (totalCalories / (durationSeconds / 60.0))
+        } else null
+
         val line = StringBuilder().apply {
             append(dateStr).append(";")
             append(activityName).append(";")
             append(durationFormatted).append(";")
             append(formatVal(steps)).append(";")
-            append(formatVal(distanceSteps, 2)).append(";")
-            append(formatVal(distanceGps, 2)).append(";")
+            append(formatVal(distanceStepsRounded)).append(";")
+            append(formatVal(distanceGpsRounded)).append(";")
             append(formatVal(avgSpeedSteps, 2)).append(";")
             append(formatVal(avgSpeedGps, 2)).append(";")
             append(formatVal(totalAscent, 1)).append(";")
             append(formatVal(totalDescent, 1)).append(";")
-            append(formatVal(avgBpm, 1))
+            append(formatVal(avgBpm, 1)).append(";")
+            append(formatVal(totalCalories, 1)).append(";") // nowa kolumna: kalorie
+            append(formatVal(calorieMinAvg, 1)) // nowa kolumna: kalorie_min
         }.toString()
 
         try {
             val fos = FileOutputStream(file, true)
             if (isNewFile) {
-                val header = "data;nazwa aktywnosci;dlugosc;kroki;odl_kroki;gps_dystans;srednia_predkosc_kroki;srednia_predkosc_gps;przewyzszenia_gora;przewyzszenia_dol;srednie_bpm\n"
+                val header = "data;nazwa aktywnosci;dlugosc;kroki;kroki_dystans;gps_dystans;srednia_predkosc_kroki;srednia_predkosc_gps;przewyzszenia_gora;przewyzszenia_dol;srednie_bpm;kalorie;kalorie_min\n"
                 fos.write(header.toByteArray())
             }
             fos.write((line + "\n").toByteArray())

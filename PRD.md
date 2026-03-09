@@ -17,5 +17,10 @@ Aplikacja ma być minimalistycznym asystentem sportowym, który gromadzi dane z 
 - System profili zdrowotnych (Płeć, Wiek, Masa, Wzrost, Tętno spoczynkowe/maksymalne).
 - Nawigacja kółkiem fizycznym (Rotary Input) i gestami.
 
+## Standardy Danych i Formatowania
+- **Odległość**: Wszystkie odległości w plikach aktywności są zapisywane w **metrach**, zaokrąglone do pełnych wartości (brak centymetrów).
+- **Czas**: Wszystkie czasy aktywności są zapisywane z dokładnością do **sekund**.
+- **Kalorie**: Wszystkie wartości kcal są zapisywane z dokładnością do **1 miejsca po przecinku**.
+
 ## Sukces Projektu
 Użytkownik może odbyć 30-minutowy spacer bez wyciągania telefonu z kieszeni, mając pełny wgląd w trasę i wartości wszystkich czujników w trakcie spaceru, a po powrocie dane automatycznie czekają na niego w telefonie gotowe do analizy.

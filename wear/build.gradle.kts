@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.horologist.compose.tools)
     implementation(libs.horologist.tiles)
     implementation(libs.androidx.watchface.complications.data.source.ktx)
+    implementation(libs.kotlinx.coroutines.play.services)
     
     // Maps & Location
     implementation(libs.play.services.maps)

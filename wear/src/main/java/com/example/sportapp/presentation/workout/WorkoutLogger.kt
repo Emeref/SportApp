@@ -8,6 +8,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 class WorkoutLogger(
     private val context: Context,
@@ -42,7 +43,7 @@ class WorkoutLogger(
         lastFlushTime = startTime
         
         // Nagłówek zapisujemy od razu
-        writeLine("czas;lat;lon;bpm;srednie_bpm;kroki;kroki_min;odl_kroki;gps_dystans;predkosc;wysokosc;przewyzszenia_gora;przewyzszenia_dol")
+        writeLine("czas;lat;lon;bpm;srednie_bpm;kroki;kroki_min;kroki_dystans;gps_dystans;predkosc_gps;predkosc_kroki;wysokosc;przewyzszenia_gora;przewyzszenia_dol;kalorie_min;kalorie_suma")
     }
 
     private fun formatVal(value: Any?, decimalPlaces: Int = -1): String {
@@ -63,8 +64,10 @@ class WorkoutLogger(
         bpm: Float? = null,
         kroki: Int? = null,
         gpsDystans: Float? = null,
-        predkosc: Float? = null,
+        predkoscGps: Float? = null,
         wysokosc: Double? = null,
+        calorieMin: Double? = null,
+        calorieSum: Double? = null,
         forceFlush: Boolean = false
     ) {
         val currentTime = System.currentTimeMillis()
@@ -81,9 +84,16 @@ class WorkoutLogger(
             (kroki.toDouble() / (durationMillis / 60000.0))
         } else null
 
-        val odlKroki = if (kroki != null && kroki > 0) {
+        val predkoscKroki = if (stepsMin != null && stepsMin > 0) {
+            (stepsMin * healthData.stepLength * 60.0) / 100000.0
+        } else null
+
+        val odlKrokiActual = if (kroki != null && kroki > 0) {
             (kroki * healthData.stepLength / 100.0)
         } else null
+        val odlKrokiRounded = odlKrokiActual?.roundToInt()
+
+        val gpsDystansRounded = gpsDystans?.roundToInt()
 
         if (wysokosc != null) {
             lastHeight?.let { last ->
@@ -102,18 +112,19 @@ class WorkoutLogger(
             append(formatVal(avgBpm, 1)).append(";")
             append(formatVal(kroki)).append(";")
             append(formatVal(stepsMin, 1)).append(";")
-            append(formatVal(odlKroki, 2)).append(";")
-            append(formatVal(gpsDystans, 2)).append(";")
-            append(formatVal(predkosc, 1)).append(";")
+            append(formatVal(odlKrokiRounded)).append(";")
+            append(formatVal(gpsDystansRounded)).append(";")
+            append(formatVal(predkoscGps, 1)).append(";")
+            append(formatVal(predkoscKroki, 1)).append(";")
             append(formatVal(wysokosc, 1)).append(";")
             append(formatVal(totalAscent, 1)).append(";")
-            append(formatVal(totalDescent, 1))
+            append(formatVal(totalDescent, 1)).append(";")
+            append(formatVal(calorieMin, 1)).append(";") // nowa kolumna
+            append(formatVal(calorieSum, 1)) // nowa kolumna
         }.toString()
 
-        // Dodaj do bufora zamiast pisać do pliku
         logBuffer.add(line)
 
-        // Zapisuj co 30 sekund lub gdy wymuszono (pauza/koniec)
         if (forceFlush || currentTime - lastFlushTime >= 30000) {
             flush()
         }
@@ -147,7 +158,7 @@ class WorkoutLogger(
     }
     
     fun getFinalStats(): Map<String, Any?> {
-        flush() // Upewnij się, że wszystko jest zapisane przed końcem
+        flush()
         return mapOf(
             "totalAscent" to totalAscent,
             "totalDescent" to totalDescent,
