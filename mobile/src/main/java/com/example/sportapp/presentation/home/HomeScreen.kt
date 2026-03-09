@@ -1,10 +1,12 @@
 package com.example.sportapp.presentation.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.example.sportapp.R
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.util.*
@@ -29,6 +32,7 @@ fun HomeScreen(
     val stats by viewModel.stats.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    var showSecretPopup by remember { mutableStateOf(false) }
 
     val activeWidgets = settings.widgets.filter { it.isEnabled }
 
@@ -44,6 +48,21 @@ fun HomeScreen(
             }
             ReportingPeriod.YEAR -> "Wyniki z tego roku:"
             ReportingPeriod.CUSTOM -> if (settings.customDays == 1) "Wyniki z ostatniego dnia:" else "Wyniki z ostatnich ${settings.customDays} dni:"
+        }
+    }
+
+    if (showSecretPopup) {
+        Dialog(onDismissRequest = { showSecretPopup = false }) {
+            Card {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        IconButton(onClick = { showSecretPopup = false }) {
+                            Icon(Icons.Default.Close, contentDescription = "Zamknij")
+                        }
+                    }
+                    Text("Super, że klikasz, ale tu nic nie ma", style = MaterialTheme.typography.bodyLarge)
+                }
+            }
         }
     }
 
@@ -112,7 +131,10 @@ fun HomeScreen(
             Image(
                 painter = painterResource(id = R.drawable.logo_emeref),
                 contentDescription = "Logo Emeref",
-                modifier = Modifier.height(40.dp).padding(vertical = 8.dp)
+                modifier = Modifier
+                    .height(40.dp)
+                    .padding(vertical = 8.dp)
+                    .clickable { showSecretPopup = true }
             )
         }
     }
