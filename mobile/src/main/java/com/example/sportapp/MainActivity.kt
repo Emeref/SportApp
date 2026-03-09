@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -23,6 +24,9 @@ import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.SettingsScreen
 import com.example.sportapp.presentation.settings.WidgetSelectionScreen
 import com.example.sportapp.presentation.stats.OverallStatsScreen
+import com.example.sportapp.presentation.stats.OverallStatsViewModel
+import com.example.sportapp.presentation.stats.OverallStatsViewModelFactory
+import com.example.sportapp.presentation.stats.OverallStatsWidgetScreen
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -39,6 +43,11 @@ class MainActivity : ComponentActivity() {
                     val settingsState by homeViewModel.settings.collectAsState()
                     val scope = rememberCoroutineScope()
                     
+                    // Współdzielony ViewModel dla statystyk
+                    val statsViewModel: OverallStatsViewModel = viewModel(
+                        factory = OverallStatsViewModelFactory(applicationContext)
+                    )
+
                     NavHost(
                         navController = navController,
                         startDestination = Screen.Home.route
@@ -78,7 +87,20 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Screen.OverallStats.route) {
                             OverallStatsScreen(
-                                onNavigateBack = { navController.popBackStack() }
+                                viewModel = statsViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToOptions = { navController.navigate("stats_widget_selection") }
+                            )
+                        }
+                        composable("stats_widget_selection") {
+                            val statsWidgets by statsViewModel.widgets.collectAsState()
+                            OverallStatsWidgetScreen(
+                                widgets = statsWidgets,
+                                onSave = { updatedWidgets ->
+                                    statsViewModel.saveWidgets(updatedWidgets)
+                                    navController.popBackStack()
+                                },
+                                onCancel = { navController.popBackStack() }
                             )
                         }
                         composable(Screen.ActivityList.route) {
