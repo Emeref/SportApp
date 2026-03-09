@@ -17,7 +17,6 @@ class WorkoutRepository(private val context: Context) {
         return getAllSummaries().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
     }
 
-    // Ta metoda jest teraz używana przez HomeViewModel
     fun getStatsForPeriod(period: ReportingPeriod, customDays: Int): Map<String, Any> {
         val now = Calendar.getInstance()
         val startDate: Date
@@ -67,12 +66,13 @@ class WorkoutRepository(private val context: Context) {
 
         return mapOf(
             "count" to filtered.size,
-            "calories" to String.format(Locale.US, "%.1f", filtered.sumOf { it["kalorie"]?.toDoubleOrNull() ?: 0.0 }),
+            "calories" to filtered.sumOf { it["kalorie"]?.toDoubleOrNull() ?: 0.0 },
             "distanceGpsM" to filtered.sumOf { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 },
             "distanceStepsM" to filtered.sumOf { it["kroki_dystans"]?.toDoubleOrNull() ?: 0.0 },
-            "ascent" to String.format(Locale.US, "%.1f", filtered.sumOf { it["przewyzszenia_gora"]?.toDoubleOrNull() ?: 0.0 }),
-            "descent" to String.format(Locale.US, "%.1f", filtered.sumOf { it["przewyzszenia_dol"]?.toDoubleOrNull() ?: 0.0 }),
-            "steps" to filtered.sumOf { it["kroki"]?.toLongOrNull() ?: 0L }
+            "ascent" to filtered.sumOf { it["przewyzszenia_gora"]?.toDoubleOrNull() ?: 0.0 },
+            "descent" to filtered.sumOf { it["przewyzszenia_dol"]?.toDoubleOrNull() ?: 0.0 },
+            "steps" to filtered.sumOf { it["kroki"]?.toLongOrNull() ?: 0L },
+            "raw_data" to filtered // Dodajemy surowe dane do wykresów
         )
     }
 
@@ -108,7 +108,7 @@ class WorkoutRepository(private val context: Context) {
         } catch (e: Exception) {
             Log.e("WorkoutRepository", "Error reading summary file", e)
         }
-        return results
+        return results.sortedBy { it["data"] } // Sortujemy od najstarszych do najnowszych
     }
 
     fun getActivityItems(): List<ActivityItem> {

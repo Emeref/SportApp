@@ -58,6 +58,10 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.gson)
 
+    // Vico Charts
+    implementation(libs.vico.compose)
+    implementation(libs.vico.core)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
