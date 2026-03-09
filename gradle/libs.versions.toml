@@ -73,7 +73,8 @@ play-services-maps = { group = "com.google.android.gms", name = "play-services-m
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
-vico-compose = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
+vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 vico-core = { group = "com.patrykandpatrick.vico", name = "core", version.ref = "vico" }
 
 [plugins]
