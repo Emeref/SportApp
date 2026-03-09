@@ -147,10 +147,19 @@ fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
         "calories" -> StatCard(modifier, "Spalone kalorie", "${stats["calories"] ?: 0} kcal")
         "distanceGps" -> StatCard(modifier, "Dystans (GPS)", formatDistanceUI(stats["distanceGpsM"] as? Double ?: 0.0))
         "distanceSteps" -> StatCard(modifier, "Dystans (kroki)", formatDistanceUI(stats["distanceStepsM"] as? Double ?: 0.0))
-        "ascent" -> StatCard(modifier, "Przewyższenia +", "${stats["ascent"] ?: 0} m")
-        "descent" -> StatCard(modifier, "Przewyższenia -", "${stats["descent"] ?: 0} m")
+        "ascent" -> StatCard(modifier, "Przewyższenia do góry", formatElevationUI(stats["ascent"]))
+        "descent" -> StatCard(modifier, "Przewyższenia do dołu", formatElevationUI(stats["descent"]))
         "steps" -> StatCard(modifier, "Wszystkie kroki", stats["steps"]?.toString() ?: "0")
     }
+}
+
+private fun formatElevationUI(value: Any?): String {
+    val num = when (value) {
+        is Number -> value.toDouble()
+        is String -> value.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+    return String.format(Locale.US, "%.1f m", num)
 }
 
 private fun formatDistanceUI(meters: Double): String {

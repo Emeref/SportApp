@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation.stats
 
 import android.app.DatePickerDialog
+import android.text.Layout
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,10 +26,18 @@ import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.line.lineChart
+import com.patrykandpatrick.vico.compose.component.lineComponent
+import com.patrykandpatrick.vico.compose.component.shapeComponent
+import com.patrykandpatrick.vico.compose.component.textComponent
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
 import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
+import com.patrykandpatrick.vico.core.component.marker.MarkerComponent
+import com.patrykandpatrick.vico.core.component.shape.Shapes
+import com.patrykandpatrick.vico.core.component.shape.cornered.Corner
+import com.patrykandpatrick.vico.core.component.shape.cornered.CorneredShape
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
+import com.patrykandpatrick.vico.core.marker.Marker
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.ceil
@@ -205,6 +214,8 @@ fun ChartSection(title: String, producer: ChartEntryModelProducer) {
         }
     }
 
+    val marker = rememberMarkerCustom()
+
     Column {
         Text(text = title, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
         Spacer(modifier = Modifier.height(8.dp))
@@ -213,6 +224,7 @@ fun ChartSection(title: String, producer: ChartEntryModelProducer) {
                 axisValuesOverrider = axisValuesOverrider
             ),
             chartModelProducer = producer,
+            marker = marker,
             startAxis = rememberStartAxis(
                 label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
                 valueFormatter = { value, _ -> value.toInt().toString() },
@@ -223,6 +235,30 @@ fun ChartSection(title: String, producer: ChartEntryModelProducer) {
                 valueFormatter = { value, _ -> (value.toInt() + 1).toString() }
             ),
             modifier = Modifier.fillMaxWidth().height(200.dp)
+        )
+    }
+}
+
+@Composable
+fun rememberMarkerCustom(): Marker {
+    val labelBackgroundColor = MaterialTheme.colorScheme.surface
+    val labelTextColor = MaterialTheme.colorScheme.onSurface
+    val labelBackgroundShape = CorneredShape(Corner.FullyRounded)
+    val label = textComponent(
+        color = labelTextColor,
+        background = shapeComponent(shape = labelBackgroundShape, color = labelBackgroundColor),
+        textAlignment = Layout.Alignment.ALIGN_CENTER
+    )
+    val indicator = shapeComponent(shape = Shapes.pillShape, color = MaterialTheme.colorScheme.primary)
+    val guideline = lineComponent(
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+        thickness = 2.dp
+    )
+    return remember(label, indicator, guideline) {
+        MarkerComponent(
+            label = label,
+            indicator = indicator,
+            guideline = guideline,
         )
     }
 }
