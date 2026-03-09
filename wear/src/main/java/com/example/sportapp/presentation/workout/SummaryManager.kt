@@ -6,6 +6,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 object SummaryManager {
     private const val SUMMARY_FILE_NAME = "Podsumowanie_cwiczen.csv"
@@ -48,13 +49,17 @@ object SummaryManager {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val dateStr = sdf.format(startTime)
 
+        // Zaokrąglamy odległości do pełnych metrów przed zapisem
+        val distanceStepsRounded = distanceSteps?.roundToInt()
+        val distanceGpsRounded = distanceGps?.roundToInt()
+
         val line = StringBuilder().apply {
             append(dateStr).append(";")
             append(activityName).append(";")
             append(durationFormatted).append(";")
             append(formatVal(steps)).append(";")
-            append(formatVal(distanceSteps, 2)).append(";")
-            append(formatVal(distanceGps, 2)).append(";")
+            append(formatVal(distanceStepsRounded)).append(";")
+            append(formatVal(distanceGpsRounded)).append(";")
             append(formatVal(avgSpeedSteps, 2)).append(";")
             append(formatVal(avgSpeedGps, 2)).append(";")
             append(formatVal(totalAscent, 1)).append(";")

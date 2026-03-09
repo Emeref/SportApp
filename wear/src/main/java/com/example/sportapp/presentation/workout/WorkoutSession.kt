@@ -45,7 +45,7 @@ fun rememberWorkoutSession(
                 bpm = heartRate,
                 kroki = stepCount,
                 gpsDystans = distanceState.totalDistance,
-                predkosc = speedKmH,
+                predkoscGps = speedKmH, // Zaktualizowana nazwa parametru
                 wysokosc = altitude
             )
         }

@@ -28,13 +28,14 @@ class WorkoutRepository(private val context: Context) {
             }
         }
 
-        val totalCalories = recentSummaries.sumOf { (it["srednie_bpm"]?.toDoubleOrNull() ?: 0.0) * 0.1 } // Uproszczony wzór dla przykładu
-        val totalDistance = recentSummaries.sumOf { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 }
+        val totalCalories = recentSummaries.sumOf { (it["srednie_bpm"]?.toDoubleOrNull() ?: 0.0) * 0.1 } // Uproszczony wzór
+        val totalDistanceMeters = recentSummaries.sumOf { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 }
+        val totalDistanceKm = totalDistanceMeters / 1000.0
 
         return mapOf(
             "count" to recentSummaries.size,
             "calories" to totalCalories.toInt(),
-            "distance" to String.format(Locale.US, "%.2f", totalDistance)
+            "distance" to String.format(Locale.US, "%.2f", totalDistanceKm)
         )
     }
 
@@ -67,14 +68,17 @@ class WorkoutRepository(private val context: Context) {
     fun getActivityItems(): List<ActivityItem> {
         val summaries = getAllSummaries()
         return summaries.mapIndexed { index, map ->
+            val distGpsM = map["gps_dystans"]?.toDoubleOrNull() ?: 0.0
+            val distStepsM = map["odl_kroki"]?.toDoubleOrNull() ?: 0.0
+            
             ActivityItem(
                 id = index.toString(),
                 type = map["nazwa aktywnosci"] ?: "Nieznana",
                 date = map["data"] ?: "",
                 duration = map["dlugosc"] ?: "",
-                calories = "---", // Można wyliczyć jeśli mamy bpm w podsumowaniu
-                distanceGps = "${map["gps_dystans"] ?: "0"} km",
-                distanceSteps = "${map["odl_kroki"] ?: "0"} km"
+                calories = "---",
+                distanceGps = String.format(Locale.US, "%.2f km", distGpsM / 1000.0),
+                distanceSteps = String.format(Locale.US, "%.2f km", distStepsM / 1000.0)
             )
         }.reversed()
     }

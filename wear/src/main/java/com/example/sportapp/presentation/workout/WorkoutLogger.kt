@@ -8,6 +8,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 class WorkoutLogger(
     private val context: Context,
@@ -41,8 +42,8 @@ class WorkoutLogger(
         startTime = System.currentTimeMillis()
         lastFlushTime = startTime
         
-        // Nagłówek zapisujemy od razu
-        writeLine("czas;lat;lon;bpm;srednie_bpm;kroki;kroki_min;odl_kroki;gps_dystans;predkosc;wysokosc;przewyzszenia_gora;przewyzszenia_dol")
+        // Nagłówek zapisujemy od razu - ZAKTUALIZOWANE NAZWY I NOWA KOLUMNA
+        writeLine("czas;lat;lon;bpm;srednie_bpm;kroki;kroki_min;kroki_dystans;gps_dystans;predkosc_gps;predkosc_kroki;wysokosc;przewyzszenia_gora;przewyzszenia_dol")
     }
 
     private fun formatVal(value: Any?, decimalPlaces: Int = -1): String {
@@ -63,7 +64,7 @@ class WorkoutLogger(
         bpm: Float? = null,
         kroki: Int? = null,
         gpsDystans: Float? = null,
-        predkosc: Float? = null,
+        predkoscGps: Float? = null,
         wysokosc: Double? = null,
         forceFlush: Boolean = false
     ) {
@@ -81,9 +82,21 @@ class WorkoutLogger(
             (kroki.toDouble() / (durationMillis / 60000.0))
         } else null
 
-        val odlKroki = if (kroki != null && kroki > 0) {
+        // Prędkość z kroków (km/h)
+        // kroki_min * stepLength (cm) = cm/min
+        // (cm/min * 60) / 100,000 = km/h
+        val predkoscKroki = if (stepsMin != null && stepsMin > 0) {
+            (stepsMin * healthData.stepLength * 60.0) / 100000.0
+        } else null
+
+        // Obliczamy faktyczną odległość z kroków, ale do pliku zapisujemy zaokrąglone pełne metry
+        val odlKrokiActual = if (kroki != null && kroki > 0) {
             (kroki * healthData.stepLength / 100.0)
         } else null
+        val odlKrokiRounded = odlKrokiActual?.roundToInt()
+
+        // Dla GPS dystans jest już przekazywany w metrach, zaokrąglamy go
+        val gpsDystansRounded = gpsDystans?.roundToInt()
 
         if (wysokosc != null) {
             lastHeight?.let { last ->
@@ -102,9 +115,10 @@ class WorkoutLogger(
             append(formatVal(avgBpm, 1)).append(";")
             append(formatVal(kroki)).append(";")
             append(formatVal(stepsMin, 1)).append(";")
-            append(formatVal(odlKroki, 2)).append(";")
-            append(formatVal(gpsDystans, 2)).append(";")
-            append(formatVal(predkosc, 1)).append(";")
+            append(formatVal(odlKrokiRounded)).append(";") // Zmiana nazwy w nagłówku na kroki_dystans
+            append(formatVal(gpsDystansRounded)).append(";")
+            append(formatVal(predkoscGps, 1)).append(";") // Zmiana nazwy w nagłówku na predkosc_gps
+            append(formatVal(predkoscKroki, 1)).append(";") // Nowa kolumna predkosc_kroki
             append(formatVal(wysokosc, 1)).append(";")
             append(formatVal(totalAscent, 1)).append(";")
             append(formatVal(totalDescent, 1))
