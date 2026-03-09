@@ -41,7 +41,7 @@ class DataLayerManager(private val context: Context) {
                         dataMap.putLong("timestamp", System.currentTimeMillis())
                     }.asPutDataRequest().setUrgent()
 
-                    dataClient.putData(request).await()
+                    dataClient.putDataItem(request).await()
                     Log.d("DataLayerManager", "Successfully pushed to Data Layer: ${file.name}")
                 } catch (e: Exception) {
                     Log.e("DataLayerManager", "Error syncing file: ${file.name}", e)
