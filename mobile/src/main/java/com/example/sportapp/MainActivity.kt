@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,7 +19,11 @@ import com.example.sportapp.presentation.home.HomeScreen
 import com.example.sportapp.presentation.home.HomeViewModel
 import com.example.sportapp.presentation.home.HomeViewModelFactory
 import com.example.sportapp.presentation.navigation.Screen
+import com.example.sportapp.presentation.settings.MobileSettingsManager
+import com.example.sportapp.presentation.settings.SettingsScreen
+import com.example.sportapp.presentation.settings.WidgetSelectionScreen
 import com.example.sportapp.presentation.stats.OverallStatsScreen
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,20 +32,48 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     val navController = rememberNavController()
+                    val homeViewModel: HomeViewModel = viewModel(
+                        factory = HomeViewModelFactory(applicationContext)
+                    )
+                    val settingsManager = MobileSettingsManager(applicationContext)
+                    val settingsState by homeViewModel.settings.collectAsState()
+                    val scope = rememberCoroutineScope()
                     
                     NavHost(
                         navController = navController,
                         startDestination = Screen.Home.route
                     ) {
                         composable(Screen.Home.route) {
-                            val homeViewModel: HomeViewModel = viewModel(
-                                factory = HomeViewModelFactory(applicationContext)
-                            )
                             HomeScreen(
                                 viewModel = homeViewModel,
                                 onNavigateToStats = { navController.navigate(Screen.OverallStats.route) },
                                 onNavigateToActivityList = { navController.navigate(Screen.ActivityList.route) },
-                                onSettingsClick = { /* TODO: Otwórz opcje */ }
+                                onSettingsClick = { navController.navigate("settings") }
+                            )
+                        }
+                        composable("settings") {
+                            SettingsScreen(
+                                initialState = settingsState,
+                                onSave = { updated ->
+                                    scope.launch { 
+                                        settingsManager.saveSettings(updated)
+                                        navController.popBackStack()
+                                    }
+                                },
+                                onCancel = { navController.popBackStack() },
+                                onNavigateToWidgetSelection = { navController.navigate("widget_selection") }
+                            )
+                        }
+                        composable("widget_selection") {
+                            WidgetSelectionScreen(
+                                widgets = settingsState.widgets,
+                                onSave = { updatedWidgets ->
+                                    scope.launch {
+                                        settingsManager.saveSettings(settingsState.copy(widgets = updatedWidgets))
+                                        navController.popBackStack()
+                                    }
+                                },
+                                onCancel = { navController.popBackStack() }
                             )
                         }
                         composable(Screen.OverallStats.route) {
@@ -59,7 +94,6 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Screen.ActivityDetail.route) {
-                            // Placeholder dla szczegółów
                             Surface { }
                         }
                     }
