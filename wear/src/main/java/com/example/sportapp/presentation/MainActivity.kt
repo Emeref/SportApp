@@ -13,6 +13,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.example.sportapp.presentation.components.PlaceholderScreen
 import com.example.sportapp.presentation.menu.ChooseSportScreen
 import com.example.sportapp.presentation.menu.MainMenuScreen
+import com.example.sportapp.presentation.menu.StatisticsScreen
 import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.theme.SportAppTheme
 import com.example.sportapp.presentation.workout.ClimbingWorkoutScreen
@@ -62,7 +63,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("main_menu") { MainMenuScreen(navController) }
                         composable("choose_sport") { ChooseSportScreen(navController) }
-                        composable("statistics") { PlaceholderScreen("Statystyki") }
+                        composable("statistics") { StatisticsScreen() }
                         composable("settings") { 
                             SettingsScreen(
                                 navController = navController, 
