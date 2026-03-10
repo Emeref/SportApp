@@ -30,6 +30,11 @@
 - Gesty: Umożliwiaj powrót gestem swipe w prawo (nie zamykaj okien automatycznie po wyborze opcji w ustawieniach, chyba że użytkownik kliknie "Zatwierdź").
 - Korona zegarka (Rotary): Każdy przewijalny ekran musi obsługiwać nawigację kółkiem fizycznym.
 
+## Testowanie i Stabilność
+- **KAŻDY** nowy feature musi posiadać odpowiadające mu testy jednostkowe (Unit Tests) lub integracyjne.
+- Przed zatwierdzeniem jakichkolwiek zmian, należy upewnić się, że **WSZYSTKIE** istniejące testy przechodzą pomyślnie.
+- Komenda do weryfikacji testów: `./gradlew test` lub specyficzne zadania dla modułów (np. `:mobile:testDebugUnitTest`).
+
 ## Ważne
 - Dodawaj nowe funkcjonalności na końcu istniejących plików.
 - Nie usuwaj komentarzy oznaczonych jako // IMPORTANT.
