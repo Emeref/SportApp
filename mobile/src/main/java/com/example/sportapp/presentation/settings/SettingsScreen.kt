@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.BuildConfig
 import com.example.sportapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,6 +92,23 @@ fun SettingsScreen(
                     leadingContent = { Icon(Icons.Default.CloudQueue, null) },
                     trailingContent = { Switch(checked = false, onCheckedChange = null, enabled = false) }
                 )
+            }
+
+            // 4. Tryb Deweloperski / Testowy (ukryty w wersji produkcyjnej)
+            if (BuildConfig.DEBUG) {
+                SettingsSection(title = "Tryb deweloperski") {
+                    ListItem(
+                        headlineContent = { Text("Dane testowe") },
+                        supportingContent = { Text("Używaj symulowanych plików CSV z folderu test_activities") },
+                        leadingContent = { Icon(Icons.Default.BugReport, null) },
+                        trailingContent = { 
+                            Switch(
+                                checked = state.useTestData, 
+                                onCheckedChange = { state = state.copy(useTestData = it) }
+                            ) 
+                        }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
