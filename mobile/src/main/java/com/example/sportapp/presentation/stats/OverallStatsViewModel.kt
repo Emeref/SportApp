@@ -30,7 +30,16 @@ class OverallStatsViewModel(
     private val _selectedType = MutableStateFlow<String?>(null)
     val selectedType = _selectedType.asStateFlow()
 
-    private val _startDate = MutableStateFlow<Date?>(null)
+    // Default: 7 days ago
+    private val _startDate = MutableStateFlow<Date?>(
+        Calendar.getInstance().apply { 
+            add(Calendar.DAY_OF_YEAR, -7)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+    )
     val startDate = _startDate.asStateFlow()
 
     private val _endDate = MutableStateFlow<Date?>(null)
@@ -51,16 +60,28 @@ class OverallStatsViewModel(
     init {
         refreshActivityTypes()
         
-        combine(_selectedType, _startDate, _endDate) { type, start, end ->
-            repository.getFilteredStats(type, start, end)
-        }.onEach { statsMap ->
-            updateChartData(statsMap["raw_data"] as? List<Map<String, String>> ?: emptyList())
-            _stats.value = statsMap
-        }.launchIn(viewModelScope)
+        viewModelScope.launch {
+            combine(_selectedType, _startDate, _endDate) { type, start, end ->
+                if (repository is WorkoutRepository) {
+                    repository.getFilteredStatsSuspend(type, start, end)
+                } else {
+                    repository.getFilteredStats(type, start, end)
+                }
+            }.collect { statsMap ->
+                updateChartData(statsMap["raw_data"] as? List<Map<String, String>> ?: emptyList())
+                _stats.value = statsMap
+            }
+        }
     }
 
     fun refreshActivityTypes() {
-        _activityTypes.value = repository.getUniqueActivityTypes()
+        viewModelScope.launch {
+            _activityTypes.value = if (repository is WorkoutRepository) {
+                repository.getUniqueActivityTypesSuspend()
+            } else {
+                repository.getUniqueActivityTypes()
+            }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

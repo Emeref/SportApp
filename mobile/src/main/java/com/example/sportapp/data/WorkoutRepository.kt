@@ -5,8 +5,9 @@ import android.util.Log
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.ReportingPeriod
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -16,19 +17,23 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
 
     private val settingsManager = MobileSettingsManager(context)
 
-    private fun getActivitiesDir(): File {
-        val useTestData = runBlocking { settingsManager.settingsFlow.first().useTestData }
+    private suspend fun getActivitiesDir(): File = withContext(Dispatchers.IO) {
+        val useTestData = settingsManager.settingsFlow.first().useTestData
         val dirName = if (useTestData) "test_activities" else "activities"
         val dir = File(context.filesDir, dirName)
         if (!dir.exists()) dir.mkdirs()
-        return dir
+        dir
     }
 
     override fun getUniqueActivityTypes(): List<String> {
-        return getAllSummaries().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
+        throw UnsupportedOperationException("Use suspend version: getUniqueActivityTypesSuspend")
     }
 
-    fun getStatsForPeriod(period: ReportingPeriod, customDays: Int): Map<String, Any> {
+    suspend fun getUniqueActivityTypesSuspend(): List<String> = withContext(Dispatchers.IO) {
+        getAllSummariesSuspend().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
+    }
+
+    suspend fun getStatsForPeriodSuspend(period: ReportingPeriod, customDays: Int): Map<String, Any> = withContext(Dispatchers.IO) {
         val now = Calendar.getInstance()
         val startDate: Date
         val endDate: Date
@@ -55,7 +60,7 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
                 startDate = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -customDays) }.time
             }
         }
-        return getFilteredStats(startDate = startDate, endDate = endDate)
+        getFilteredStatsSuspend(startDate = startDate, endDate = endDate)
     }
 
     override fun getFilteredStats(
@@ -63,9 +68,17 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
         startDate: Date?,
         endDate: Date?
     ): Map<String, Any> {
+        throw UnsupportedOperationException("Use suspend version: getFilteredStatsSuspend")
+    }
+
+    suspend fun getFilteredStatsSuspend(
+        activityType: String? = null,
+        startDate: Date? = null,
+        endDate: Date? = null
+    ): Map<String, Any> = withContext(Dispatchers.IO) {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         
-        val filtered = getAllSummaries().filter { summary ->
+        val filtered = getAllSummariesSuspend().filter { summary ->
             val typeMatch = activityType == null || summary["nazwa aktywnosci"] == activityType
             val dateMatch = try {
                 val date = sdf.parse(summary["data"] ?: "")
@@ -75,7 +88,7 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
             typeMatch && dateMatch
         }
 
-        return mapOf(
+        mapOf(
             "count" to filtered.size,
             "calories" to filtered.sumOf { it["kalorie"]?.toDoubleOrNull() ?: 0.0 },
             "distanceGpsM" to filtered.sumOf { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 },
@@ -83,7 +96,7 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
             "ascent" to filtered.sumOf { it["przewyzszenia_gora"]?.toDoubleOrNull() ?: 0.0 },
             "descent" to filtered.sumOf { it["przewyzszenia_dol"]?.toDoubleOrNull() ?: 0.0 },
             "steps" to filtered.sumOf { it["kroki"]?.toLongOrNull() ?: 0L },
-            "raw_data" to filtered // Dodajemy surowe dane do wykresów
+            "raw_data" to filtered
         )
     }
 
@@ -97,13 +110,17 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
     }
 
     override fun getAllSummaries(): List<Map<String, String>> {
+         throw UnsupportedOperationException("Use suspend version: getAllSummariesSuspend")
+    }
+
+    suspend fun getAllSummariesSuspend(): List<Map<String, String>> = withContext(Dispatchers.IO) {
         val file = File(getActivitiesDir(), "Podsumowanie_cwiczen.csv")
-        if (!file.exists()) return emptyList()
+        if (!file.exists()) return@withContext emptyList<Map<String, String>>()
 
         val results = mutableListOf<Map<String, String>>()
         try {
             val lines = file.readLines()
-            if (lines.size < 2) return emptyList()
+            if (lines.size < 2) return@withContext emptyList<Map<String, String>>()
             
             val header = lines[0].split(";")
             for (i in 1 until lines.size) {
@@ -119,24 +136,40 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
         } catch (e: Exception) {
             Log.e("WorkoutRepository", "Error reading summary file", e)
         }
-        return results.sortedBy { it["data"] } // Sortujemy od najstarszych do najnowszych
+        results.sortedBy { it["data"] }
     }
 
     override fun getActivityItems(): List<ActivityItem> {
-        val summaries = getAllSummaries()
-        return summaries.mapIndexed { index, map ->
+        throw UnsupportedOperationException("Use suspend version: getActivityItemsSuspend")
+    }
+
+    suspend fun getActivityItemsSuspend(): List<ActivityItem> = withContext(Dispatchers.IO) {
+        val summaries = getAllSummariesSuspend()
+        val dir = getActivitiesDir()
+        val files = dir.listFiles { file -> file.isFile && file.name.endsWith(".csv") && file.name != "Podsumowanie_cwiczen.csv" } ?: emptyArray()
+        val fileMap = files.associateBy { it.name }
+
+        summaries.mapIndexedNotNull { index, map ->
+            val date = map["data"] ?: ""
+            val type = map["nazwa aktywnosci"] ?: "Nieznana"
+            
+            val dateForFile = date.replace("-", "_").replace(" ", "_").replace(":", "_")
+            val possibleFileNameStart = "${type}_${dateForFile}"
+            
+            val sessionFile = fileMap.keys.find { it.startsWith(possibleFileNameStart) } ?: return@mapIndexedNotNull null
+            
             val distGpsM = map["gps_dystans"]?.toDoubleOrNull() ?: 0.0
             val distStepsM = map["kroki_dystans"]?.toDoubleOrNull() ?: 0.0
             
             ActivityItem(
-                id = index.toString(),
-                type = map["nazwa aktywnosci"] ?: "Nieznana",
-                date = map["data"] ?: "",
+                id = sessionFile,
+                type = type,
+                date = date,
                 duration = map["dlugosc"] ?: "",
                 calories = map["kalorie"] ?: "0",
                 distanceGps = formatDistance(distGpsM),
                 distanceSteps = formatDistance(distStepsM)
             )
-        }.reversed()
+        }.sortedByDescending { it.date }
     }
 }

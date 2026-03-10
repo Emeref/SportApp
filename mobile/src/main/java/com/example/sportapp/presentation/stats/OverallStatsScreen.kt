@@ -1,7 +1,6 @@
 package com.example.sportapp.presentation.stats
 
 import android.app.DatePickerDialog
-import android.text.Layout
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -23,34 +21,9 @@ import androidx.compose.ui.unit.dp
 import com.example.sportapp.R
 import com.example.sportapp.presentation.home.WidgetFactory
 import com.example.sportapp.presentation.settings.WidgetItem
-import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
-import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
-import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
-import com.patrykandpatrick.vico.compose.chart.Chart
-import com.patrykandpatrick.vico.compose.chart.line.lineChart
-import com.patrykandpatrick.vico.compose.chart.line.lineSpec
-import com.patrykandpatrick.vico.compose.chart.scroll.rememberChartScrollSpec
-import com.patrykandpatrick.vico.compose.component.lineComponent
-import com.patrykandpatrick.vico.compose.component.shape.shader.fromBrush
-import com.patrykandpatrick.vico.compose.component.shapeComponent
-import com.patrykandpatrick.vico.compose.component.textComponent
-import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
-import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
-import com.patrykandpatrick.vico.core.component.marker.MarkerComponent
-import com.patrykandpatrick.vico.core.component.shape.Shapes
-import com.patrykandpatrick.vico.core.component.shape.cornered.Corner
-import com.patrykandpatrick.vico.core.component.shape.cornered.MarkerCorneredShape
-import com.patrykandpatrick.vico.core.component.shape.shader.DynamicShaders
-import com.patrykandpatrick.vico.core.dimensions.MutableDimensions
-import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
-import com.patrykandpatrick.vico.core.marker.Marker
-import com.patrykandpatrick.vico.core.marker.MarkerLabelFormatter
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.ceil
 
 @Composable
 fun OverallStatsScreen(
@@ -238,7 +211,12 @@ fun OverallStatsContent(
                                     "steps" -> "Kroki"
                                     else -> widget.label
                                 }
-                                ChartSection(title = title, producer = producer, rawData = rawData, unit = unit)
+                                CommonChartSection(
+                                    title = title,
+                                    producer = producer,
+                                    unit = unit,
+                                    overallRawData = rawData
+                                )
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
                         }
@@ -260,135 +238,6 @@ fun OverallStatsContent(
                 contentDescription = "Logo Emeref",
                 modifier = Modifier.height(40.dp).padding(vertical = 8.dp)
             )
-        }
-    }
-}
-
-@Composable
-fun ChartSection(title: String, producer: ChartEntryModelProducer, rawData: List<Map<String, String>>, unit: String) {
-    val axisValuesOverrider = remember {
-        object : AxisValuesOverrider<ChartEntryModel> {
-            override fun getMaxY(model: ChartEntryModel): Float {
-                val max = model.maxY
-                if (max.isNaN() || max <= 0f) return 8f
-                val ceiling = ceil(max.toDouble()).toInt()
-                val remainder = ceiling % 8
-                val finalMax = if (remainder == 0) ceiling else ceiling + (8 - remainder)
-                return finalMax.toFloat()
-            }
-
-            override fun getMinY(model: ChartEntryModel): Float = 0f
-            
-            override fun getMinX(model: ChartEntryModel): Float = model.minX
-            override fun getMaxX(model: ChartEntryModel): Float = model.maxX
-        }
-    }
-
-    val marker = rememberMarkerCustom(rawData, unit)
-
-    Column {
-        Text(text = title, style = MaterialTheme.typography.titleSmall)
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
-        val formatter = DecimalFormat("#,###.#", symbols)
-        val orangeColor = Color(0xFFFF9800)
-
-        Chart(
-            chart = lineChart(
-                lines = listOf(
-                    lineSpec(
-                        lineColor = orangeColor,
-                        lineBackgroundShader = DynamicShaders.fromBrush(
-                            Brush.verticalGradient(
-                                colors = listOf(orangeColor.copy(alpha = 0.4f), Color.Transparent)
-                            )
-                        )
-                    )
-                ),
-                axisValuesOverrider = axisValuesOverrider,
-            ),
-            chartModelProducer = producer,
-            marker = marker,
-            startAxis = rememberStartAxis(
-                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
-                valueFormatter = { value, _ -> formatter.format(value.toLong()) },
-                itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9),
-                guideline = null
-            ),
-            bottomAxis = rememberBottomAxis(
-                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
-                valueFormatter = { value, _ -> 
-                    if (value.isNaN()) "" else (value.toInt() + 1).toString() 
-                },
-                guideline = null
-            ),
-            chartScrollSpec = rememberChartScrollSpec(isScrollEnabled = false),
-            modifier = Modifier.fillMaxWidth().height(320.dp)
-        )
-    }
-}
-
-@Composable
-fun rememberMarkerCustom(rawData: List<Map<String, String>>, unit: String): Marker {
-    val labelBackgroundColor = MaterialTheme.colorScheme.surface
-    val labelTextColor = MaterialTheme.colorScheme.onSurface
-    
-    val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
-    val formatter = DecimalFormat("#,###.#", symbols)
-    val inputSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-    val outputSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-
-    val label = textComponent(
-        color = labelTextColor,
-        background = shapeComponent(
-            shape = MarkerCorneredShape(Corner.FullyRounded),
-            color = labelBackgroundColor,
-            strokeColor = Color.Green,
-            strokeWidth = 2.dp
-        ),
-        padding = MutableDimensions(horizontalDp = 12f, verticalDp = 8f),
-        textAlignment = Layout.Alignment.ALIGN_CENTER,
-        lineCount = 3 // WYMUSZENIE 3 LINII
-    )
-    val indicator = shapeComponent(shape = Shapes.pillShape, color = Color.Green)
-    val guideline = lineComponent(
-        color = Color.Green.copy(alpha = 0.5f),
-        thickness = 2.dp
-    )
-    return remember(label, indicator, guideline, rawData, unit) {
-        object : MarkerComponent(label, indicator, guideline) {
-            override fun getInsets(
-                context: com.patrykandpatrick.vico.core.context.MeasureContext,
-                outInsets: com.patrykandpatrick.vico.core.chart.insets.Insets,
-                horizontalDimensions: com.patrykandpatrick.vico.core.chart.dimensions.HorizontalDimensions
-            ) {
-                with(context) {
-                    // Rezerwujemy stałe miejsce na 3 linie tekstu nad wykresem
-                    outInsets.top = label.getHeight(context, text = "Activity Name\n2024-01-01\n100.0 km") + (density * 24f)
-                }
-            }
-        }.apply {
-            labelFormatter = MarkerLabelFormatter { markedEntries, _ ->
-                val entry = markedEntries.firstOrNull() ?: return@MarkerLabelFormatter ""
-                val index = entry.entry.x.toInt()
-
-                if (index in rawData.indices) {
-                    val data = rawData[index]
-                    val activityName = data["nazwa aktywnosci"] ?: "Aktywność"
-                    val rawDate = data["data"] ?: ""
-                    val formattedDate = try {
-                        inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate
-                    } catch (e: Exception) {
-                        rawDate
-                    }
-
-                    val value = formatter.format(entry.entry.y)
-                    "$activityName\n$formattedDate\n$value $unit"
-                } else {
-                    ""
-                }
-            }
         }
     }
 }
