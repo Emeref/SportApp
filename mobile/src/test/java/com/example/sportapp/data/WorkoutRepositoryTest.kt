@@ -3,6 +3,7 @@ package com.example.sportapp.data
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.example.sportapp.presentation.settings.ReportingPeriod
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -38,11 +39,10 @@ class WorkoutRepositoryTest {
         assertEquals("1.23 km", repository.formatDistance(1234.0))
         assertEquals("12.3 km", repository.formatDistance(12345.0))
         assertEquals("123 km", repository.formatDistance(123456.0))
-        // Test for grouping space (added manually in UI but repository logic should be consistent or tested via UI)
     }
 
     @Test
-    fun `getFilteredStats correctly aggregates data including calories with precision`() {
+    fun `getFilteredStats correctly aggregates data including calories with precision`() = runBlocking {
         val summaryFile = File(activitiesDir, "Podsumowanie_cwiczen.csv")
         summaryFile.writeText(
             "nazwa aktywnosci;data;dlugosc;kalorie;gps_dystans;kroki_dystans;przewyzszenia_gora;przewyzszenia_dol;kroki\n" +
@@ -50,15 +50,13 @@ class WorkoutRepositoryTest {
             "Bieganie;2024-03-02 10:00:00;00:45:00;500.44;8000.0;7500.0;50.0;45.0;10000"
         )
 
-        val stats = repository.getFilteredStats()
+        val stats = repository.getFilteredStatsSuspend()
         // 200.55 + 500.44 = 700.99
         assertEquals(700.99, stats["calories"] as Double, 0.001)
     }
 
     @Test
     fun `formatDistance logic for large distances`() {
-        // Test cases for > 6000m conversion are handled in ViewModel/UI per new requirements
-        // but repository should still provide raw data correctly
         val dist = 12500.0
         val formatted = repository.formatDistance(dist)
         assertEquals("12.5 km", formatted)

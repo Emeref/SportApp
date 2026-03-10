@@ -26,21 +26,27 @@
     - [x] Wyświetlanie statystyk i listy aktywności.
 - [ ] **Analiza danych (Mobile)**:
     - [ ] **Szczegóły aktywności (Ekran ActivityDetailScreen)**:
-        - [ ] Wykresy (bpm, kroki, prędkość, wysokość itd.) z markerami.
+        - [x] Wykresy (bpm, kroki, prędkość, wysokość itd.) z markerami.
         - [ ] Interaktywna mapa trasy z oznaczeniem startu (kółko) i końca (flaga).
-        - [ ] Personalizacja widoku (wybór i kolejność wykresów/mapy).
-        - [ ] Wybór koloru śladu na mapie.
+        - [x] Personalizacja widoku (wybór i kolejność wykresów/mapy).
+        - [x] Wybór koloru śladu na mapie.
+        - [ ] **Optymalizacja wykresów**: Usprawnienie wyświetlania przy dużej liczbie rekordów (próbkowanie do max 500 punktów).
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
+    - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
 - [x] **Ustawienia i Personalizacja (Mobile)**:
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
     - [x] Wybór okresu raportowania (dziś, tydzień, miesiąc, rok, inne).
 
-## 4. Chmura i Bezpieczeństwo
+## 4. Funkcje Wear OS (Zegarek)
+- [ ] **Statystyki na zegarku**:
+    - [ ] Wyświetlanie podsumowania widgetów z ostatniego tygodnia (dystans, kcal, kroki).
+
+## 5. Chmura i Bezpieczeństwo
 - [ ] **Integracja z Google**:
     - [ ] Dodanie logowania przez konto Google.
     - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań na koncie użytkownika, backup i wczytywanie danych.
 
-## 5. Jakość i Testy
+## 6. Jakość i Testy
 - [x] **Unit testy**:
     - [x] Testy logiki biznesowej (Kalkulatory, Repozytoria, ViewModele).
     - [ ] **Testy parsera CSV i Mapy**: Weryfikacja poprawności rysowania trasy i czytania dużych plików sesji.
