@@ -27,6 +27,7 @@ import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.line.lineChart
 import com.patrykandpatrick.vico.compose.chart.line.lineSpec
+import com.patrykandpatrick.vico.compose.chart.scroll.rememberChartScrollSpec
 import com.patrykandpatrick.vico.compose.component.lineComponent
 import com.patrykandpatrick.vico.compose.component.shapeComponent
 import com.patrykandpatrick.vico.compose.component.textComponent
@@ -40,6 +41,8 @@ import com.patrykandpatrick.vico.core.dimensions.MutableDimensions
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.marker.Marker
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.ceil
@@ -170,21 +173,38 @@ fun OverallStatsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // 3. Wykresy
+            val rawData = stats["raw_data"] as? List<*>
             if (activeWidgets.isNotEmpty()) {
-                Text(
-                    text = "Wykresy trendów",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                )
-                
-                activeWidgets.forEach { widget ->
-                    if (widget.id != "count") {
-                        val producer = viewModel.chartProducers[widget.id]
-                        if (producer != null) {
-                            ChartSection(title = widget.label, producer = producer)
-                            Spacer(modifier = Modifier.height(24.dp))
+                if (!rawData.isNullOrEmpty()) {
+                    Text(
+                        text = "Wykresy trendów",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    )
+                    
+                    activeWidgets.forEach { widget ->
+                        if (widget.id != "count") {
+                            val producer = viewModel.chartProducers[widget.id]
+                            if (producer != null) {
+                                val maxVal = viewModel.getMaxValueForWidget(widget.id)
+                                val title = when(widget.id) {
+                                    "distanceGps" -> if (maxVal > 6000) "Dystans (GPS) w kilometrach" else "Dystans (GPS) w metrach"
+                                    "distanceSteps" -> if (maxVal > 6000) "Dystans (kroki) w kilometrach" else "Dystans (kroki) w metrach"
+                                    "steps" -> "Kroki"
+                                    else -> widget.label
+                                }
+                                ChartSection(title = title, producer = producer)
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
                         }
                     }
+                } else if (stats.containsKey("raw_data")) {
+                    Text(
+                        text = "Brak danych do wyświetlenia wykresów.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
                 }
             }
 
@@ -205,7 +225,7 @@ fun ChartSection(title: String, producer: ChartEntryModelProducer) {
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
                 val max = model.maxY
-                if (max <= 0f) return 8f
+                if (max.isNaN() || max <= 0f) return 8f
                 val ceiling = ceil(max.toDouble()).toInt()
                 val remainder = ceiling % 8
                 val finalMax = if (remainder == 0) ceiling else ceiling + (8 - remainder)
@@ -213,11 +233,24 @@ fun ChartSection(title: String, producer: ChartEntryModelProducer) {
             }
 
             override fun getMinY(model: ChartEntryModel): Float = 0f
+            
+            override fun getMinX(model: ChartEntryModel): Float {
+                return if (model.minX.isNaN()) 0f else model.minX
+            }
+
+            override fun getMaxX(model: ChartEntryModel): Float {
+                val minX = if (model.minX.isNaN()) 0f else model.minX
+                val maxX = if (model.maxX.isNaN()) 1f else model.maxX
+                return if (minX == maxX) maxX + 1f else maxX
+            }
         }
     }
 
     val marker = rememberMarkerCustom()
     val orangeColor = Color(0xFFF9A825) // Pomarańczowy
+
+    val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
+    val formatter = DecimalFormat("#,###", symbols)
 
     Column {
         Text(text = title, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
@@ -225,19 +258,24 @@ fun ChartSection(title: String, producer: ChartEntryModelProducer) {
         Chart(
             chart = lineChart(
                 lines = listOf(lineSpec(lineColor = orangeColor)),
-                axisValuesOverrider = axisValuesOverrider
+                axisValuesOverrider = axisValuesOverrider,
             ),
             chartModelProducer = producer,
             marker = marker,
             startAxis = rememberStartAxis(
                 label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
-                valueFormatter = { value, _ -> value.toInt().toString() },
-                itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9)
+                valueFormatter = { value, _ -> formatter.format(value.toLong()) },
+                itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9),
+                guideline = null // Usunięcie linii pomocniczych poziomych
             ),
             bottomAxis = rememberBottomAxis(
                 label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
-                valueFormatter = { value, _ -> (value.toInt() + 1).toString() }
+                valueFormatter = { value, _ -> 
+                    if (value.isNaN()) "" else (value.toInt() + 1).toString() 
+                },
+                guideline = null // Usunięcie linii pomocniczych pionowych
             ),
+            chartScrollSpec = rememberChartScrollSpec(isScrollEnabled = false), // Wyłączenie scrolla by wykres był na szerokość
             modifier = Modifier.fillMaxWidth().height(200.dp)
         )
     }

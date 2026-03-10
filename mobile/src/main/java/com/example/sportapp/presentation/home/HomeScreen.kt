@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.R
 import com.example.sportapp.presentation.settings.ReportingPeriod
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -143,31 +145,36 @@ fun HomeScreen(
 @Composable
 fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
     when (id) {
-        "count" -> StatCard(modifier, "Liczba aktywności", stats["count"]?.toString() ?: "0")
-        "calories" -> StatCard(modifier, "Spalone kalorie", "${stats["calories"] ?: 0} kcal")
+        "count" -> StatCard(modifier, "Liczba aktywności", formatLargeNumber(stats["count"]))
+        "calories" -> StatCard(modifier, "Spalone kalorie", "${formatLargeNumber(stats["calories"])} kcal")
         "distanceGps" -> StatCard(modifier, "Dystans (GPS)", formatDistanceUI(stats["distanceGpsM"] as? Double ?: 0.0))
         "distanceSteps" -> StatCard(modifier, "Dystans (kroki)", formatDistanceUI(stats["distanceStepsM"] as? Double ?: 0.0))
-        "ascent" -> StatCard(modifier, "Przewyższenia do góry", formatElevationUI(stats["ascent"]))
-        "descent" -> StatCard(modifier, "Przewyższenia do dołu", formatElevationUI(stats["descent"]))
-        "steps" -> StatCard(modifier, "Wszystkie kroki", stats["steps"]?.toString() ?: "0")
+        "ascent" -> StatCard(modifier, "Przewyższenia do góry", "${formatLargeNumber(stats["ascent"])} m")
+        "descent" -> StatCard(modifier, "Przewyższenia do dołu", "${formatLargeNumber(stats["descent"])} m")
+        "steps" -> StatCard(modifier, "Kroki", formatLargeNumber(stats["steps"]))
     }
 }
 
-private fun formatElevationUI(value: Any?): String {
+private fun formatLargeNumber(value: Any?): String {
     val num = when (value) {
-        is Number -> value.toDouble()
-        is String -> value.toDoubleOrNull() ?: 0.0
-        else -> 0.0
+        is Number -> value.toLong()
+        is String -> value.toDoubleOrNull()?.toLong() ?: 0L
+        else -> 0L
     }
-    return String.format(Locale.US, "%.1f m", num)
+    
+    val symbols = DecimalFormatSymbols(Locale.US).apply {
+        groupingSeparator = ' '
+    }
+    val formatter = DecimalFormat("#,###", symbols)
+    return formatter.format(num)
 }
 
 private fun formatDistanceUI(meters: Double): String {
     return when {
-        meters < 1000 -> "${meters.toInt()} m"
+        meters < 1000 -> "${formatLargeNumber(meters)} m"
         meters < 10000 -> String.format(Locale.US, "%.2f km", Math.floor(meters / 10.0) / 100.0)
         meters < 100000 -> String.format(Locale.US, "%.1f km", Math.floor(meters / 100.0) / 10.0)
-        else -> "${Math.floor(meters / 1000.0).toInt()} km"
+        else -> "${formatLargeNumber(Math.floor(meters / 1000.0))} km"
     }
 }
 
