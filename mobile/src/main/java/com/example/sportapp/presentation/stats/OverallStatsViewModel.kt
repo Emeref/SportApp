@@ -14,7 +14,7 @@ import java.util.*
 
 class OverallStatsViewModel(
     context: Context,
-    private val repository: WorkoutRepository = WorkoutRepository(context)
+    private val repository: IWorkoutRepository = WorkoutRepository(context)
 ) : ViewModel() {
     private val settingsManager = OverallStatsSettingsManager(context)
 
@@ -62,7 +62,11 @@ class OverallStatsViewModel(
         
         viewModelScope.launch {
             combine(_selectedType, _startDate, _endDate) { type, start, end ->
-                repository.getFilteredStatsSuspend(type, start, end)
+                if (repository is WorkoutRepository) {
+                    repository.getFilteredStatsSuspend(type, start, end)
+                } else {
+                    repository.getFilteredStats(type, start, end)
+                }
             }.collect { statsMap ->
                 updateChartData(statsMap["raw_data"] as? List<Map<String, String>> ?: emptyList())
                 _stats.value = statsMap
@@ -72,7 +76,11 @@ class OverallStatsViewModel(
 
     fun refreshActivityTypes() {
         viewModelScope.launch {
-            _activityTypes.value = repository.getUniqueActivityTypesSuspend()
+            _activityTypes.value = if (repository is WorkoutRepository) {
+                repository.getUniqueActivityTypesSuspend()
+            } else {
+                repository.getUniqueActivityTypes()
+            }
         }
     }
 
