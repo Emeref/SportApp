@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -27,7 +28,9 @@ import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.line.lineChart
 import com.patrykandpatrick.vico.compose.chart.line.lineSpec
+import com.patrykandpatrick.vico.compose.chart.scroll.rememberChartScrollSpec
 import com.patrykandpatrick.vico.compose.component.lineComponent
+import com.patrykandpatrick.vico.compose.component.shape.shader.fromBrush
 import com.patrykandpatrick.vico.compose.component.shapeComponent
 import com.patrykandpatrick.vico.compose.component.textComponent
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
@@ -35,11 +38,15 @@ import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
 import com.patrykandpatrick.vico.core.component.marker.MarkerComponent
 import com.patrykandpatrick.vico.core.component.shape.Shapes
 import com.patrykandpatrick.vico.core.component.shape.cornered.Corner
-import com.patrykandpatrick.vico.core.component.shape.cornered.CorneredShape
+import com.patrykandpatrick.vico.core.component.shape.cornered.MarkerCorneredShape
+import com.patrykandpatrick.vico.core.component.shape.shader.DynamicShaders
 import com.patrykandpatrick.vico.core.dimensions.MutableDimensions
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.marker.Marker
+import com.patrykandpatrick.vico.core.marker.MarkerLabelFormatter
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.ceil
@@ -170,21 +177,47 @@ fun OverallStatsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // 3. Wykresy
+            @Suppress("UNCHECKED_CAST")
+            val rawData = stats["raw_data"] as? List<Map<String, String>>
             if (activeWidgets.isNotEmpty()) {
-                Text(
-                    text = "Wykresy trendów",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                )
-                
-                activeWidgets.forEach { widget ->
-                    if (widget.id != "count") {
-                        val producer = viewModel.chartProducers[widget.id]
-                        if (producer != null) {
-                            ChartSection(title = widget.label, producer = producer)
-                            Spacer(modifier = Modifier.height(24.dp))
+                if (!rawData.isNullOrEmpty()) {
+                    Text(
+                        text = "Wykresy trendów",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    )
+                    
+                    activeWidgets.forEach { widget ->
+                        if (widget.id != "count") {
+                            val producer = viewModel.chartProducers[widget.id]
+                            if (producer != null) {
+                                val maxVal = viewModel.getMaxValueForWidget(widget.id)
+                                val unit = when(widget.id) {
+                                    "distanceGps" -> if (maxVal > 6000) "km" else "m"
+                                    "distanceSteps" -> if (maxVal > 6000) "km" else "m"
+                                    "calories" -> "kcal"
+                                    "steps" -> "kroków"
+                                    "ascent", "descent" -> "m"
+                                    else -> ""
+                                }
+                                val title = when(widget.id) {
+                                    "distanceGps" -> if (maxVal > 6000) "Dystans (GPS) w kilometrach" else "Dystans (GPS) w metrach"
+                                    "distanceSteps" -> if (maxVal > 6000) "Dystans (kroki) w kilometrach" else "Dystans (kroki) w metrach"
+                                    "steps" -> "Kroki"
+                                    else -> widget.label
+                                }
+                                ChartSection(title = title, producer = producer, rawData = rawData, unit = unit)
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
                         }
                     }
+                } else if (stats.containsKey("raw_data")) {
+                    Text(
+                        text = "Brak danych do wyświetlenia wykresów.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
                 }
             }
 
@@ -200,12 +233,12 @@ fun OverallStatsScreen(
 }
 
 @Composable
-fun ChartSection(title: String, producer: ChartEntryModelProducer) {
+fun ChartSection(title: String, producer: ChartEntryModelProducer, rawData: List<Map<String, String>>, unit: String) {
     val axisValuesOverrider = remember {
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
                 val max = model.maxY
-                if (max <= 0f) return 8f
+                if (max.isNaN() || max <= 0f) return 8f
                 val ceiling = ceil(max.toDouble()).toInt()
                 val remainder = ceiling % 8
                 val finalMax = if (remainder == 0) ceiling else ceiling + (8 - remainder)
@@ -213,57 +246,117 @@ fun ChartSection(title: String, producer: ChartEntryModelProducer) {
             }
 
             override fun getMinY(model: ChartEntryModel): Float = 0f
+            
+            override fun getMinX(model: ChartEntryModel): Float = model.minX
+            override fun getMaxX(model: ChartEntryModel): Float = model.maxX
         }
     }
 
-    val marker = rememberMarkerCustom()
-    val orangeColor = Color(0xFFF9A825) // Pomarańczowy
+    val marker = rememberMarkerCustom(rawData, unit)
 
     Column {
-        Text(text = title, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+        Text(text = title, style = MaterialTheme.typography.titleSmall)
         Spacer(modifier = Modifier.height(8.dp))
+        
+        val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
+        val formatter = DecimalFormat("#,###.#", symbols)
+        val orangeColor = Color(0xFFFF9800)
+
         Chart(
             chart = lineChart(
-                lines = listOf(lineSpec(lineColor = orangeColor)),
-                axisValuesOverrider = axisValuesOverrider
+                lines = listOf(
+                    lineSpec(
+                        lineColor = orangeColor,
+                        lineBackgroundShader = DynamicShaders.fromBrush(
+                            Brush.verticalGradient(
+                                colors = listOf(orangeColor.copy(alpha = 0.4f), Color.Transparent)
+                            )
+                        )
+                    )
+                ),
+                axisValuesOverrider = axisValuesOverrider,
             ),
             chartModelProducer = producer,
             marker = marker,
             startAxis = rememberStartAxis(
                 label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
-                valueFormatter = { value, _ -> value.toInt().toString() },
-                itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9)
+                valueFormatter = { value, _ -> formatter.format(value.toLong()) },
+                itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9),
+                guideline = null
             ),
             bottomAxis = rememberBottomAxis(
                 label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
-                valueFormatter = { value, _ -> (value.toInt() + 1).toString() }
+                valueFormatter = { value, _ -> 
+                    if (value.isNaN()) "" else (value.toInt() + 1).toString() 
+                },
+                guideline = null
             ),
-            modifier = Modifier.fillMaxWidth().height(200.dp)
+            chartScrollSpec = rememberChartScrollSpec(isScrollEnabled = false),
+            modifier = Modifier.fillMaxWidth().height(320.dp)
         )
     }
 }
 
 @Composable
-fun rememberMarkerCustom(): Marker {
+fun rememberMarkerCustom(rawData: List<Map<String, String>>, unit: String): Marker {
     val labelBackgroundColor = MaterialTheme.colorScheme.surface
     val labelTextColor = MaterialTheme.colorScheme.onSurface
-    val labelBackgroundShape = CorneredShape(Corner.FullyRounded)
+    
+    val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
+    val formatter = DecimalFormat("#,###.#", symbols)
+    val inputSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+    val outputSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
     val label = textComponent(
         color = labelTextColor,
-        background = shapeComponent(shape = labelBackgroundShape, color = labelBackgroundColor),
-        padding = MutableDimensions(horizontalDp = 8f, verticalDp = 4f),
-        textAlignment = Layout.Alignment.ALIGN_CENTER
+        background = shapeComponent(
+            shape = MarkerCorneredShape(Corner.FullyRounded),
+            color = labelBackgroundColor,
+            strokeColor = Color.Green,
+            strokeWidth = 2.dp
+        ),
+        padding = MutableDimensions(horizontalDp = 12f, verticalDp = 8f),
+        textAlignment = Layout.Alignment.ALIGN_CENTER,
+        lineCount = 3 // WYMUSZENIE 3 LINII
     )
-    val indicator = shapeComponent(shape = Shapes.pillShape, color = Color.Green) // Kropka w miejscu przecięcia
+    val indicator = shapeComponent(shape = Shapes.pillShape, color = Color.Green)
     val guideline = lineComponent(
-        color = Color.Green.copy(alpha = 0.5f), // Linia dotyku (zielona)
+        color = Color.Green.copy(alpha = 0.5f),
         thickness = 2.dp
     )
-    return remember(label, indicator, guideline) {
-        MarkerComponent(
-            label = label,
-            indicator = indicator,
-            guideline = guideline,
-        )
+    return remember(label, indicator, guideline, rawData, unit) {
+        object : MarkerComponent(label, indicator, guideline) {
+            override fun getInsets(
+                context: com.patrykandpatrick.vico.core.context.MeasureContext,
+                outInsets: com.patrykandpatrick.vico.core.chart.insets.Insets,
+                horizontalDimensions: com.patrykandpatrick.vico.core.chart.dimensions.HorizontalDimensions
+            ) {
+                with(context) {
+                    // Rezerwujemy stałe miejsce na 3 linie tekstu nad wykresem
+                    outInsets.top = label.getHeight(context, text = "Line 1\nLine 2\nLine 3") + (density * 32f)
+                }
+            }
+        }.apply {
+            labelFormatter = MarkerLabelFormatter { markedEntries, _ ->
+                val entry = markedEntries.firstOrNull() ?: return@MarkerLabelFormatter ""
+                val index = entry.entry.x.toInt()
+
+                if (index in rawData.indices) {
+                    val data = rawData[index]
+                    val activityName = data["nazwa aktywnosci"] ?: "Aktywność"
+                    val rawDate = data["data"] ?: ""
+                    val formattedDate = try {
+                        inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate
+                    } catch (e: Exception) {
+                        rawDate
+                    }
+
+                    val value = formatter.format(entry.entry.y)
+                    "$activityName\n$formattedDate\n$value $unit"
+                } else {
+                    ""
+                }
+            }
+        }
     }
 }
