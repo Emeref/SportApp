@@ -26,7 +26,7 @@
     - [x] Wyświetlanie statystyk i listy aktywności.
 - [ ] **Analiza danych (Mobile)**:
     - [ ] Szczegóły aktywności (Wykresy, Mapa trasy).
-    - [ ] Filtrowanie statystyk ogólnych.
+    - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
 - [x] **Ustawienia i Personalizacja (Mobile)**:
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
     - [x] Wybór okresu raportowania (dziś, tydzień, miesiąc, rok, inne).
@@ -46,3 +46,4 @@
 - [x] Synchronizacja plików CSV między zegarkiem a telefonem.
 - [x] Material 3 UI na telefonie.
 - [x] Dynamiczne formatowanie dystansu na ekranie głównym (m/km).
+- [x] Ekran statystyk ogólnych z filtrowaniem i wykresami trendów.
