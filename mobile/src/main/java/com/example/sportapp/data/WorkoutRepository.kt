@@ -3,7 +3,10 @@ package com.example.sportapp.data
 import android.content.Context
 import android.util.Log
 import com.example.sportapp.presentation.activities.ActivityItem
+import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.ReportingPeriod
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -11,7 +14,15 @@ import kotlin.math.floor
 
 class WorkoutRepository(private val context: Context) {
 
-    private val activitiesDir = File(context.filesDir, "activities")
+    private val settingsManager = MobileSettingsManager(context)
+
+    private fun getActivitiesDir(): File {
+        val useTestData = runBlocking { settingsManager.settingsFlow.first().useTestData }
+        val dirName = if (useTestData) "test_activities" else "activities"
+        val dir = File(context.filesDir, dirName)
+        if (!dir.exists()) dir.mkdirs()
+        return dir
+    }
 
     fun getUniqueActivityTypes(): List<String> {
         return getAllSummaries().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
@@ -86,7 +97,7 @@ class WorkoutRepository(private val context: Context) {
     }
 
     fun getAllSummaries(): List<Map<String, String>> {
-        val file = File(activitiesDir, "Podsumowanie_cwiczen.csv")
+        val file = File(getActivitiesDir(), "Podsumowanie_cwiczen.csv")
         if (!file.exists()) return emptyList()
 
         val results = mutableListOf<Map<String, String>>()

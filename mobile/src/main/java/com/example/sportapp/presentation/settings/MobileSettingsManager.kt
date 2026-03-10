@@ -18,6 +18,7 @@ class MobileSettingsManager(private val context: Context) {
         private val WIDGETS_JSON = stringPreferencesKey("widgets_json")
         private val PERIOD = stringPreferencesKey("period")
         private val CUSTOM_DAYS = intPreferencesKey("custom_days")
+        private val USE_TEST_DATA = booleanPreferencesKey("use_test_data")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -32,7 +33,8 @@ class MobileSettingsManager(private val context: Context) {
         MobileSettingsState(
             widgets = widgets,
             period = ReportingPeriod.valueOf(preferences[PERIOD] ?: ReportingPeriod.WEEK.name),
-            customDays = preferences[CUSTOM_DAYS] ?: 7
+            customDays = preferences[CUSTOM_DAYS] ?: 7,
+            useTestData = preferences[USE_TEST_DATA] ?: false
         )
     }
 
@@ -41,6 +43,7 @@ class MobileSettingsManager(private val context: Context) {
             preferences[WIDGETS_JSON] = gson.toJson(state.widgets)
             preferences[PERIOD] = state.period.name
             preferences[CUSTOM_DAYS] = state.customDays
+            preferences[USE_TEST_DATA] = state.useTestData
         }
     }
 }

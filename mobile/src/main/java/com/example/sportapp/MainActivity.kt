@@ -13,6 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.sportapp.data.TestDataGenerator
 import com.example.sportapp.presentation.activities.ActivityListScreen
 import com.example.sportapp.presentation.activities.ActivityListViewModel
 import com.example.sportapp.presentation.activities.ActivityListViewModelFactory
@@ -32,6 +33,12 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Generuj dane testowe jeśli jesteśmy w trybie DEBUG
+        if (BuildConfig.DEBUG) {
+            TestDataGenerator.generateTestData(applicationContext)
+        }
+
         setContent {
             MaterialTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
@@ -73,6 +80,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToWidgetSelection = { navController.navigate("widget_selection") }
                             )
                         }
+                        // ... reszta composables pozostaje bez zmian
                         composable("widget_selection") {
                             WidgetSelectionScreen(
                                 widgets = settingsState.widgets,
@@ -114,9 +122,6 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Screen.ActivityDetail.createRoute(id))
                                 }
                             )
-                        }
-                        composable(Screen.ActivityDetail.route) {
-                            Surface { }
                         }
                     }
                 }
