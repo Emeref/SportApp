@@ -12,13 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
-import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
-import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
-import com.patrykandpatrick.vico.compose.chart.Chart
-import com.patrykandpatrick.vico.compose.chart.line.lineChart
-import com.patrykandpatrick.vico.compose.chart.scroll.rememberChartScrollSpec
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,31 +87,37 @@ fun ActivityDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 2. Wykresy
-                settings.visibleElements.forEach { widget ->
-                    val producer = viewModel.chartProducers[widget.id]
-                    if (producer != null && (sessionData!!.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
-                        Text(
-                            text = widget.label,
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                        Chart(
-                            chart = lineChart(),
-                            chartModelProducer = producer,
-                            startAxis = rememberStartAxis(),
-                            bottomAxis = rememberBottomAxis(),
-                            chartScrollSpec = rememberChartScrollSpec(isScrollEnabled = true),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .padding(horizontal = 16.dp)
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
+                sessionData?.let { data ->
+                    settings.visibleElements.forEach { widget ->
+                        val producer = viewModel.chartProducers[widget.id]
+                        if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
+                            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                CommonChartSection(
+                                    title = widget.label,
+                                    producer = producer,
+                                    unit = getUnitForWidget(widget.id),
+                                    detailTimes = data.times,
+                                    isScrollEnabled = false // Zmienione na false, aby wykres dopasował się do ekranu
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
                     }
                 }
                 
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
+    }
+}
+
+private fun getUnitForWidget(id: String): String {
+    return when(id) {
+        "bpm", "srednie_bpm" -> "bpm"
+        "kroki", "kroki_min" -> "kroków"
+        "kroki_dystans", "gps_dystans" -> "m"
+        "predkosc_gps" -> "km/h"
+        "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"
+        else -> ""
     }
 }
