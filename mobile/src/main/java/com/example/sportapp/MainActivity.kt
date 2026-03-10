@@ -7,8 +7,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -24,10 +24,14 @@ import com.example.sportapp.presentation.navigation.Screen
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.SettingsScreen
 import com.example.sportapp.presentation.settings.WidgetSelectionScreen
+import com.example.sportapp.presentation.stats.ActivityDetailScreen
+import com.example.sportapp.presentation.stats.ActivityDetailViewModel
+import com.example.sportapp.presentation.stats.ActivityDetailViewModelFactory
 import com.example.sportapp.presentation.stats.OverallStatsScreen
 import com.example.sportapp.presentation.stats.OverallStatsViewModel
 import com.example.sportapp.presentation.stats.OverallStatsViewModelFactory
 import com.example.sportapp.presentation.stats.OverallStatsWidgetScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -36,7 +40,9 @@ class MainActivity : ComponentActivity() {
         
         // Generuj dane testowe jeśli jesteśmy w trybie DEBUG
         if (BuildConfig.DEBUG) {
-            TestDataGenerator.generateTestData(applicationContext)
+            lifecycleScope.launch(Dispatchers.IO) {
+                TestDataGenerator.generateTestData(applicationContext)
+            }
         }
 
         setContent {
@@ -80,7 +86,6 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToWidgetSelection = { navController.navigate("widget_selection") }
                             )
                         }
-                        // ... reszta composables pozostaje bez zmian
                         composable("widget_selection") {
                             WidgetSelectionScreen(
                                 widgets = settingsState.widgets,
@@ -122,6 +127,18 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Screen.ActivityDetail.createRoute(id))
                                 }
                             )
+                        }
+                        composable(Screen.ActivityDetail.route) { backStackEntry ->
+                            val activityId = backStackEntry.arguments?.getString("activityId")
+                            if (activityId != null) {
+                                val detailViewModel: ActivityDetailViewModel = viewModel(
+                                    factory = ActivityDetailViewModelFactory(applicationContext, activityId)
+                                )
+                                ActivityDetailScreen(
+                                    viewModel = detailViewModel,
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
                         }
                     }
                 }

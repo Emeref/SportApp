@@ -41,8 +41,10 @@ class HomeViewModel(context: Context) : ViewModel() {
     }
 
     fun refreshStats() {
-        val currentSettings = _settings.value
-        _stats.value = repository.getStatsForPeriod(currentSettings.period, currentSettings.customDays)
+        viewModelScope.launch {
+            val currentSettings = _settings.value
+            _stats.value = repository.getStatsForPeriodSuspend(currentSettings.period, currentSettings.customDays)
+        }
     }
 
     fun triggerSync() {
