@@ -25,7 +25,11 @@
     - [x] Synchronizacja `Wearable Data Layer API`.
     - [x] Wyświetlanie statystyk i listy aktywności.
 - [ ] **Analiza danych (Mobile)**:
-    - [ ] Szczegóły aktywności (Wykresy, Mapa trasy).
+    - [ ] **Szczegóły aktywności (Ekran ActivityDetailScreen)**:
+        - [ ] Wykresy (bpm, kroki, prędkość, wysokość itd.) z markerami.
+        - [ ] Interaktywna mapa trasy z oznaczeniem startu (kółko) i końca (flaga).
+        - [ ] Personalizacja widoku (wybór i kolejność wykresów/mapy).
+        - [ ] Wybór koloru śladu na mapie.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
 - [x] **Ustawienia i Personalizacja (Mobile)**:
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
@@ -39,8 +43,10 @@
 ## 5. Jakość i Testy
 - [x] **Unit testy**:
     - [x] Testy logiki biznesowej (Kalkulatory, Repozytoria, ViewModele).
-- [ ] **Testy komponentów UI**:
-    - [ ] Weryfikacja wyświetlania markerów i wykresów.
+    - [ ] **Testy parsera CSV i Mapy**: Weryfikacja poprawności rysowania trasy i czytania dużych plików sesji.
+- [x] **Testy komponentów UI**:
+    - [x] Weryfikacja wyświetlania wykresów i filtrowania (OverallStats).
+    - [ ] **Testy ekranu szczegółów**: Weryfikacja interakcji z wykresami i mapą.
 
 ## ZREALIZOWANE ELEMENTY INFRASTRUKTURY:
 - [x] System nawigacji i zarządzanie sesją.
@@ -48,4 +54,4 @@
 - [x] Material 3 UI na telefonie.
 - [x] Dynamiczne formatowanie dystansu na ekranie głównym (m/km).
 - [x] Ekran statystyk ogólnych z filtrowaniem i wykresami trendów.
-- [x] Automatyzacja CI z cache'owaniem Gradle.
+- [x] Automatyzacja CI z cache'owaniem Gradle i Dependency Injection w testach.
