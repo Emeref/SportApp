@@ -26,6 +26,7 @@ import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.line.lineChart
+import com.patrykandpatrick.vico.compose.chart.line.lineSpec
 import com.patrykandpatrick.vico.compose.component.lineComponent
 import com.patrykandpatrick.vico.compose.component.shapeComponent
 import com.patrykandpatrick.vico.compose.component.textComponent
@@ -35,6 +36,7 @@ import com.patrykandpatrick.vico.core.component.marker.MarkerComponent
 import com.patrykandpatrick.vico.core.component.shape.Shapes
 import com.patrykandpatrick.vico.core.component.shape.cornered.Corner
 import com.patrykandpatrick.vico.core.component.shape.cornered.CorneredShape
+import com.patrykandpatrick.vico.core.dimensions.MutableDimensions
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.marker.Marker
@@ -215,12 +217,14 @@ fun ChartSection(title: String, producer: ChartEntryModelProducer) {
     }
 
     val marker = rememberMarkerCustom()
+    val orangeColor = Color(0xFFF9A825) // Pomarańczowy
 
     Column {
         Text(text = title, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
         Spacer(modifier = Modifier.height(8.dp))
         Chart(
             chart = lineChart(
+                lines = listOf(lineSpec(lineColor = orangeColor)),
                 axisValuesOverrider = axisValuesOverrider
             ),
             chartModelProducer = producer,
@@ -247,11 +251,12 @@ fun rememberMarkerCustom(): Marker {
     val label = textComponent(
         color = labelTextColor,
         background = shapeComponent(shape = labelBackgroundShape, color = labelBackgroundColor),
+        padding = MutableDimensions(horizontalDp = 8f, verticalDp = 4f),
         textAlignment = Layout.Alignment.ALIGN_CENTER
     )
-    val indicator = shapeComponent(shape = Shapes.pillShape, color = MaterialTheme.colorScheme.primary)
+    val indicator = shapeComponent(shape = Shapes.pillShape, color = Color.Green) // Kropka w miejscu przecięcia
     val guideline = lineComponent(
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+        color = Color.Green.copy(alpha = 0.5f), // Linia dotyku (zielona)
         thickness = 2.dp
     )
     return remember(label, indicator, guideline) {
