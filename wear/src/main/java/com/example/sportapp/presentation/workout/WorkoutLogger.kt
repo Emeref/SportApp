@@ -24,7 +24,7 @@ class WorkoutLogger(
     private var lastDescentRef: Double? = null
     private var totalAscent: Double = 0.0
     private var totalDescent: Double = 0.0
-    private val ELEVATION_THRESHOLD = 0.5 // Próg zmiany wysokości w metrach
+    private val ELEVATION_THRESHOLD = 2.0 // Próg zmiany wysokości w metrach
 
     private val heartRates = mutableListOf<Float>()
     private val logBuffer = mutableListOf<String>()

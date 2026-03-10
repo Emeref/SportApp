@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.floor
 
-class WorkoutRepository(private val context: Context) {
+class WorkoutRepository(private val context: Context) : IWorkoutRepository {
 
     private val settingsManager = MobileSettingsManager(context)
 
@@ -24,7 +24,7 @@ class WorkoutRepository(private val context: Context) {
         return dir
     }
 
-    fun getUniqueActivityTypes(): List<String> {
+    override fun getUniqueActivityTypes(): List<String> {
         return getAllSummaries().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
     }
 
@@ -58,10 +58,10 @@ class WorkoutRepository(private val context: Context) {
         return getFilteredStats(startDate = startDate, endDate = endDate)
     }
 
-    fun getFilteredStats(
-        activityType: String? = null,
-        startDate: Date? = null,
-        endDate: Date? = null
+    override fun getFilteredStats(
+        activityType: String?,
+        startDate: Date?,
+        endDate: Date?
     ): Map<String, Any> {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         
@@ -87,7 +87,7 @@ class WorkoutRepository(private val context: Context) {
         )
     }
 
-    fun formatDistance(meters: Double): String {
+    override fun formatDistance(meters: Double): String {
         return when {
             meters < 1000 -> "${floor(meters).toInt()} m"
             meters < 10000 -> String.format(Locale.US, "%.2f km", floor(meters / 10.0) / 100.0)
@@ -96,7 +96,7 @@ class WorkoutRepository(private val context: Context) {
         }
     }
 
-    fun getAllSummaries(): List<Map<String, String>> {
+    override fun getAllSummaries(): List<Map<String, String>> {
         val file = File(getActivitiesDir(), "Podsumowanie_cwiczen.csv")
         if (!file.exists()) return emptyList()
 
@@ -122,7 +122,7 @@ class WorkoutRepository(private val context: Context) {
         return results.sortedBy { it["data"] } // Sortujemy od najstarszych do najnowszych
     }
 
-    fun getActivityItems(): List<ActivityItem> {
+    override fun getActivityItems(): List<ActivityItem> {
         val summaries = getAllSummaries()
         return summaries.mapIndexed { index, map ->
             val distGpsM = map["gps_dystans"]?.toDoubleOrNull() ?: 0.0

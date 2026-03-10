@@ -37,9 +37,10 @@
     - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań na koncie użytkownika, backup i wczytywanie danych.
 
 ## 5. Jakość i Testy
-- [ ] **Unit testy**:
-    - [ ] Testy logiki biznesowej.
-    - [ ] Testy komponentów UI.
+- [x] **Unit testy**:
+    - [x] Testy logiki biznesowej (Kalkulatory, Repozytoria, ViewModele).
+- [ ] **Testy komponentów UI**:
+    - [ ] Weryfikacja wyświetlania markerów i wykresów.
 
 ## ZREALIZOWANE ELEMENTY INFRASTRUKTURY:
 - [x] System nawigacji i zarządzanie sesją.
@@ -47,3 +48,4 @@
 - [x] Material 3 UI na telefonie.
 - [x] Dynamiczne formatowanie dystansu na ekranie głównym (m/km).
 - [x] Ekran statystyk ogólnych z filtrowaniem i wykresami trendów.
+- [x] Automatyzacja CI z cache'owaniem Gradle.

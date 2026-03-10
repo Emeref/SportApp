@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.R
 import com.example.sportapp.presentation.home.WidgetFactory
+import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
@@ -51,7 +52,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.ceil
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverallStatsScreen(
     viewModel: OverallStatsViewModel,
@@ -64,7 +64,39 @@ fun OverallStatsScreen(
     val selectedType by viewModel.selectedType.collectAsState()
     val startDate by viewModel.startDate.collectAsState()
     val endDate by viewModel.endDate.collectAsState()
-    
+
+    OverallStatsContent(
+        stats = stats,
+        widgets = widgets,
+        activityTypes = activityTypes,
+        selectedType = selectedType,
+        startDate = startDate,
+        endDate = endDate,
+        chartProducers = viewModel.chartProducers,
+        getMaxValueForWidget = { viewModel.getMaxValueForWidget(it) },
+        onTypeSelected = { viewModel.onTypeSelected(it) },
+        onDateRangeSelected = { start, end -> viewModel.onDateRangeSelected(start, end) },
+        onNavigateBack = onNavigateBack,
+        onNavigateToOptions = onNavigateToOptions
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OverallStatsContent(
+    stats: Map<String, Any>,
+    widgets: List<WidgetItem>,
+    activityTypes: List<String>,
+    selectedType: String?,
+    startDate: Date?,
+    endDate: Date?,
+    chartProducers: Map<String, ChartEntryModelProducer>,
+    getMaxValueForWidget: (String) -> Double,
+    onTypeSelected: (String?) -> Unit,
+    onDateRangeSelected: (Date?, Date?) -> Unit,
+    onNavigateBack: () -> Unit,
+    onNavigateToOptions: () -> Unit
+) {
     var showTypeMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
@@ -113,9 +145,9 @@ fun OverallStatsScreen(
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
                         DropdownMenu(expanded = showTypeMenu, onDismissRequest = { showTypeMenu = false }) {
-                            DropdownMenuItem(text = { Text("Wszystkie") }, onClick = { viewModel.onTypeSelected(null); showTypeMenu = false })
+                            DropdownMenuItem(text = { Text("Wszystkie") }, onClick = { onTypeSelected(null); showTypeMenu = false })
                             activityTypes.forEach { type ->
-                                DropdownMenuItem(text = { Text(type) }, onClick = { viewModel.onTypeSelected(type); showTypeMenu = false })
+                                DropdownMenuItem(text = { Text(type) }, onClick = { onTypeSelected(type); showTypeMenu = false })
                             }
                         }
                     }
@@ -126,7 +158,7 @@ fun OverallStatsScreen(
                                 val cal = Calendar.getInstance()
                                 DatePickerDialog(context, { _, y, m, d ->
                                     val date = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }.time
-                                    viewModel.onDateRangeSelected(date, endDate)
+                                    onDateRangeSelected(date, endDate)
                                 }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
                             },
                             modifier = Modifier.weight(1f)
@@ -141,7 +173,7 @@ fun OverallStatsScreen(
                                 val cal = Calendar.getInstance()
                                 DatePickerDialog(context, { _, y, m, d ->
                                     val date = Calendar.getInstance().apply { set(y, m, d, 23, 59, 59) }.time
-                                    viewModel.onDateRangeSelected(startDate, date)
+                                    onDateRangeSelected(startDate, date)
                                 }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
                             },
                             modifier = Modifier.weight(1f)
@@ -189,9 +221,9 @@ fun OverallStatsScreen(
                     
                     activeWidgets.forEach { widget ->
                         if (widget.id != "count") {
-                            val producer = viewModel.chartProducers[widget.id]
+                            val producer = chartProducers[widget.id]
                             if (producer != null) {
-                                val maxVal = viewModel.getMaxValueForWidget(widget.id)
+                                val maxVal = getMaxValueForWidget(widget.id)
                                 val unit = when(widget.id) {
                                     "distanceGps" -> if (maxVal > 6000) "km" else "m"
                                     "distanceSteps" -> if (maxVal > 6000) "km" else "m"
@@ -333,7 +365,7 @@ fun rememberMarkerCustom(rawData: List<Map<String, String>>, unit: String): Mark
             ) {
                 with(context) {
                     // Rezerwujemy stałe miejsce na 3 linie tekstu nad wykresem
-                    outInsets.top = label.getHeight(context, text = "Line 1\nLine 2\nLine 3") + (density * 32f)
+                    outInsets.top = label.getHeight(context, text = "Activity Name\n2024-01-01\n100.0 km") + (density * 24f)
                 }
             }
         }.apply {
