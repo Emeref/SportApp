@@ -3,6 +3,7 @@ package com.example.sportapp.presentation.stats
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.WorkoutRepository
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -11,8 +12,10 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 
-class OverallStatsViewModel(context: Context) : ViewModel() {
-    private val repository = WorkoutRepository(context)
+class OverallStatsViewModel(
+    context: Context,
+    private val repository: IWorkoutRepository = WorkoutRepository(context)
+) : ViewModel() {
     private val settingsManager = OverallStatsSettingsManager(context)
 
     val widgets = settingsManager.widgetsFlow.stateIn(
@@ -46,16 +49,18 @@ class OverallStatsViewModel(context: Context) : ViewModel() {
     )
 
     init {
-        _activityTypes.value = repository.getUniqueActivityTypes()
+        refreshActivityTypes()
         
         combine(_selectedType, _startDate, _endDate) { type, start, end ->
             repository.getFilteredStats(type, start, end)
         }.onEach { statsMap ->
-            // Najpierw aktualizujemy dane wykresów, potem statystyki, 
-            // aby UI nie próbowało renderować wykresów z nieaktualnymi (pustymi) producentami
             updateChartData(statsMap["raw_data"] as? List<Map<String, String>> ?: emptyList())
             _stats.value = statsMap
         }.launchIn(viewModelScope)
+    }
+
+    fun refreshActivityTypes() {
+        _activityTypes.value = repository.getUniqueActivityTypes()
     }
 
     @Suppress("UNCHECKED_CAST")

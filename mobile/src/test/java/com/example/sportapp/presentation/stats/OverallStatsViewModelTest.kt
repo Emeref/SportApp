@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.stats
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.example.sportapp.data.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
@@ -13,7 +14,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.io.File
 import java.util.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -23,6 +23,7 @@ class OverallStatsViewModelTest {
 
     private lateinit var context: Context
     private lateinit var viewModel: OverallStatsViewModel
+    private lateinit var fakeRepository: FakeWorkoutRepository
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -30,16 +31,28 @@ class OverallStatsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
         
-        val activitiesDir = File(context.filesDir, "activities")
-        if (!activitiesDir.exists()) activitiesDir.mkdirs()
-        val summaryFile = File(activitiesDir, "Podsumowanie_cwiczen.csv")
-        summaryFile.writeText(
-            "nazwa aktywnosci;data;dlugosc;kalorie;gps_dystans;kroki_dystans;przewyzszenia_gora;przewyzszenia_dol;kroki\n" +
-            "Spacer;2024-03-01 10:00:00;00:30:00;200;3000;2800;10;5;4000\n" +
-            "Bieganie;2024-03-02 10:00:00;00:45:00;500;8000;7500;50;45;10000"
-        )
+        fakeRepository = FakeWorkoutRepository().apply {
+            summaries = mutableListOf(
+                mapOf(
+                    "nazwa aktywnosci" to "Spacer",
+                    "data" to "2024-03-01 10:00:00",
+                    "kalorie" to "200",
+                    "gps_dystans" to "3000",
+                    "kroki_dystans" to "2800",
+                    "kroki" to "4000"
+                ),
+                mapOf(
+                    "nazwa aktywnosci" to "Bieganie",
+                    "data" to "2024-03-02 10:00:00",
+                    "kalorie" to "500",
+                    "gps_dystans" to "8000",
+                    "kroki_dystans" to "7500",
+                    "kroki" to "10000"
+                )
+            )
+        }
 
-        viewModel = OverallStatsViewModel(context)
+        viewModel = OverallStatsViewModel(context, fakeRepository)
     }
 
     @After

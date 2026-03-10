@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-03-09T15:17:01.558320Z">
+        <DropdownSelection timestamp="2026-03-10T11:55:07.755956100Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=56201FDCR00DHS" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\konra\.android\avd\Medium_Phone.avd" />
             </handle>
           </Target>
         </DropdownSelection>
