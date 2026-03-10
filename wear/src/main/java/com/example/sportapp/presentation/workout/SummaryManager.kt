@@ -2,8 +2,10 @@ package com.example.sportapp.presentation.workout
 
 import android.content.Context
 import android.util.Log
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileReader
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
@@ -85,5 +87,56 @@ object SummaryManager {
         } catch (e: Exception) {
             Log.e("SummaryManager", "Error saving summary", e)
         }
+    }
+
+    data class WeeklyStats(
+        val totalSteps: Int,
+        val totalDistanceMeters: Int,
+        val totalCalories: Int
+    )
+
+    fun getWeeklyStats(context: Context): WeeklyStats {
+        val activitiesDir = File(context.filesDir, "activities")
+        val file = File(activitiesDir, SUMMARY_FILE_NAME)
+        if (!file.exists()) return WeeklyStats(0, 0, 0)
+
+        var totalSteps = 0
+        var totalDistance = 0
+        var totalCalories = 0.0
+
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -7)
+        val oneWeekAgo = calendar.time
+
+        try {
+            BufferedReader(FileReader(file)).use { reader ->
+                val header = reader.readLine() // Skip header
+                var line: String? = reader.readLine()
+                while (line != null) {
+                    val parts = line.split(";")
+                    if (parts.size >= 12) {
+                        try {
+                            val date = sdf.parse(parts[0])
+                            if (date != null && date.after(oneWeekAgo)) {
+                                totalSteps += parts[3].toIntOrNull() ?: 0
+                                // Preferujemy GPS dystans, jeśli brak to kroki_dystans
+                                val distGps = parts[5].toIntOrNull() ?: 0
+                                val distSteps = parts[4].toIntOrNull() ?: 0
+                                totalDistance += if (distGps > 0) distGps else distSteps
+                                totalCalories += parts[11].toDoubleOrNull() ?: 0.0
+                            }
+                        } catch (e: Exception) {
+                            Log.e("SummaryManager", "Error parsing line: $line", e)
+                        }
+                    }
+                    line = reader.readLine()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SummaryManager", "Error reading summary file", e)
+        }
+
+        return WeeklyStats(totalSteps, totalDistance, totalCalories.toInt())
     }
 }

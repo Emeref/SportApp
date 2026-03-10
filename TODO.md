@@ -38,8 +38,8 @@
     - [x] Wybór okresu raportowania (dziś, tydzień, miesiąc, rok, inne).
 
 ## 4. Funkcje Wear OS (Zegarek)
-- [ ] **Statystyki na zegarku**:
-    - [ ] Wyświetlanie podsumowania widgetów z ostatniego tygodnia (dystans, kcal, kroki).
+- [x] **Statystyki na zegarku**:
+    - [x] Wyświetlanie podsumowania widgetów z ostatniego tygodnia (dystans, kcal, kroki).
 
 ## 5. Chmura i Bezpieczeństwo
 - [ ] **Integracja z Google**:
