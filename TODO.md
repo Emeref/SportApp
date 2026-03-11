@@ -66,5 +66,7 @@
 
 ## 7. Refaktoryzacja i Dobre Praktyki
 - [x] **Wstrzykiwanie Zależności**: Wdrożenie **Hilt** w modułach `mobile` i `wear`.
+- [x] **Migracja na KSP**: Przejście z Kapt na KSP w module `mobile` (lepsza kompatybilność z Kotlin 2.x i Hilt).
+- [x] **Usunięcie manualnych fabryk ViewModeli**: Pełne przejście na `@HiltViewModel`.
 - [ ] **Clean Code**: Usunięcie hardkodowanych stringów (klucze CSV, trasy nawigacji) do stałych/typów enumeratywnych.
 - [ ] **Usprawnienie modelu danych**: Rozważenie przejścia z metadanych w nazwie pliku na metadane wewnątrz pliku lub bazę Room.
