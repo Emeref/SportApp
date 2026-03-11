@@ -50,7 +50,7 @@ class WorkoutRepositoryTest {
             "Bieganie;2024-03-02 10:00:00;00:45:00;500.44;8000.0;7500.0;50.0;45.0;10000"
         )
 
-        val stats = repository.getFilteredStatsSuspend()
+        val stats = repository.getFilteredStats()
         // 200.55 + 500.44 = 700.99
         assertEquals(700.99, stats["calories"] as Double, 0.001)
     }

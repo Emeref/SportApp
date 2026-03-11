@@ -1,16 +1,17 @@
 package com.example.sportapp.data
 
 import com.example.sportapp.presentation.activities.ActivityItem
+import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.util.*
 
 class FakeWorkoutRepository : IWorkoutRepository {
     var summaries = mutableListOf<Map<String, String>>()
 
-    override fun getUniqueActivityTypes(): List<String> {
+    override suspend fun getUniqueActivityTypes(): List<String> {
         return summaries.map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
     }
 
-    override fun getFilteredStats(
+    override suspend fun getFilteredStats(
         activityType: String?,
         startDate: Date?,
         endDate: Date?
@@ -33,9 +34,13 @@ class FakeWorkoutRepository : IWorkoutRepository {
         )
     }
 
+    override suspend fun getStatsForPeriod(period: ReportingPeriod, customDays: Int): Map<String, Any> {
+        return getFilteredStats()
+    }
+
     override fun formatDistance(meters: Double): String = "${meters.toInt()} m"
 
-    override fun getAllSummaries(): List<Map<String, String>> = summaries
+    override suspend fun getAllSummaries(): List<Map<String, String>> = summaries
 
-    override fun getActivityItems(): List<ActivityItem> = emptyList()
+    override suspend fun getActivityItems(): List<ActivityItem> = emptyList()
 }
