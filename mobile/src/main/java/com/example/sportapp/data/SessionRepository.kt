@@ -7,17 +7,14 @@ import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import java.io.BufferedReader
 import java.io.File
-import java.util.*
+import java.io.FileReader
+import javax.inject.Inject
+import javax.inject.Singleton
 
-data class SessionData(
-    val times: List<String>,
-    val route: List<LatLng>,
-    val charts: Map<String, List<Float?>>,
-    val error: String? = null
-)
-
-class SessionRepository(private val context: Context) {
+@Singleton
+class SessionRepository @Inject constructor(private val context: Context) {
     private val settingsManager = MobileSettingsManager(context)
 
     private suspend fun getActivitiesDir(): File = withContext(Dispatchers.IO) {
@@ -43,42 +40,43 @@ class SessionRepository(private val context: Context) {
         columns.forEach { chartData[it] = mutableListOf() }
 
         try {
-            val lines = file.readLines()
-            if (lines.size < 2) return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Plik jest pusty lub uszkodzony")
-
-            val header = lines[0].split(";")
-            val timeIdx = header.indexOf("czas")
-            val latIdx = header.indexOf("lat")
-            val lonIdx = header.indexOf("lon")
-            
-            // Check if critical column exists
-            if (timeIdx == -1) {
-                return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Niepoprawny format: brak kolumny 'czas'")
-            }
-
-            val colIndices = columns.associateWith { header.indexOf(it) }
-
-            for (i in 1 until lines.size) {
-                val values = lines[i].split(";")
-                if (values.size < 1) continue // Skip empty lines
-
-                val time = values.getOrNull(timeIdx) ?: ""
-                times.add(time)
-
-                val lat = values.getOrNull(latIdx)?.toDoubleOrNull()
-                val lon = values.getOrNull(lonIdx)?.toDoubleOrNull()
-                if (lat != null && lon != null) {
-                    route.add(LatLng(lat, lon))
+            BufferedReader(FileReader(file)).use { reader ->
+                val headerLine = reader.readLine() ?: return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Plik jest pusty")
+                val header = headerLine.split(";")
+                
+                val timeIdx = header.indexOf("czas")
+                val latIdx = header.indexOf("lat")
+                val lonIdx = header.indexOf("lon")
+                
+                if (timeIdx == -1) {
+                    return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Niepoprawny format: brak kolumny 'czas'")
                 }
 
-                colIndices.forEach { (name, idx) ->
-                    if (idx != -1) {
-                        val value = values.getOrNull(idx)?.replace(",", ".")?.toFloatOrNull()
-                        chartData[name]?.add(value)
-                    } else {
-                        // Kolumna nie istnieje w pliku - wypełniamy zerem (null zostanie zamieniony na 0f w ViewModelu)
-                        chartData[name]?.add(null)
+                val colIndices = columns.associateWith { header.indexOf(it) }
+
+                var line = reader.readLine()
+                while (line != null) {
+                    val values = line.split(";")
+                    if (values.isNotEmpty()) {
+                        val time = values.getOrNull(timeIdx) ?: ""
+                        times.add(time)
+
+                        val lat = values.getOrNull(latIdx)?.toDoubleOrNull()
+                        val lon = values.getOrNull(lonIdx)?.toDoubleOrNull()
+                        if (lat != null && lon != null) {
+                            route.add(LatLng(lat, lon))
+                        }
+
+                        colIndices.forEach { (name, idx) ->
+                            if (idx != -1) {
+                                val value = values.getOrNull(idx)?.replace(",", ".")?.toFloatOrNull()
+                                chartData[name]?.add(value)
+                            } else {
+                                chartData[name]?.add(null)
+                            }
+                        }
                     }
+                    line = reader.readLine()
                 }
             }
         } catch (e: Exception) {
@@ -89,3 +87,10 @@ class SessionRepository(private val context: Context) {
         return@withContext SessionData(times, route, chartData)
     }
 }
+
+data class SessionData(
+    val times: List<String>,
+    val route: List<LatLng>,
+    val charts: Map<String, List<Float?>>,
+    val error: String? = null
+)

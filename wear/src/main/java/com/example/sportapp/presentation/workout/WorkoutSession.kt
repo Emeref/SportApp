@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
+import kotlinx.coroutines.launch
 import java.util.*
 
 @Composable
@@ -14,6 +15,7 @@ fun rememberWorkoutSession(
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ): WorkoutSessionState {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var status by remember { mutableStateOf(WorkoutStatus.ACTIVE) }
     val startTime = remember { Date() }
     
@@ -65,51 +67,53 @@ fun rememberWorkoutSession(
         status = if (status == WorkoutStatus.ACTIVE) WorkoutStatus.PAUSED else WorkoutStatus.ACTIVE
     }
 
-    val endWorkout = {
-        val stats = logger.getFinalStats()
-        val durationHours = workoutTimerState.totalSeconds / 3600.0
-        val distanceKm = distanceState.totalDistance / 1000.0
-        val distanceStepsMeters = (stepCount * healthData.stepLength / 100.0)
-        
-        val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
-        val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
+    val endWorkout: () -> Unit = {
+        scope.launch {
+            val stats = logger.getFinalStats()
+            val durationHours = workoutTimerState.totalSeconds / 3600.0
+            val distanceKm = distanceState.totalDistance / 1000.0
+            val distanceStepsMeters = (stepCount * healthData.stepLength / 100.0)
+            
+            val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
+            val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
 
-        // Przygotowanie danych do podsumowania UI
-        val summary = mutableListOf<Pair<String, String>>()
-        summary.add("Czas trwania" to workoutTimerState.formattedTime)
-        
-        if (stepCount > 0) summary.add("Kroki" to "$stepCount")
-        if (distanceKm > 0) summary.add("Dystans (GPS)" to String.format(Locale.US, "%.2f km", distanceKm))
-        
-        val avgBpm = stats["avgBpm"] as? Double
-        if (avgBpm != null) summary.add("Średnie tętno" to "${avgBpm.toInt()} BPM")
-        
-        val totalAscent = stats["totalAscent"] as Double
-        if (totalAscent > 0) summary.add("Przewyższenie +" to String.format(Locale.US, "%.1f m", totalAscent))
+            // Przygotowanie danych do podsumowania UI
+            val summary = mutableListOf<Pair<String, String>>()
+            summary.add("Czas trwania" to workoutTimerState.formattedTime)
+            
+            if (stepCount > 0) summary.add("Kroki" to "$stepCount")
+            if (distanceKm > 0) summary.add("Dystans (GPS)" to String.format(Locale.US, "%.2f km", distanceKm))
+            
+            val avgBpm = stats["avgBpm"] as? Double
+            if (avgBpm != null) summary.add("Średnie tętno" to "${avgBpm.toInt()} BPM")
+            
+            val totalAscent = stats["totalAscent"] as Double
+            if (totalAscent > 0) summary.add("Przewyższenie +" to String.format(Locale.US, "%.1f m", totalAscent))
 
-        if (totalCalories > 0) {
-            summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", totalCalories))
+            if (totalCalories > 0) {
+                summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", totalCalories))
+            }
+
+            // Zapis do pliku zbiorczego (CSV)
+            SummaryManager.saveSummary(
+                context = context,
+                activityName = activityName,
+                startTime = startTime,
+                durationFormatted = workoutTimerState.formattedTime,
+                steps = if (stepCount > 0) stepCount else null,
+                distanceSteps = if (distanceStepsMeters > 0) distanceStepsMeters else null,
+                distanceGps = if (distanceState.totalDistance > 0) distanceState.totalDistance else null,
+                avgSpeedSteps = if (avgSpeedSteps > 0) avgSpeedSteps else null,
+                avgSpeedGps = if (avgSpeedGps > 0) avgSpeedGps else null,
+                totalAscent = totalAscent,
+                totalDescent = stats["totalDescent"] as Double,
+                avgBpm = avgBpm,
+                totalCalories = totalCalories,
+                durationSeconds = workoutTimerState.totalSeconds
+            )
+
+            onEndWorkout(summary)
         }
-
-        // Zapis do pliku zbiorczego (CSV)
-        SummaryManager.saveSummary(
-            context = context,
-            activityName = activityName,
-            startTime = startTime,
-            durationFormatted = workoutTimerState.formattedTime,
-            steps = if (stepCount > 0) stepCount else null,
-            distanceSteps = if (distanceStepsMeters > 0) distanceStepsMeters else null,
-            distanceGps = if (distanceState.totalDistance > 0) distanceState.totalDistance else null,
-            avgSpeedSteps = if (avgSpeedSteps > 0) avgSpeedSteps else null,
-            avgSpeedGps = if (avgSpeedGps > 0) avgSpeedGps else null,
-            totalAscent = totalAscent,
-            totalDescent = stats["totalDescent"] as Double,
-            avgBpm = avgBpm,
-            totalCalories = totalCalories,
-            durationSeconds = workoutTimerState.totalSeconds
-        )
-
-        onEndWorkout(summary)
     }
 
     return WorkoutSessionState(

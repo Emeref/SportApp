@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.wear.compose.material.*
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
@@ -20,15 +19,20 @@ import com.example.sportapp.presentation.workout.ClimbingWorkoutScreen
 import com.example.sportapp.presentation.workout.WalkingWorkoutScreen
 import com.example.sportapp.presentation.workout.WorkoutSummaryScreen
 import com.google.maps.android.compose.MapType
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var settingsManager: SettingsManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val context = LocalContext.current
             val navController = rememberSwipeDismissableNavController()
-            val settingsManager = remember { SettingsManager(context) }
             val scope = rememberCoroutineScope()
             
             val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData()))

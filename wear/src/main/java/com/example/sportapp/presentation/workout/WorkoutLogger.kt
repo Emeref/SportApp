@@ -4,11 +4,12 @@ import android.content.Context
 import android.util.Log
 import com.example.sportapp.presentation.settings.Gender
 import com.example.sportapp.presentation.settings.HealthData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class WorkoutLogger(
@@ -30,6 +31,32 @@ class WorkoutLogger(
     private val logBuffer = mutableListOf<String>()
     private var lastFlushTime: Long = 0
 
+    companion object {
+        const val COLUMN_TIME = "czas"
+        const val COLUMN_LAT = "lat"
+        const val COLUMN_LON = "lon"
+        const val COLUMN_BPM = "bpm"
+        const val COLUMN_AVG_BPM = "srednie_bpm"
+        const val COLUMN_STEPS = "kroki"
+        const val COLUMN_STEPS_MIN = "kroki_min"
+        const val COLUMN_DISTANCE_STEPS = "kroki_dystans"
+        const val COLUMN_DISTANCE_GPS = "gps_dystans"
+        const val COLUMN_SPEED_GPS = "predkosc_gps"
+        const val COLUMN_SPEED_STEPS = "predkosc_kroki"
+        const val COLUMN_ALTITUDE = "wysokosc"
+        const val COLUMN_ASCENT = "przewyzszenia_gora"
+        const val COLUMN_DESCENT = "przewyzszenia_dol"
+        const val COLUMN_CALORIES_MIN = "kalorie_min"
+        const val COLUMN_CALORIES_SUM = "kalorie_suma"
+
+        val HEADER = listOf(
+            COLUMN_TIME, COLUMN_LAT, COLUMN_LON, COLUMN_BPM, COLUMN_AVG_BPM,
+            COLUMN_STEPS, COLUMN_STEPS_MIN, COLUMN_DISTANCE_STEPS, COLUMN_DISTANCE_GPS,
+            COLUMN_SPEED_GPS, COLUMN_SPEED_STEPS, COLUMN_ALTITUDE, COLUMN_ASCENT,
+            COLUMN_DESCENT, COLUMN_CALORIES_MIN, COLUMN_CALORIES_SUM
+        ).joinToString(";")
+    }
+
     init {
         val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.US)
         val dateStr = sdf.format(Date())
@@ -44,7 +71,7 @@ class WorkoutLogger(
         startTime = System.currentTimeMillis()
         lastFlushTime = startTime
         
-        writeLine("czas;lat;lon;bpm;srednie_bpm;kroki;kroki_min;kroki_dystans;gps_dystans;predkosc_gps;predkosc_kroki;wysokosc;przewyzszenia_gora;przewyzszenia_dol;kalorie_min;kalorie_suma")
+        writeLineSync(HEADER)
     }
 
     private fun formatVal(value: Any?, decimalPlaces: Int = -1): String {
@@ -59,7 +86,7 @@ class WorkoutLogger(
         return stringVal
     }
 
-    fun logData(
+    suspend fun logData(
         lat: Double? = null,
         lon: Double? = null,
         bpm: Float? = null,
@@ -70,7 +97,7 @@ class WorkoutLogger(
         calorieMin: Double? = null,
         calorieSum: Double? = null,
         forceFlush: Boolean = false
-    ) {
+    ) = withContext(Dispatchers.Default) {
         val currentTime = System.currentTimeMillis()
         val durationMillis = currentTime - startTime
         val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", (durationMillis / 3600000), (durationMillis / 60000) % 60, (durationMillis / 1000) % 60)
@@ -82,23 +109,21 @@ class WorkoutLogger(
         val odlKrokiRounded = (kroki?.times(healthData.stepLength / 100.0))?.roundToInt()
         val gpsDystansRounded = gpsDystans?.roundToInt()
 
-        // Nowa logika przewyższeń
+        // Logika przewyższeń
         if (wysokosc != null) {
             if (lastAscentRef == null) lastAscentRef = wysokosc
             if (lastDescentRef == null) lastDescentRef = wysokosc
 
-            // Sprawdzamy wzrost wysokości
             if (wysokosc - lastAscentRef!! >= ELEVATION_THRESHOLD) {
                 totalAscent += wysokosc - lastAscentRef!!
                 lastAscentRef = wysokosc
-                lastDescentRef = wysokosc // Resetujemy punkt odniesienia dla spadku
+                lastDescentRef = wysokosc
             }
 
-            // Sprawdzamy spadek wysokości
             if (lastDescentRef!! - wysokosc >= ELEVATION_THRESHOLD) {
                 totalDescent += lastDescentRef!! - wysokosc
                 lastDescentRef = wysokosc
-                lastAscentRef = wysokosc // Resetujemy punkt odniesienia dla wzrostu
+                lastAscentRef = wysokosc
             }
         }
 
@@ -121,25 +146,32 @@ class WorkoutLogger(
             append(formatVal(calorieSum, 1))
         }.toString()
 
-        logBuffer.add(line)
+        synchronized(logBuffer) {
+            logBuffer.add(line)
+        }
 
         if (forceFlush || currentTime - lastFlushTime >= 30000) flush()
     }
 
-    fun flush() {
-        if (logBuffer.isEmpty()) return
+    suspend fun flush() = withContext(Dispatchers.IO) {
+        val linesToWrite = synchronized(logBuffer) {
+            if (logBuffer.isEmpty()) return@withContext
+            val copy = logBuffer.toList()
+            logBuffer.clear()
+            copy
+        }
+        
         try {
             FileOutputStream(file, true).use { fos ->
-                logBuffer.forEach { line -> fos.write((line + "\n").toByteArray()) }
+                linesToWrite.forEach { line -> fos.write((line + "\n").toByteArray()) }
             }
-            logBuffer.clear()
             lastFlushTime = System.currentTimeMillis()
         } catch (e: Exception) {
             Log.e("WorkoutLogger", "Error flushing buffer", e)
         }
     }
 
-    private fun writeLine(line: String) {
+    private fun writeLineSync(line: String) {
         try {
             FileOutputStream(file, true).use { it.write((line + "\n").toByteArray()) }
         } catch (e: Exception) {
@@ -147,7 +179,7 @@ class WorkoutLogger(
         }
     }
     
-    fun getFinalStats(): Map<String, Any?> {
+    suspend fun getFinalStats(): Map<String, Any?> {
         flush()
         return mapOf(
             "totalAscent" to totalAscent,

@@ -6,12 +6,16 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "mobile_settings")
 
-class MobileSettingsManager(private val context: Context) {
+@Singleton
+class MobileSettingsManager @Inject constructor(@ApplicationContext private val context: Context) {
     private val gson = Gson()
 
     companion object {

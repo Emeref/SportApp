@@ -3,20 +3,26 @@ package com.example.sportapp.presentation.stats
 import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ActivityDetailViewModel(
-    context: Context,
-    private val sessionId: String // Nazwa pliku CSV
+@HiltViewModel
+class ActivityDetailViewModel @Inject constructor(
+    @ApplicationContext context: Context,
+    private val repository: SessionRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val repository = SessionRepository(context)
+    private val sessionId: String = checkNotNull(savedStateHandle["activityId"])
     private val settingsManager = ActivityDetailSettingsManager(context)
 
     val settings = settingsManager.settingsFlow.stateIn(

@@ -8,33 +8,36 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.sportapp.data.TestDataGenerator
 import com.example.sportapp.presentation.activities.ActivityListScreen
 import com.example.sportapp.presentation.activities.ActivityListViewModel
-import com.example.sportapp.presentation.activities.ActivityListViewModelFactory
 import com.example.sportapp.presentation.home.HomeScreen
 import com.example.sportapp.presentation.home.HomeViewModel
-import com.example.sportapp.presentation.home.HomeViewModelFactory
 import com.example.sportapp.presentation.navigation.Screen
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.SettingsScreen
 import com.example.sportapp.presentation.settings.WidgetSelectionScreen
 import com.example.sportapp.presentation.stats.ActivityDetailScreen
 import com.example.sportapp.presentation.stats.ActivityDetailViewModel
-import com.example.sportapp.presentation.stats.ActivityDetailViewModelFactory
 import com.example.sportapp.presentation.stats.OverallStatsScreen
 import com.example.sportapp.presentation.stats.OverallStatsViewModel
-import com.example.sportapp.presentation.stats.OverallStatsViewModelFactory
 import com.example.sportapp.presentation.stats.OverallStatsWidgetScreen
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var settingsManager: MobileSettingsManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -49,17 +52,12 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     val navController = rememberNavController()
-                    val homeViewModel: HomeViewModel = viewModel(
-                        factory = HomeViewModelFactory(applicationContext)
-                    )
-                    val settingsManager = MobileSettingsManager(applicationContext)
+                    val homeViewModel: HomeViewModel = hiltViewModel()
                     val settingsState by homeViewModel.settings.collectAsState()
                     val scope = rememberCoroutineScope()
                     
                     // Współdzielony ViewModel dla statystyk
-                    val statsViewModel: OverallStatsViewModel = viewModel(
-                        factory = OverallStatsViewModelFactory(applicationContext)
-                    )
+                    val statsViewModel: OverallStatsViewModel = hiltViewModel()
 
                     NavHost(
                         navController = navController,
@@ -117,9 +115,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Screen.ActivityList.route) {
-                            val activityListViewModel: ActivityListViewModel = viewModel(
-                                factory = ActivityListViewModelFactory(applicationContext)
-                            )
+                            val activityListViewModel: ActivityListViewModel = hiltViewModel()
                             ActivityListScreen(
                                 viewModel = activityListViewModel,
                                 onNavigateBack = { navController.popBackStack() },
@@ -128,17 +124,12 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable(Screen.ActivityDetail.route) { backStackEntry ->
-                            val activityId = backStackEntry.arguments?.getString("activityId")
-                            if (activityId != null) {
-                                val detailViewModel: ActivityDetailViewModel = viewModel(
-                                    factory = ActivityDetailViewModelFactory(applicationContext, activityId)
-                                )
-                                ActivityDetailScreen(
-                                    viewModel = detailViewModel,
-                                    onNavigateBack = { navController.popBackStack() }
-                                )
-                            }
+                        composable(Screen.ActivityDetail.route) {
+                            val detailViewModel: ActivityDetailViewModel = hiltViewModel()
+                            ActivityDetailScreen(
+                                viewModel = detailViewModel,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
                         }
                     }
                 }

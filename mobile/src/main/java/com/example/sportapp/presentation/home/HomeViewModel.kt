@@ -4,17 +4,23 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sportapp.data.WorkoutRepository
+import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.wearable.Wearable
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class HomeViewModel(context: Context) : ViewModel() {
-    private val repository = WorkoutRepository(context)
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    @ApplicationContext context: Context,
+    private val repository: IWorkoutRepository
+) : ViewModel() {
     private val settingsManager = MobileSettingsManager(context)
     private val messageClient = Wearable.getMessageClient(context)
     private val nodeClient = Wearable.getNodeClient(context)
@@ -43,7 +49,7 @@ class HomeViewModel(context: Context) : ViewModel() {
     fun refreshStats() {
         viewModelScope.launch {
             val currentSettings = _settings.value
-            _stats.value = repository.getStatsForPeriodSuspend(currentSettings.period, currentSettings.customDays)
+            _stats.value = repository.getStatsForPeriod(currentSettings.period, currentSettings.customDays)
         }
     }
 
