@@ -4,19 +4,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.example.sportapp.presentation.workout.SummaryManager
 import java.util.Locale
 
 @Composable
-fun StatisticsScreen() {
-    val context = LocalContext.current
-    val stats = remember { SummaryManager.getWeeklyStats(context) }
+fun StatisticsScreen(
+    viewModel: StatisticsViewModel = hiltViewModel()
+) {
+    val stats by viewModel.stats.collectAsState()
     val listState = rememberScalingLazyListState()
 
     ScalingLazyColumn(

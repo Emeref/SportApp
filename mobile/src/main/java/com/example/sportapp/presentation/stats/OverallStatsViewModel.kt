@@ -4,17 +4,20 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
-import com.example.sportapp.data.WorkoutRepository
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
+import javax.inject.Inject
 
-class OverallStatsViewModel(
-    context: Context,
-    private val repository: IWorkoutRepository = WorkoutRepository(context)
+@HiltViewModel
+class OverallStatsViewModel @Inject constructor(
+    @ApplicationContext context: Context,
+    private val repository: IWorkoutRepository
 ) : ViewModel() {
     private val settingsManager = OverallStatsSettingsManager(context)
 
@@ -62,11 +65,7 @@ class OverallStatsViewModel(
         
         viewModelScope.launch {
             combine(_selectedType, _startDate, _endDate) { type, start, end ->
-                if (repository is WorkoutRepository) {
-                    repository.getFilteredStatsSuspend(type, start, end)
-                } else {
-                    repository.getFilteredStats(type, start, end)
-                }
+                repository.getFilteredStats(type, start, end)
             }.collect { statsMap ->
                 updateChartData(statsMap["raw_data"] as? List<Map<String, String>> ?: emptyList())
                 _stats.value = statsMap
@@ -76,11 +75,7 @@ class OverallStatsViewModel(
 
     fun refreshActivityTypes() {
         viewModelScope.launch {
-            _activityTypes.value = if (repository is WorkoutRepository) {
-                repository.getUniqueActivityTypesSuspend()
-            } else {
-                repository.getUniqueActivityTypes()
-            }
+            _activityTypes.value = repository.getUniqueActivityTypes()
         }
     }
 

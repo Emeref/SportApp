@@ -5,10 +5,14 @@ import android.util.Log
 import com.google.android.gms.wearable.Asset
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class DataLayerManager(private val context: Context) {
+@Singleton
+class DataLayerManager @Inject constructor(@ApplicationContext private val context: Context) {
 
     suspend fun syncActivities() {
         Log.d("DataLayerManager", "syncActivities: Starting search for files...")

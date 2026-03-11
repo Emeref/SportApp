@@ -11,9 +11,12 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.floor
 
-class WorkoutRepository(private val context: Context) : IWorkoutRepository {
+@Singleton
+class WorkoutRepository @Inject constructor(private val context: Context) : IWorkoutRepository {
 
     private val settingsManager = MobileSettingsManager(context)
 
@@ -25,15 +28,11 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
         dir
     }
 
-    override fun getUniqueActivityTypes(): List<String> {
-        throw UnsupportedOperationException("Use suspend version: getUniqueActivityTypesSuspend")
+    override suspend fun getUniqueActivityTypes(): List<String> = withContext(Dispatchers.IO) {
+        getAllSummaries().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
     }
 
-    suspend fun getUniqueActivityTypesSuspend(): List<String> = withContext(Dispatchers.IO) {
-        getAllSummariesSuspend().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
-    }
-
-    suspend fun getStatsForPeriodSuspend(period: ReportingPeriod, customDays: Int): Map<String, Any> = withContext(Dispatchers.IO) {
+    override suspend fun getStatsForPeriod(period: ReportingPeriod, customDays: Int): Map<String, Any> = withContext(Dispatchers.IO) {
         val now = Calendar.getInstance()
         val startDate: Date
         val endDate: Date
@@ -60,25 +59,17 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
                 startDate = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -customDays) }.time
             }
         }
-        getFilteredStatsSuspend(startDate = startDate, endDate = endDate)
+        getFilteredStats(startDate = startDate, endDate = endDate)
     }
 
-    override fun getFilteredStats(
+    override suspend fun getFilteredStats(
         activityType: String?,
         startDate: Date?,
         endDate: Date?
-    ): Map<String, Any> {
-        throw UnsupportedOperationException("Use suspend version: getFilteredStatsSuspend")
-    }
-
-    suspend fun getFilteredStatsSuspend(
-        activityType: String? = null,
-        startDate: Date? = null,
-        endDate: Date? = null
     ): Map<String, Any> = withContext(Dispatchers.IO) {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         
-        val filtered = getAllSummariesSuspend().filter { summary ->
+        val filtered = getAllSummaries().filter { summary ->
             val typeMatch = activityType == null || summary["nazwa aktywnosci"] == activityType
             val dateMatch = try {
                 val date = sdf.parse(summary["data"] ?: "")
@@ -109,11 +100,7 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
         }
     }
 
-    override fun getAllSummaries(): List<Map<String, String>> {
-         throw UnsupportedOperationException("Use suspend version: getAllSummariesSuspend")
-    }
-
-    suspend fun getAllSummariesSuspend(): List<Map<String, String>> = withContext(Dispatchers.IO) {
+    override suspend fun getAllSummaries(): List<Map<String, String>> = withContext(Dispatchers.IO) {
         val file = File(getActivitiesDir(), "Podsumowanie_cwiczen.csv")
         if (!file.exists()) return@withContext emptyList<Map<String, String>>()
 
@@ -139,12 +126,8 @@ class WorkoutRepository(private val context: Context) : IWorkoutRepository {
         results.sortedBy { it["data"] }
     }
 
-    override fun getActivityItems(): List<ActivityItem> {
-        throw UnsupportedOperationException("Use suspend version: getActivityItemsSuspend")
-    }
-
-    suspend fun getActivityItemsSuspend(): List<ActivityItem> = withContext(Dispatchers.IO) {
-        val summaries = getAllSummariesSuspend()
+    override suspend fun getActivityItems(): List<ActivityItem> = withContext(Dispatchers.IO) {
+        val summaries = getAllSummaries()
         val dir = getActivitiesDir()
         val files = dir.listFiles { file -> file.isFile && file.name.endsWith(".csv") && file.name != "Podsumowanie_cwiczen.csv" } ?: emptyArray()
         val fileMap = files.associateBy { it.name }

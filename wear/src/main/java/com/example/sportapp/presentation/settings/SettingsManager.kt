@@ -2,20 +2,23 @@ package com.example.sportapp.presentation.settings
 
 import android.content.Context
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import com.google.maps.android.compose.MapType
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-private val Context.dataStore by preferencesDataStore(name = "settings")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-class SettingsManager(private val context: Context) {
+@Singleton
+class SettingsManager @Inject constructor(@ApplicationContext private val context: Context) {
     private val gson = Gson()
 
     companion object {
