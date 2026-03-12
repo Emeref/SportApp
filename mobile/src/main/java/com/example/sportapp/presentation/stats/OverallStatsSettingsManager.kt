@@ -20,26 +20,30 @@ class OverallStatsSettingsManager(private val context: Context) {
 
     companion object {
         private val WIDGETS_JSON = stringPreferencesKey("widgets_json")
+        
+        val DEFAULT_WIDGETS = listOf(
+            WidgetItem("count", "Liczba aktywności"),
+            WidgetItem("calories", "Spalone kalorie"),
+            WidgetItem("distanceGps", "Dystans (GPS)"),
+            WidgetItem("distanceSteps", "Dystans (kroki)"),
+            WidgetItem("ascent", "Przewyższenia w górę"),
+            WidgetItem("descent", "Przewyższenia w dół"),
+            WidgetItem("steps", "Wszystkie kroki")
+        )
     }
-
-    // Domyślny stan jest taki sam jak w ustawieniach głównych
-    private val defaultWidgets = listOf(
-        WidgetItem("count", "Liczba aktywności"),
-        WidgetItem("calories", "Spalone kalorie"),
-        WidgetItem("distanceGps", "Dystans (GPS)"),
-        WidgetItem("distanceSteps", "Dystans (kroki)"),
-        WidgetItem("ascent", "Przewyższenia w górę"),
-        WidgetItem("descent", "Przewyższenia w dół"),
-        WidgetItem("steps", "Wszystkie kroki")
-    )
 
     val widgetsFlow: Flow<List<WidgetItem>> = context.overallStatsDataStore.data.map { preferences ->
         val widgetsJson = preferences[WIDGETS_JSON]
         if (widgetsJson != null) {
-            val type = object : TypeToken<List<WidgetItem>>() {}.type
-            gson.fromJson(widgetsJson, type)
+            try {
+                val type = object : TypeToken<List<WidgetItem>>() {}.type
+                val decoded: List<WidgetItem>? = gson.fromJson(widgetsJson, type)
+                if (decoded.isNullOrEmpty()) DEFAULT_WIDGETS else decoded
+            } catch (e: Exception) {
+                DEFAULT_WIDGETS
+            }
         } else {
-            defaultWidgets
+            DEFAULT_WIDGETS
         }
     }
 
