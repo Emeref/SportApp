@@ -33,11 +33,22 @@ class SessionRepository @Inject constructor(private val context: Context) {
         val route = mutableListOf<LatLng>()
         val chartData = mutableMapOf<String, MutableList<Float?>>()
         
-        val columns = listOf(
-            "bpm", "srednie_bpm", "kroki", "kroki_min", "kroki_dystans", 
-            "gps_dystans", "predkosc_gps", "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol"
+        // Zaktualizowana lista kolumn zgodna z wymaganiami UI i rzeczywistymi nazwami w CSV
+        val columnMapping = mapOf(
+            "bpm" to "bpm",
+            "kalorie_min" to "kalorie_min",
+            "kalorie_suma" to "kalorie_suma",
+            "kroki_min" to "kroki_min",
+            "odl_kroki" to "kroki_dystans",
+            "predkosc_kroki" to "predkosc_kroki",
+            "gps_dystans" to "gps_dystans",
+            "predkosc" to "predkosc_gps",
+            "wysokosc" to "wysokosc",
+            "przewyzszenia_gora" to "przewyzszenia_gora",
+            "przewyzszenia_dol" to "przewyzszenia_dol"
         )
-        columns.forEach { chartData[it] = mutableListOf() }
+        
+        columnMapping.keys.forEach { chartData[it] = mutableListOf() }
 
         try {
             BufferedReader(FileReader(file)).use { reader ->
@@ -52,7 +63,7 @@ class SessionRepository @Inject constructor(private val context: Context) {
                     return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Niepoprawny format: brak kolumny 'czas'")
                 }
 
-                val colIndices = columns.associateWith { header.indexOf(it) }
+                val colIndices = columnMapping.mapValues { (_, csvName) -> header.indexOf(csvName) }
 
                 var line = reader.readLine()
                 while (line != null) {
@@ -67,12 +78,12 @@ class SessionRepository @Inject constructor(private val context: Context) {
                             route.add(LatLng(lat, lon))
                         }
 
-                        colIndices.forEach { (name, idx) ->
+                        colIndices.forEach { (uiName, idx) ->
                             if (idx != -1) {
                                 val value = values.getOrNull(idx)?.replace(",", ".")?.toFloatOrNull()
-                                chartData[name]?.add(value)
+                                chartData[uiName]?.add(value)
                             } else {
-                                chartData[name]?.add(null)
+                                chartData[uiName]?.add(null)
                             }
                         }
                     }

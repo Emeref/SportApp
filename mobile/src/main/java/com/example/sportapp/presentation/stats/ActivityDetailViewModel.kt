@@ -28,7 +28,10 @@ class ActivityDetailViewModel @Inject constructor(
     val settings = settingsManager.settingsFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ActivityDetailSettings(emptyList(), 0xFFFF9800.toInt())
+        initialValue = ActivityDetailSettings(
+            ActivityDetailSettingsManager.DEFAULT_ELEMENTS, 
+            ActivityDetailSettingsManager.DEFAULT_COLOR
+        )
     )
 
     private val _sessionData = MutableStateFlow<com.example.sportapp.data.SessionData?>(null)
@@ -39,10 +42,11 @@ class ActivityDetailViewModel @Inject constructor(
 
     val chartProducers: Map<String, ChartEntryModelProducer> = mapOf(
         "bpm" to ChartEntryModelProducer(),
-        "srednie_bpm" to ChartEntryModelProducer(),
-        "kroki" to ChartEntryModelProducer(),
+        "kalorie_min" to ChartEntryModelProducer(),
+        "kalorie_suma" to ChartEntryModelProducer(),
         "kroki_min" to ChartEntryModelProducer(),
         "odl_kroki" to ChartEntryModelProducer(),
+        "predkosc_kroki" to ChartEntryModelProducer(),
         "gps_dystans" to ChartEntryModelProducer(),
         "predkosc" to ChartEntryModelProducer(),
         "wysokosc" to ChartEntryModelProducer(),

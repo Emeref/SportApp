@@ -30,12 +30,12 @@ class ActivityDetailSettingsManager(private val context: Context) {
         val DEFAULT_ELEMENTS = listOf(
             WidgetItem("map", "Mapa"),
             WidgetItem("bpm", "Tętno (bpm)"),
-            WidgetItem("srednie_bpm", "Średnie tętno"),
-            WidgetItem("kroki", "Kroki"),
+            WidgetItem("kalorie_min", "Kalorie/min"),
             WidgetItem("kroki_min", "Kroki/min"),
             WidgetItem("odl_kroki", "Dystans (kroki)"),
+            WidgetItem("predkosc_kroki", "Prędkość (kroki)"),
             WidgetItem("gps_dystans", "Dystans (GPS)"),
-            WidgetItem("predkosc", "Prędkość"),
+            WidgetItem("predkosc", "Prędkość (GPS)"),
             WidgetItem("wysokosc", "Wysokość"),
             WidgetItem("przewyzszenia_gora", "Przewyższenia +"),
             WidgetItem("przewyzszenia_dol", "Przewyższenia -")
@@ -50,7 +50,22 @@ class ActivityDetailSettingsManager(private val context: Context) {
             try {
                 val type = object : TypeToken<List<WidgetItem>>() {}.type
                 val decoded: List<WidgetItem>? = gson.fromJson(elementsJson, type)
-                if (decoded.isNullOrEmpty()) DEFAULT_ELEMENTS else decoded
+                
+                // Filtrujemy niechciane elementy (srednie_bpm, kroki, kalorie_suma)
+                val filtered = decoded?.filter { 
+                    it.id != "srednie_bpm" && it.id != "kroki" && it.id != "kalorie_suma" 
+                }
+                
+                if (filtered.isNullOrEmpty()) {
+                    DEFAULT_ELEMENTS
+                } else {
+                    val missing = DEFAULT_ELEMENTS.filter { def -> filtered.none { it.id == def.id } }
+                    if (missing.isNotEmpty()) {
+                        filtered + missing
+                    } else {
+                        filtered
+                    }
+                }
             } catch (e: Exception) {
                 DEFAULT_ELEMENTS
             }
@@ -61,7 +76,6 @@ class ActivityDetailSettingsManager(private val context: Context) {
         val colorHex = preferences[TRACK_COLOR]
         val color = if (colorHex != null) {
             try {
-                // Używamy Long do sparsowania hex, a potem rzutujemy na Int
                 colorHex.toLong(16).toInt()
             } catch (e: Exception) {
                 DEFAULT_COLOR
@@ -81,7 +95,6 @@ class ActivityDetailSettingsManager(private val context: Context) {
 
     suspend fun saveTrackColor(color: Int) {
         context.activityDetailDataStore.edit { preferences ->
-            // Zapisujemy jako hex bez znaku minus (dla kolorów ARGB)
             preferences[TRACK_COLOR] = Integer.toHexString(color)
         }
     }

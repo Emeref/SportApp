@@ -117,9 +117,10 @@ fun ActivityDetailScreen(
 private fun getUnitForWidget(id: String): String {
     return when(id) {
         "bpm", "srednie_bpm" -> "bpm"
-        "kroki", "kroki_min" -> "kroków"
+        "kalorie_min", "kalorie_suma" -> "kcal"
+        "kroki_min" -> "kroków/min"
         "odl_kroki", "gps_dystans" -> "m"
-        "predkosc" -> "km/h"
+        "predkosc", "predkosc_kroki" -> "km/h"
         "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"
         else -> ""
     }
