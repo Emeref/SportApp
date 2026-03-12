@@ -64,43 +64,46 @@ fun ActivityDetailScreen(
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
             ) {
-                // 1. Mapa
-                if (sessionData!!.route.isNotEmpty()) {
-                    val startPos = sessionData!!.route.first()
-                    val cameraPositionState = rememberCameraPositionState {
-                        position = CameraPosition.fromLatLngZoom(startPos, 15f)
-                    }
-                    Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
-                        GoogleMap(
-                            modifier = Modifier.fillMaxSize(),
-                            cameraPositionState = cameraPositionState
-                        ) {
-                            Polyline(
-                                points = sessionData!!.route,
-                                color = Color(settings.trackColor),
-                                width = 10f
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 2. Wykresy
+                // Wyświetlamy elementy w kolejności zdefiniowanej w ustawieniach i tylko te zaznaczone
                 sessionData?.let { data ->
-                    settings.visibleElements.forEach { widget ->
-                        val producer = viewModel.chartProducers[widget.id]
-                        if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
-                            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                CommonChartSection(
-                                    title = widget.label,
-                                    producer = producer,
-                                    unit = getUnitForWidget(widget.id),
-                                    detailTimes = data.times,
-                                    isScrollEnabled = false // Zmienione na false, aby wykres dopasował się do ekranu
-                                )
+                    settings.visibleElements.filter { it.isEnabled }.forEach { widget ->
+                        when (widget.id) {
+                            "map" -> {
+                                if (data.route.isNotEmpty()) {
+                                    val startPos = data.route.first()
+                                    val cameraPositionState = rememberCameraPositionState {
+                                        position = CameraPosition.fromLatLngZoom(startPos, 15f)
+                                    }
+                                    Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
+                                        GoogleMap(
+                                            modifier = Modifier.fillMaxSize(),
+                                            cameraPositionState = cameraPositionState
+                                        ) {
+                                            Polyline(
+                                                points = data.route,
+                                                color = Color(settings.trackColor),
+                                                width = 10f
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
                             }
-                            Spacer(modifier = Modifier.height(24.dp))
+                            else -> {
+                                val producer = viewModel.chartProducers[widget.id]
+                                if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
+                                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                        CommonChartSection(
+                                            title = widget.label,
+                                            producer = producer,
+                                            unit = getUnitForWidget(widget.id),
+                                            detailTimes = data.times,
+                                            isScrollEnabled = false
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                }
+                            }
                         }
                     }
                 }
@@ -115,8 +118,8 @@ private fun getUnitForWidget(id: String): String {
     return when(id) {
         "bpm", "srednie_bpm" -> "bpm"
         "kroki", "kroki_min" -> "kroków"
-        "kroki_dystans", "gps_dystans" -> "m"
-        "predkosc_gps" -> "km/h"
+        "odl_kroki", "gps_dystans" -> "m"
+        "predkosc" -> "km/h"
         "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"
         else -> ""
     }
