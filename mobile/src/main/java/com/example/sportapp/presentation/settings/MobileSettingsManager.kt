@@ -27,11 +27,17 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
         val widgetsJson = preferences[WIDGETS_JSON]
+        val defaultWidgets = MobileSettingsState().widgets
         val widgets = if (widgetsJson != null) {
-            val type = object : TypeToken<List<WidgetItem>>() {}.type
-            gson.fromJson(widgetsJson, type)
+            try {
+                val type = object : TypeToken<List<WidgetItem>>() {}.type
+                val decoded: List<WidgetItem>? = gson.fromJson(widgetsJson, type)
+                if (decoded.isNullOrEmpty()) defaultWidgets else decoded
+            } catch (e: Exception) {
+                defaultWidgets
+            }
         } else {
-            MobileSettingsState().widgets
+            defaultWidgets
         }
 
         MobileSettingsState(

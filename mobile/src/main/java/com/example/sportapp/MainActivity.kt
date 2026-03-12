@@ -23,6 +23,7 @@ import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.SettingsScreen
 import com.example.sportapp.presentation.settings.WidgetSelectionScreen
 import com.example.sportapp.presentation.stats.ActivityDetailScreen
+import com.example.sportapp.presentation.stats.ActivityDetailSettingsViewModel
 import com.example.sportapp.presentation.stats.ActivityDetailViewModel
 import com.example.sportapp.presentation.stats.OverallStatsScreen
 import com.example.sportapp.presentation.stats.OverallStatsViewModel
@@ -121,7 +122,22 @@ class MainActivity : ComponentActivity() {
                                 onNavigateBack = { navController.popBackStack() },
                                 onNavigateToDetail = { id -> 
                                     navController.navigate(Screen.ActivityDetail.createRoute(id))
-                                }
+                                },
+                                onNavigateToSettings = { navController.navigate("activity_detail_settings") }
+                            )
+                        }
+                        composable("activity_detail_settings") {
+                            val detailSettingsViewModel: ActivityDetailSettingsViewModel = hiltViewModel()
+                            val detailSettings by detailSettingsViewModel.settings.collectAsState()
+                            
+                            WidgetSelectionScreen(
+                                widgets = detailSettings.visibleElements,
+                                title = "Wykresy w szczegółach",
+                                onSave = { updatedWidgets ->
+                                    detailSettingsViewModel.saveVisibleElements(updatedWidgets)
+                                    navController.popBackStack()
+                                },
+                                onCancel = { navController.popBackStack() }
                             )
                         }
                         composable(Screen.ActivityDetail.route) {

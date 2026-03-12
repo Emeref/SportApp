@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,7 +29,8 @@ import java.util.*
 fun ActivityListScreen(
     viewModel: ActivityListViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToDetail: (String) -> Unit
+    onNavigateToDetail: (String) -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val activities by viewModel.activities.collectAsState()
     val activityTypes by viewModel.activityTypes.collectAsState()
@@ -49,6 +51,11 @@ fun ActivityListScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
                     }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Ustawienia wykresów")
+                    }
                 }
             )
         }
@@ -62,7 +69,7 @@ fun ActivityListScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 1. Filtry (takie same jak w statystykach)
+            // 1. Filtry
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))

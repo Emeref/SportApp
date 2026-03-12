@@ -16,10 +16,12 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun WidgetSelectionScreen(
     widgets: List<WidgetItem>,
+    title: String = "Widgety na stronie głównej",
     onSave: (List<WidgetItem>) -> Unit,
     onCancel: () -> Unit
 ) {
-    var internalWidgets by remember { mutableStateOf(widgets) }
+    // Używamy remember(widgets), aby zaktualizować listę, gdy dane zostaną załadowane z DataStore
+    var internalWidgets by remember(widgets) { mutableStateOf(widgets) }
 
     Column(
         modifier = Modifier
@@ -27,7 +29,7 @@ fun WidgetSelectionScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "Widgety na stronie głównej",
+            text = title,
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )

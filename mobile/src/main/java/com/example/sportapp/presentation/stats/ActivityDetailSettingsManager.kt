@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation.stats
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -25,34 +26,49 @@ class ActivityDetailSettingsManager(private val context: Context) {
     companion object {
         private val VISIBLE_ELEMENTS_JSON = stringPreferencesKey("visible_elements_json")
         private val TRACK_COLOR = stringPreferencesKey("track_color")
-    }
 
-    private val defaultElements = listOf(
-        WidgetItem("map", "Mapa"),
-        WidgetItem("bpm", "Tętno (bpm)"),
-        WidgetItem("srednie_bpm", "Średnie tętno"),
-        WidgetItem("kroki", "Kroki"),
-        WidgetItem("kroki_min", "Kroki/min"),
-        WidgetItem("odl_kroki", "Dystans (kroki)"),
-        WidgetItem("gps_dystans", "Dystans (GPS)"),
-        WidgetItem("predkosc", "Prędkość"),
-        WidgetItem("wysokosc", "Wysokość"),
-        WidgetItem("przewyzszenia_gora", "Przewyższenia +"),
-        WidgetItem("przewyzszenia_dol", "Przewyższenia -")
-    )
+        val DEFAULT_ELEMENTS = listOf(
+            WidgetItem("map", "Mapa"),
+            WidgetItem("bpm", "Tętno (bpm)"),
+            WidgetItem("srednie_bpm", "Średnie tętno"),
+            WidgetItem("kroki", "Kroki"),
+            WidgetItem("kroki_min", "Kroki/min"),
+            WidgetItem("odl_kroki", "Dystans (kroki)"),
+            WidgetItem("gps_dystans", "Dystans (GPS)"),
+            WidgetItem("predkosc", "Prędkość"),
+            WidgetItem("wysokosc", "Wysokość"),
+            WidgetItem("przewyzszenia_gora", "Przewyższenia +"),
+            WidgetItem("przewyzszenia_dol", "Przewyższenia -")
+        )
+        
+        val DEFAULT_COLOR = 0xFFFF9800.toInt()
+    }
 
     val settingsFlow: Flow<ActivityDetailSettings> = context.activityDetailDataStore.data.map { preferences ->
         val elementsJson = preferences[VISIBLE_ELEMENTS_JSON]
         val elements = if (elementsJson != null) {
-            val type = object : TypeToken<List<WidgetItem>>() {}.type
-            gson.fromJson(elementsJson, type)
+            try {
+                val type = object : TypeToken<List<WidgetItem>>() {}.type
+                val decoded: List<WidgetItem>? = gson.fromJson(elementsJson, type)
+                if (decoded.isNullOrEmpty()) DEFAULT_ELEMENTS else decoded
+            } catch (e: Exception) {
+                DEFAULT_ELEMENTS
+            }
         } else {
-            defaultElements
+            DEFAULT_ELEMENTS
         }
         
-        // Domyślny kolor: Szary (zgodnie z agents.md) lub pomarańczowy (zgodnie z Twoim wyborem dla zegarka)
-        // Tutaj ustawimy domyślnie pomarańczowy 0xFFFF9800
-        val color = preferences[TRACK_COLOR]?.toLong(16)?.toInt() ?: 0xFFFF9800.toInt()
+        val colorHex = preferences[TRACK_COLOR]
+        val color = if (colorHex != null) {
+            try {
+                // Używamy Long do sparsowania hex, a potem rzutujemy na Int
+                colorHex.toLong(16).toInt()
+            } catch (e: Exception) {
+                DEFAULT_COLOR
+            }
+        } else {
+            DEFAULT_COLOR
+        }
 
         ActivityDetailSettings(elements, color)
     }
@@ -65,6 +81,7 @@ class ActivityDetailSettingsManager(private val context: Context) {
 
     suspend fun saveTrackColor(color: Int) {
         context.activityDetailDataStore.edit { preferences ->
+            // Zapisujemy jako hex bez znaku minus (dla kolorów ARGB)
             preferences[TRACK_COLOR] = Integer.toHexString(color)
         }
     }
