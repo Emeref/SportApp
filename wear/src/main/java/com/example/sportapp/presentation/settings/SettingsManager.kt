@@ -5,7 +5,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.sportapp.presentation.workout.SportConfig
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.google.maps.android.compose.MapType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +27,7 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         private val MAP_TYPE_KEY = stringPreferencesKey("map_type")
         private val CLOCK_COLOR_KEY = longPreferencesKey("clock_color")
         private val HEALTH_DATA_KEY = stringPreferencesKey("health_data")
+        private val SPORTS_CONFIG_KEY = stringPreferencesKey("sports_config")
     }
 
     val settingsFlow: Flow<UserSettings> = context.dataStore.data
@@ -46,7 +49,15 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
                 HealthData()
             }
 
-            UserSettings(mapType, clockColor, healthData)
+            val sportsConfigJson = preferences[SPORTS_CONFIG_KEY]
+            val sportsConfig = if (sportsConfigJson != null) {
+                val type = object : TypeToken<List<SportConfig>>() {}.type
+                gson.fromJson(sportsConfigJson, type)
+            } else {
+                listOf(SportConfig("default", "Default sport"))
+            }
+
+            UserSettings(mapType, clockColor, healthData, sportsConfig)
         }
 
     suspend fun saveMapType(type: MapType) {
@@ -66,10 +77,17 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             preferences[HEALTH_DATA_KEY] = gson.toJson(data)
         }
     }
+
+    suspend fun saveSportsConfig(sports: List<SportConfig>) {
+        context.dataStore.edit { preferences ->
+            preferences[SPORTS_CONFIG_KEY] = gson.toJson(sports)
+        }
+    }
 }
 
 data class UserSettings(
     val mapType: MapType,
     val clockColor: Color?,
-    val healthData: HealthData
+    val healthData: HealthData,
+    val sportsConfig: List<SportConfig>
 )

@@ -19,9 +19,7 @@ import com.example.sportapp.presentation.activities.ActivityListViewModel
 import com.example.sportapp.presentation.home.HomeScreen
 import com.example.sportapp.presentation.home.HomeViewModel
 import com.example.sportapp.presentation.navigation.Screen
-import com.example.sportapp.presentation.settings.MobileSettingsManager
-import com.example.sportapp.presentation.settings.SettingsScreen
-import com.example.sportapp.presentation.settings.WidgetSelectionScreen
+import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.stats.ActivityDetailScreen
 import com.example.sportapp.presentation.stats.ActivityDetailSettingsViewModel
 import com.example.sportapp.presentation.stats.ActivityDetailViewModel
@@ -42,7 +40,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Generuj dane testowe jeśli jesteśmy w trybie DEBUG
         if (BuildConfig.DEBUG) {
             lifecycleScope.launch(Dispatchers.IO) {
                 TestDataGenerator.generateTestData(applicationContext)
@@ -57,7 +54,6 @@ class MainActivity : ComponentActivity() {
                     val settingsState by homeViewModel.settings.collectAsState()
                     val scope = rememberCoroutineScope()
                     
-                    // Współdzielony ViewModel dla statystyk
                     val statsViewModel: OverallStatsViewModel = hiltViewModel()
 
                     NavHost(
@@ -82,7 +78,19 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onCancel = { navController.popBackStack() },
-                                onNavigateToWidgetSelection = { navController.navigate("widget_selection") }
+                                onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
+                                onNavigateToSportSettings = { navController.navigate("sport_settings") }
+                            )
+                        }
+                        composable("sport_settings") {
+                            SportSettingsScreen(
+                                settingsState = settingsState,
+                                onSave = { updated ->
+                                    scope.launch {
+                                        settingsManager.saveSettings(updated)
+                                    }
+                                },
+                                onNavigateBack = { navController.popBackStack() }
                             )
                         }
                         composable("widget_selection") {

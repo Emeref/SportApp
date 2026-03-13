@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
@@ -22,7 +21,14 @@ import androidx.wear.compose.material.Text
 import com.google.maps.android.compose.MapType
 
 @Composable
-fun SettingsScreen(navController: NavHostController, currentMapType: MapType, currentClockColor: Color?) {
+fun SettingsScreen(
+    currentMapType: MapType,
+    currentClockColor: Color?,
+    onMapTypeChange: (MapType) -> Unit,
+    onClockColorChange: (Color) -> Unit,
+    onHealthData: () -> Unit,
+    onBack: () -> Unit
+) {
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -34,7 +40,7 @@ fun SettingsScreen(navController: NavHostController, currentMapType: MapType, cu
         item {
             Chip(
                 label = { Text("Dane zdrowotne") },
-                onClick = { navController.navigate("health_data") },
+                onClick = onHealthData,
                 icon = { Icon(Icons.Default.HealthAndSafety, contentDescription = "Dane zdrowotne") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
@@ -51,7 +57,7 @@ fun SettingsScreen(navController: NavHostController, currentMapType: MapType, cu
             Chip(
                 label = { Text("Rodzaj mapy") },
                 secondaryLabel = { Text(mapTypeLabel) },
-                onClick = { navController.navigate("map_type_selection") },
+                onClick = { /* W tej architekturze nawigacja jest w MainActivity */ },
                 icon = { Icon(Icons.Default.Map, contentDescription = "Rodzaj mapy") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
             )
@@ -70,7 +76,7 @@ fun SettingsScreen(navController: NavHostController, currentMapType: MapType, cu
             Chip(
                 label = { Text("Kolor zegara") },
                 secondaryLabel = { Text(colorLabel) },
-                onClick = { navController.navigate("clock_color_selection") },
+                onClick = { /* W tej architekturze nawigacja jest w MainActivity */ },
                 icon = { Icon(Icons.Default.Schedule, contentDescription = "Kolor zegara") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )

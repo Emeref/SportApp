@@ -19,7 +19,6 @@ fun ClimbingWorkoutScreen(
     healthData: HealthData, 
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ) {
-    // Wspólna logika sesji (bez metValue, bo używamy HRR)
     val session = rememberWorkoutSession(
         activityName = "Wspinaczka",
         healthData = healthData,
@@ -31,7 +30,7 @@ fun ClimbingWorkoutScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(state = horizontalPagerState) { hPage ->
             if (hPage == 0) {
-                WorkoutControlScreen(
+                WorkoutControls(
                     status = session.status,
                     onTogglePause = session.togglePause,
                     onEnd = session.endWorkout

@@ -45,7 +45,7 @@ fun WalkingWorkoutScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(state = horizontalPagerState) { hPage ->
             if (hPage == 0) {
-                WorkoutControlScreen(
+                WorkoutControls(
                     status = session.status,
                     onTogglePause = session.togglePause,
                     onEnd = session.endWorkout
@@ -67,12 +67,15 @@ fun WalkingWorkoutScreen(
                             )
                     ) { vPage ->
                         when (vPage) {
-                            0 -> MainDataScreen(
+                            0 -> DynamicWorkoutScreen(
+                                sportConfig = SportConfig("walking", "Spacer"),
                                 heartRate = session.heartRate,
                                 stepCount = session.stepCount,
                                 distanceMeters = session.distanceState.totalDistance,
                                 speedKmH = session.speedKmH,
-                                workoutTimerState = session.workoutTimerState
+                                workoutTimerState = session.workoutTimerState,
+                                totalCalories = session.totalCalories,
+                                altitude = session.altitude
                             )
                             1 -> MapScreen(mapType, focusRequester)
                         }

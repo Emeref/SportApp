@@ -24,7 +24,8 @@ fun SettingsScreen(
     initialState: MobileSettingsState,
     onSave: (MobileSettingsState) -> Unit,
     onCancel: () -> Unit,
-    onNavigateToWidgetSelection: () -> Unit
+    onNavigateToWidgetSelection: () -> Unit,
+    onNavigateToSportSettings: () -> Unit
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
@@ -56,7 +57,21 @@ fun SettingsScreen(
                 }
             }
 
-            // 2. Sekcja Okresu
+            // 2. Sekcja Sporty
+            SettingsSection(title = "Sporty") {
+                OutlinedCard(
+                    onClick = onNavigateToSportSettings,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Konfiguracja sportów") },
+                        supportingContent = { Text("Dodaj, edytuj lub usuń sporty na zegarku") },
+                        trailingContent = { Icon(Icons.Default.ChevronRight, null) }
+                    )
+                }
+            }
+
+            // 3. Sekcja Okresu
             SettingsSection(title = "Za jaki okres pokazujemy widgety?") {
                 Column {
                     PeriodOption("Dziś", ReportingPeriod.TODAY, state.period) { state = state.copy(period = it) }
@@ -84,7 +99,7 @@ fun SettingsScreen(
                 }
             }
 
-            // 3. Sekcja Integracja
+            // 4. Sekcja Integracja
             SettingsSection(title = "Integracja") {
                 ListItem(
                     headlineContent = { Text("Google Drive") },
@@ -94,7 +109,7 @@ fun SettingsScreen(
                 )
             }
 
-            // 4. Tryb Deweloperski / Testowy (ukryty w wersji produkcyjnej)
+            // 5. Tryb Deweloperski / Testowy (ukryty w wersji produkcyjnej)
             if (BuildConfig.DEBUG) {
                 SettingsSection(title = "Tryb deweloperski") {
                     ListItem(

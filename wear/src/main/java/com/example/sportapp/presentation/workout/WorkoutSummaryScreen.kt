@@ -20,12 +20,11 @@ import androidx.wear.compose.material.*
 
 @Composable
 fun WorkoutSummaryScreen(
-    title: String,
+    workoutName: String,
     summaryData: List<Pair<String, String>>,
-    onConfirm: () -> Unit
+    onDismiss: () -> Unit
 ) {
     val listState = rememberScalingLazyListState()
-    // Używamy foundation.rememberSwipeToDismissBoxState i blokujemy zmianę stanu, aby wyłączyć gest wyjścia
     val swipeState = rememberSwipeToDismissBoxState(
         confirmStateChange = { it != SwipeToDismissValue.Dismissed }
     )
@@ -56,7 +55,7 @@ fun WorkoutSummaryScreen(
                     
                     item {
                         Text(
-                            text = title,
+                            text = workoutName,
                             style = MaterialTheme.typography.title2,
                             color = MaterialTheme.colors.primary,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -92,7 +91,7 @@ fun WorkoutSummaryScreen(
 
                     item {
                         Button(
-                            onClick = onConfirm,
+                            onClick = onDismiss,
                             modifier = Modifier.size(ButtonDefaults.DefaultButtonSize)
                         ) {
                             Icon(

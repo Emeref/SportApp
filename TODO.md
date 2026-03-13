@@ -54,6 +54,8 @@
 - [ ] **Optymalizacja UI**:
     - [ ] **Obsługa Ambient Mode**: Implementacja trybu oszczędzania energii dla ekranów treningowych.
     - [ ] **Centrowanie mapy**: Automatyczne odświeżanie mapy tak, aby kropka pozycji była zawsze w centrum.
+- [ ] **Pierwsze uruchomienie**:
+    - [ ] Przy pierwszym odpaleniu zegarka spytaj o wszystkie potrzebne uprawnienia.
 
 ## 5. Chmura i Bezpieczeństwo
 - [ ] **Integracja z Google**:
