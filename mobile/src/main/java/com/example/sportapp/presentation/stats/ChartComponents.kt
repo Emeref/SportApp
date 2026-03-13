@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.data.db.WorkoutEntity
 import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
@@ -48,7 +49,7 @@ fun CommonChartSection(
     title: String,
     producer: ChartEntryModelProducer,
     unit: String = "",
-    overallRawData: List<Map<String, String>>? = null,
+    overallRawData: List<Any>? = null,
     detailTimes: List<String>? = null,
     isScrollEnabled: Boolean = false
 ) {
@@ -115,7 +116,7 @@ fun CommonChartSection(
 
 @Composable
 fun rememberMarkerCustom(
-    overallRawData: List<Map<String, String>>?,
+    overallRawData: List<Any>?,
     detailTimes: List<String>?,
     unit: String
 ): Marker {
@@ -124,8 +125,8 @@ fun rememberMarkerCustom(
     
     val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
     val formatter = DecimalFormat("#,###.#", symbols)
-    val inputSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
     val outputSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    val inputSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
     val isDetail = detailTimes != null
     val lineCount = if (isDetail) 2 else 3
@@ -173,14 +174,25 @@ fun rememberMarkerCustom(
                 } else if (overallRawData != null) {
                     if (index in overallRawData.indices) {
                         val data = overallRawData[index]
-                        val activityName = data["nazwa aktywnosci"] ?: "Aktywność"
-                        val rawDate = data["data"] ?: ""
-                        val formattedDate = try {
-                            inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate
-                        } catch (e: Exception) {
-                            rawDate
+                        
+                        when (data) {
+                            is WorkoutEntity -> {
+                                val name = data.activityName
+                                val date = outputSdf.format(java.util.Date(data.startTime))
+                                "$name\n$date\n$value $unit"
+                            }
+                            is Map<*, *> -> {
+                                val name = data["nazwa aktywnosci"]?.toString() ?: "Aktywność"
+                                val rawDate = data["data"]?.toString() ?: ""
+                                val formattedDate = try {
+                                    inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate
+                                } catch (e: Exception) {
+                                    rawDate
+                                }
+                                "$name\n$formattedDate\n$value $unit"
+                            }
+                            else -> "$value $unit"
                         }
-                        "$activityName\n$formattedDate\n$value $unit"
                     } else ""
                 } else ""
             }

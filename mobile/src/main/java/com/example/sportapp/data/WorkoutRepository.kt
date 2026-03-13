@@ -1,65 +1,73 @@
 package com.example.sportapp.data
 
 import android.content.Context
-import android.util.Log
+import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutEntity
+import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.presentation.activities.ActivityItem
-import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.ReportingPeriod
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.floor
 
 @Singleton
-class WorkoutRepository @Inject constructor(private val context: Context) : IWorkoutRepository {
+class WorkoutRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val workoutDao: WorkoutDao
+) : IWorkoutRepository {
 
-    private val settingsManager = MobileSettingsManager(context)
+    override fun getAllWorkouts(): Flow<List<WorkoutEntity>> {
+        return workoutDao.getAllWorkouts()
+    }
 
-    private suspend fun getActivitiesDir(): File = withContext(Dispatchers.IO) {
-        val useTestData = settingsManager.settingsFlow.first().useTestData
-        val dirName = if (useTestData) "test_activities" else "activities"
-        val dir = File(context.filesDir, dirName)
-        if (!dir.exists()) dir.mkdirs()
-        dir
+    override suspend fun getWorkoutById(id: Long): WorkoutEntity? {
+        return workoutDao.getWorkoutById(id)
+    }
+
+    override suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity> {
+        return workoutDao.getPointsForWorkout(workoutId)
+    }
+
+    override suspend fun deleteWorkout(workout: WorkoutEntity) {
+        workoutDao.deletePointsForWorkout(workout.id)
+        workoutDao.deleteWorkout(workout)
     }
 
     override suspend fun getUniqueActivityTypes(): List<String> = withContext(Dispatchers.IO) {
-        getAllSummaries().map { it["nazwa aktywnosci"] ?: "" }.distinct().filter { it.isNotEmpty() }
+        workoutDao.getWorkoutsSince(0).map { it.activityName }.distinct().filter { it.isNotEmpty() }
     }
 
-    override suspend fun getStatsForPeriod(period: ReportingPeriod, customDays: Int): Map<String, Any> = withContext(Dispatchers.IO) {
-        val now = Calendar.getInstance()
-        val startDate: Date
-        val endDate: Date
+    override fun getFilteredStatsFlow(
+        activityType: String?,
+        startDate: Date?,
+        endDate: Date?
+    ): Flow<Map<String, Any>> {
+        return workoutDao.getAllWorkouts().map { allWorkouts ->
+            val filtered = allWorkouts.filter { workout ->
+                val typeMatch = activityType == null || workout.activityName == activityType
+                val workoutDate = workout.startTime
+                val startMatch = startDate == null || workoutDate >= startDate.time
+                val endMatch = endDate == null || workoutDate <= endDate.time
+                typeMatch && startMatch && endMatch
+            }
 
-        when (period) {
-            ReportingPeriod.TODAY -> {
-                startDate = now.apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
-                endDate = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1); set(Calendar.HOUR_OF_DAY, 0) }.time
-            }
-            ReportingPeriod.WEEK -> {
-                startDate = now.apply { firstDayOfWeek = Calendar.MONDAY; set(Calendar.DAY_OF_WEEK, Calendar.MONDAY); set(Calendar.HOUR_OF_DAY, 0) }.time
-                endDate = Calendar.getInstance().apply { add(Calendar.WEEK_OF_YEAR, 1) }.time
-            }
-            ReportingPeriod.MONTH -> {
-                startDate = now.apply { set(Calendar.DAY_OF_MONTH, 1); set(Calendar.HOUR_OF_DAY, 0) }.time
-                endDate = Calendar.getInstance().apply { add(Calendar.MONTH, 1); set(Calendar.DAY_OF_MONTH, 1) }.time
-            }
-            ReportingPeriod.YEAR -> {
-                startDate = now.apply { set(Calendar.DAY_OF_YEAR, 1); set(Calendar.HOUR_OF_DAY, 0) }.time
-                endDate = Calendar.getInstance().apply { add(Calendar.YEAR, 1) }.time
-            }
-            ReportingPeriod.CUSTOM -> {
-                endDate = Calendar.getInstance().time
-                startDate = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -customDays) }.time
-            }
+            mapOf(
+                "count" to filtered.size,
+                "calories" to filtered.sumOf { it.totalCalories ?: 0.0 },
+                "distanceGpsM" to filtered.sumOf { it.distanceGps ?: 0.0 },
+                "distanceStepsM" to filtered.sumOf { it.distanceSteps ?: 0.0 },
+                "ascent" to filtered.sumOf { it.totalAscent ?: 0.0 },
+                "descent" to filtered.sumOf { it.totalDescent ?: 0.0 },
+                "steps" to filtered.sumOf { it.steps?.toLong() ?: 0L },
+                "raw_data" to filtered
+            )
         }
-        getFilteredStats(startDate = startDate, endDate = endDate)
     }
 
     override suspend fun getFilteredStats(
@@ -67,92 +75,89 @@ class WorkoutRepository @Inject constructor(private val context: Context) : IWor
         startDate: Date?,
         endDate: Date?
     ): Map<String, Any> = withContext(Dispatchers.IO) {
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-        
-        val filtered = getAllSummaries().filter { summary ->
-            val typeMatch = activityType == null || summary["nazwa aktywnosci"] == activityType
-            val dateMatch = try {
-                val date = sdf.parse(summary["data"] ?: "")
-                (startDate == null || date?.after(startDate) == true) && (endDate == null || date?.before(endDate) == true)
-            } catch (e: Exception) { false }
+        val workouts = workoutDao.getWorkoutsSince(0)
 
-            typeMatch && dateMatch
+        val filtered = workouts.filter { workout ->
+            val typeMatch = activityType == null || workout.activityName == activityType
+            val workoutDate = workout.startTime
+            val startMatch = startDate == null || workoutDate >= startDate.time
+            val endMatch = endDate == null || workoutDate <= endDate.time
+            typeMatch && startMatch && endMatch
         }
 
         mapOf(
             "count" to filtered.size,
-            "calories" to filtered.sumOf { it["kalorie"]?.toDoubleOrNull() ?: 0.0 },
-            "distanceGpsM" to filtered.sumOf { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 },
-            "distanceStepsM" to filtered.sumOf { it["kroki_dystans"]?.toDoubleOrNull() ?: 0.0 },
-            "ascent" to filtered.sumOf { it["przewyzszenia_gora"]?.toDoubleOrNull() ?: 0.0 },
-            "descent" to filtered.sumOf { it["przewyzszenia_dol"]?.toDoubleOrNull() ?: 0.0 },
-            "steps" to filtered.sumOf { it["kroki"]?.toLongOrNull() ?: 0L },
+            "calories" to filtered.sumOf { it.totalCalories ?: 0.0 },
+            "distanceGpsM" to filtered.sumOf { it.distanceGps ?: 0.0 },
+            "distanceStepsM" to filtered.sumOf { it.distanceSteps ?: 0.0 },
+            "ascent" to filtered.sumOf { it.totalAscent ?: 0.0 },
+            "descent" to filtered.sumOf { it.totalDescent ?: 0.0 },
+            "steps" to filtered.sumOf { it.steps?.toLong() ?: 0L },
             "raw_data" to filtered
         )
     }
 
+    override suspend fun getStatsForPeriod(period: ReportingPeriod, customDays: Int): Map<String, Any> {
+        val calendar = Calendar.getInstance()
+        val endDate = calendar.time
+        
+        when (period) {
+            ReportingPeriod.TODAY -> {
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+            }
+            ReportingPeriod.WEEK -> calendar.add(Calendar.DAY_OF_YEAR, -7)
+            ReportingPeriod.MONTH -> calendar.add(Calendar.MONTH, -1)
+            ReportingPeriod.YEAR -> calendar.add(Calendar.YEAR, -1)
+            ReportingPeriod.CUSTOM -> calendar.add(Calendar.DAY_OF_YEAR, -customDays)
+        }
+        
+        val startDate = calendar.time
+        return getFilteredStats(null, startDate, endDate)
+    }
+
     override fun formatDistance(meters: Double): String {
         return when {
-            meters < 1000 -> "${floor(meters).toInt()} m"
-            meters < 10000 -> String.format(Locale.US, "%.2f km", floor(meters / 10.0) / 100.0)
-            meters < 100000 -> String.format(Locale.US, "%.1f km", floor(meters / 100.0) / 10.0)
-            else -> "${floor(meters / 1000.0).toInt()} km"
+            meters < 1000 -> "${meters.toInt()} m"
+            meters < 10000 -> String.format(Locale.US, "%.2f km", meters / 1000.0)
+            meters < 100000 -> String.format(Locale.US, "%.1f km", meters / 1000.0)
+            else -> String.format(Locale.US, "%.0f km", meters / 1000.0)
         }
     }
 
     override suspend fun getAllSummaries(): List<Map<String, String>> = withContext(Dispatchers.IO) {
-        val file = File(getActivitiesDir(), "Podsumowanie_cwiczen.csv")
-        if (!file.exists()) return@withContext emptyList<Map<String, String>>()
-
-        val results = mutableListOf<Map<String, String>>()
-        try {
-            val lines = file.readLines()
-            if (lines.size < 2) return@withContext emptyList<Map<String, String>>()
-            
-            val header = lines[0].split(";")
-            for (i in 1 until lines.size) {
-                val values = lines[i].split(";")
-                val map = mutableMapOf<String, String>()
-                header.forEachIndexed { index, name ->
-                    if (index < values.size) {
-                        map[name] = values[index]
-                    }
-                }
-                results.add(map)
-            }
-        } catch (e: Exception) {
-            Log.e("WorkoutRepository", "Error reading summary file", e)
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+        workoutDao.getWorkoutsSince(0).map { workout ->
+            mapOf(
+                "nazwa aktywnosci" to workout.activityName,
+                "data" to sdf.format(Date(workout.startTime)),
+                "dlugosc" to workout.durationFormatted,
+                "kalorie" to (workout.totalCalories?.toString() ?: "0"),
+                "gps_dystans" to (workout.distanceGps?.toString() ?: "0"),
+                "kroki_dystans" to (workout.distanceSteps?.toString() ?: "0"),
+                "kroki" to (workout.steps?.toString() ?: "0"),
+                "przewyzszenia_gora" to (workout.totalAscent?.toString() ?: "0"),
+                "przewyzszenia_dol" to (workout.totalDescent?.toString() ?: "0")
+            )
         }
-        results.sortedBy { it["data"] }
     }
 
     override suspend fun getActivityItems(): List<ActivityItem> = withContext(Dispatchers.IO) {
-        val summaries = getAllSummaries()
-        val dir = getActivitiesDir()
-        val files = dir.listFiles { file -> file.isFile && file.name.endsWith(".csv") && file.name != "Podsumowanie_cwiczen.csv" } ?: emptyArray()
-        val fileMap = files.associateBy { it.name }
-
-        summaries.mapIndexedNotNull { index, map ->
-            val date = map["data"] ?: ""
-            val type = map["nazwa aktywnosci"] ?: "Nieznana"
-            
-            val dateForFile = date.replace("-", "_").replace(" ", "_").replace(":", "_")
-            val possibleFileNameStart = "${type}_${dateForFile}"
-            
-            val sessionFile = fileMap.keys.find { it.startsWith(possibleFileNameStart) } ?: return@mapIndexedNotNull null
-            
-            val distGpsM = map["gps_dystans"]?.toDoubleOrNull() ?: 0.0
-            val distStepsM = map["kroki_dystans"]?.toDoubleOrNull() ?: 0.0
-            
-            ActivityItem(
-                id = sessionFile,
-                type = type,
-                date = date,
-                duration = map["dlugosc"] ?: "",
-                calories = map["kalorie"] ?: "0",
-                distanceGps = formatDistance(distGpsM),
-                distanceSteps = formatDistance(distStepsM)
-            )
-        }.sortedByDescending { it.date }
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+        workoutDao.getWorkoutsSince(0)
+            .sortedByDescending { it.startTime }
+            .map { workout ->
+                ActivityItem(
+                    id = workout.id.toString(),
+                    type = workout.activityName,
+                    date = sdf.format(Date(workout.startTime)),
+                    duration = workout.durationFormatted,
+                    calories = "${workout.totalCalories?.toInt() ?: 0} kcal",
+                    distanceGps = formatDistance(workout.distanceGps ?: 0.0),
+                    distanceSteps = formatDistance(workout.distanceSteps ?: 0.0)
+                )
+            }
     }
 }
