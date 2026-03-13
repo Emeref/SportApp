@@ -71,7 +71,7 @@ class SessionRepository @Inject constructor(private val context: Context) {
         var maxBpm = 0f
         var lastAvgBpm = 0f
         var totalCalories = 0f
-        var lastAvgCalories = 0f
+        var maxCaloriesMin = 0f
 
         try {
             BufferedReader(FileReader(file)).use { reader ->
@@ -111,7 +111,7 @@ class SessionRepository @Inject constructor(private val context: Context) {
                                         "bpm" -> if (v > maxBpm) maxBpm = v
                                         "srednie_bpm" -> lastAvgBpm = v
                                         "kalorie_suma" -> totalCalories = v
-                                        "kalorie_min" -> lastAvgCalories = v
+                                        "kalorie_min" -> if (v > maxCaloriesMin) maxCaloriesMin = v
                                     }
                                 }
                             } else {
@@ -137,7 +137,7 @@ class SessionRepository @Inject constructor(private val context: Context) {
             maxBpm = maxBpm.toInt(),
             avgBpm = lastAvgBpm.toInt(),
             totalCalories = totalCalories.toInt(),
-            avgCalories = lastAvgCalories
+            maxCaloriesMin = maxCaloriesMin
         )
     }
 }
@@ -153,5 +153,5 @@ data class SessionData(
     val maxBpm: Int = 0,
     val avgBpm: Int = 0,
     val totalCalories: Int = 0,
-    val avgCalories: Float = 0f
+    val maxCaloriesMin: Float = 0f
 )
