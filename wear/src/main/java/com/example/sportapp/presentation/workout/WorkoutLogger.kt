@@ -26,6 +26,11 @@ class WorkoutLogger(
     private val heartRates = mutableListOf<Float>()
     private var maxCalorieMin: Double = 0.0
 
+    private fun Double?.round(decimals: Int = 2): Double? {
+        if (this == null) return null
+        return "%.${decimals}f".format(Locale.US, this).toDouble()
+    }
+
     suspend fun logData(
         lat: Double? = null,
         lon: Double? = null,
@@ -76,18 +81,18 @@ class WorkoutLogger(
             latitude = lat,
             longitude = lon,
             bpm = bpm?.toInt(),
-            avgBpm = avgBpm,
+            avgBpm = avgBpm.round(2),
             steps = kroki,
-            stepsMin = stepsMin,
+            stepsMin = stepsMin.round(2),
             distanceSteps = odlKrokiRounded,
             distanceGps = gpsDystansRounded,
-            speedGps = predkoscGps?.toDouble(),
-            speedSteps = predkoscKroki,
-            altitude = wysokosc,
-            totalAscent = totalAscent,
-            totalDescent = totalDescent,
-            calorieMin = calorieMin,
-            calorieSum = calorieSum
+            speedGps = predkoscGps?.toDouble().round(2),
+            speedSteps = predkoscKroki.round(2),
+            altitude = wysokosc.round(2),
+            totalAscent = totalAscent.round(2),
+            totalDescent = totalDescent.round(2),
+            calorieMin = calorieMin.round(2),
+            calorieSum = calorieSum.round(2)
         )
         
         workoutDao.insertPoint(point)

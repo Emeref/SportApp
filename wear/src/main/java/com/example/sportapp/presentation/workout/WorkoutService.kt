@@ -62,6 +62,11 @@ class WorkoutService : Service(), SensorEventListener {
     private var timerJob: Job? = null
     private var locationCallback: LocationCallback? = null
 
+    private fun Double?.round(decimals: Int = 2): Double? {
+        if (this == null) return null
+        return "%.${decimals}f".format(Locale.US, this).toDouble()
+    }
+
     inner class LocalBinder : Binder() {
         fun getService(): WorkoutService = this@WorkoutService
     }
@@ -181,16 +186,16 @@ class WorkoutService : Service(), SensorEventListener {
             val finalWorkout = workoutDao.getWorkoutById(currentWorkoutId)?.copy(
                 durationFormatted = formatTime(totalSeconds),
                 steps = if (currentSteps > 0) currentSteps else null,
-                distanceSteps = if (distanceStepsMeters > 0) distanceStepsMeters else null,
-                distanceGps = if (totalDistance > 0) totalDistance.toDouble() else null,
-                avgSpeedSteps = if (avgSpeedSteps > 0) avgSpeedSteps else null,
-                avgSpeedGps = if (avgSpeedGps > 0) avgSpeedGps else null,
-                totalAscent = stats["totalAscent"] as? Double ?: 0.0,
-                totalDescent = stats["totalDescent"] as? Double ?: 0.0,
-                avgBpm = stats["avgBpm"] as? Double,
+                distanceSteps = if (distanceStepsMeters > 0) distanceStepsMeters.round(2) else null,
+                distanceGps = if (totalDistance > 0) totalDistance.toDouble().round(2) else null,
+                avgSpeedSteps = if (avgSpeedSteps > 0) avgSpeedSteps.round(2) else null,
+                avgSpeedGps = if (avgSpeedGps > 0) avgSpeedGps.round(2) else null,
+                totalAscent = (stats["totalAscent"] as? Double ?: 0.0).round(2),
+                totalDescent = (stats["totalDescent"] as? Double ?: 0.0).round(2),
+                avgBpm = (stats["avgBpm"] as? Double).round(2),
                 maxBpm = stats["maxBpm"] as? Int,
-                totalCalories = totalCalories,
-                maxCalorieMin = stats["maxCalorieMin"] as? Double ?: 0.0,
+                totalCalories = totalCalories.round(2),
+                maxCalorieMin = (stats["maxCalorieMin"] as? Double ?: 0.0).round(2),
                 durationSeconds = totalSeconds
             )
             

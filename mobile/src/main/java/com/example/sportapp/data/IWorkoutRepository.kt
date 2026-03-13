@@ -15,6 +15,12 @@ interface IWorkoutRepository {
 
     suspend fun getUniqueActivityTypes(): List<String>
     
+    fun getFilteredStatsFlow(
+        activityType: String? = null,
+        startDate: Date? = null,
+        endDate: Date? = null
+    ): Flow<Map<String, Any>>
+
     suspend fun getFilteredStats(
         activityType: String? = null,
         startDate: Date? = null,

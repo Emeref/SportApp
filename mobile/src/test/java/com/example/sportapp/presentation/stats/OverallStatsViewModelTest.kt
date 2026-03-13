@@ -3,6 +3,7 @@ package com.example.sportapp.presentation.stats
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.example.sportapp.data.FakeWorkoutRepository
+import com.example.sportapp.data.db.WorkoutEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
@@ -32,22 +33,42 @@ class OverallStatsViewModelTest {
         context = ApplicationProvider.getApplicationContext()
         
         fakeRepository = FakeWorkoutRepository().apply {
-            summaries = mutableListOf(
-                mapOf(
-                    "nazwa aktywnosci" to "Spacer",
-                    "data" to "2024-03-01 10:00:00",
-                    "kalorie" to "200",
-                    "gps_dystans" to "3000",
-                    "kroki_dystans" to "2800",
-                    "kroki" to "4000"
+            workouts = mutableListOf(
+                WorkoutEntity(
+                    id = 1,
+                    activityName = "Spacer",
+                    startTime = System.currentTimeMillis() - 100000,
+                    durationFormatted = "00:30:00",
+                    steps = 4000,
+                    distanceSteps = 2800.0,
+                    distanceGps = 3000.0,
+                    avgSpeedSteps = 5.0,
+                    avgSpeedGps = 6.0,
+                    totalAscent = 10.0,
+                    totalDescent = 5.0,
+                    avgBpm = 100.0,
+                    maxBpm = 120,
+                    totalCalories = 200.0,
+                    maxCalorieMin = 10.0,
+                    durationSeconds = 1800
                 ),
-                mapOf(
-                    "nazwa aktywnosci" to "Bieganie",
-                    "data" to "2024-03-02 10:00:00",
-                    "kalorie" to "500",
-                    "gps_dystans" to "8000",
-                    "kroki_dystans" to "7500",
-                    "kroki" to "10000"
+                WorkoutEntity(
+                    id = 2,
+                    activityName = "Bieganie",
+                    startTime = System.currentTimeMillis(),
+                    durationFormatted = "00:45:00",
+                    steps = 10000,
+                    distanceSteps = 7500.0,
+                    distanceGps = 8000.0,
+                    avgSpeedSteps = 10.0,
+                    avgSpeedGps = 11.0,
+                    totalAscent = 50.0,
+                    totalDescent = 45.0,
+                    avgBpm = 150.0,
+                    maxBpm = 180,
+                    totalCalories = 500.0,
+                    maxCalorieMin = 20.0,
+                    durationSeconds = 2700
                 )
             )
         }
