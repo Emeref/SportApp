@@ -75,7 +75,6 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[USE_TEST_DATA] = state.useTestData
             preferences[SPORTS_JSON] = gson.toJson(state.sports)
         }
-        // Automatyczna synchronizacja z zegarkiem przy każdej zmianie
         syncSportsToWear(state.sports)
     }
 
