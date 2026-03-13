@@ -161,6 +161,7 @@ class WorkoutService : Service(), SensorEventListener {
                 totalDescent = stats["totalDescent"] as? Double ?: 0.0,
                 avgBpm = stats["avgBpm"] as? Double,
                 totalCalories = totalCalories,
+                maxCalorieMin = stats["maxCalorieMin"] as? Double ?: 0.0,
                 durationSeconds = totalSeconds
             )
             

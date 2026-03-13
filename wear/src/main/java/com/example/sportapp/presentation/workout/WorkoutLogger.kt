@@ -10,6 +10,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 class WorkoutLogger(
@@ -30,6 +31,7 @@ class WorkoutLogger(
     private val heartRates = mutableListOf<Float>()
     private val logBuffer = mutableListOf<String>()
     private var lastFlushTime: Long = 0
+    private var maxCalorieMin: Double = 0.0
 
     companion object {
         const val COLUMN_TIME = "czas"
@@ -109,6 +111,10 @@ class WorkoutLogger(
         val odlKrokiRounded = (kroki?.times(healthData.stepLength / 100.0))?.roundToInt()
         val gpsDystansRounded = gpsDystans?.roundToInt()
 
+        if (calorieMin != null) {
+            maxCalorieMin = max(maxCalorieMin, calorieMin)
+        }
+
         // Logika przewyższeń
         if (wysokosc != null) {
             if (lastAscentRef == null) lastAscentRef = wysokosc
@@ -184,7 +190,8 @@ class WorkoutLogger(
         return mapOf(
             "totalAscent" to totalAscent,
             "totalDescent" to totalDescent,
-            "avgBpm" to if (heartRates.isNotEmpty()) heartRates.average() else null
+            "avgBpm" to if (heartRates.isNotEmpty()) heartRates.average() else null,
+            "maxCalorieMin" to maxCalorieMin
         )
     }
 }

@@ -39,6 +39,7 @@ object SummaryManager {
         totalDescent: Double?,
         avgBpm: Double?,
         totalCalories: Double?,
+        maxCalorieMin: Double?,
         durationSeconds: Long
     ) {
         val activitiesDir = File(context.filesDir, "activities")
@@ -55,11 +56,6 @@ object SummaryManager {
         val distanceStepsRounded = distanceSteps?.roundToInt()
         val distanceGpsRounded = distanceGps?.roundToInt()
 
-        // Wyliczenie średnich kalorii na minutę
-        val calorieMinAvg = if (totalCalories != null && durationSeconds > 0) {
-            (totalCalories / (durationSeconds / 60.0))
-        } else null
-
         val line = StringBuilder().apply {
             append(dateStr).append(";")
             append(activityName).append(";")
@@ -73,13 +69,13 @@ object SummaryManager {
             append(formatVal(totalDescent, 1)).append(";")
             append(formatVal(avgBpm, 1)).append(";")
             append(formatVal(totalCalories, 1)).append(";") // nowa kolumna: kalorie
-            append(formatVal(calorieMinAvg, 1)) // nowa kolumna: kalorie_min
+            append(formatVal(maxCalorieMin, 1)) // nowa kolumna: maks_kalorie_min (zastępuje średnią)
         }.toString()
 
         try {
             val fos = FileOutputStream(file, true)
             if (isNewFile) {
-                val header = "data;nazwa aktywnosci;dlugosc;kroki;kroki_dystans;gps_dystans;srednia_predkosc_kroki;srednia_predkosc_gps;przewyzszenia_gora;przewyzszenia_dol;srednie_bpm;kalorie;kalorie_min\n"
+                val header = "data;nazwa aktywnosci;dlugosc;kroki;kroki_dystans;gps_dystans;srednia_predkosc_kroki;srednia_predkosc_gps;przewyzszenia_gora;przewyzszenia_dol;srednie_bpm;kalorie;maks_kalorie_min\n"
                 fos.write(header.toByteArray())
             }
             fos.write((line + "\n").toByteArray())

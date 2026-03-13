@@ -19,9 +19,9 @@
 - [x] **Konfiguracja aktywności (XML)**:
     - [x] Stworzenie parsera XML dla układu sensorów.
 - [ ] **Optymalizacja i Architektura danych**:
-    - [x] **Refaktoryzacja IWorkoutRepository**: Ujednolicenie interfejsu na metody `suspend`.
+    - [x] **Refaktoryzacja IWorkoutRepository**: Ujednolicona obsługa uprawnień przed startem aktywności.
     - [x] **Strumieniowy odczyt CSV**: Zamiana `readLines()` na `BufferedReader` (bezpieczeństwo pamięci RAM przy dużych plikach).
-    - [ ] **Asynchroniczny zapis (IO)**: Przeniesienie operacji dyskowych w `WorkoutLogger` na `Dispatchers.IO`.
+    - [x] **Asynchroniczny zapis (IO)**: Przeniesienie operacji dyskowych w `WorkoutLogger` na `Dispatchers.IO`.
     - [ ] **Migracja na bazę danych (Room)**: Refaktor zapisu z CSV na wydajniejszą bazę danych (np. Room).
 - [x] **Logowanie treningów (CSV)**:
     - [x] Rejestracja parametrów co sekundę do pliku sesji (metry, zaokrąglone).
@@ -78,6 +78,6 @@
 - [ ] **Usprawnienie modelu danych**: Rozważenie przejścia z metadanych w nazwie pliku na metadane wewnątrz pliku lub bazę Room.
 
 ## PRIORYTETY
-1. **Wprowadzenie Foreground Service (Wear OS)** - Zapewnienie stabilności nagrywania treningów w tle.
-2. **Migracja na bazę danych Room** - Poprawa wydajności odczytu i zapisu danych sesji oraz ułatwienie wyliczania statystyk.
-3. **Nowe widgety statystyczne w ActivityDetailScreen** - Wzbogacenie analizy aktywności o dane takie jak Max HR, Max Speed itp.
+1. **Migracja na bazę danych Room** - Poprawa wydajności odczytu i zapisu danych sesji oraz ułatwienie wyliczania statystyk.
+2. **Nowe widgety statystyczne w ActivityDetailScreen** - Wzbogacenie analizy aktywności o dane takie jak Max HR, Max Speed itp.
+3. **Własne dyscypliny** - Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników i ich wizualizacji.

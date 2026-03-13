@@ -165,7 +165,7 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData) {
         // Kalorie w trzecim wierszu
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SummaryItem(label = "Kalorie", value = "${data.totalCalories} kcal", modifier = Modifier.weight(1f))
-            SummaryItem(label = "Śr. Kalorie", value = String.format(Locale.US, "%.2f kcal/min", data.avgCalories), modifier = Modifier.weight(1f))
+            SummaryItem(label = "Maks. Spalanie", value = String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin), modifier = Modifier.weight(1f))
         }
     }
 }
