@@ -1,0 +1,46 @@
+package com.example.sportapp.data.db
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "workouts")
+data class WorkoutEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val activityName: String,
+    val startTime: Long,
+    val durationFormatted: String,
+    val steps: Int?,
+    val distanceSteps: Double?,
+    val distanceGps: Double?,
+    val avgSpeedSteps: Double?,
+    val avgSpeedGps: Double?,
+    val totalAscent: Double?,
+    val totalDescent: Double?,
+    val avgBpm: Double?,
+    val maxBpm: Int?,
+    val totalCalories: Double?,
+    val maxCalorieMin: Double?,
+    val durationSeconds: Long
+)
+
+@Entity(tableName = "workout_points")
+data class WorkoutPointEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val workoutId: Long,
+    val time: String,
+    val latitude: Double?,
+    val longitude: Double?,
+    val bpm: Int?,
+    val avgBpm: Double?,
+    val steps: Int?,
+    val stepsMin: Double?,
+    val distanceSteps: Int?,
+    val distanceGps: Int?,
+    val speedGps: Double?,
+    val speedSteps: Double?,
+    val altitude: Double?,
+    val totalAscent: Double?,
+    val totalDescent: Double?,
+    val calorieMin: Double?,
+    val calorieSum: Double?
+)

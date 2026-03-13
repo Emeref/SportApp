@@ -13,16 +13,24 @@ import android.os.*
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sportapp.R
+import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.android.gms.location.*
 import com.google.gson.Gson
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.*
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class WorkoutService : Service(), SensorEventListener {
+
+    @Inject lateinit var workoutDao: WorkoutDao
+    @Inject lateinit var dataLayerManager: DataLayerManager
 
     private val binder = LocalBinder()
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -38,6 +46,7 @@ class WorkoutService : Service(), SensorEventListener {
 
     private var status = WorkoutStatus.IDLE
     private var startTime = Date()
+    private var currentWorkoutId: Long = -1
     private var totalSeconds = 0L
     private var heartRate = 0f
     private var stepCountStart = -1
@@ -74,7 +83,30 @@ class WorkoutService : Service(), SensorEventListener {
                 val name = intent.getStringExtra(EXTRA_ACTIVITY_NAME) ?: "Aktywność"
                 val hDataJson = intent.getStringExtra(EXTRA_HEALTH_DATA_JSON)
                 val hData = if (hDataJson != null) gson.fromJson(hDataJson, HealthData::class.java) else HealthData()
-                startWorkout(name, hData)
+                
+                serviceScope.launch {
+                    val workout = WorkoutEntity(
+                        activityName = name,
+                        startTime = System.currentTimeMillis(),
+                        durationFormatted = "00:00",
+                        steps = 0,
+                        distanceSteps = 0.0,
+                        distanceGps = 0.0,
+                        avgSpeedSteps = 0.0,
+                        avgSpeedGps = 0.0,
+                        totalAscent = 0.0,
+                        totalDescent = 0.0,
+                        avgBpm = 0.0,
+                        maxBpm = 0,
+                        totalCalories = 0.0,
+                        maxCalorieMin = 0.0,
+                        durationSeconds = 0
+                    )
+                    currentWorkoutId = workoutDao.insertWorkout(workout)
+                    withContext(Dispatchers.Main) {
+                        startWorkout(name, hData)
+                    }
+                }
             }
             ACTION_PAUSE_RESUME -> togglePause()
             ACTION_STOP -> stopWorkout()
@@ -99,7 +131,7 @@ class WorkoutService : Service(), SensorEventListener {
         altitude = 0.0
         totalCalories = 0.0
         
-        logger = WorkoutLogger(this, activityName, hData)
+        logger = WorkoutLogger(workoutDao, currentWorkoutId, hData)
         
         // Wakelock
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).newWakeLock(
@@ -123,7 +155,6 @@ class WorkoutService : Service(), SensorEventListener {
     private fun togglePause() {
         if (status == WorkoutStatus.ACTIVE) {
             status = WorkoutStatus.PAUSED
-            serviceScope.launch { logger?.flush() }
         } else if (status == WorkoutStatus.PAUSED) {
             status = WorkoutStatus.ACTIVE
         }
@@ -147,23 +178,27 @@ class WorkoutService : Service(), SensorEventListener {
             val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
             val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
 
-            SummaryManager.saveSummary(
-                context = this@WorkoutService,
-                activityName = activityName,
-                startTime = startTime,
+            val finalWorkout = workoutDao.getWorkoutById(currentWorkoutId)?.copy(
                 durationFormatted = formatTime(totalSeconds),
                 steps = if (currentSteps > 0) currentSteps else null,
                 distanceSteps = if (distanceStepsMeters > 0) distanceStepsMeters else null,
-                distanceGps = if (totalDistance > 0) totalDistance else null,
+                distanceGps = if (totalDistance > 0) totalDistance.toDouble() else null,
                 avgSpeedSteps = if (avgSpeedSteps > 0) avgSpeedSteps else null,
                 avgSpeedGps = if (avgSpeedGps > 0) avgSpeedGps else null,
                 totalAscent = stats["totalAscent"] as? Double ?: 0.0,
                 totalDescent = stats["totalDescent"] as? Double ?: 0.0,
                 avgBpm = stats["avgBpm"] as? Double,
+                maxBpm = stats["maxBpm"] as? Int,
                 totalCalories = totalCalories,
                 maxCalorieMin = stats["maxCalorieMin"] as? Double ?: 0.0,
                 durationSeconds = totalSeconds
             )
+            
+            if (finalWorkout != null) {
+                workoutDao.updateWorkout(finalWorkout)
+                // Automatyczna synchronizacja po zakończeniu treningu
+                dataLayerManager.syncActivities()
+            }
             
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()

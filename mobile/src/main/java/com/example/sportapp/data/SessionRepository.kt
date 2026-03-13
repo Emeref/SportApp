@@ -1,143 +1,86 @@
 package com.example.sportapp.data
 
-import android.content.Context
 import android.util.Log
-import com.example.sportapp.presentation.settings.MobileSettingsManager
+import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutEntity
+import com.example.sportapp.data.db.WorkoutPointEntity
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileReader
-import java.text.SimpleDateFormat
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SessionRepository @Inject constructor(private val context: Context) {
-    private val settingsManager = MobileSettingsManager(context)
+class SessionRepository @Inject constructor(
+    private val workoutDao: WorkoutDao
+) {
 
-    private suspend fun getActivitiesDir(): File = withContext(Dispatchers.IO) {
-        val useTestData = settingsManager.settingsFlow.first().useTestData
-        val dirName = if (useTestData) "test_activities" else "activities"
-        val dir = File(context.filesDir, dirName)
-        if (!dir.exists()) dir.mkdirs()
-        dir
-    }
+    suspend fun getSessionData(workoutIdString: String): SessionData = withContext(Dispatchers.IO) {
+        val workoutId = workoutIdString.toLongOrNull() 
+            ?: return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Niepoprawne ID treningu")
 
-    suspend fun getSessionData(fileName: String): SessionData = withContext(Dispatchers.IO) {
-        val file = File(getActivitiesDir(), fileName)
-        if (!file.exists()) return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Plik nie istnieje")
+        val workout = workoutDao.getWorkoutById(workoutId)
+            ?: return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Trening nie istnieje w bazie")
 
-        // Parsowanie nazwy pliku: <Nazwa>_<Data>_<Czas>.csv
-        // Przykład: Bieganie_2024-05-20_14-30-05.csv
-        val nameParts = fileName.removeSuffix(".csv").split("_")
-        val activityName = nameParts.getOrNull(0) ?: "Aktywność"
-        
-        val activityDate = if (nameParts.size >= 3) {
-            val datePart = nameParts[1] // 2024-05-20
-            val timePart = nameParts[2].replace("-", ":") // 14-30-05 -> 14:30:05
-            // Formatujemy do YYYY-MM-DD hh:mm
-            if (timePart.length >= 5) {
-                "$datePart ${timePart.substring(0, 5)}"
-            } else {
-                "$datePart $timePart"
-            }
-        } else ""
+        val points = workoutDao.getPointsForWorkout(workoutId)
 
         val times = mutableListOf<String>()
         val route = mutableListOf<LatLng>()
         val chartData = mutableMapOf<String, MutableList<Float?>>()
         
-        val columnMapping = mapOf(
-            "bpm" to "bpm",
-            "srednie_bpm" to "srednie_bpm",
-            "kalorie_min" to "kalorie_min",
-            "kalorie_suma" to "kalorie_suma",
-            "kroki_min" to "kroki_min",
-            "odl_kroki" to "kroki_dystans",
-            "predkosc_kroki" to "predkosc_kroki",
-            "gps_dystans" to "gps_dystans",
-            "predkosc" to "predkosc_gps",
-            "wysokosc" to "wysokosc",
-            "przewyzszenia_gora" to "przewyzszenia_gora",
-            "przewyzszenia_dol" to "przewyzszenia_dol"
+        val uiColumns = listOf(
+            "bpm", "srednie_bpm", "kalorie_min", "kalorie_suma", 
+            "kroki_min", "kroki_dystans", "predkosc_kroki", 
+            "gps_dystans", "predkosc_gps", "wysokosc", 
+            "przewyzszenia_gora", "przewyzszenia_dol"
         )
         
-        columnMapping.keys.forEach { chartData[it] = mutableListOf() }
+        uiColumns.forEach { chartData[it] = mutableListOf() }
 
-        var maxBpm = 0f
-        var lastAvgBpm = 0f
-        var totalCalories = 0f
-        var maxCaloriesMin = 0f
+        var maxBpm = 0
+        var lastAvgBpm = 0.0
+        var totalCalories = 0.0
+        var maxCaloriesMin = 0.0
 
-        try {
-            BufferedReader(FileReader(file)).use { reader ->
-                val headerLine = reader.readLine() ?: return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Plik jest pusty")
-                val header = headerLine.split(";")
-                
-                val timeIdx = header.indexOf("czas")
-                val latIdx = header.indexOf("lat")
-                val lonIdx = header.indexOf("lon")
-                
-                if (timeIdx == -1) {
-                    return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Niepoprawny format: brak kolumny 'czas'")
-                }
-
-                val colIndices = columnMapping.mapValues { (_, csvName) -> header.indexOf(csvName) }
-
-                var line = reader.readLine()
-                while (line != null) {
-                    val values = line.split(";")
-                    if (values.isNotEmpty()) {
-                        val time = values.getOrNull(timeIdx) ?: ""
-                        times.add(time)
-
-                        val lat = values.getOrNull(latIdx)?.toDoubleOrNull()
-                        val lon = values.getOrNull(lonIdx)?.toDoubleOrNull()
-                        if (lat != null && lon != null) {
-                            route.add(LatLng(lat, lon))
-                        }
-
-                        colIndices.forEach { (uiName, idx) ->
-                            if (idx != -1) {
-                                val rawVal = values.getOrNull(idx)?.replace(",", ".")?.toFloatOrNull()
-                                chartData[uiName]?.add(rawVal)
-                                
-                                rawVal?.let { v ->
-                                    when(uiName) {
-                                        "bpm" -> if (v > maxBpm) maxBpm = v
-                                        "srednie_bpm" -> lastAvgBpm = v
-                                        "kalorie_suma" -> totalCalories = v
-                                        "kalorie_min" -> if (v > maxCaloriesMin) maxCaloriesMin = v
-                                    }
-                                }
-                            } else {
-                                chartData[uiName]?.add(null)
-                            }
-                        }
-                    }
-                    line = reader.readLine()
-                }
+        points.forEach { point ->
+            times.add(point.time)
+            
+            if (point.latitude != null && point.longitude != null) {
+                route.add(LatLng(point.latitude, point.longitude))
             }
-        } catch (e: Exception) {
-            Log.e("SessionRepository", "Error reading session file: $fileName", e)
-            return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Błąd odczytu danych: ${e.message}")
+
+            // Mapowanie pól encji na wykresy
+            chartData["bpm"]?.add(point.bpm?.toFloat())
+            chartData["srednie_bpm"]?.add(point.avgBpm?.toFloat())
+            chartData["kalorie_min"]?.add(point.calorieMin?.toFloat())
+            chartData["kalorie_suma"]?.add(point.calorieSum?.toFloat())
+            chartData["kroki_min"]?.add(point.stepsMin?.toFloat())
+            chartData["kroki_dystans"]?.add(point.distanceSteps?.toFloat())
+            chartData["predkosc_kroki"]?.add(point.speedSteps?.toFloat())
+            chartData["gps_dystans"]?.add(point.distanceGps?.toFloat())
+            chartData["predkosc_gps"]?.add(point.speedGps?.toFloat())
+            chartData["wysokosc"]?.add(point.altitude?.toFloat())
+            chartData["przewyzszenia_gora"]?.add(point.totalAscent?.toFloat())
+            chartData["przewyzszenia_dol"]?.add(point.totalDescent?.toFloat())
+
+            // Statystyki
+            point.bpm?.let { if (it > maxBpm) maxBpm = it }
+            point.avgBpm?.let { lastAvgBpm = it }
+            point.calorieSum?.let { totalCalories = it }
+            point.calorieMin?.let { if (it > maxCaloriesMin) maxCaloriesMin = it }
         }
 
         return@withContext SessionData(
             times = times,
             route = route,
             charts = chartData,
-            activityName = activityName,
-            activityDate = activityDate,
-            duration = times.lastOrNull() ?: "00:00:00",
-            maxBpm = maxBpm.toInt(),
+            activityName = workout.activityName,
+            activityDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(workout.startTime)),
+            duration = workout.durationFormatted,
+            maxBpm = maxBpm,
             avgBpm = lastAvgBpm.toInt(),
             totalCalories = totalCalories.toInt(),
-            maxCaloriesMin = maxCaloriesMin
+            maxCaloriesMin = maxCaloriesMin.toFloat()
         )
     }
 }
