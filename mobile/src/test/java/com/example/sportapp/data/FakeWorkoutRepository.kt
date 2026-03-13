@@ -5,6 +5,7 @@ import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import java.util.*
 
@@ -24,6 +25,14 @@ class FakeWorkoutRepository : IWorkoutRepository {
 
     override suspend fun getUniqueActivityTypes(): List<String> {
         return workouts.map { it.activityName }.distinct().filter { it.isNotEmpty() }
+    }
+
+    override fun getFilteredStatsFlow(
+        activityType: String?,
+        startDate: Date?,
+        endDate: Date?
+    ): Flow<Map<String, Any>> = flow {
+        emit(getFilteredStats(activityType, startDate, endDate))
     }
 
     override suspend fun getFilteredStats(
