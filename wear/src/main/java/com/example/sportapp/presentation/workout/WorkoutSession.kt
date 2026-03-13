@@ -1,11 +1,16 @@
 package com.example.sportapp.presentation.workout
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
-import kotlinx.coroutines.launch
+import com.google.gson.Gson
+import kotlinx.coroutines.flow.collectLatest
 import java.util.*
 
 @Composable
@@ -15,115 +20,76 @@ fun rememberWorkoutSession(
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ): WorkoutSessionState {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var status by remember { mutableStateOf(WorkoutStatus.ACTIVE) }
-    val startTime = remember { Date() }
-    
-    // 1. Sensory
-    val heartRate = rememberHeartRate()
-    val stepCount = rememberStepCount(status)
-    val distanceState = rememberDistance(status)
-    val speedKmH = rememberSpeed()
-    val workoutTimerState = rememberWorkoutTimer(status)
-    val altitude = rememberAltitude()
+    val gson = remember { Gson() }
+    var service by remember { mutableStateOf<WorkoutService?>(null) }
+    var workoutData by remember { mutableStateOf(WorkoutData(status = WorkoutStatus.IDLE)) }
 
-    // 2. Logika kalorii (Tylko model HRR)
-    val totalCalories = rememberCalorieTracker(
-        status = status,
-        totalSeconds = workoutTimerState.totalSeconds,
-        heartRate = heartRate,
-        healthData = healthData
-    )
+    val connection = remember {
+        object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+                val localBinder = binder as WorkoutService.LocalBinder
+                service = localBinder.getService()
+            }
 
-    // 3. Logger CSV
-    val logger = remember { WorkoutLogger(context, activityName, healthData) }
-
-    // Logowanie co sekundę
-    LaunchedEffect(workoutTimerState.totalSeconds) {
-        if (status == WorkoutStatus.ACTIVE) {
-            val calorieMin = CalorieCalculator.calculateHRR(heartRate, healthData)
-            logger.logData(
-                lat = distanceState.currentLat,
-                lon = distanceState.currentLon,
-                bpm = heartRate,
-                kroki = stepCount,
-                gpsDystans = distanceState.totalDistance,
-                predkoscGps = speedKmH,
-                wysokosc = altitude,
-                calorieMin = calorieMin,
-                calorieSum = totalCalories
-            )
+            override fun onServiceDisconnected(name: ComponentName?) {
+                service = null
+            }
         }
     }
 
-    // Wymuszenie zapisu przy pauzie
-    LaunchedEffect(status) {
-        if (status == WorkoutStatus.PAUSED) {
-            logger.flush()
+    DisposableEffect(Unit) {
+        val intent = Intent(context, WorkoutService::class.java).apply {
+            action = WorkoutService.ACTION_START
+            putExtra(WorkoutService.EXTRA_ACTIVITY_NAME, activityName)
+            putExtra(WorkoutService.EXTRA_HEALTH_DATA_JSON, gson.toJson(healthData))
+        }
+        context.startForegroundService(intent)
+        context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+
+        onDispose {
+            context.unbindService(connection)
         }
     }
 
-    val togglePause = {
-        status = if (status == WorkoutStatus.ACTIVE) WorkoutStatus.PAUSED else WorkoutStatus.ACTIVE
+    LaunchedEffect(service) {
+        service?.workoutState?.collectLatest {
+            workoutData = it
+        }
+    }
+
+    val togglePause: () -> Unit = {
+        val intent = Intent(context, WorkoutService::class.java).apply {
+            action = WorkoutService.ACTION_PAUSE_RESUME
+        }
+        context.startService(intent)
     }
 
     val endWorkout: () -> Unit = {
-        scope.launch {
-            val stats = logger.getFinalStats()
-            val durationHours = workoutTimerState.totalSeconds / 3600.0
-            val distanceKm = distanceState.totalDistance / 1000.0
-            val distanceStepsMeters = (stepCount * healthData.stepLength / 100.0)
-            
-            val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
-            val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
+        val data = workoutData
+        val summary = mutableListOf<Pair<String, String>>()
+        summary.add("Czas trwania" to data.formattedTime)
+        if (data.stepCount > 0) summary.add("Kroki" to "${data.stepCount}")
+        if (data.totalDistance > 0) summary.add("Dystans" to String.format(Locale.US, "%.2f km", data.totalDistance / 1000.0))
+        if (data.heartRate > 0) summary.add("Tętno" to "${data.heartRate.toInt()} BPM")
+        if (data.totalCalories > 0) summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", data.totalCalories))
+        
+        onEndWorkout(summary)
 
-            // Przygotowanie danych do podsumowania UI
-            val summary = mutableListOf<Pair<String, String>>()
-            summary.add("Czas trwania" to workoutTimerState.formattedTime)
-            
-            if (stepCount > 0) summary.add("Kroki" to "$stepCount")
-            if (distanceKm > 0) summary.add("Dystans (GPS)" to String.format(Locale.US, "%.2f km", distanceKm))
-            
-            val avgBpm = stats["avgBpm"] as? Double
-            if (avgBpm != null) summary.add("Średnie tętno" to "${avgBpm.toInt()} BPM")
-            
-            val totalAscent = stats["totalAscent"] as Double
-            if (totalAscent > 0) summary.add("Przewyższenie +" to String.format(Locale.US, "%.1f m", totalAscent))
-
-            if (totalCalories > 0) {
-                summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", totalCalories))
-            }
-
-            // Zapis do pliku zbiorczego (CSV)
-            SummaryManager.saveSummary(
-                context = context,
-                activityName = activityName,
-                startTime = startTime,
-                durationFormatted = workoutTimerState.formattedTime,
-                steps = if (stepCount > 0) stepCount else null,
-                distanceSteps = if (distanceStepsMeters > 0) distanceStepsMeters else null,
-                distanceGps = if (distanceState.totalDistance > 0) distanceState.totalDistance else null,
-                avgSpeedSteps = if (avgSpeedSteps > 0) avgSpeedSteps else null,
-                avgSpeedGps = if (avgSpeedGps > 0) avgSpeedGps else null,
-                totalAscent = totalAscent,
-                totalDescent = stats["totalDescent"] as Double,
-                avgBpm = avgBpm,
-                totalCalories = totalCalories,
-                durationSeconds = workoutTimerState.totalSeconds
-            )
-
-            onEndWorkout(summary)
+        val intent = Intent(context, WorkoutService::class.java).apply {
+            action = WorkoutService.ACTION_STOP
         }
+        context.startService(intent)
     }
 
     return WorkoutSessionState(
-        status = status,
-        heartRate = heartRate,
-        stepCount = stepCount,
-        distanceState = distanceState,
-        speedKmH = speedKmH,
-        workoutTimerState = workoutTimerState,
-        totalCalories = totalCalories,
+        status = workoutData.status,
+        heartRate = workoutData.heartRate,
+        stepCount = workoutData.stepCount,
+        distanceState = DistanceState(workoutData.totalDistance, workoutData.currentLat, workoutData.currentLon),
+        speedKmH = workoutData.speedKmH,
+        workoutTimerState = WorkoutTimerState(workoutData.formattedTime, workoutData.totalSeconds),
+        totalCalories = workoutData.totalCalories,
+        altitude = workoutData.altitude,
         togglePause = togglePause,
         endWorkout = endWorkout
     )
@@ -137,6 +103,7 @@ data class WorkoutSessionState(
     val speedKmH: Float,
     val workoutTimerState: WorkoutTimerState,
     val totalCalories: Double,
+    val altitude: Double,
     val togglePause: () -> Unit,
     val endWorkout: () -> Unit
 )
