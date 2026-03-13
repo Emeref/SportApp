@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
+import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
@@ -33,7 +34,6 @@ class OverallStatsViewModel @Inject constructor(
     private val _selectedType = MutableStateFlow<String?>(null)
     val selectedType = _selectedType.asStateFlow()
 
-    // Default: 7 days ago
     private val _startDate = MutableStateFlow<Date?>(
         Calendar.getInstance().apply { 
             add(Calendar.DAY_OF_YEAR, -7)
@@ -67,7 +67,9 @@ class OverallStatsViewModel @Inject constructor(
             combine(_selectedType, _startDate, _endDate) { type, start, end ->
                 repository.getFilteredStats(type, start, end)
             }.collect { statsMap ->
-                updateChartData(statsMap["raw_data"] as? List<Map<String, String>> ?: emptyList())
+                @Suppress("UNCHECKED_CAST")
+                val rawData = statsMap["raw_data"] as? List<WorkoutEntity> ?: emptyList()
+                updateChartData(rawData)
                 _stats.value = statsMap
             }
         }
@@ -79,33 +81,33 @@ class OverallStatsViewModel @Inject constructor(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun updateChartData(rawData: List<Map<String, String>>) {
-        val maxDistGps = rawData.maxOfOrNull { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 } ?: 0.0
-        val maxDistSteps = rawData.maxOfOrNull { it["kroki_dystans"]?.toDoubleOrNull() ?: 0.0 } ?: 0.0
+    private fun updateChartData(rawData: List<WorkoutEntity>) {
+        val maxDistGps = rawData.maxOfOrNull { it.distanceGps ?: 0.0 } ?: 0.0
+        val maxDistSteps = rawData.maxOfOrNull { it.distanceSteps ?: 0.0 } ?: 0.0
 
-        chartProducers["calories"]?.setEntries(rawData.mapIndexed { index, map -> entryOf(index, map["kalorie"]?.toFloatOrNull() ?: 0f) })
+        chartProducers["calories"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.totalCalories?.toFloat() ?: 0f) })
         
-        chartProducers["distanceGps"]?.setEntries(rawData.mapIndexed { index, map -> 
-            val value = map["gps_dystans"]?.toFloatOrNull() ?: 0f
+        chartProducers["distanceGps"]?.setEntries(rawData.mapIndexed { index, workout -> 
+            val value = workout.distanceGps?.toFloat() ?: 0f
             entryOf(index, if (maxDistGps > 6000) value / 1000f else value)
         })
         
-        chartProducers["distanceSteps"]?.setEntries(rawData.mapIndexed { index, map -> 
-            val value = map["kroki_dystans"]?.toFloatOrNull() ?: 0f
+        chartProducers["distanceSteps"]?.setEntries(rawData.mapIndexed { index, workout -> 
+            val value = workout.distanceSteps?.toFloat() ?: 0f
             entryOf(index, if (maxDistSteps > 6000) value / 1000f else value)
         })
 
-        chartProducers["ascent"]?.setEntries(rawData.mapIndexed { index, map -> entryOf(index, map["przewyzszenia_gora"]?.toFloatOrNull() ?: 0f) })
-        chartProducers["descent"]?.setEntries(rawData.mapIndexed { index, map -> entryOf(index, map["przewyzszenia_dol"]?.toFloatOrNull() ?: 0f) })
-        chartProducers["steps"]?.setEntries(rawData.mapIndexed { index, map -> entryOf(index, map["kroki"]?.toFloatOrNull() ?: 0f) })
+        chartProducers["ascent"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.totalAscent?.toFloat() ?: 0f) })
+        chartProducers["descent"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.totalDescent?.toFloat() ?: 0f) })
+        chartProducers["steps"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.steps?.toFloat() ?: 0f) })
     }
 
     fun getMaxValueForWidget(id: String): Double {
-        val rawData = _stats.value["raw_data"] as? List<Map<String, String>> ?: return 0.0
+        @Suppress("UNCHECKED_CAST")
+        val rawData = _stats.value["raw_data"] as? List<WorkoutEntity> ?: return 0.0
         return when(id) {
-            "distanceGps" -> rawData.maxOfOrNull { it["gps_dystans"]?.toDoubleOrNull() ?: 0.0 } ?: 0.0
-            "distanceSteps" -> rawData.maxOfOrNull { it["kroki_dystans"]?.toDoubleOrNull() ?: 0.0 } ?: 0.0
+            "distanceGps" -> rawData.maxOfOrNull { it.distanceGps ?: 0.0 } ?: 0.0
+            "distanceSteps" -> rawData.maxOfOrNull { it.distanceSteps ?: 0.0 } ?: 0.0
             else -> 0.0
         }
     }

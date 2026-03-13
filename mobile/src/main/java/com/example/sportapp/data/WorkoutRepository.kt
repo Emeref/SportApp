@@ -39,8 +39,6 @@ class WorkoutRepository @Inject constructor(
     }
 
     override suspend fun getUniqueActivityTypes(): List<String> = withContext(Dispatchers.IO) {
-        // Pobieramy unikalne typy z bazy danych zamiast z CSV
-        // Ponieważ getAllWorkouts zwraca Flow, używamy getWorkoutsSince(0) by dostać Listę
         workoutDao.getWorkoutsSince(0).map { it.activityName }.distinct().filter { it.isNotEmpty() }
     }
 
@@ -67,7 +65,7 @@ class WorkoutRepository @Inject constructor(
             "ascent" to filtered.sumOf { it.totalAscent ?: 0.0 },
             "descent" to filtered.sumOf { it.totalDescent ?: 0.0 },
             "steps" to filtered.sumOf { it.steps?.toLong() ?: 0L },
-            "raw_data" to filtered
+            "raw_data" to filtered // Tutaj teraz są obiekty WorkoutEntity
         )
     }
 
@@ -102,7 +100,6 @@ class WorkoutRepository @Inject constructor(
     }
 
     override suspend fun getAllSummaries(): List<Map<String, String>> = withContext(Dispatchers.IO) {
-        // Mapujemy encje bazy na format mapy (dla kompatybilności wstecznej jeśli UI tego wymaga)
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         workoutDao.getWorkoutsSince(0).map { workout ->
             mapOf(
@@ -121,16 +118,19 @@ class WorkoutRepository @Inject constructor(
 
     override suspend fun getActivityItems(): List<ActivityItem> = withContext(Dispatchers.IO) {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
-        workoutDao.getWorkoutsSince(0).map { workout ->
-            ActivityItem(
-                id = workout.id.toString(), // ID z bazy danych
-                type = workout.activityName,
-                date = sdf.format(Date(workout.startTime)),
-                duration = workout.durationFormatted,
-                calories = "${workout.totalCalories?.toInt() ?: 0} kcal",
-                distanceGps = formatDistance(workout.distanceGps ?: 0.0),
-                distanceSteps = formatDistance(workout.distanceSteps ?: 0.0)
-            )
-        }
+        // Sortujemy po startTime DESC, aby najnowsze były na górze
+        workoutDao.getWorkoutsSince(0)
+            .sortedByDescending { it.startTime }
+            .map { workout ->
+                ActivityItem(
+                    id = workout.id.toString(),
+                    type = workout.activityName,
+                    date = sdf.format(Date(workout.startTime)),
+                    duration = workout.durationFormatted,
+                    calories = "${workout.totalCalories?.toInt() ?: 0} kcal",
+                    distanceGps = formatDistance(workout.distanceGps ?: 0.0),
+                    distanceSteps = formatDistance(workout.distanceSteps ?: 0.0)
+                )
+            }
     }
 }
