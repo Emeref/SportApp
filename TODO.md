@@ -8,7 +8,7 @@
     - [x] Wyliczanie spalonych kalorii (Modele: Keytel, MET, HRR).
     - [x] Śledzenie trasy (GPS Location tracking).
 - [ ] **Stabilność i Precyzja**:
-    - [ ] **Wprowadzenie Foreground Service**: Przeniesienie logiki sesji z UI do usługi w tle (zapobieganie ubijaniu treningu).
+    - [x] **Wprowadzenie Foreground Service**: Przeniesienie logiki sesji z UI do usługi w tle (zapobieganie ubijaniu treningu).
     - [ ] **Centralny PermissionManager**: Ujednolicona obsługa uprawnień przed startem aktywności.
     - [ ] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych GPS i barometru (eliminacja szumów).
 - [ ] **Własne dyscypliny**: Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników.
@@ -40,7 +40,7 @@
         - [ ] Interaktywna mapa trasy z oznaczeniem startu (kółko) i końca (flaga).
         - [x] Personalizacja widoku (wybór i kolejność wykresów/mapy).
         - [x] Wybór koloru śladu na mapie.
-        - [ ] **Nowe widgety statystyczne**: Dodanie podsumowań takich jak Max HR, Max Speed, średnie tempo itp.
+        - [x] **Nowe widgety statystyczne**: Dodanie podsumowań takich jak Max HR, Max Speed, średnie tempo itp.
         - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
     - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
@@ -58,7 +58,7 @@
 ## 5. Chmura i Bezpieczeństwo
 - [ ] **Integracja z Google**:
     - [ ] Dodanie logowania przez konto Google.
-    - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań w chmurze (backup/sync).
+    - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań w chmudze (backup/sync).
     - [ ] **Health Connect**: Synchronizacja danych treningowych z Google Health Connect.
 
 ## 6. Jakość i Testy

@@ -44,6 +44,7 @@ class WorkoutRepositoryTest {
     @Test
     fun `getFilteredStats correctly aggregates data including calories with precision`() = runBlocking {
         val summaryFile = File(activitiesDir, "Podsumowanie_cwiczen.csv")
+        // Używamy aktualnego formatu nagłówka z Podsumowanie_cwiczen.csv
         summaryFile.writeText(
             "nazwa aktywnosci;data;dlugosc;kalorie;gps_dystans;kroki_dystans;przewyzszenia_gora;przewyzszenia_dol;kroki\n" +
             "Spacer;2024-03-01 10:00:00;00:30:00;200.55;3000.0;2800.0;10.0;5.0;4000\n" +
