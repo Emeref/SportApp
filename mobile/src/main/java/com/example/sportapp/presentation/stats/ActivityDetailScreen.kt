@@ -158,67 +158,52 @@ fun ActivityDetailScreen(
 fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleElements: List<WidgetItem>) {
     val isEnabled = { id: String -> visibleElements.any { it.id == id && it.isEnabled } }
     
-    // Warunki wyświetlania widgetów na podstawie zaznaczonych elementów w ustawieniach
-    val showHeartRate = isEnabled("bpm")
-    val showCalories = isEnabled("kalorie_min")
+    // Lista wszystkich potencjalnych widgetów (z nowymi nazwami)
+    val allPossibleWidgets = mutableListOf<Pair<String, String>>()
     
-    // GPS Stats widoczne jeśli zaznaczona Mapa lub dowolny wykres GPS
+    if (isEnabled("bpm")) {
+        allPossibleWidgets.add("Maksymalne tętno" to "${data.maxBpm} bpm")
+        allPossibleWidgets.add("Średnie tętno" to "${data.avgBpm} bpm")
+    }
+    
+    if (isEnabled("kalorie_min")) {
+        allPossibleWidgets.add("Spalone kalorie" to "${data.totalCalories} kcal")
+        allPossibleWidgets.add("Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin))
+    }
+
     val showGpsStats = isEnabled("map") || isEnabled("gps_dystans") || isEnabled("wysokosc") || 
                        isEnabled("przewyzszenia_gora") || isEnabled("przewyzszenia_dol") || isEnabled("predkosc")
-                       
+    
+    if (showGpsStats) {
+        allPossibleWidgets.add("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeedGps))
+        allPossibleWidgets.add("Dystans" to formatDistance(data.totalDistanceGps))
+    }
+
     val showStepsStats = isEnabled("odl_kroki") || isEnabled("predkosc_kroki") || isEnabled("kroki_min")
+    
+    if (showStepsStats) {
+        allPossibleWidgets.add("Maks prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps))
+        allPossibleWidgets.add("Liczba kroków" to "${data.totalSteps}")
+        allPossibleWidgets.add("Dystans (kroki)" to formatDistance(data.totalDistanceSteps))
+    }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        // Czas trwania na całą szerokość (zawsze widoczny)
+        // 1. Pierwszy wiersz to zawsze 'Czas trwania'
         SummaryItem(label = "Czas trwania", value = data.duration, modifier = Modifier.fillMaxWidth())
         
-        if (showHeartRate) {
+        // 2. Kolejne wiersze (2 widgety na wiersz, ostatni na pełną szerokość jeśli nieparzyste)
+        val chunks = allPossibleWidgets.chunked(2)
+        chunks.forEach { chunk ->
             Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SummaryItem(label = "Max Tętno", value = "${data.maxBpm} bpm", modifier = Modifier.weight(1f))
-                SummaryItem(label = "Śr. Tętno", value = "${data.avgBpm} bpm", modifier = Modifier.weight(1f))
-            }
-        }
-        
-        if (showCalories) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SummaryItem(label = "Kalorie", value = "${data.totalCalories} kcal", modifier = Modifier.weight(1f))
-                SummaryItem(label = "Maks. Spalanie", value = String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin), modifier = Modifier.weight(1f))
-            }
-        }
-
-        if (showGpsStats || showStepsStats) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (showGpsStats) {
-                    SummaryItem(label = "Maks prędkość (GPS)", value = String.format(Locale.US, "%.1f km/h", data.maxSpeedGps), modifier = Modifier.weight(1f))
+            if (chunk.size == 2) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SummaryItem(label = chunk[0].first, value = chunk[0].second, modifier = Modifier.weight(1f))
+                    SummaryItem(label = chunk[1].first, value = chunk[1].second, modifier = Modifier.weight(1f))
                 }
-                if (showStepsStats) {
-                    SummaryItem(label = "Maks prędkość (kroki)", value = String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps), modifier = Modifier.weight(1f))
-                } else if (showGpsStats) {
-                    Box(modifier = Modifier.weight(1f))
-                }
+            } else {
+                // Ostatni widget w nieparzystym zestawie na całą długość
+                SummaryItem(label = chunk[0].first, value = chunk[0].second, modifier = Modifier.fillMaxWidth())
             }
-        }
-
-        if (showGpsStats || showStepsStats) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (showGpsStats) {
-                    SummaryItem(label = "Dystans (GPS)", value = formatDistance(data.totalDistanceGps), modifier = Modifier.weight(1f))
-                }
-                if (showStepsStats) {
-                    SummaryItem(label = "Liczba kroków", value = "${data.totalSteps}", modifier = Modifier.weight(1f))
-                } else if (showGpsStats) {
-                    Box(modifier = Modifier.weight(1f))
-                }
-            }
-        }
-
-        if (showStepsStats) {
-            Spacer(modifier = Modifier.height(8.dp))
-            SummaryItem(label = "Dystans (kroki)", value = formatDistance(data.totalDistanceSteps), modifier = Modifier.fillMaxWidth())
         }
     }
 }
