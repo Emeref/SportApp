@@ -34,7 +34,10 @@ data class WorkoutData(
     val status: WorkoutStatus = WorkoutStatus.IDLE,
     val totalSeconds: Long = 0L,
     val formattedTime: String = "00:00",
-    val lastPoint: WorkoutPointEntity? = null
+    val lastPoint: WorkoutPointEntity? = null,
+    val maxBpm: Int = 0,
+    val maxSpeedGps: Double = 0.0,
+    val maxSpeedSteps: Double = 0.0
 )
 
 @AndroidEntryPoint
@@ -60,11 +63,14 @@ class WorkoutService : Service(), SensorEventListener {
     private var currentWorkoutId: Long = -1
     private var totalSeconds = 0L
     private var heartRate = 0f
-    private var stepCountStart = -1
+    private var maxBpm = 0
     private var currentSteps = 0
+    private var stepCountStart = -1
     private var totalDistance = 0f
     private var lastLocation: Location? = null
     private var speedKmH = 0f
+    private var maxSpeedGps = 0.0
+    private var maxSpeedSteps = 0.0
     private var altitude = 0.0
     private var healthData: HealthData? = null
     private var sportDefinition: WorkoutDefinition? = null
@@ -73,6 +79,8 @@ class WorkoutService : Service(), SensorEventListener {
 
     private var timerJob: Job? = null
     private var locationCallback: LocationCallback? = null
+
+    fun getSportDefinition(): WorkoutDefinition? = sportDefinition
 
     private fun isRecording(sensor: WorkoutSensor): Boolean {
         return sportDefinition?.sensors?.find { it.sensorId == sensor.id }?.isRecording == true
@@ -141,11 +149,14 @@ class WorkoutService : Service(), SensorEventListener {
         status = WorkoutStatus.ACTIVE
         totalSeconds = 0L
         heartRate = 0f
+        maxBpm = 0
         stepCountStart = -1
         currentSteps = 0
         totalDistance = 0f
         lastLocation = null
         speedKmH = 0f
+        maxSpeedGps = 0.0
+        maxSpeedSteps = 0.0
         altitude = 0.0
         totalCaloriesAcc = 0.0
         
@@ -204,7 +215,7 @@ class WorkoutService : Service(), SensorEventListener {
                 totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) (stats["totalAscent"] as? Double ?: 0.0) else null,
                 totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) (stats["totalDescent"] as? Double ?: 0.0) else null,
                 avgBpm = if (isRecording(WorkoutSensor.AVG_HEART_RATE)) (stats["avgBpm"] as? Double) else null,
-                maxBpm = if (isRecording(WorkoutSensor.HEART_RATE)) (stats["maxBpm"] as? Int) else null,
+                maxBpm = if (isRecording(WorkoutSensor.HEART_RATE)) maxBpm else null,
                 totalCalories = if (isRecording(WorkoutSensor.CALORIES_SUM)) totalCaloriesAcc else null,
                 maxCalorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) (stats["maxCalorieMin"] as? Double ?: 0.0) else null,
                 durationSeconds = totalSeconds
@@ -257,6 +268,12 @@ class WorkoutService : Service(), SensorEventListener {
                         calorieMin = calorieMinNow,
                         calorieSum = totalCaloriesAcc
                     )
+                    
+                    // Track aggregates for UI summary
+                    if (heartRate > maxBpm) maxBpm = heartRate.toInt()
+                    if (speedKmH > maxSpeedGps) maxSpeedGps = speedKmH.toDouble()
+                    lastPoint?.speedSteps?.let { if (it > maxSpeedSteps) maxSpeedSteps = it }
+
                     updateState(lastPoint)
                 } else {
                     delay(500)
@@ -312,7 +329,10 @@ class WorkoutService : Service(), SensorEventListener {
             status = status,
             totalSeconds = totalSeconds,
             formattedTime = formatTime(totalSeconds),
-            lastPoint = lastPoint
+            lastPoint = lastPoint,
+            maxBpm = maxBpm,
+            maxSpeedGps = maxSpeedGps,
+            maxSpeedSteps = maxSpeedSteps
         )
     }
 
