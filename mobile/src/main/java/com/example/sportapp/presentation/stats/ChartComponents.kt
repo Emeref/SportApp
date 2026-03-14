@@ -89,7 +89,7 @@ fun CommonChartSection(
                 spacing = if (totalPoints > 1) ((totalPoints - 1) / 5).coerceAtLeast(1) else 1,
                 offset = 0,
                 shiftExtremeTicks = true,
-                addExtremeLabelPadding = true // Dodaje padding dla pierwszej i ostatniej etykiety
+                addExtremeLabelPadding = true
             )
         }
 
@@ -134,7 +134,10 @@ fun CommonChartSection(
                 guideline = null
             ),
             chartScrollSpec = rememberChartScrollSpec(isScrollEnabled = isScrollEnabled),
-            horizontalLayout = HorizontalLayout.fullWidth(), // Poprawione wywołanie rozszerzenia
+            horizontalLayout = HorizontalLayout.fullWidth(
+                unscalableStartPadding = 16.dp, // Miejsce dla "0:00"
+                unscalableEndPadding = 24.dp    // Większe miejsce dla dłuższego czasu na końcu
+            ),
             modifier = Modifier.fillMaxWidth().height(if (overallRawData != null) 320.dp else 200.dp)
         )
     }
