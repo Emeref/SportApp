@@ -40,7 +40,7 @@
         - [ ] Interaktywna mapa trasy z oznaczeniem startu (kółko) i końca (flaga).
         - [x] Personalizacja widoku (wybór i kolejność wykresów/mapy).
         - [x] Wybór koloru śladu na mapie.
-        - [x] **Nowe widgety statystyczne**: Dodanie podsumowań takich jak Max HR, Max Speed, średnie tempo itp.
+        - [ ] **Nowe widgety statystyczne**: Dodanie podsumowań takich jak Max HR, Max Speed, średnie tempo, średnia prędkość itp.
         - [x] **Optymalizacja wykresów**: Poprawa czytelności osi X (format czasu, brak ucinania etykiet), naprawa błędów renderowania 'NONE'.
         - [ ] **Próbkowanie danych**: Implementacja algorytmu (np. LTTB) do ograniczenia liczby punktów na wykresie (max 500).
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
@@ -79,5 +79,5 @@
 
 ## PRIORYTETY
 1. **Własne dyscypliny** - Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników i ich wizualizacji.
-2. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
-3. **Stabilność i Precyzja (Centralny PermissionManager)** - Ujednolicona obsługa uprawnień w całej aplikacji przed rozpoczęciem treningu.
+2. **Widget 'średnia prędkość' i 'średni prędkość (kroki)'** - Implementacja i wyświetlanie średniej prędkości na ekranie szczegółów aktywności.
+3. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.

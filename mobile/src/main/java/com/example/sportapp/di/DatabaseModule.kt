@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.sportapp.data.db.AppDatabase
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutDefinitionDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,11 +23,18 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "sportapp_db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration() // For development, simplify migration
+        .build()
     }
 
     @Provides
     fun provideWorkoutDao(database: AppDatabase): WorkoutDao {
         return database.workoutDao()
+    }
+
+    @Provides
+    fun provideWorkoutDefinitionDao(database: AppDatabase): WorkoutDefinitionDao {
+        return database.workoutDefinitionDao()
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,7 +25,8 @@ fun SettingsScreen(
     initialState: MobileSettingsState,
     onSave: (MobileSettingsState) -> Unit,
     onCancel: () -> Unit,
-    onNavigateToWidgetSelection: () -> Unit
+    onNavigateToWidgetSelection: () -> Unit,
+    onNavigateToDefinitions: () -> Unit
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
@@ -42,7 +44,22 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 1. Sekcja Widgety
+            // 1. Sekcja Aktywności
+            SettingsSection(title = "Treningi") {
+                OutlinedCard(
+                    onClick = onNavigateToDefinitions,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Definicja aktywności") },
+                        supportingContent = { Text("Zarządzaj listą i czujnikami sportów") },
+                        leadingContent = { Icon(Icons.Default.SettingsAccessibility, null) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
+                    )
+                }
+            }
+
+            // 2. Sekcja Widgety
             SettingsSection(title = "Widok ekranu głównego") {
                 OutlinedCard(
                     onClick = onNavigateToWidgetSelection,
@@ -51,12 +68,13 @@ fun SettingsScreen(
                     ListItem(
                         headlineContent = { Text("Widgety na stronie głównej") },
                         supportingContent = { Text("Wybierz i ustaw kolejność") },
-                        trailingContent = { Icon(Icons.Default.ChevronRight, null) }
+                        leadingContent = { Icon(Icons.Default.Dashboard, null) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
                 }
             }
 
-            // 2. Sekcja Okresu
+            // 3. Sekcja Okresu
             SettingsSection(title = "Za jaki okres pokazujemy widgety?") {
                 Column {
                     PeriodOption("Dziś", ReportingPeriod.TODAY, state.period) { state = state.copy(period = it) }
@@ -84,7 +102,7 @@ fun SettingsScreen(
                 }
             }
 
-            // 3. Sekcja Integracja
+            // 4. Sekcja Integracja
             SettingsSection(title = "Integracja") {
                 ListItem(
                     headlineContent = { Text("Google Drive") },
@@ -94,7 +112,7 @@ fun SettingsScreen(
                 )
             }
 
-            // 4. Tryb Deweloperski / Testowy (ukryty w wersji produkcyjnej)
+            // 5. Tryb Deweloperski / Testowy (ukryty w wersji produkcyjnej)
             if (BuildConfig.DEBUG) {
                 SettingsSection(title = "Tryb deweloperski") {
                     ListItem(
