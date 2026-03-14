@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.SessionData
+import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.google.android.gms.maps.model.LatLng
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -23,6 +24,7 @@ import javax.inject.Inject
 class ActivityDetailViewModel @Inject constructor(
     @ApplicationContext context: Context,
     private val repository: IWorkoutRepository,
+    private val sessionRepository: SessionRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val activityId: Long = savedStateHandle.get<String>("activityId")?.toLongOrNull() ?: -1L
@@ -68,60 +70,30 @@ class ActivityDetailViewModel @Inject constructor(
                 return@launch
             }
 
-            val workout = repository.getWorkoutById(activityId)
-            if (workout == null) {
-                _error.value = "Trening o ID $activityId nie został znaleziony."
-                return@launch
-            }
-
-            val points = repository.getPointsForWorkout(activityId)
-            
-            val chartData = mutableMapOf<String, MutableList<Float?>>()
-            val columnKeys = listOf("bpm", "kalorie_min", "kalorie_suma", "kroki_min", "odl_kroki", "predkosc_kroki", "gps_dystans", "predkosc", "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol")
-            columnKeys.forEach { chartData[it] = mutableListOf() }
-
-            val times = mutableListOf<String>()
-            val route = mutableListOf<LatLng>()
-
-            points.forEach { p ->
-                times.add(p.time)
-                if (p.latitude != null && p.longitude != null) {
-                    route.add(LatLng(p.latitude, p.longitude))
+            try {
+                val data = sessionRepository.getSessionData(activityId.toString())
+                if (data.error != null) {
+                    _error.value = data.error
+                } else {
+                    _sessionData.value = data
+                    updateCharts(data)
                 }
-                chartData["bpm"]?.add(p.bpm?.toFloat())
-                chartData["kalorie_min"]?.add(p.calorieMin?.toFloat())
-                chartData["kalorie_suma"]?.add(p.calorieSum?.toFloat())
-                chartData["kroki_min"]?.add(p.stepsMin?.toFloat())
-                chartData["odl_kroki"]?.add(p.distanceSteps?.toFloat())
-                chartData["predkosc_kroki"]?.add(p.speedSteps?.toFloat())
-                chartData["gps_dystans"]?.add(p.distanceGps?.toFloat())
-                chartData["predkosc"]?.add(p.speedGps?.toFloat())
-                chartData["wysokosc"]?.add(p.altitude?.toFloat())
-                chartData["przewyzszenia_gora"]?.add(p.totalAscent?.toFloat())
-                chartData["przewyzszenia_dol"]?.add(p.totalDescent?.toFloat())
+            } catch (e: Exception) {
+                _error.value = "Błąd ładowania danych: ${e.message}"
             }
-
-            val data = SessionData(
-                times = times,
-                route = route,
-                charts = chartData,
-                activityName = workout.activityName,
-                activityDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(workout.startTime)),
-                duration = workout.durationFormatted,
-                maxBpm = workout.maxBpm ?: 0,
-                avgBpm = workout.avgBpm?.toInt() ?: 0,
-                totalCalories = workout.totalCalories?.toInt() ?: 0,
-                maxCaloriesMin = workout.maxCalorieMin?.toFloat() ?: 0f
-            )
-
-            _sessionData.value = data
-            updateCharts(data)
         }
     }
 
     private fun updateCharts(data: SessionData) {
         chartProducers.forEach { (id, producer) ->
-            val points = data.charts[id] ?: emptyList()
+            // Mapowanie kluczy z SessionData.charts na te używane w UI
+            val internalKey = when(id) {
+                "predkosc" -> "predkosc_gps"
+                "odl_kroki" -> "kroki_dystans"
+                else -> id
+            }
+            
+            val points = data.charts[internalKey] ?: emptyList()
             if (points.isNotEmpty()) {
                 producer.setEntries(points.mapIndexed { index, value ->
                     entryOf(index, value ?: 0f)

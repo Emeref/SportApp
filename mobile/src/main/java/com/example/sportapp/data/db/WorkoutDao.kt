@@ -31,4 +31,19 @@ interface WorkoutDao {
 
     @Query("DELETE FROM workout_points WHERE workoutId = :workoutId")
     suspend fun deletePointsForWorkout(workoutId: Long)
+
+    @Query("SELECT MAX(speedGps) FROM workout_points WHERE workoutId = :workoutId")
+    suspend fun getMaxSpeedGps(workoutId: Long): Double?
+
+    @Query("SELECT MAX(speedSteps) FROM workout_points WHERE workoutId = :workoutId")
+    suspend fun getMaxSpeedSteps(workoutId: Long): Double?
+
+    @Query("SELECT MAX(distanceGps) FROM workout_points WHERE workoutId = :workoutId")
+    suspend fun getMaxDistanceGps(workoutId: Long): Double?
+
+    @Query("SELECT MAX(distanceSteps) FROM workout_points WHERE workoutId = :workoutId")
+    suspend fun getMaxDistanceSteps(workoutId: Long): Double?
+
+    @Query("SELECT MAX(steps) FROM workout_points WHERE workoutId = :workoutId")
+    suspend fun getMaxSteps(workoutId: Long): Int?
 }

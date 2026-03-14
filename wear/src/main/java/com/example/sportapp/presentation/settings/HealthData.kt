@@ -7,7 +7,7 @@ data class HealthData(
     val height: Int = 184,
     val restingHR: Int = 56,
     val maxHR: Int = 220 - 40, // Domyślnie 220 - wiek
-    val stepLength: Int = 83
+    val stepLength: Int = 79
 )
 
 enum class Gender {

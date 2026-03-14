@@ -167,6 +167,35 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData) {
             SummaryItem(label = "Kalorie", value = "${data.totalCalories} kcal", modifier = Modifier.weight(1f))
             SummaryItem(label = "Maks. Spalanie", value = String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin), modifier = Modifier.weight(1f))
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Prędkość Maksymalna
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SummaryItem(label = "Maks prędkość (GPS)", value = String.format(Locale.US, "%.1f km/h", data.maxSpeedGps), modifier = Modifier.weight(1f))
+            SummaryItem(label = "Maks prędkość (kroki)", value = String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps), modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Dystans i kroki
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SummaryItem(label = "Dystans (GPS)", value = formatDistance(data.totalDistanceGps), modifier = Modifier.weight(1f))
+            SummaryItem(label = "Liczba kroków", value = "${data.totalSteps}", modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Dystans z kroków na całą szerokość (jako uzupełnienie)
+        SummaryItem(label = "Dystans (kroki)", value = formatDistance(data.totalDistanceSteps), modifier = Modifier.fillMaxWidth())
+    }
+}
+
+private fun formatDistance(distanceMeters: Double): String {
+    return if (distanceMeters >= 1000) {
+        String.format(Locale.US, "%.2f km", distanceMeters / 1000.0)
+    } else {
+        String.format(Locale.US, "%.0f m", distanceMeters)
     }
 }
 
