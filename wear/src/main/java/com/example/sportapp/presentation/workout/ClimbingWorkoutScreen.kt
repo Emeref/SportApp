@@ -31,7 +31,7 @@ fun ClimbingWorkoutScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(state = horizontalPagerState) { hPage ->
             if (hPage == 0) {
-                WorkoutControlScreen(
+                WorkoutControls(
                     status = session.status,
                     onTogglePause = session.togglePause,
                     onEnd = session.endWorkout

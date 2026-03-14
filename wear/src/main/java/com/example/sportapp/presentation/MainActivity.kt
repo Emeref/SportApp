@@ -1,8 +1,12 @@
 package com.example.sportapp.presentation
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material.*
@@ -47,6 +51,24 @@ class MainActivity : ComponentActivity() {
                 healthData = settingsState.healthData
             }
             
+            // Permissions
+            val permissions = mutableListOf(
+                Manifest.permission.BODY_SENSORS,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACTIVITY_RECOGNITION
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+
+            val launcher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) { /* Handle results if needed */ }
+
+            LaunchedEffect(Unit) {
+                launcher.launch(permissions.toTypedArray())
+            }
+
             var currentSummaryData by remember { mutableStateOf<Pair<String, List<Pair<String, String>>>?>(null) }
 
             SportAppTheme {
