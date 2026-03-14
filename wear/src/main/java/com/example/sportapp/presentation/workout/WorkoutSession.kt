@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.gson.Gson
@@ -66,12 +67,16 @@ fun rememberWorkoutSession(
 
     val endWorkout: () -> Unit = {
         val data = workoutData
+        val lastPoint = data.lastPoint
         val summary = mutableListOf<Pair<String, String>>()
         summary.add("Czas trwania" to data.formattedTime)
-        if (data.stepCount > 0) summary.add("Kroki" to "${data.stepCount}")
-        if (data.totalDistance > 0) summary.add("Dystans" to String.format(Locale.US, "%.2f km", data.totalDistance / 1000.0))
-        if (data.heartRate > 0) summary.add("Tętno" to "${data.heartRate.toInt()} BPM")
-        if (data.totalCalories > 0) summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", data.totalCalories))
+        
+        if (lastPoint != null) {
+            lastPoint.steps?.let { if (it > 0) summary.add("Kroki" to "$it") }
+            lastPoint.distanceGps?.let { if (it > 0) summary.add("Dystans" to String.format(Locale.US, "%.2f km", it / 1000.0)) }
+            lastPoint.bpm?.let { if (it > 0) summary.add("Tętno" to "$it BPM") }
+            lastPoint.calorieSum?.let { if (it > 0) summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", it)) }
+        }
         
         onEndWorkout(summary)
 
@@ -83,13 +88,8 @@ fun rememberWorkoutSession(
 
     return WorkoutSessionState(
         status = workoutData.status,
-        heartRate = workoutData.heartRate,
-        stepCount = workoutData.stepCount,
-        distanceState = DistanceState(workoutData.totalDistance, workoutData.currentLat, workoutData.currentLon),
-        speedKmH = workoutData.speedKmH,
         workoutTimerState = WorkoutTimerState(workoutData.formattedTime, workoutData.totalSeconds),
-        totalCalories = workoutData.totalCalories,
-        altitude = workoutData.altitude,
+        lastPoint = workoutData.lastPoint,
         togglePause = togglePause,
         endWorkout = endWorkout
     )
@@ -97,13 +97,8 @@ fun rememberWorkoutSession(
 
 data class WorkoutSessionState(
     val status: WorkoutStatus,
-    val heartRate: Float,
-    val stepCount: Int,
-    val distanceState: DistanceState,
-    val speedKmH: Float,
     val workoutTimerState: WorkoutTimerState,
-    val totalCalories: Double,
-    val altitude: Double,
+    val lastPoint: WorkoutPointEntity?,
     val togglePause: () -> Unit,
     val endWorkout: () -> Unit
 )

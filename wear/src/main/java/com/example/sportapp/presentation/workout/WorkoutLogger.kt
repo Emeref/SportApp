@@ -41,7 +41,7 @@ class WorkoutLogger(
         wysokosc: Double? = null,
         calorieMin: Double? = null,
         calorieSum: Double? = null
-    ) = withContext(Dispatchers.IO) {
+    ): WorkoutPointEntity = withContext(Dispatchers.IO) {
         val currentTime = System.currentTimeMillis()
         val durationMillis = currentTime - startTime
         val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", (durationMillis / 3600000), (durationMillis / 60000) % 60, (durationMillis / 1000) % 60)
@@ -96,6 +96,7 @@ class WorkoutLogger(
         )
         
         workoutDao.insertPoint(point)
+        point
     }
 
     suspend fun getFinalStats(): Map<String, Any?> {

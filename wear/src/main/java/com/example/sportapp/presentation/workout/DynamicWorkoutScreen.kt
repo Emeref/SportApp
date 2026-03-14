@@ -186,20 +186,21 @@ fun DynamicSensorDispatcher(
 ) {
     val sensor = com.example.sportapp.data.model.WorkoutSensor.entries.find { it.id == id } ?: return
     val label = sensor.label
+    val p = session.lastPoint
     
     when (id) {
-        "bpm" -> SportDataRow(label, if (session.heartRate > 0) "${session.heartRate.toInt()}" else "--", Color.Red, true)
-        "avgBpm" -> SportDataRow(label, "--", Color.Red)
-        "steps" -> SportDataRow(label, "${session.stepCount}", Color.Green)
-        "stepsMin" -> SportDataRow(label, "--", Color.Green)
-        "distanceSteps" -> SportDataRow(label, "--", Color.Cyan)
-        "distanceGps" -> SportDataRow(label, String.format(Locale.US, "%.2f km", session.distanceState.totalDistance / 1000f), Color.Cyan)
-        "speedGps" -> SportDataRow(label, String.format(Locale.US, "%.1f km/h", session.speedKmH), Color.Yellow)
-        "speedSteps" -> SportDataRow(label, "--", Color.Yellow)
-        "altitude" -> SportDataRow(label, String.format(Locale.US, "%.0f m", session.altitude), Color.Magenta)
-        "totalAscent" -> SportDataRow(label, "-- m", Color.Magenta)
-        "totalDescent" -> SportDataRow(label, "-- m", Color.Magenta)
-        "calorieMin" -> SportDataRow(label, "--", Color.LightGray)
-        "calorieSum" -> SportDataRow(label, String.format(Locale.US, "%.0f kcal", session.totalCalories), Color.LightGray)
+        "bpm" -> SportDataRow(label, p?.bpm?.let { "$it" } ?: "--", Color.Red, true)
+        "avgBpm" -> SportDataRow(label, p?.avgBpm?.let { String.format(Locale.US, "%.0f", it) } ?: "--", Color.Red)
+        "steps" -> SportDataRow(label, p?.steps?.let { "$it" } ?: "0", Color.Green)
+        "stepsMin" -> SportDataRow(label, p?.stepsMin?.let { String.format(Locale.US, "%.1f", it) } ?: "--", Color.Green)
+        "distanceSteps" -> SportDataRow(label, p?.distanceSteps?.let { "$it m" } ?: "-- m", Color.Cyan)
+        "distanceGps" -> SportDataRow(label, p?.distanceGps?.let { String.format(Locale.US, "%.2f km", it / 1000.0) } ?: "0.00 km", Color.Cyan)
+        "speedGps" -> SportDataRow(label, p?.speedGps?.let { String.format(Locale.US, "%.1f km/h", it) } ?: "0.0 km/h", Color.Yellow)
+        "speedSteps" -> SportDataRow(label, p?.speedSteps?.let { String.format(Locale.US, "%.1f km/h", it) } ?: "-- km/h", Color.Yellow)
+        "altitude" -> SportDataRow(label, p?.altitude?.let { String.format(Locale.US, "%.0f m", it) } ?: "-- m", Color.Magenta)
+        "totalAscent" -> SportDataRow(label, p?.totalAscent?.let { String.format(Locale.US, "%.0f m", it) } ?: "-- m", Color.Magenta)
+        "totalDescent" -> SportDataRow(label, p?.totalDescent?.let { String.format(Locale.US, "%.0f m", it) } ?: "-- m", Color.Magenta)
+        "calorieMin" -> SportDataRow(label, p?.calorieMin?.let { String.format(Locale.US, "%.1f", it) } ?: "--", Color.LightGray)
+        "calorieSum" -> SportDataRow(label, p?.calorieSum?.let { String.format(Locale.US, "%.0f kcal", it) } ?: "0 kcal", Color.LightGray)
     }
 }

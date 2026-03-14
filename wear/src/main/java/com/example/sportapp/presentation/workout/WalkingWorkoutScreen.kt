@@ -68,10 +68,10 @@ fun WalkingWorkoutScreen(
                     ) { vPage ->
                         when (vPage) {
                             0 -> MainDataScreen(
-                                heartRate = session.heartRate,
-                                stepCount = session.stepCount,
-                                distanceMeters = session.distanceState.totalDistance,
-                                speedKmH = session.speedKmH,
+                                heartRate = session.lastPoint?.bpm?.toFloat() ?: 0f,
+                                stepCount = session.lastPoint?.steps ?: 0,
+                                distanceMeters = session.lastPoint?.distanceGps?.toFloat() ?: 0f,
+                                speedKmH = session.lastPoint?.speedGps?.toFloat() ?: 0f,
                                 workoutTimerState = session.workoutTimerState
                             )
                             1 -> MapScreen(mapType, focusRequester)

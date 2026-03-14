@@ -38,10 +38,10 @@ fun ClimbingWorkoutScreen(
                 )
             } else {
                 ClimbingDataScreen(
-                    heartRate = session.heartRate,
+                    heartRate = session.lastPoint?.bpm?.toFloat() ?: 0f,
                     workoutTimerState = session.workoutTimerState,
                     healthData = healthData,
-                    totalCalories = session.totalCalories
+                    totalCalories = session.lastPoint?.calorieSum ?: 0.0
                 )
             }
         }

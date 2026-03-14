@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import com.example.sportapp.R
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutEntity
+import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.android.gms.location.*
@@ -45,7 +46,6 @@ class WorkoutService : Service(), SensorEventListener {
     val workoutState = _workoutState.asStateFlow()
 
     private var status = WorkoutStatus.IDLE
-    private var startTime = Date()
     private var currentWorkoutId: Long = -1
     private var totalSeconds = 0L
     private var heartRate = 0f
@@ -125,7 +125,6 @@ class WorkoutService : Service(), SensorEventListener {
         activityName = name
         healthData = hData
         status = WorkoutStatus.ACTIVE
-        startTime = Date()
         totalSeconds = 0L
         heartRate = 0f
         stepCountStart = -1
@@ -138,12 +137,10 @@ class WorkoutService : Service(), SensorEventListener {
         
         logger = WorkoutLogger(workoutDao, currentWorkoutId, hData)
         
-        // Wakelock
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK, "SportApp:WorkoutWakeLock"
-        ).apply { acquire(10*60*60*1000L /* 10 hours max */) }
+        ).apply { acquire(10*60*60*1000L) }
 
-        // Start Foreground
         val notification = createNotification()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
@@ -154,7 +151,7 @@ class WorkoutService : Service(), SensorEventListener {
         registerSensors()
         startTimer()
         startLocationUpdates()
-        updateState()
+        updateState(null)
     }
 
     private fun togglePause() {
@@ -164,7 +161,7 @@ class WorkoutService : Service(), SensorEventListener {
             status = WorkoutStatus.ACTIVE
         }
         updateNotification()
-        updateState()
+        updateState(null)
     }
 
     private fun stopWorkout() {
@@ -201,7 +198,6 @@ class WorkoutService : Service(), SensorEventListener {
             
             if (finalWorkout != null) {
                 workoutDao.updateWorkout(finalWorkout)
-                // Automatyczna synchronizacja po zakończeniu treningu
                 dataLayerManager.syncActivities()
             }
             
@@ -233,10 +229,10 @@ class WorkoutService : Service(), SensorEventListener {
                     delay(1000)
                     totalSeconds++
                     
-                    val calorieMin = healthData?.let { CalorieCalculator.calculateHRR(heartRate, it) } ?: 0.0
-                    totalCalories += (calorieMin / 60.0)
+                    val calorieMinNow = healthData?.let { CalorieCalculator.calculateHRR(heartRate, it) } ?: 0.0
+                    totalCalories += (calorieMinNow / 60.0)
                     
-                    logger?.logData(
+                    val lastPoint = logger?.logData(
                         lat = lastLocation?.latitude,
                         lon = lastLocation?.longitude,
                         bpm = heartRate,
@@ -244,10 +240,10 @@ class WorkoutService : Service(), SensorEventListener {
                         gpsDystans = totalDistance,
                         predkoscGps = speedKmH,
                         wysokosc = altitude,
-                        calorieMin = calorieMin,
+                        calorieMin = calorieMinNow,
                         calorieSum = totalCalories
                     )
-                    updateState()
+                    updateState(lastPoint)
                 } else {
                     delay(500)
                 }
@@ -267,7 +263,7 @@ class WorkoutService : Service(), SensorEventListener {
                     lastLocation?.let { totalDistance += it.distanceTo(location) }
                     lastLocation = location
                     speedKmH = location.speed * 3.6f
-                    updateState()
+                    // updateState(null) // We update state every second in timerJob anyway
                 }
             }
         }
@@ -293,25 +289,17 @@ class WorkoutService : Service(), SensorEventListener {
                     altitude = SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, it.values[0]).toDouble()
                 }
             }
-            updateState()
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-    private fun updateState() {
+    private fun updateState(lastPoint: WorkoutPointEntity?) {
         _workoutState.value = WorkoutData(
             status = status,
-            heartRate = heartRate,
-            stepCount = currentSteps,
-            totalDistance = totalDistance,
-            currentLat = lastLocation?.latitude,
-            currentLon = lastLocation?.longitude,
-            speedKmH = speedKmH,
             totalSeconds = totalSeconds,
             formattedTime = formatTime(totalSeconds),
-            totalCalories = totalCalories,
-            altitude = altitude
+            lastPoint = lastPoint
         )
     }
 
@@ -368,14 +356,7 @@ class WorkoutService : Service(), SensorEventListener {
 
 data class WorkoutData(
     val status: WorkoutStatus = WorkoutStatus.IDLE,
-    val heartRate: Float = 0f,
-    val stepCount: Int = 0,
-    val totalDistance: Float = 0f,
-    val currentLat: Double? = null,
-    val currentLon: Double? = null,
-    val speedKmH: Float = 0f,
     val totalSeconds: Long = 0L,
     val formattedTime: String = "00:00",
-    val totalCalories: Double = 0.0,
-    val altitude: Double = 0.0
+    val lastPoint: WorkoutPointEntity? = null
 )
