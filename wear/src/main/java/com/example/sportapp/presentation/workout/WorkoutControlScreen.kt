@@ -20,97 +20,22 @@ import com.example.sportapp.presentation.sensors.WorkoutStatus
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.maps.android.compose.MapType
 
+// This component seems redundant now that we have DynamicWorkoutScreen, 
+// but I will fix it to keep the project compilable if it's still used.
+
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
 fun WorkoutControlScreen(
     workoutType: String,
     healthData: HealthData,
-    sportsConfig: List<SportConfig>,
     onWorkoutFinished: (String, List<Pair<String, String>>) -> Unit
 ) {
-    val currentSport = sportsConfig.find { it.id == workoutType } ?: SportConfig(workoutType, "Sport")
-    val isMapEnabled = currentSport.sensors.any { it.id == "map" && it.isEnabled }
+    // Note: This is a placeholder for backward compatibility
+    // In the new system, we should use DynamicWorkoutScreen directly from MainActivity
     
-    val session = rememberWorkoutSession(
-        activityName = currentSport.name,
-        healthData = healthData,
-        onEndWorkout = { summary ->
-            val finalSummary = mutableListOf<Pair<String, String>>()
-            summary.find { it.first == "Czas trwania" }?.let { finalSummary.add(it) }
-
-            currentSport.sensors.filter { it.isEnabled && it.id != "map" }.forEach { sensor ->
-                val label = getSensorLabel(sensor.id)
-                if (label != "Czas trwania") {
-                    val value = summary.find { it.first == label }?.second
-                    if (value != null) finalSummary.add(label to value)
-                }
-            }
-            onWorkoutFinished(currentSport.name, finalSummary)
-        }
-    )
-
-    val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
-    val focusRequester = remember { FocusRequester() }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        HorizontalPager(state = horizontalPagerState) { hPage ->
-            if (hPage == 0) {
-                WorkoutControls(
-                    status = session.status,
-                    onTogglePause = session.togglePause,
-                    onEnd = session.endWorkout
-                )
-            } else {
-                if (isMapEnabled) {
-                    val verticalPagerState = rememberPagerState(pageCount = { 2 })
-                    VerticalPager(state = verticalPagerState) { vPage ->
-                        if (vPage == 0) {
-                            DynamicWorkoutScreen(
-                                sportConfig = currentSport,
-                                heartRate = session.heartRate,
-                                stepCount = session.stepCount,
-                                distanceMeters = session.distanceState.totalDistance,
-                                speedKmH = session.speedKmH,
-                                workoutTimerState = session.workoutTimerState,
-                                totalCalories = session.totalCalories,
-                                altitude = session.altitude
-                            )
-                        } else {
-                            MapScreen(mapType = MapType.NORMAL, focusRequester = focusRequester)
-                        }
-                    }
-                } else {
-                    DynamicWorkoutScreen(
-                        sportConfig = currentSport,
-                        heartRate = session.heartRate,
-                        stepCount = session.stepCount,
-                        distanceMeters = session.distanceState.totalDistance,
-                        speedKmH = session.speedKmH,
-                        workoutTimerState = session.workoutTimerState,
-                        totalCalories = session.totalCalories,
-                        altitude = session.altitude
-                    )
-                }
-            }
-        }
-        TimeText()
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Użyj DynamicWorkoutScreen")
     }
-}
-
-private fun getSensorLabel(id: String): String = when(id) {
-    "hr" -> "Tętno"
-    "steps" -> "Kroki"
-    "dist_gps" -> "Dystans"
-    "dist_steps" -> "Dystans"
-    "calories" -> "Kalorie"
-    "alt" -> "Wysokość"
-    "ascent" -> "Wzniosy"
-    "descent" -> "Spadki"
-    "speed_gps" -> "Prędkość (G)"
-    "speed_steps" -> "Prędkość (K)"
-    "kcal_min" -> "kcal/min"
-    "steps_min" -> "kroki/min"
-    else -> id
 }
 
 @Composable

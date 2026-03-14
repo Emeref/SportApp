@@ -9,18 +9,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.wear.compose.material.*
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
-import com.example.sportapp.presentation.components.PlaceholderScreen
 import com.example.sportapp.presentation.menu.ChooseSportScreen
 import com.example.sportapp.presentation.menu.MainMenuScreen
 import com.example.sportapp.presentation.menu.StatisticsScreen
 import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.theme.SportAppTheme
-import com.example.sportapp.presentation.workout.ClimbingWorkoutScreen
-import com.example.sportapp.presentation.workout.WalkingWorkoutScreen
+import com.example.sportapp.presentation.workout.DynamicWorkoutScreen
 import com.example.sportapp.presentation.workout.WorkoutSummaryScreen
 import com.google.maps.android.compose.MapType
 import dagger.hilt.android.AndroidEntryPoint
@@ -213,36 +213,25 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        // Sporty
-                        composable("workout_walking") { 
-                            WalkingWorkoutScreen(
-                                mapType = selectedMapType, 
+                        // Dynamiczny Trening
+                        composable(
+                            "dynamic_workout/{definitionId}",
+                            arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
+                        ) { backStackEntry ->
+                            val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
+                            DynamicWorkoutScreen(
+                                definitionId = definitionId,
+                                mapType = selectedMapType,
                                 clockColor = selectedClockColor,
                                 healthData = healthData,
-                                onEndWorkout = { summary ->
-                                    currentSummaryData = "Spacer" to summary
-                                    navController.navigate("workout_summary") {
-                                        popUpTo("main_menu") { inclusive = false }
-                                    }
-                                }
-                            ) 
-                        }
-                        composable("workout_climbing") { 
-                            ClimbingWorkoutScreen(
-                                clockColor = selectedClockColor, 
-                                healthData = healthData,
-                                onEndWorkout = { summary ->
-                                    currentSummaryData = "Wspinaczka" to summary
+                                onEndWorkout = { name, summary ->
+                                    currentSummaryData = name to summary
                                     navController.navigate("workout_summary") {
                                         popUpTo("main_menu") { inclusive = false }
                                     }
                                 }
                             )
                         }
-                        composable("workout_tennis") { PlaceholderScreen("Tenis") }
-                        composable("workout_gym") { PlaceholderScreen("Siłownia") }
-                        composable("workout_pool") { PlaceholderScreen("Basen") }
-                        composable("workout_kayak") { PlaceholderScreen("Kajak") }
                     }
                 }
             }

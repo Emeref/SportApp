@@ -6,16 +6,19 @@ import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
+import com.example.sportapp.data.WorkoutDefinitionSyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class WorkoutDefinitionViewModel @Inject constructor(
-    private val dao: WorkoutDefinitionDao
+    private val dao: WorkoutDefinitionDao,
+    private val syncManager: WorkoutDefinitionSyncManager
 ) : ViewModel() {
 
     val definitions: StateFlow<List<WorkoutDefinition>> = dao.getAllDefinitions()
@@ -23,6 +26,7 @@ class WorkoutDefinitionViewModel @Inject constructor(
 
     init {
         ensureDefaultDefinition()
+        observeAndSync()
     }
 
     private fun ensureDefaultDefinition() {
@@ -43,6 +47,16 @@ class WorkoutDefinitionViewModel @Inject constructor(
         }
     }
 
+    private fun observeAndSync() {
+        viewModelScope.launch {
+            definitions.collectLatest { list ->
+                if (list.isNotEmpty()) {
+                    syncManager.syncDefinitions(list)
+                }
+            }
+        }
+    }
+
     fun saveDefinition(definition: WorkoutDefinition) {
         viewModelScope.launch {
             if (definition.id == 0L) {
@@ -50,7 +64,6 @@ class WorkoutDefinitionViewModel @Inject constructor(
             } else {
                 dao.updateDefinition(definition)
             }
-            // TODO: Trigger synchronization with watch
         }
     }
 
@@ -58,7 +71,6 @@ class WorkoutDefinitionViewModel @Inject constructor(
         if (definition.isDefault) return
         viewModelScope.launch {
             dao.deleteDefinition(definition)
-            // TODO: Trigger synchronization with watch
         }
     }
 }
