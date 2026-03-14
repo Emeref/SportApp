@@ -22,7 +22,7 @@
     - [x] **Refaktoryzacja IWorkoutRepository**: Ujednolicona obsługa uprawnień przed startem aktywności.
     - [x] **Strumieniowy odczyt CSV**: Zamiana `readLines()` na `BufferedReader` (bezpieczeństwo pamięci RAM przy dużych plikach).
     - [x] **Asynchroniczny zapis (IO)**: Przeniesienie operacji dyskowych w `WorkoutLogger` na `Dispatchers.IO`.
-    - [ ] **Migracja na bazę danych (Room)**: Refaktor zapisu z CSV na wydajniejszą bazę danych (np. Room).
+    - [x] **Migracja na bazę danych (Room)**: Wdrożenie bazy danych Room (`AppDatabase`, `WorkoutDao`) dla efektywnego zarządzania danymi sesji.
 - [x] **Logowanie treningów (CSV)**:
     - [x] Rejestracja parametrów co sekundę do pliku sesji (metry, zaokrąglone).
     - [x] Obliczanie średniego BPM, przewyższeń i dystansu.
@@ -41,7 +41,8 @@
         - [x] Personalizacja widoku (wybór i kolejność wykresów/mapy).
         - [x] Wybór koloru śladu na mapie.
         - [x] **Nowe widgety statystyczne**: Dodanie podsumowań takich jak Max HR, Max Speed, średnie tempo itp.
-        - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
+        - [x] **Optymalizacja wykresów**: Poprawa czytelności osi X (format czasu, brak ucinania etykiet), naprawa błędów renderowania 'NONE'.
+        - [ ] **Próbkowanie danych**: Implementacja algorytmu (np. LTTB) do ograniczenia liczby punktów na wykresie (max 500).
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
     - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
 - [x] **Ustawienia i Personalizacja (Mobile)**:
@@ -64,7 +65,6 @@
 ## 6. Jakość i Testy
 - [x] **Unit testy**:
     - [x] Testy logiki biznesowej (Kalkulatory, Repozytoria, ViewModele).
-    - [ ] **Testy parsera CSV**: Weryfikacja czytania dużych plików sesji.
 - [x] **Testy komponentów UI**:
     - [x] Weryfikacja wyświetlania wykresów i filtrowania (OverallStats).
     - [ ] **Testy ekranu szczegółów**: Weryfikacja interakcji z wykresami i mapą.
@@ -78,6 +78,6 @@
 - [ ] **Usprawnienie modelu danych**: Rozważenie przejścia z metadanych w nazwie pliku na metadane wewnątrz pliku lub bazę Room.
 
 ## PRIORYTETY
-1. **Migracja na bazę danych Room** - Poprawa wydajności odczytu i zapisu danych sesji oraz ułatwienie wyliczania statystyk.
-2. **Nowe widgety statystyczne w ActivityDetailScreen** - Wzbogacenie analizy aktywności o dane takie jak Max HR, Max Speed itp.
-3. **Własne dyscypliny** - Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników i ich wizualizacji.
+1. **Własne dyscypliny** - Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników i ich wizualizacji.
+2. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
+3. **Stabilność i Precyzja (Centralny PermissionManager)** - Ujednolicona obsługa uprawnień w całej aplikacji przed rozpoczęciem treningu.
