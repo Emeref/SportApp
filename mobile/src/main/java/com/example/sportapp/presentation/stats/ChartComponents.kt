@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation.stats
 
 import android.text.Layout
+import android.text.TextUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,11 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.sportapp.data.db.WorkoutEntity
 import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
+import com.patrykandpatrick.vico.compose.chart.layout.fullWidth
 import com.patrykandpatrick.vico.compose.chart.line.lineChart
 import com.patrykandpatrick.vico.compose.chart.line.lineSpec
 import com.patrykandpatrick.vico.compose.chart.scroll.rememberChartScrollSpec
@@ -27,6 +30,7 @@ import com.patrykandpatrick.vico.compose.component.shape.shader.fromBrush
 import com.patrykandpatrick.vico.compose.component.shapeComponent
 import com.patrykandpatrick.vico.compose.component.textComponent
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
+import com.patrykandpatrick.vico.core.chart.layout.HorizontalLayout
 import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
 import com.patrykandpatrick.vico.core.component.marker.MarkerComponent
 import com.patrykandpatrick.vico.core.component.shape.Shapes
@@ -71,13 +75,23 @@ fun CommonChartSection(
 
     val marker = rememberMarkerCustom(overallRawData, detailTimes, unit)
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
         Text(text = title, style = MaterialTheme.typography.titleSmall)
         Spacer(modifier = Modifier.height(8.dp))
         
         val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
         val formatter = DecimalFormat("#,###.#", symbols)
         val orangeColor = Color(0xFFFF9800)
+
+        val totalPoints = detailTimes?.size ?: 0
+        val horizontalItemPlacer = remember(totalPoints) {
+            AxisItemPlacer.Horizontal.default(
+                spacing = if (totalPoints > 1) ((totalPoints - 1) / 5).coerceAtLeast(1) else 1,
+                offset = 0,
+                shiftExtremeTicks = true,
+                addExtremeLabelPadding = true
+            )
+        }
 
         Chart(
             chart = lineChart(
@@ -92,6 +106,7 @@ fun CommonChartSection(
                     )
                 ),
                 axisValuesOverrider = axisValuesOverrider,
+                spacing = 2.dp 
             ),
             chartModelProducer = producer,
             marker = marker,
@@ -102,15 +117,48 @@ fun CommonChartSection(
                 guideline = null
             ),
             bottomAxis = rememberBottomAxis(
-                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
+                label = axisLabelComponent(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textSize = 8.sp,
+                ).apply { ellipsize = null }, 
                 valueFormatter = { value, _ -> 
-                    if (value.isNaN()) "" else (value.toInt() + 1).toString() 
+                    if (value.isNaN() || detailTimes == null || detailTimes.isEmpty()) return@rememberBottomAxis ""
+                    val index = value.toInt()
+                    if (index in detailTimes.indices) {
+                        formatToRelativeTime(index, detailTimes)
+                    } else {
+                        ""
+                    }
                 },
+                itemPlacer = horizontalItemPlacer,
                 guideline = null
             ),
             chartScrollSpec = rememberChartScrollSpec(isScrollEnabled = isScrollEnabled),
+            horizontalLayout = HorizontalLayout.fullWidth(
+                unscalableStartPadding = 16.dp, // Miejsce dla "0:00"
+                unscalableEndPadding = 24.dp    // Większe miejsce dla dłuższego czasu na końcu
+            ),
             modifier = Modifier.fillMaxWidth().height(if (overallRawData != null) 320.dp else 200.dp)
         )
+    }
+}
+
+private fun formatToRelativeTime(index: Int, allTimes: List<String>): String {
+    if (allTimes.isEmpty()) return "0:00"
+    val sdf = SimpleDateFormat("HH:mm:ss", Locale.US)
+    try {
+        val startTime = sdf.parse(allTimes[0])?.time ?: 0L
+        val currentTime = sdf.parse(allTimes[index])?.time ?: 0L
+        val diffSeconds = (currentTime - startTime) / 1000
+        val hours = diffSeconds / 3600
+        val minutes = (diffSeconds % 3600) / 60
+        val seconds = diffSeconds % 60
+        return when {
+            hours > 0 -> String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
+            else -> String.format(Locale.US, "%d:%02d", minutes, seconds)
+        }
+    } catch (e: Exception) {
+        return "0:00"
     }
 }
 
