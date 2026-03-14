@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.presentation.settings.WidgetItem
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.*
 import java.util.Locale
@@ -87,8 +88,8 @@ fun ActivityDetailScreen(
                     )
                 }
 
-                // Widgety z podsumowaniem (Grid)
-                SummaryWidgetsGrid(data)
+                // Widgety z podsumowaniem (Grid) uzależnione od ustawień
+                SummaryWidgetsGrid(data, settings.visibleElements)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -124,7 +125,14 @@ fun ActivityDetailScreen(
                         }
                         else -> {
                             val producer = viewModel.chartProducers[widget.id]
-                            if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
+                            // Mapowanie klucza na SessionData.charts (predkosc -> predkosc_gps, odl_kroki -> kroki_dystans)
+                            val chartKey = when(widget.id) {
+                                "predkosc" -> "predkosc_gps"
+                                "odl_kroki" -> "kroki_dystans"
+                                else -> widget.id
+                            }
+                            
+                            if (producer != null && (data.charts[chartKey]?.filterNotNull()?.isNotEmpty() == true)) {
                                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                                     CommonChartSection(
                                         title = widget.label,
@@ -147,26 +155,64 @@ fun ActivityDetailScreen(
 }
 
 @Composable
-fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData) {
+fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleElements: List<WidgetItem>) {
+    val isEnabled = { id: String -> visibleElements.any { it.id == id && it.isEnabled } }
+    
+    // Lista wszystkich potencjalnych widgetów (z nowymi nazwami)
+    val allPossibleWidgets = mutableListOf<Pair<String, String>>()
+    
+    if (isEnabled("bpm")) {
+        allPossibleWidgets.add("Maksymalne tętno" to "${data.maxBpm} bpm")
+        allPossibleWidgets.add("Średnie tętno" to "${data.avgBpm} bpm")
+    }
+    
+    if (isEnabled("kalorie_min")) {
+        allPossibleWidgets.add("Spalone kalorie" to "${data.totalCalories} kcal")
+        allPossibleWidgets.add("Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin))
+    }
+
+    val showGpsStats = isEnabled("map") || isEnabled("gps_dystans") || isEnabled("wysokosc") || 
+                       isEnabled("przewyzszenia_gora") || isEnabled("przewyzszenia_dol") || isEnabled("predkosc")
+    
+    if (showGpsStats) {
+        allPossibleWidgets.add("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeedGps))
+        allPossibleWidgets.add("Dystans" to formatDistance(data.totalDistanceGps))
+    }
+
+    val showStepsStats = isEnabled("odl_kroki") || isEnabled("predkosc_kroki") || isEnabled("kroki_min")
+    
+    if (showStepsStats) {
+        allPossibleWidgets.add("Maks prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps))
+        allPossibleWidgets.add("Liczba kroków" to "${data.totalSteps}")
+        allPossibleWidgets.add("Dystans (kroki)" to formatDistance(data.totalDistanceSteps))
+    }
+
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        // Czas trwania na całą szerokość
+        // 1. Pierwszy wiersz to zawsze 'Czas trwania'
         SummaryItem(label = "Czas trwania", value = data.duration, modifier = Modifier.fillMaxWidth())
         
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Tętno w drugim wierszu
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SummaryItem(label = "Max Tętno", value = "${data.maxBpm} bpm", modifier = Modifier.weight(1f))
-            SummaryItem(label = "Śr. Tętno", value = "${data.avgBpm} bpm", modifier = Modifier.weight(1f))
+        // 2. Kolejne wiersze (2 widgety na wiersz, ostatni na pełną szerokość jeśli nieparzyste)
+        val chunks = allPossibleWidgets.chunked(2)
+        chunks.forEach { chunk ->
+            Spacer(modifier = Modifier.height(8.dp))
+            if (chunk.size == 2) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SummaryItem(label = chunk[0].first, value = chunk[0].second, modifier = Modifier.weight(1f))
+                    SummaryItem(label = chunk[1].first, value = chunk[1].second, modifier = Modifier.weight(1f))
+                }
+            } else {
+                // Ostatni widget w nieparzystym zestawie na całą długość
+                SummaryItem(label = chunk[0].first, value = chunk[0].second, modifier = Modifier.fillMaxWidth())
+            }
         }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Kalorie w trzecim wierszu
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SummaryItem(label = "Kalorie", value = "${data.totalCalories} kcal", modifier = Modifier.weight(1f))
-            SummaryItem(label = "Maks. Spalanie", value = String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin), modifier = Modifier.weight(1f))
-        }
+    }
+}
+
+private fun formatDistance(distanceMeters: Double): String {
+    return if (distanceMeters >= 1000) {
+        String.format(Locale.US, "%.2f km", distanceMeters / 1000.0)
+    } else {
+        String.format(Locale.US, "%.0f m", distanceMeters)
     }
 }
 
