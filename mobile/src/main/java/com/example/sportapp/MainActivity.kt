@@ -10,12 +10,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.sportapp.data.TestDataGenerator
 import com.example.sportapp.presentation.activities.ActivityListScreen
 import com.example.sportapp.presentation.activities.ActivityListViewModel
+import com.example.sportapp.presentation.definitions.WorkoutDefinitionEditScreen
+import com.example.sportapp.presentation.definitions.WorkoutDefinitionListScreen
+import com.example.sportapp.presentation.definitions.WorkoutDefinitionViewModel
 import com.example.sportapp.presentation.home.HomeScreen
 import com.example.sportapp.presentation.home.HomeViewModel
 import com.example.sportapp.presentation.navigation.Screen
@@ -82,7 +87,28 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onCancel = { navController.popBackStack() },
-                                onNavigateToWidgetSelection = { navController.navigate("widget_selection") }
+                                onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
+                                onNavigateToDefinitions = { navController.navigate("definitions_list") }
+                            )
+                        }
+                        composable("definitions_list") {
+                            val definitionViewModel: WorkoutDefinitionViewModel = hiltViewModel()
+                            WorkoutDefinitionListScreen(
+                                viewModel = definitionViewModel,
+                                onNavigateToEdit = { id -> navController.navigate("definition_edit/$id") },
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(
+                            "definition_edit/{id}",
+                            arguments = listOf(navArgument("id") { type = NavType.LongType })
+                        ) { backStackEntry ->
+                            val id = backStackEntry.arguments?.getLong("id") ?: 0L
+                            val definitionViewModel: WorkoutDefinitionViewModel = hiltViewModel()
+                            WorkoutDefinitionEditScreen(
+                                viewModel = definitionViewModel,
+                                definitionId = id,
+                                onNavigateBack = { navController.popBackStack() }
                             )
                         }
                         composable("widget_selection") {

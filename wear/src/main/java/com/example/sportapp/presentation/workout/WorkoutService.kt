@@ -14,7 +14,11 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sportapp.R
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
+import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.android.gms.location.*
@@ -26,10 +30,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.*
 import javax.inject.Inject
 
+data class WorkoutData(
+    val status: WorkoutStatus = WorkoutStatus.IDLE,
+    val totalSeconds: Long = 0L,
+    val formattedTime: String = "00:00",
+    val lastPoint: WorkoutPointEntity? = null,
+    val maxBpm: Int = 0,
+    val maxSpeedGps: Double = 0.0,
+    val maxSpeedSteps: Double = 0.0
+)
+
 @AndroidEntryPoint
 class WorkoutService : Service(), SensorEventListener {
 
     @Inject lateinit var workoutDao: WorkoutDao
+    @Inject lateinit var workoutDefinitionDao: WorkoutDefinitionDao
     @Inject lateinit var dataLayerManager: DataLayerManager
 
     private val binder = LocalBinder()
@@ -41,30 +56,34 @@ class WorkoutService : Service(), SensorEventListener {
     private var wakeLock: PowerManager.WakeLock? = null
     private var logger: WorkoutLogger? = null
     
-    private var _workoutState = MutableStateFlow(WorkoutData())
+    private var _workoutState = MutableStateFlow<WorkoutData>(WorkoutData())
     val workoutState = _workoutState.asStateFlow()
 
     private var status = WorkoutStatus.IDLE
-    private var startTime = Date()
     private var currentWorkoutId: Long = -1
     private var totalSeconds = 0L
     private var heartRate = 0f
-    private var stepCountStart = -1
+    private var maxBpm = 0
     private var currentSteps = 0
+    private var stepCountStart = -1
     private var totalDistance = 0f
     private var lastLocation: Location? = null
     private var speedKmH = 0f
+    private var maxSpeedGps = 0.0
+    private var maxSpeedSteps = 0.0
     private var altitude = 0.0
-    private var totalCalories = 0.0
     private var healthData: HealthData? = null
-    private var activityName: String = ""
+    private var sportDefinition: WorkoutDefinition? = null
+    private var fallbackActivityName: String = "Aktywność"
+    private var totalCaloriesAcc = 0.0
 
     private var timerJob: Job? = null
     private var locationCallback: LocationCallback? = null
 
-    private fun Double?.round(decimals: Int = 2): Double? {
-        if (this == null) return null
-        return "%.${decimals}f".format(Locale.US, this).toDouble()
+    fun getSportDefinition(): WorkoutDefinition? = sportDefinition
+
+    private fun isRecording(sensor: WorkoutSensor): Boolean {
+        return sportDefinition?.sensors?.find { it.sensorId == sensor.id }?.isRecording == true
     }
 
     inner class LocalBinder : Binder() {
@@ -75,7 +94,7 @@ class WorkoutService : Service(), SensorEventListener {
 
     override fun onCreate() {
         super.onCreate()
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         createNotificationChannel()
     }
@@ -85,13 +104,17 @@ class WorkoutService : Service(), SensorEventListener {
         
         when (intent.action) {
             ACTION_START -> {
-                val name = intent.getStringExtra(EXTRA_ACTIVITY_NAME) ?: "Aktywność"
+                val definitionId = intent.getLongExtra(EXTRA_DEFINITION_ID, -1L)
+                fallbackActivityName = intent.getStringExtra(EXTRA_ACTIVITY_NAME) ?: "Aktywność"
                 val hDataJson = intent.getStringExtra(EXTRA_HEALTH_DATA_JSON)
                 val hData = if (hDataJson != null) gson.fromJson(hDataJson, HealthData::class.java) else HealthData()
                 
                 serviceScope.launch {
+                    val definition = if (definitionId != -1L) workoutDefinitionDao.getDefinitionById(definitionId) else null
+                    sportDefinition = definition
+                    
                     val workout = WorkoutEntity(
-                        activityName = name,
+                        activityName = definition?.name ?: fallbackActivityName,
                         startTime = System.currentTimeMillis(),
                         durationFormatted = "00:00",
                         steps = 0,
@@ -109,7 +132,7 @@ class WorkoutService : Service(), SensorEventListener {
                     )
                     currentWorkoutId = workoutDao.insertWorkout(workout)
                     withContext(Dispatchers.Main) {
-                        startWorkout(name, hData)
+                        startWorkout(hData)
                     }
                 }
             }
@@ -119,31 +142,30 @@ class WorkoutService : Service(), SensorEventListener {
         return START_STICKY
     }
 
-    private fun startWorkout(name: String, hData: HealthData) {
+    private fun startWorkout(hData: HealthData) {
         if (status != WorkoutStatus.IDLE) return
         
-        activityName = name
-        healthData = hData
+        this.healthData = hData
         status = WorkoutStatus.ACTIVE
-        startTime = Date()
         totalSeconds = 0L
         heartRate = 0f
+        maxBpm = 0
         stepCountStart = -1
         currentSteps = 0
         totalDistance = 0f
         lastLocation = null
         speedKmH = 0f
+        maxSpeedGps = 0.0
+        maxSpeedSteps = 0.0
         altitude = 0.0
-        totalCalories = 0.0
+        totalCaloriesAcc = 0.0
         
-        logger = WorkoutLogger(workoutDao, currentWorkoutId, hData)
+        logger = WorkoutLogger(workoutDao, currentWorkoutId, hData, sportDefinition?.sensors ?: emptyList())
         
-        // Wakelock
-        wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).newWakeLock(
+        wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK, "SportApp:WorkoutWakeLock"
-        ).apply { acquire(10*60*60*1000L /* 10 hours max */) }
+        ).apply { acquire(10*60*60*1000L) }
 
-        // Start Foreground
         val notification = createNotification()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
@@ -154,7 +176,7 @@ class WorkoutService : Service(), SensorEventListener {
         registerSensors()
         startTimer()
         startLocationUpdates()
-        updateState()
+        updateState(null)
     }
 
     private fun togglePause() {
@@ -164,7 +186,7 @@ class WorkoutService : Service(), SensorEventListener {
             status = WorkoutStatus.ACTIVE
         }
         updateNotification()
-        updateState()
+        updateState(null)
     }
 
     private fun stopWorkout() {
@@ -185,23 +207,22 @@ class WorkoutService : Service(), SensorEventListener {
 
             val finalWorkout = workoutDao.getWorkoutById(currentWorkoutId)?.copy(
                 durationFormatted = formatTime(totalSeconds),
-                steps = if (currentSteps > 0) currentSteps else null,
-                distanceSteps = if (distanceStepsMeters > 0) distanceStepsMeters.round(2) else null,
-                distanceGps = if (totalDistance > 0) totalDistance.toDouble().round(2) else null,
-                avgSpeedSteps = if (avgSpeedSteps > 0) avgSpeedSteps.round(2) else null,
-                avgSpeedGps = if (avgSpeedGps > 0) avgSpeedGps.round(2) else null,
-                totalAscent = (stats["totalAscent"] as? Double ?: 0.0).round(2),
-                totalDescent = (stats["totalDescent"] as? Double ?: 0.0).round(2),
-                avgBpm = (stats["avgBpm"] as? Double).round(2),
-                maxBpm = stats["maxBpm"] as? Int,
-                totalCalories = totalCalories.round(2),
-                maxCalorieMin = (stats["maxCalorieMin"] as? Double ?: 0.0).round(2),
+                steps = if (isRecording(WorkoutSensor.STEPS)) currentSteps else null,
+                distanceSteps = if (isRecording(WorkoutSensor.DISTANCE_STEPS)) distanceStepsMeters else null,
+                distanceGps = if (isRecording(WorkoutSensor.DISTANCE_GPS)) totalDistance.toDouble() else null,
+                avgSpeedSteps = if (isRecording(WorkoutSensor.SPEED_STEPS)) avgSpeedSteps else null,
+                avgSpeedGps = if (isRecording(WorkoutSensor.SPEED_GPS)) avgSpeedGps else null,
+                totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) (stats["totalAscent"] as? Double ?: 0.0) else null,
+                totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) (stats["totalDescent"] as? Double ?: 0.0) else null,
+                avgBpm = if (isRecording(WorkoutSensor.AVG_HEART_RATE)) (stats["avgBpm"] as? Double) else null,
+                maxBpm = if (isRecording(WorkoutSensor.HEART_RATE)) maxBpm else null,
+                totalCalories = if (isRecording(WorkoutSensor.CALORIES_SUM)) totalCaloriesAcc else null,
+                maxCalorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) (stats["maxCalorieMin"] as? Double ?: 0.0) else null,
                 durationSeconds = totalSeconds
             )
             
             if (finalWorkout != null) {
                 workoutDao.updateWorkout(finalWorkout)
-                // Automatyczna synchronizacja po zakończeniu treningu
                 dataLayerManager.syncActivities()
             }
             
@@ -233,10 +254,10 @@ class WorkoutService : Service(), SensorEventListener {
                     delay(1000)
                     totalSeconds++
                     
-                    val calorieMin = healthData?.let { CalorieCalculator.calculateHRR(heartRate, it) } ?: 0.0
-                    totalCalories += (calorieMin / 60.0)
+                    val calorieMinNow = healthData?.let { CalorieCalculator.calculateHRR(heartRate, it) } ?: 0.0
+                    totalCaloriesAcc += (calorieMinNow / 60.0)
                     
-                    logger?.logData(
+                    val lastPoint = logger?.logData(
                         lat = lastLocation?.latitude,
                         lon = lastLocation?.longitude,
                         bpm = heartRate,
@@ -244,10 +265,16 @@ class WorkoutService : Service(), SensorEventListener {
                         gpsDystans = totalDistance,
                         predkoscGps = speedKmH,
                         wysokosc = altitude,
-                        calorieMin = calorieMin,
-                        calorieSum = totalCalories
+                        calorieMin = calorieMinNow,
+                        calorieSum = totalCaloriesAcc
                     )
-                    updateState()
+                    
+                    // Track aggregates for UI summary
+                    if (heartRate > maxBpm) maxBpm = heartRate.toInt()
+                    if (speedKmH > maxSpeedGps) maxSpeedGps = speedKmH.toDouble()
+                    lastPoint?.speedSteps?.let { if (it > maxSpeedSteps) maxSpeedSteps = it }
+
+                    updateState(lastPoint)
                 } else {
                     delay(500)
                 }
@@ -267,7 +294,6 @@ class WorkoutService : Service(), SensorEventListener {
                     lastLocation?.let { totalDistance += it.distanceTo(location) }
                     lastLocation = location
                     speedKmH = location.speed * 3.6f
-                    updateState()
                 }
             }
         }
@@ -293,25 +319,20 @@ class WorkoutService : Service(), SensorEventListener {
                     altitude = SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, it.values[0]).toDouble()
                 }
             }
-            updateState()
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-    private fun updateState() {
+    private fun updateState(lastPoint: WorkoutPointEntity?) {
         _workoutState.value = WorkoutData(
             status = status,
-            heartRate = heartRate,
-            stepCount = currentSteps,
-            totalDistance = totalDistance,
-            currentLat = lastLocation?.latitude,
-            currentLon = lastLocation?.longitude,
-            speedKmH = speedKmH,
             totalSeconds = totalSeconds,
             formattedTime = formatTime(totalSeconds),
-            totalCalories = totalCalories,
-            altitude = altitude
+            lastPoint = lastPoint,
+            maxBpm = maxBpm,
+            maxSpeedGps = maxSpeedGps,
+            maxSpeedSteps = maxSpeedSteps
         )
     }
 
@@ -320,7 +341,7 @@ class WorkoutService : Service(), SensorEventListener {
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Aktywny trening: $activityName")
+            .setContentTitle("Aktywny trening: ${sportDefinition?.name ?: fallbackActivityName}")
             .setContentText("Czas: ${formatTime(totalSeconds)}")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
@@ -329,7 +350,7 @@ class WorkoutService : Service(), SensorEventListener {
     }
 
     private fun updateNotification() {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, createNotification())
     }
 
@@ -362,20 +383,7 @@ class WorkoutService : Service(), SensorEventListener {
         const val ACTION_PAUSE_RESUME = "ACTION_PAUSE_RESUME"
         const val ACTION_STOP = "ACTION_STOP"
         const val EXTRA_ACTIVITY_NAME = "EXTRA_ACTIVITY_NAME"
+        const val EXTRA_DEFINITION_ID = "EXTRA_DEFINITION_ID"
         const val EXTRA_HEALTH_DATA_JSON = "EXTRA_HEALTH_DATA_JSON"
     }
 }
-
-data class WorkoutData(
-    val status: WorkoutStatus = WorkoutStatus.IDLE,
-    val heartRate: Float = 0f,
-    val stepCount: Int = 0,
-    val totalDistance: Float = 0f,
-    val currentLat: Double? = null,
-    val currentLon: Double? = null,
-    val speedKmH: Float = 0f,
-    val totalSeconds: Long = 0L,
-    val formattedTime: String = "00:00",
-    val totalCalories: Double = 0.0,
-    val altitude: Double = 0.0
-)

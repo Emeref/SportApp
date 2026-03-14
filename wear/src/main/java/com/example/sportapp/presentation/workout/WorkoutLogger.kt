@@ -2,6 +2,8 @@ package com.example.sportapp.presentation.workout
 
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.data.model.SensorConfig
+import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.settings.HealthData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,7 +14,8 @@ import kotlin.math.roundToInt
 class WorkoutLogger(
     private val workoutDao: WorkoutDao,
     private val workoutId: Long,
-    private val healthData: HealthData
+    private val healthData: HealthData,
+    private val sensorConfigs: List<SensorConfig>
 ) {
     private var startTime: Long = System.currentTimeMillis()
     
@@ -31,6 +34,10 @@ class WorkoutLogger(
         return "%.${decimals}f".format(Locale.US, this).toDouble()
     }
 
+    private fun isRecording(sensor: WorkoutSensor): Boolean {
+        return sensorConfigs.find { it.sensorId == sensor.id }?.isRecording == true
+    }
+
     suspend fun logData(
         lat: Double? = null,
         lon: Double? = null,
@@ -41,7 +48,7 @@ class WorkoutLogger(
         wysokosc: Double? = null,
         calorieMin: Double? = null,
         calorieSum: Double? = null
-    ) = withContext(Dispatchers.IO) {
+    ): WorkoutPointEntity = withContext(Dispatchers.IO) {
         val currentTime = System.currentTimeMillis()
         val durationMillis = currentTime - startTime
         val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", (durationMillis / 3600000), (durationMillis / 60000) % 60, (durationMillis / 1000) % 60)
@@ -78,24 +85,25 @@ class WorkoutLogger(
         val point = WorkoutPointEntity(
             workoutId = workoutId,
             time = timeFormatted,
-            latitude = lat,
-            longitude = lon,
-            bpm = bpm?.toInt(),
-            avgBpm = avgBpm.round(2),
-            steps = kroki,
-            stepsMin = stepsMin.round(2),
-            distanceSteps = odlKrokiRounded,
-            distanceGps = gpsDystansRounded,
-            speedGps = predkoscGps?.toDouble().round(2),
-            speedSteps = predkoscKroki.round(2),
-            altitude = wysokosc.round(2),
-            totalAscent = totalAscent.round(2),
-            totalDescent = totalDescent.round(2),
-            calorieMin = calorieMin.round(2),
-            calorieSum = calorieSum.round(2)
+            latitude = if (isRecording(WorkoutSensor.MAP)) lat else null,
+            longitude = if (isRecording(WorkoutSensor.MAP)) lon else null,
+            bpm = if (isRecording(WorkoutSensor.HEART_RATE)) bpm?.toInt() else null,
+            avgBpm = if (isRecording(WorkoutSensor.AVG_HEART_RATE)) avgBpm.round(2) else null,
+            steps = if (isRecording(WorkoutSensor.STEPS)) kroki else null,
+            stepsMin = if (isRecording(WorkoutSensor.STEPS_PER_MINUTE)) stepsMin.round(2) else null,
+            distanceSteps = if (isRecording(WorkoutSensor.DISTANCE_STEPS)) odlKrokiRounded else null,
+            distanceGps = if (isRecording(WorkoutSensor.DISTANCE_GPS)) gpsDystansRounded else null,
+            speedGps = if (isRecording(WorkoutSensor.SPEED_GPS)) predkoscGps?.toDouble().round(2) else null,
+            speedSteps = if (isRecording(WorkoutSensor.SPEED_STEPS)) predkoscKroki.round(2) else null,
+            altitude = if (isRecording(WorkoutSensor.ALTITUDE)) wysokosc.round(2) else null,
+            totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) totalAscent.round(2) else null,
+            totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) totalDescent.round(2) else null,
+            calorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) calorieMin.round(2) else null,
+            calorieSum = if (isRecording(WorkoutSensor.CALORIES_SUM)) calorieSum.round(2) else null
         )
         
         workoutDao.insertPoint(point)
+        point
     }
 
     suspend fun getFinalStats(): Map<String, Any?> {

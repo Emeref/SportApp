@@ -7,6 +7,9 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.gson.Gson
@@ -17,6 +20,7 @@ import java.util.*
 fun rememberWorkoutSession(
     activityName: String,
     healthData: HealthData,
+    definitionId: Long = -1L,
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ): WorkoutSessionState {
     val context = LocalContext.current
@@ -41,6 +45,7 @@ fun rememberWorkoutSession(
         val intent = Intent(context, WorkoutService::class.java).apply {
             action = WorkoutService.ACTION_START
             putExtra(WorkoutService.EXTRA_ACTIVITY_NAME, activityName)
+            putExtra(WorkoutService.EXTRA_DEFINITION_ID, definitionId)
             putExtra(WorkoutService.EXTRA_HEALTH_DATA_JSON, gson.toJson(healthData))
         }
         context.startForegroundService(intent)
@@ -66,12 +71,59 @@ fun rememberWorkoutSession(
 
     val endWorkout: () -> Unit = {
         val data = workoutData
+        val lastPoint = data.lastPoint
         val summary = mutableListOf<Pair<String, String>>()
+        
+        fun isRec(sensor: WorkoutSensor): Boolean {
+            val sensors = service?.getSportDefinition()?.sensors ?: return true
+            return sensors.find { it.sensorId == sensor.id }?.isRecording == true
+        }
+
         summary.add("Czas trwania" to data.formattedTime)
-        if (data.stepCount > 0) summary.add("Kroki" to "${data.stepCount}")
-        if (data.totalDistance > 0) summary.add("Dystans" to String.format(Locale.US, "%.2f km", data.totalDistance / 1000.0))
-        if (data.heartRate > 0) summary.add("Tętno" to "${data.heartRate.toInt()} BPM")
-        if (data.totalCalories > 0) summary.add("Kalorie" to String.format(Locale.US, "%.1f kcal", data.totalCalories))
+        
+        if (lastPoint != null) {
+            // Tętno -> Średnie i Maksymalne
+            if (isRec(WorkoutSensor.HEART_RATE)) {
+                lastPoint.avgBpm?.let { summary.add("Średnie tętno" to String.format(Locale.US, "%.0f BPM", it)) }
+                if (data.maxBpm > 0) summary.add("Maksymalne tętno" to "${data.maxBpm} BPM")
+            }
+
+            // Prędkość GPS -> Średnia i Maksymalna
+            if (isRec(WorkoutSensor.SPEED_GPS)) {
+                lastPoint.speedGps?.let { summary.add("Średnia prędkość" to String.format(Locale.US, "%.1f km/h", it)) }
+                if (data.maxSpeedGps > 0) summary.add("Maksymalna prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeedGps))
+            }
+
+            // Prędkość Kroki -> Średnia i Maksymalna
+            if (isRec(WorkoutSensor.SPEED_STEPS)) {
+                lastPoint.speedSteps?.let { summary.add("Średnia prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", it)) }
+                if (data.maxSpeedSteps > 0) summary.add("Maksymalna prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps))
+            }
+
+            // Dystanse i Kroki
+            if (isRec(WorkoutSensor.DISTANCE_GPS)) {
+                lastPoint.distanceGps?.let { summary.add("Dystans" to String.format(Locale.US, "%.2f km", it / 1000.0)) }
+            }
+            if (isRec(WorkoutSensor.DISTANCE_STEPS)) {
+                lastPoint.distanceSteps?.let { summary.add("Dystans (kroki)" to "$it m") }
+            }
+            if (isRec(WorkoutSensor.STEPS)) {
+                lastPoint.steps?.let { summary.add("Kroki" to "$it") }
+            }
+
+            // Przewyższenia
+            if (isRec(WorkoutSensor.TOTAL_ASCENT)) {
+                lastPoint.totalAscent?.let { if (it > 0) summary.add("Przewyższenie +" to String.format(Locale.US, "%.0f m", it)) }
+            }
+            if (isRec(WorkoutSensor.TOTAL_DESCENT)) {
+                lastPoint.totalDescent?.let { if (it > 0) summary.add("Przewyższenie -" to String.format(Locale.US, "%.0f m", it)) }
+            }
+
+            // Kalorie
+            if (isRec(WorkoutSensor.CALORIES_SUM)) {
+                lastPoint.calorieSum?.let { summary.add("Kalorie" to String.format(Locale.US, "%.0f kcal", it)) }
+            }
+        }
         
         onEndWorkout(summary)
 
@@ -83,13 +135,8 @@ fun rememberWorkoutSession(
 
     return WorkoutSessionState(
         status = workoutData.status,
-        heartRate = workoutData.heartRate,
-        stepCount = workoutData.stepCount,
-        distanceState = DistanceState(workoutData.totalDistance, workoutData.currentLat, workoutData.currentLon),
-        speedKmH = workoutData.speedKmH,
         workoutTimerState = WorkoutTimerState(workoutData.formattedTime, workoutData.totalSeconds),
-        totalCalories = workoutData.totalCalories,
-        altitude = workoutData.altitude,
+        lastPoint = workoutData.lastPoint,
         togglePause = togglePause,
         endWorkout = endWorkout
     )
@@ -97,13 +144,8 @@ fun rememberWorkoutSession(
 
 data class WorkoutSessionState(
     val status: WorkoutStatus,
-    val heartRate: Float,
-    val stepCount: Int,
-    val distanceState: DistanceState,
-    val speedKmH: Float,
     val workoutTimerState: WorkoutTimerState,
-    val totalCalories: Double,
-    val altitude: Double,
+    val lastPoint: WorkoutPointEntity?,
     val togglePause: () -> Unit,
     val endWorkout: () -> Unit
 )

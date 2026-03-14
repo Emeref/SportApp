@@ -19,7 +19,7 @@ fun ClimbingWorkoutScreen(
     healthData: HealthData, 
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ) {
-    // Wspólna logika sesji (bez metValue, bo używamy HRR)
+    // Wspólna logika sesji
     val session = rememberWorkoutSession(
         activityName = "Wspinaczka",
         healthData = healthData,
@@ -38,10 +38,10 @@ fun ClimbingWorkoutScreen(
                 )
             } else {
                 ClimbingDataScreen(
-                    heartRate = session.heartRate,
+                    heartRate = session.lastPoint?.bpm?.toFloat() ?: 0f,
                     workoutTimerState = session.workoutTimerState,
                     healthData = healthData,
-                    totalCalories = session.totalCalories
+                    totalCalories = session.lastPoint?.calorieSum ?: 0.0
                 )
             }
         }
