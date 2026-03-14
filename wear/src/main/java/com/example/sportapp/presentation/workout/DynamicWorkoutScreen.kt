@@ -1,10 +1,13 @@
 package com.example.sportapp.presentation.workout
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -27,6 +30,8 @@ import com.example.sportapp.presentation.components.SportDataRow
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.maps.android.compose.MapType
 import java.util.*
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
@@ -59,6 +64,7 @@ fun DynamicWorkoutScreen(
     val session = rememberWorkoutSession(
         activityName = sportDef.name,
         healthData = healthData,
+        definitionId = definitionId, // Przekazujemy ID do serwisu
         onEndWorkout = { summary -> onEndWorkout(sportDef.name, summary) }
     )
 
@@ -76,13 +82,12 @@ fun DynamicWorkoutScreen(
                 val listState = rememberScalingLazyListState()
                 val focusRequester = remember { FocusRequester() }
                 
-                // Logika blokowania przewijania: jeśli <= 4 czujników i BRAK mapy
                 val isScrollEnabled = dataSensors.size > 4 || hasMap
 
                 ScalingLazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colors.background)
+                        .background(androidx.wear.compose.material.MaterialTheme.colors.background)
                         .then(if (isScrollEnabled) {
                             Modifier
                                 .rotaryScrollable(
@@ -99,15 +104,13 @@ fun DynamicWorkoutScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // 1. Zawsze czas na górze
                     item {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 24.dp)) {
-                            Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
-                            Text(session.workoutTimerState.formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
+                            Text("CZAS AKTYWNOŚCI", style = androidx.wear.compose.material.MaterialTheme.typography.caption2, color = Color.Gray)
+                            Text(session.workoutTimerState.formattedTime, style = androidx.wear.compose.material.MaterialTheme.typography.title1, fontSize = 28.sp)
                         }
                     }
 
-                    // 2. Dynamiczne czujniki
                     if (dataSensors.size <= 3) {
                         items(dataSensors.size) { index ->
                             DynamicSensorDispatcher(dataSensors[index].sensorId, session)
@@ -129,11 +132,10 @@ fun DynamicWorkoutScreen(
                         }
                     }
 
-                    // 3. Mapa na końcu listy (jeśli wybrana)
                     if (hasMap) {
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("MAPA", style = MaterialTheme.typography.caption2, color = Color.Gray)
+                            Text("MAPA", style = androidx.wear.compose.material.MaterialTheme.typography.caption2, color = Color.Gray)
                         }
                         item {
                             Box(
@@ -158,7 +160,7 @@ fun DynamicWorkoutScreen(
         
         if (clockColor != null) {
             Box(modifier = Modifier.fillMaxWidth().wrapContentHeight(), contentAlignment = Alignment.TopCenter) {
-                TimeText(timeTextStyle = MaterialTheme.typography.caption1.copy(color = clockColor, fontWeight = FontWeight.Bold))
+                TimeText(timeTextStyle = androidx.wear.compose.material.MaterialTheme.typography.caption1.copy(color = clockColor, fontWeight = FontWeight.Bold))
             }
         }
     }

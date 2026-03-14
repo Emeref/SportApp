@@ -19,7 +19,7 @@ fun ClimbingWorkoutScreen(
     healthData: HealthData, 
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ) {
-    // Wspólna logika sesji (bez metValue, bo używamy HRR)
+    // Wspólna logika sesji
     val session = rememberWorkoutSession(
         activityName = "Wspinaczka",
         healthData = healthData,

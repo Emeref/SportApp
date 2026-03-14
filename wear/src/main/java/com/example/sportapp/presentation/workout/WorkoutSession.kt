@@ -18,6 +18,7 @@ import java.util.*
 fun rememberWorkoutSession(
     activityName: String,
     healthData: HealthData,
+    definitionId: Long = -1L,
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ): WorkoutSessionState {
     val context = LocalContext.current
@@ -42,6 +43,7 @@ fun rememberWorkoutSession(
         val intent = Intent(context, WorkoutService::class.java).apply {
             action = WorkoutService.ACTION_START
             putExtra(WorkoutService.EXTRA_ACTIVITY_NAME, activityName)
+            putExtra(WorkoutService.EXTRA_DEFINITION_ID, definitionId)
             putExtra(WorkoutService.EXTRA_HEALTH_DATA_JSON, gson.toJson(healthData))
         }
         context.startForegroundService(intent)
