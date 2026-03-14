@@ -23,6 +23,7 @@
     - [x] **Strumieniowy odczyt CSV**: Zamiana `readLines()` na `BufferedReader` (bezpieczeństwo pamięci RAM przy dużych plikach).
     - [x] **Asynchroniczny zapis (IO)**: Przeniesienie operacji dyskowych w `WorkoutLogger` na `Dispatchers.IO`.
     - [x] **Migracja na bazę danych (Room)**: Wdrożenie bazy danych Room (`AppDatabase`, `WorkoutDao`) dla efektywnego zarządzania danymi sesji.
+- [ ] **Globalne Stałe**: Dodaj plik ze zmiennymi, gdzie będą definicje z całej aplikacji (np. czułość kółka, timeouty).
 - [x] **Logowanie treningów (CSV)**:
     - [x] Rejestracja parametrów co sekundę do pliku sesji (metry, zaokrąglone).
     - [x] Obliczanie średniego BPM, przewyższeń i dystansu.
@@ -53,6 +54,7 @@
 - [x] **Statystyki na zegarku**:
     - [x] Wyświetlanie podsumowania widgetów z ostatniego tygodnia (dystans, kcal, kroki).
 - [ ] **Optymalizacja UI**:
+    - [x] **Responsywność korony zegarka**: Zwiększenie czułości kółka przy przewijaniu długich list treningowych.
     - [ ] **Obsługa Ambient Mode**: Implementacja trybu oszczędzania energii dla ekranów treningowych.
     - [ ] **Centrowanie mapy**: Automatyczne odświeżanie mapy tak, aby kropka pozycji była zawsze w centrum.
 

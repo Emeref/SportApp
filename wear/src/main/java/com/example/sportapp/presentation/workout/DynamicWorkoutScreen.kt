@@ -1,14 +1,12 @@
 package com.example.sportapp.presentation.workout
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
@@ -19,18 +17,16 @@ import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.pager.HorizontalPager
-import androidx.wear.compose.foundation.pager.VerticalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.material.*
+import com.example.sportapp.AppConstants
 import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.components.SportDataRow
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.maps.android.compose.MapType
 import java.util.*
-import kotlin.math.cos
-import kotlin.math.sin
 
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
@@ -77,49 +73,83 @@ fun DynamicWorkoutScreen(
                     onEnd = session.endWorkout
                 )
             } else {
-                val verticalPageCount = if (hasMap) 2 else 1
-                val verticalPagerState = rememberPagerState(pageCount = { verticalPageCount })
+                val listState = rememberScalingLazyListState()
                 val focusRequester = remember { FocusRequester() }
-                val configuration = LocalConfiguration.current
-                val screenWidthPx = configuration.screenWidthDp.dp
-
-                Box(modifier = Modifier.fillMaxSize()) {
-                    VerticalPager(
-                        state = verticalPagerState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .rotaryScrollable(
-                                behavior = RotaryScrollableDefaults.behavior(verticalPagerState),
-                                focusRequester = focusRequester
-                            )
-                    ) { vPage ->
-                        when (vPage) {
-                            0 -> DynamicDataScreen(
-                                sensors = dataSensors,
-                                session = session
-                            )
-                            1 -> if (hasMap) MapScreen(mapType, focusRequester)
-                        }
-                    }
-
-                    if (verticalPageCount > 1) {
-                        val radius = (screenWidthPx / 2) - 12.dp
-                        val angleBetweenDots = 10f
-                        val startAngle = 90f + (angleBetweenDots * (verticalPageCount - 1) / 2f)
-                        repeat(verticalPageCount) { index ->
-                            val isSelected = verticalPagerState.currentPage == index
-                            val size by animateDpAsState(targetValue = if (isSelected) 8.dp else 5.dp, label = "dotSize")
-                            val color = if (isSelected) Color.White else Color.Gray.copy(alpha = 0.5f)
-                            val angleRad = Math.toRadians((startAngle - (index * angleBetweenDots)).toDouble())
-                            Box(
-                                modifier = Modifier.align(Alignment.Center)
-                                    .offset(x = (radius.value * cos(angleRad)).dp, y = (radius.value * sin(angleRad)).dp)
-                                    .size(size).clip(CircleShape).background(color)
-                            )
-                        }
-                    }
-                }
                 
+                // Logika blokowania przewijania: jeśli <= 4 czujników i BRAK mapy
+                val isScrollEnabled = dataSensors.size > 4 || hasMap
+
+                ScalingLazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colors.background)
+                        .then(if (isScrollEnabled) {
+                            Modifier
+                                .rotaryScrollable(
+                                    behavior = RotaryScrollableDefaults.behavior(
+                                        scrollableState = listState,
+                                        hapticFeedbackEnabled = true
+                                    ),
+                                    focusRequester = focusRequester
+                                )
+                        } else Modifier)
+                        .focusRequester(focusRequester),
+                    state = listState,
+                    userScrollEnabled = isScrollEnabled,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // 1. Zawsze czas na górze
+                    item {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 24.dp)) {
+                            Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
+                            Text(session.workoutTimerState.formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
+                        }
+                    }
+
+                    // 2. Dynamiczne czujniki
+                    if (dataSensors.size <= 3) {
+                        items(dataSensors.size) { index ->
+                            DynamicSensorDispatcher(dataSensors[index].sensorId, session)
+                        }
+                    } else {
+                        val rows = dataSensors.chunked(2)
+                        items(rows.size) { rowIndex ->
+                            val rowSensors = rows[rowIndex]
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                rowSensors.forEach { sensor ->
+                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                        DynamicSensorDispatcher(sensor.sensorId, session)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. Mapa na końcu listy (jeśli wybrana)
+                    if (hasMap) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("MAPA", style = MaterialTheme.typography.caption2, color = Color.Gray)
+                        }
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(160.dp)
+                                    .padding(horizontal = 8.dp)
+                            ) {
+                                MapScreen(mapType, focusRequester)
+                            }
+                        }
+                    }
+                    
+                    item { Spacer(modifier = Modifier.height(24.dp)) }
+                }
+
                 LaunchedEffect(Unit) {
                     focusRequester.requestFocus()
                 }
@@ -131,51 +161,6 @@ fun DynamicWorkoutScreen(
                 TimeText(timeTextStyle = MaterialTheme.typography.caption1.copy(color = clockColor, fontWeight = FontWeight.Bold))
             }
         }
-    }
-}
-
-@Composable
-fun DynamicDataScreen(
-    sensors: List<com.example.sportapp.data.model.SensorConfig>,
-    session: WorkoutSessionState
-) {
-    val listState = rememberScalingLazyListState()
-    
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background),
-        state = listState,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        item {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 16.dp)) {
-                Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
-                Text(session.workoutTimerState.formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
-            }
-        }
-
-        if (sensors.size <= 3) {
-            items(sensors.size) { index ->
-                DynamicSensorDispatcher(sensors[index].sensorId, session)
-            }
-        } else {
-            val rows = sensors.chunked(2)
-            items(rows.size) { rowIndex ->
-                val rowSensors = rows[rowIndex]
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    rowSensors.forEach { sensor ->
-                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                            DynamicSensorDispatcher(sensor.sensorId, session)
-                        }
-                    }
-                }
-            }
-        }
-        
-        item { Spacer(modifier = Modifier.height(24.dp)) }
     }
 }
 
