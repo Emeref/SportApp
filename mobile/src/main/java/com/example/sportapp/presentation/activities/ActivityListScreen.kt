@@ -46,7 +46,16 @@ fun ActivityListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Lista aktywności") },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_apki_biale),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp).padding(end = 8.dp)
+                        )
+                        Text("Lista aktywności")
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
@@ -186,14 +195,6 @@ fun ActivityListScreen(
                     Text("Pokaż szczegóły")
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Image(
-                painter = painterResource(id = R.drawable.logo_emeref),
-                contentDescription = "Logo Emeref",
-                modifier = Modifier.height(40.dp).padding(vertical = 8.dp)
-            )
         }
     }
 }

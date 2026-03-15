@@ -71,7 +71,16 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("SportApp") },
+                title = { 
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_apki_biale),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp).padding(end = 8.dp)
+                        )
+                        Text("SportApp")
+                    }
+                },
                 navigationIcon = {
                     if (isSyncing) {
                         Box(modifier = Modifier.padding(12.dp)) {
@@ -128,13 +137,14 @@ fun HomeScreen(
                 Text("Szczegóły konkretnej aktywności")
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
             
+            // Logo na dole
             Image(
-                painter = painterResource(id = R.drawable.logo_emeref),
-                contentDescription = "Logo Emeref",
+                painter = painterResource(id = R.drawable.logo_apki_biale),
+                contentDescription = "SportApp Logo",
                 modifier = Modifier
-                    .height(40.dp)
+                    .height(60.dp)
                     .padding(vertical = 8.dp)
                     .clickable { showSecretPopup = true }
             )

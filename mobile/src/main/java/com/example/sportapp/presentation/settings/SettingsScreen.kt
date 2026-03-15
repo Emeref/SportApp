@@ -33,7 +33,17 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Ustawienia") })
+            TopAppBar(
+                    title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_apki_biale),
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp).padding(end = 8.dp)
+                    )
+                    Text("Ustawienia")
+                }
+            })
         }
     ) { padding ->
         Column(
