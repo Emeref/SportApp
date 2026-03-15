@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.flowOf
 import java.util.*
 
 class FakeWorkoutRepository : IWorkoutRepository {
-    var summaries = mutableListOf<Map<String, String>>()
     var workouts = mutableListOf<WorkoutEntity>()
 
     override fun getAllWorkouts(): Flow<List<WorkoutEntity>> = flowOf(workouts)
@@ -64,8 +63,6 @@ class FakeWorkoutRepository : IWorkoutRepository {
     }
 
     override fun formatDistance(meters: Double): String = "${meters.toInt()} m"
-
-    override suspend fun getAllSummaries(): List<Map<String, String>> = summaries
 
     override suspend fun getActivityItems(): List<ActivityItem> = emptyList()
 }
