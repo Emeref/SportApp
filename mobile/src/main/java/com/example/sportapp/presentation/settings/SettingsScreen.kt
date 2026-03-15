@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -34,16 +35,28 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                    title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo_apki_biale),
-                        contentDescription = null,
-                        modifier = Modifier.size(32.dp).padding(end = 8.dp)
-                    )
-                    Text("Ustawienia")
+                title = { 
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 16.dp) // Przesunięcie pod kamerkę
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_apki_biale),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp).padding(end = 8.dp)
+                        )
+                        Text("Ustawienia")
+                    }
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onCancel,
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                    }
                 }
-            })
+            )
         }
     ) { padding ->
         Column(
@@ -122,23 +135,6 @@ fun SettingsScreen(
                 )
             }
 
-            // 5. Tryb Deweloperski / Testowy (ukryty w wersji produkcyjnej)
-            if (BuildConfig.DEBUG) {
-                SettingsSection(title = "Tryb deweloperski") {
-                    ListItem(
-                        headlineContent = { Text("Dane testowe") },
-                        supportingContent = { Text("Używaj symulowanych plików CSV z folderu test_activities") },
-                        leadingContent = { Icon(Icons.Default.BugReport, null) },
-                        trailingContent = { 
-                            Switch(
-                                checked = state.useTestData, 
-                                onCheckedChange = { state = state.copy(useTestData = it) }
-                            ) 
-                        }
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(8.dp))
 
             // PRZYCISKI ZAPISZ / ZAMKNIJ
@@ -181,13 +177,13 @@ fun SettingsScreen(
                     Image(
                         painter = painterResource(id = R.drawable.logo_mrf),
                         contentDescription = "Logo MRF",
-                        modifier = Modifier.height(60.dp).width(120.dp)
+                        modifier = Modifier.height(30.dp).width(60.dp)
                     )
-                    Spacer(modifier = Modifier.width(24.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
                     Image(
                         painter = painterResource(id = R.drawable.logo_emeref),
                         contentDescription = "Logo Emeref",
-                        modifier = Modifier.height(60.dp).width(120.dp)
+                        modifier = Modifier.height(30.dp).width(60.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(32.dp))

@@ -137,14 +137,13 @@ fun HomeScreen(
                 Text("Szczegóły konkretnej aktywności")
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.weight(1f))
             
-            // Logo na dole
             Image(
-                painter = painterResource(id = R.drawable.logo_apki_biale),
-                contentDescription = "SportApp Logo",
+                painter = painterResource(id = R.drawable.logo_emeref),
+                contentDescription = "Logo Emeref",
                 modifier = Modifier
-                    .height(60.dp)
+                    .height(40.dp)
                     .padding(vertical = 8.dp)
                     .clickable { showSecretPopup = true }
             )
