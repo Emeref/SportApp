@@ -23,6 +23,8 @@
     - [x] **Strumieniowy odczyt CSV**: Zamiana `readLines()` na `BufferedReader` (bezpieczeństwo pamięci RAM przy dużych plikach).
     - [x] **Asynchroniczny zapis (IO)**: Przeniesienie operacji dyskowych w `WorkoutLogger` na `Dispatchers.IO`.
     - [x] **Migracja na bazę danych (Room)**: Wdrożenie bazy danych Room (`AppDatabase`, `WorkoutDao`) dla efektywnego zarządzania danymi sesji.
+    - [ ] **Refaktoring Tętna**: Usunięcie kolumny `avgBpm` z tabeli `workouts` i zastąpienie jej dynamicznym obliczaniem średniej z `workout_points`.
+    - [ ] **Zarządzanie aktywnościami**: Dodanie opcji trwałego usuwania aktywności z historii.
 - [ ] **Globalne Stałe**: Dodaj plik ze zmiennymi, gdzie będą definicje z całej aplikacji (np. czułość kółka, timeouty).
 - [x] **Logowanie treningów (CSV)**:
     - [x] Rejestracja parametrów co sekundę do pliku sesji (metry, zaokrąglone).
@@ -44,11 +46,18 @@
         - [ ] **Nowe widgety statystyczne**: Dodanie podsumowań takich jak Max HR, Max Speed, średnie tempo, średnia prędkość itp.
         - [x] **Optymalizacja wykresów**: Poprawa czytelności osi X (format czasu, brak ucinania etykiet), naprawa błędów renderowania 'NONE'.
         - [ ] **Próbkowanie danych**: Implementacja algorytmu (np. LTTB) do ograniczenia liczby punktów na wykresie (max 500).
+        - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
+        - [ ] **Wykresy per aktywność**: Rozszerzenie opcji aktywności o możliwość definiowania widocznych wykresów dla konkretnego sportu.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
     - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
 - [x] **Ustawienia i Personalizacja (Mobile)**:
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
     - [x] Wybór okresu raportowania (dziś, tydzień, m-c, rok).
+    - [ ] **Poprawa Layoutu**: Przesunięcie tytułów ekranów opcji w dół (aby nie chowały się za kamerką).
+    - [ ] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definicji aktywności.
+    - [ ] **Odświeżenie UI**: Zmiana wyglądu tabel/list oraz wdrożenie sliderów do regulacji parametrów.
+    - [ ] **Branding**: Dodanie oficjalnego logo aplikacji.
+    - [ ] **Więcej widgetów**: Dodanie dodatkowych typów widgetów do wyboru w ustawieniach strony głównej.
 
 ## 4. Funkcje Wear OS (Zegarek)
 - [x] **Statystyki na zegarku**:
@@ -75,6 +84,7 @@
 - [x] **Wstrzykiwanie Zależności**: Wdrożenie **Hilt** w modułach `mobile` i `wear`.
 - [x] **Migracja na KSP**: Przejście z Kapt na KSP w module `mobile` (lepsza kompatybilność z Kotlin 2.x i Hilt).
 - [x] **Usunięcie manualnych fabryk ViewModeli**: Pełne przejście na `@HiltViewModel`.
+- [ ] **Cleanup**: Usunięcie trybu deweloperskiego oraz nieużywanych mechanizmów obsługi plików CSV.
 - [ ] **Internacjonalizacja**: Dodanie wsparcia dla wielu języków (tłumaczenia).
 - [ ] **Clean Code**: Usunięcie hardkodowanych stringów (klucze CSV, trasy nawigacji) do stałych/typów enumeratywnych.
 - [ ] **Usprawnienie modelu danych**: Rozważenie przejścia z metadanych w nazwie pliku na metadane wewnątrz pliku lub bazę Room.
