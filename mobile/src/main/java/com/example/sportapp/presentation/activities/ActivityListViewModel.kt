@@ -35,7 +35,8 @@ class ActivityListViewModel @Inject constructor(
             val typeMatch = type == null || activity.type == type
             val dateMatch = try {
                 val date = sdf.parse(activity.date)
-                (start == null || date?.after(start) == true) && (end == null || date?.before(end) == true)
+                (start == null || date?.after(start) == true || isSameDay(date, start)) && 
+                (end == null || date?.before(end) == true || isSameDay(date, end))
             } catch (e: Exception) { true }
             typeMatch && dateMatch
         }
@@ -44,6 +45,14 @@ class ActivityListViewModel @Inject constructor(
     init {
         refreshActivityTypes()
         refreshActivities()
+    }
+
+    private fun isSameDay(d1: Date?, d2: Date?): Boolean {
+        if (d1 == null || d2 == null) return false
+        val cal1 = Calendar.getInstance().apply { time = d1 }
+        val cal2 = Calendar.getInstance().apply { time = d2 }
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+               cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
     }
 
     fun refreshActivityTypes() {
@@ -65,5 +74,17 @@ class ActivityListViewModel @Inject constructor(
     fun onDateRangeSelected(start: Date?, end: Date?) {
         _startDate.value = start
         _endDate.value = end
+    }
+
+    fun deleteActivity(id: String) {
+        viewModelScope.launch {
+            val workoutId = id.toLongOrNull() ?: return@launch
+            val workout = repository.getWorkoutById(workoutId)
+            if (workout != null) {
+                repository.deleteWorkout(workout)
+                refreshActivities()
+                refreshActivityTypes()
+            }
+        }
     }
 }

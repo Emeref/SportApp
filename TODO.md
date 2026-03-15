@@ -20,11 +20,11 @@
     - [x] Stworzenie parsera XML dla układu sensorów.
 - [ ] **Optymalizacja i Architektura danych**:
     - [x] **Refaktoryzacja IWorkoutRepository**: Ujednolicona obsługa uprawnień przed startem aktywności.
-    - [x] **Strumieniowy odczyt CSV**: Zamiana `readLines()` na `BufferedReader` (bezpieczeństwo pamięci RAM przy dużych plikach).
+    - [x] **Przechowywanie danych**: Pełna migracja na bazę danych Room.
     - [x] **Asynchroniczny zapis (IO)**: Przeniesienie operacji dyskowych w `WorkoutLogger` na `Dispatchers.IO`.
     - [x] **Migracja na bazę danych (Room)**: Wdrożenie bazy danych Room (`AppDatabase`, `WorkoutDao`) dla efektywnego zarządzania danymi sesji.
     - [ ] **Refaktoring Tętna**: Usunięcie kolumny `avgBpm` z tabeli `workouts` i zastąpienie jej dynamicznym obliczaniem średniej z `workout_points`.
-    - [ ] **Zarządzanie aktywnościami**: Dodanie opcji trwałego usuwania aktywności z historii.
+    - [x] **Zarządzanie aktywnościami**: Dodanie opcji trwałego usuwania aktywności z historii.
 - [x] **Globalne Stałe**: Dodano plik `AppConstants.kt` ze zmiennymi, gdzie są definicje z całej aplikacji (np. czułość kółka).
 - [x] **Logowanie treningów**: Rejestracja parametrów co sekundę do bazy danych (metry, zaokrąglone) zgodnie z flagami zapisu.
 - [x] **Podsumowanie zbiorcze**: Dopisywanie wyników do bazy danych po zakończeniu treningu.
@@ -81,11 +81,11 @@
 - [x] **Wstrzykiwanie Zależności**: Wdrożenie **Hilt** w modułach `mobile` i `wear`.
 - [x] **Migracja na KSP**: Przejście z Kapt na KSP w module `mobile`.
 - [x] **Usunięcie manualnych fabryk ViewModeli**: Pełne przejście na `@HiltViewModel`.
-- [ ] **Cleanup**: Usunięcie trybu deweloperskiego oraz nieużywanych mechanizmów obsługi plików CSV.
+- [x] **Cleanup**: Usunięcie trybu deweloperskiego oraz nieużywanych mechanizmów obsługi plików CSV (zrealizowane).
 - [ ] **Internacjonalizacja**: Dodanie wsparcia dla wielu języków (tłumaczenia).
-- [ ] **Clean Code**: Usunięcie hardkodowanych stringów (klucze CSV, trasy nawigacji) do stałych/typów enumeratywnych.
+- [ ] **Clean Code**: Usunięcie hardkodowanych stringów (trasy nawigacji) do stałych/typów enumeratywnych.
 
 ## PRIORYTETY
-1. **Dynamiczne podsumowanie na zegarku** - Wyświetlanie statystyk końcowych tylko dla wybranych czujników (zrealizowane).
-2. **Widget 'średnia prędkość' i 'średnia prędkość (kroki)'** - Implementacja i wyświetlanie średniej prędkości na telefonie.
-3. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
+1. **Widget 'średnia prędkość' i 'średnia prędkość (kroki)'** - Implementacja i wyświetlanie średniej prędkości na telefonie.
+2. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
+3. **Integracja z Health Connect** - Synchronizacja danych treningowych z Google Health Connect.

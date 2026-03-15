@@ -21,6 +21,5 @@ data class MobileSettingsState(
         WidgetItem("steps", "Wszystkie kroki")
     ),
     val period: ReportingPeriod = ReportingPeriod.WEEK,
-    val customDays: Int = 7,
-    val useTestData: Boolean = false
+    val customDays: Int = 7
 )

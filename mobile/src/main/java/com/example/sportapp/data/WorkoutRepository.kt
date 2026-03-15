@@ -127,23 +127,6 @@ class WorkoutRepository @Inject constructor(
         }
     }
 
-    override suspend fun getAllSummaries(): List<Map<String, String>> = withContext(Dispatchers.IO) {
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-        workoutDao.getWorkoutsSince(0).map { workout ->
-            mapOf(
-                "nazwa aktywnosci" to workout.activityName,
-                "data" to sdf.format(Date(workout.startTime)),
-                "dlugosc" to workout.durationFormatted,
-                "kalorie" to (workout.totalCalories?.toString() ?: "0"),
-                "gps_dystans" to (workout.distanceGps?.toString() ?: "0"),
-                "kroki_dystans" to (workout.distanceSteps?.toString() ?: "0"),
-                "kroki" to (workout.steps?.toString() ?: "0"),
-                "przewyzszenia_gora" to (workout.totalAscent?.toString() ?: "0"),
-                "przewyzszenia_dol" to (workout.totalDescent?.toString() ?: "0")
-            )
-        }
-    }
-
     override suspend fun getActivityItems(): List<ActivityItem> = withContext(Dispatchers.IO) {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
         workoutDao.getWorkoutsSince(0)

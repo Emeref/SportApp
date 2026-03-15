@@ -69,7 +69,6 @@ class SessionRepositoryTest {
 
     @Test
     fun `getSessionData returns correct max values from points`() = runBlocking {
-        // Given: A workout with several points
         val workout = WorkoutEntity(
             activityName = "Test Workout",
             startTime = 123456789L,
@@ -96,20 +95,17 @@ class SessionRepositoryTest {
         )
         workoutDao.insertPoints(points)
 
-        // When: Getting session data
         val result = repository.getSessionData(workoutId.toString())
 
-        // Then: Max values should match the highest values in points
-        assertEquals("Liczba kroków powinna być 50", 50, result.totalSteps)
-        assertEquals("Dystans kroki powinien być 46", 46.0, result.totalDistanceSteps, 0.1)
-        assertEquals("Dystans GPS powinien być 55", 55.0, result.totalDistanceGps, 0.1)
-        assertEquals("Maks prędkość GPS powinna być 7.0", 7.0, result.maxSpeedGps, 0.1)
-        assertEquals("Maks prędkość kroki powinna być 6.0", 6.0, result.maxSpeedSteps, 0.1)
+        assertEquals(50, result.totalSteps)
+        assertEquals(46.0, result.totalDistanceSteps, 0.1)
+        assertEquals(55.0, result.totalDistanceGps, 0.1)
+        assertEquals(7.0, result.maxSpeedGps, 0.1)
+        assertEquals(6.0, result.maxSpeedSteps, 0.1)
     }
 
     @Test
     fun `getSessionData falls back to workout header when points are empty`() = runBlocking {
-        // Given: A workout with header data but no points
         val workout = WorkoutEntity(
             activityName = "Header Only",
             startTime = 123456789L,
@@ -129,10 +125,8 @@ class SessionRepositoryTest {
         )
         val workoutId = workoutDao.insertWorkout(workout)
 
-        // When: Getting session data
         val result = repository.getSessionData(workoutId.toString())
 
-        // Then: Values should be taken from the workout header
         assertEquals(100, result.totalSteps)
         assertEquals(80.0, result.totalDistanceSteps, 0.1)
         assertEquals(90.0, result.totalDistanceGps, 0.1)

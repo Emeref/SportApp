@@ -11,7 +11,6 @@
     - Testy brzegowe: tętno poniżej spoczynkowego (0 kcal), tętno równe maksymalnemu, zerowa masa ciała.
 - **WorkoutRepository**:
     - Testowanie filtrów dat (dzisiaj, tydzień, miesiąc, rok).
-    - Testowanie sumowania statystyk z plików CSV.
     - Weryfikacja formatowania dystansu (m -> km).
 - **Parsery XML**:
     - Test poprawności odczytu konfiguracji sensorów z plików XML.
@@ -19,12 +18,9 @@
 ## 2. Testy Integracyjne (Data Layer & Storage)
 - **DataStore (MobileSettingsManager)**:
     - Zapis i odczyt ustawień widgetów.
-    - Poprawność przełączania i trwałego zapisu flagi `useTestData`.
     - *Izolacja*: Każdy test musi czyścić instancję DataStore.
-- **TestDataGenerator**:
-    - Weryfikacja czy generator poprawnie tworzy strukturę plików w folderze `test_activities`.
 - **Wear OS Data Layer**:
-    - Testy przesyłania wiadomości i plików między urządzeniami.
+    - Testy przesyłania wiadomości i danych między urządzeniami.
 
 ## 3. Testy UI & UX (Automatyczne - Espresso/Compose Test)
 - **Ekran Główny (Mobile)**:
@@ -37,11 +33,11 @@
 
 ## 4. Testy Manualne (Scenariusze)
 - **Utrata sygnału GPS**: Czy aplikacja poprawnie loguje puste pola i czy sumuje dystans po odzyskaniu sygnału?
-- **Rozładowanie baterii**: Czy plik CSV zostaje poprawnie zamknięty i zapisany przed wyłączeniem się zegarka?
+- **Brak prądu**: Czy dane treningu są bezpiecznie zapisane w bazie Room przy nagłym zamknięciu aplikacji?
 - **Brak uprawnień**: Czy wyświetla się czytelny komunikat, gdy użytkownik nie nadał uprawnień?
 - **Rotary Input**: Czy kółko zegarka poprawnie przewija listy w ustawieniach i na ekranie aktywności?
 
 ## 5. Testy Wydajnościowe i Baterii
-- **Zapis CSV**: Monitoring zużycia baterii przy długotrwałym (1h+) logowaniu danych z częstotliwością 1Hz.
+- **Zapis Room**: Monitoring zużycia baterii przy długotrwałym (1h+) logowaniu danych z częstotliwością 1Hz.
 - **Pamięć**: Weryfikacja czy buforowanie logów nie powoduje wycieków pamięci (Memory Leaks) przy wielogodzinnych treningach.
-- **Synchronizacja w tle**: Wpływ przesyłania dużych plików treningowych na responsywność aplikacji mobilnej.
+- **Synchronizacja w tle**: Wpływ przesyłania danych treningowych na responsywność aplikacji mobilnej.
