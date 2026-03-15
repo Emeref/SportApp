@@ -1,7 +1,7 @@
 package com.example.sportapp.presentation.activities
 
 data class ActivityItem(
-    val id: String, // To będzie nazwa pliku CSV
+    val id: String,
     val type: String,
     val date: String,
     val duration: String,

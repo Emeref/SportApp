@@ -9,13 +9,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.sportapp.data.TestDataGenerator
 import com.example.sportapp.presentation.activities.ActivityListScreen
 import com.example.sportapp.presentation.activities.ActivityListViewModel
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionEditScreen
@@ -34,7 +32,6 @@ import com.example.sportapp.presentation.stats.OverallStatsScreen
 import com.example.sportapp.presentation.stats.OverallStatsViewModel
 import com.example.sportapp.presentation.stats.OverallStatsWidgetScreen
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -47,13 +44,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Generuj dane testowe jeśli jesteśmy w trybie DEBUG
-        if (BuildConfig.DEBUG) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                TestDataGenerator.generateTestData(applicationContext)
-            }
-        }
-
         setContent {
             MaterialTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {

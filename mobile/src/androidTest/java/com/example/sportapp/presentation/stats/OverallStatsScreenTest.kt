@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.stats
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import org.junit.Rule
@@ -36,16 +37,13 @@ class OverallStatsScreenTest {
                 onNavigateToOptions = {}
             )
         }
-
-        // Jeśli stats nie zawiera "raw_data", nie pokazujemy komunikatu o braku danych (bo jeszcze się ładują lub brak klucza)
-        // Ale jeśli zawiera pusty "raw_data", pokazujemy komunikat
     }
 
     @Test
     fun overallStatsContent_showsEmptyDataMessage_whenRawDataIsEmpty() {
         composeTestRule.setContent {
             OverallStatsContent(
-                stats = mapOf("raw_data" to emptyList<Map<String, String>>()),
+                stats = mapOf("raw_data" to emptyList<WorkoutEntity>()),
                 widgets = sampleWidgets,
                 activityTypes = emptyList(),
                 selectedType = null,
@@ -66,7 +64,23 @@ class OverallStatsScreenTest {
     @Test
     fun overallStatsContent_showsCharts_whenDataIsAvailable() {
         val testRawData = listOf(
-            mapOf("nazwa aktywnosci" to "Bieganie", "data" to "2024-01-01 10:00:00", "kalorie" to "200")
+            WorkoutEntity(
+                activityName = "Bieganie",
+                startTime = System.currentTimeMillis(),
+                durationFormatted = "00:10:00",
+                steps = 1000,
+                distanceSteps = 700.0,
+                distanceGps = 800.0,
+                avgSpeedSteps = 4.0,
+                avgSpeedGps = 4.5,
+                totalAscent = 0.0,
+                totalDescent = 0.0,
+                avgBpm = 120.0,
+                maxBpm = 140,
+                totalCalories = 100.0,
+                maxCalorieMin = 10.0,
+                durationSeconds = 600
+            )
         )
         val producers = mapOf("calories" to ChartEntryModelProducer())
 

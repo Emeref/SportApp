@@ -21,7 +21,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -48,11 +47,35 @@ fun ActivityListScreen(
     
     var selectedActivityId by remember { mutableStateOf<String?>(null) }
     var showTypeMenu by remember { mutableStateOf(false) }
+    var activityToDelete by remember { mutableStateOf<ActivityItem?>(null) }
+    
     val context = LocalContext.current
     val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
 
     val horizontalScrollState = rememberScrollState()
     val lazyListState = rememberLazyListState()
+
+    if (activityToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { activityToDelete = null },
+            title = { Text("Usuń aktywność") },
+            text = { Text("Czy na pewno chcesz trwale usunąć tę aktywność z bazy danych?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteActivity(activityToDelete!!.id)
+                    selectedActivityId = null
+                    activityToDelete = null
+                }) {
+                    Text("Usuń", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { activityToDelete = null }) {
+                    Text("Anuluj")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -220,12 +243,29 @@ fun ActivityListScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (selectedActivityId != null) {
-                Button(
-                    onClick = { onNavigateToDetail(selectedActivityId!!) },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Pokaż szczegóły")
+                    Button(
+                        onClick = { onNavigateToDetail(selectedActivityId!!) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)) // Zielony
+                    ) {
+                        Text("Pokaż szczegóły")
+                    }
+                    Button(
+                        onClick = { 
+                            activities.find { it.id == selectedActivityId }?.let { 
+                                activityToDelete = it
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE57373)) // Jasny czerwony
+                    ) {
+                        Text("Usuń")
+                    }
+
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))

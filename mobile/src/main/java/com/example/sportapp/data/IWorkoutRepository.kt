@@ -34,7 +34,5 @@ interface IWorkoutRepository {
 
     fun formatDistance(meters: Double): String
     
-    suspend fun getAllSummaries(): List<Map<String, String>>
-    
     suspend fun getActivityItems(): List<ActivityItem>
 }

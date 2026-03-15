@@ -8,10 +8,10 @@ Aplikacja mobilna służy wyłącznie jako centrum przeglądania i analizy danyc
 - **Synchronizacja**: 
     - Automatyczna synchronizacja z zegarkiem w regularnych odstępach czasu (np. przy każdym uruchomieniu aplikacji lub w tle).
     - Przycisk "Wymuś synchronizację" (Force Sync) dostępny dla użytkownika.
-    - Wykorzystanie Wear OS Data Layer API do transferu plików CSV i ustawień.
+    - Wykorzystanie Wear OS Data Layer API do transferu danych sesji i ustawień.
 - **Material Design 3**: Pełne wykorzystanie Material 3 (M3), w tym Dynamic Color (jeśli dostępne) i nowoczesnych komponentów UI.
 - **Architektura**: MVVM / Clean Architecture.
-- **Baza danych**: Room (do keszowania danych z plików CSV w celu szybkiej analizy i filtrowania).
+- **Baza danych**: Room (do przechowywania danych sesji w celu szybkiej analizy i filtrowania).
 
 ## Tech Stack (Mobile)
 - UI: Jetpack Compose (Material 3)
@@ -32,10 +32,10 @@ Aplikacja mobilna służy wyłącznie jako centrum przeglądania i analizy danyc
 
 ## Komunikacja z Zegarkiem
 - Implementacja `DataClient` i `MessageClient`.
-- Obsługa transferu plików (Asset/File) dla logów CSV.
+- Obsługa transferu danych sesji do bazy Room.
 - Synchronizacja profilu zdrowotnego (zmiana na telefonie powinna trafić na zegarek i odwrotnie).
 
 ## Ważne
-- Wszystkie operacje na plikach CSV muszą być asynchroniczne.
+- Wszystkie operacje na bazie danych muszą być asynchroniczne.
 - Należy obsłużyć stany braku połączenia z zegarkiem.
-- Logi z zegarka po przetworzeniu do bazy Room powinny być odpowiednio oznaczone, aby uniknąć duplikatów.
+- Dane z zegarka po przetworzeniu do bazy Room powinny być odpowiednio oznaczone, aby uniknąć duplikatów.

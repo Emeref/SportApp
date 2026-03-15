@@ -5,7 +5,7 @@
 - UI: Jetpack Compose for Wear OS (1.5.0+)
 - Architektura: MVVM (Model-View-ViewModel) / Modularna architektura sensorów
 - Komunikacja: Wear OS Data Layer API
-- Przechowywanie danych: Jetpack DataStore (ustawienia), Pliki CSV (treningi)
+- Przechowywanie danych: Jetpack DataStore (ustawienia), Room Database (treningi)
 
 ## Zasady Kodowania
 - Zawsze używaj `ScalingLazyColumn` zamiast `Column` na zegarku.
@@ -14,16 +14,11 @@
 - Kolory: Ciemny motyw (AMOLED-friendly), główny akcent: Szary półprzezroczysty.
 - Sensory: Używaj wzorca `remember*` z pakietu `presentation.sensors`.
 - Lokalizacja: Zawsze sprawdzaj uprawnienia (Permissions) przed odpaleniem sensorów.
-- Wszystkie sensory wymagające uprawnień muszą mieć obsłużony stan 'Brak uprawnień' (Permission Denied) w sposób czytelny dla użytkownika (np. ekran z prośbą o włączenie w ustawieniach).
+- Wszystkie sensory wymagające uprawnień muszą mieć obsłużony stan 'Brak uprawnień' (Permission Denied) w sposób czytelny dla użytkownika (np. ekran z prośą o włączenie w ustawieniach).
 
 ## Zarządzanie Plikami i Logami
-- Folder danych: Wszystkie logi i podsumowania zapisuj w folderze `activities`.
-- Format CSV:
-    - Separator: średnik (`;`).
-    - Wartości puste lub zero: Zostawiaj puste pole (np. `;;`), nie pisz "null" ani "0", aby oszczędzać miejsce.
-    - Kodowanie: UTF-8, Locale.US dla liczb (kropka jako separator dziesiętny).
-    - Optymalizacja: Dla logów CSV używaj buforowania w pamięci RAM i zapisu na dysk w blokach (np. co 30-60 sekund) lub przy pauzie/końcu treningu w celu oszczędzania baterii.
-- Nazewnictwo plików sesji: `<Nazwa_aktywnosci>_<Data_Startu>_<Dane_Zdrowotne>.csv`.
+- Baza danych: Wszystkie logi i podsumowania zapisuj w bazie danych Room.
+- Optymalizacja: Dla logów w bazie danych używaj buforowania w pamięci RAM i zapisu w blokach lub przy pauzie/końcu treningu w celu oszczędzania baterii.
 
 ## Nawigacja
 - Standard: `SwipeDismissableNavHost`.
