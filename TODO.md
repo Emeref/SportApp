@@ -11,7 +11,7 @@
     - [x] **Wprowadzenie Foreground Service**: Przeniesienie logiki sesji z UI do usługi w tle (zapobieganie ubijaniu treningu).
     - [ ] **Centralny PermissionManager**: Ujednolicona obsługa uprawnień przed startem aktywności.
     - [ ] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych GPS i barometru (eliminacja szumów).
-- [ ] **Własne dyscypliny**: Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników.
+- [x] **Własne dyscypliny**: Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
 
 ## 2. Zarządzanie danymi i plikami
 - [x] **Zapis konfiguracji aplikacji**:
@@ -25,17 +25,14 @@
     - [x] **Migracja na bazę danych (Room)**: Wdrożenie bazy danych Room (`AppDatabase`, `WorkoutDao`) dla efektywnego zarządzania danymi sesji.
     - [ ] **Refaktoring Tętna**: Usunięcie kolumny `avgBpm` z tabeli `workouts` i zastąpienie jej dynamicznym obliczaniem średniej z `workout_points`.
     - [ ] **Zarządzanie aktywnościami**: Dodanie opcji trwałego usuwania aktywności z historii.
-- [ ] **Globalne Stałe**: Dodaj plik ze zmiennymi, gdzie będą definicje z całej aplikacji (np. czułość kółka, timeouty).
-- [x] **Logowanie treningów (CSV)**:
-    - [x] Rejestracja parametrów co sekundę do pliku sesji (metry, zaokrąglone).
-    - [x] Obliczanie średniego BPM, przewyższeń i dystansu.
-- [x] **Podsumowanie zbiorcze (CSV)**:
-    - [x] Dopisywanie wyników do `Podsumowanie_cwiczen.csv`.
+- [x] **Globalne Stałe**: Dodano plik `AppConstants.kt` ze zmiennymi, gdzie są definicje z całej aplikacji (np. czułość kółka).
+- [x] **Logowanie treningów**: Rejestracja parametrów co sekundę do bazy danych (metry, zaokrąglone) zgodnie z flagami zapisu.
+- [x] **Podsumowanie zbiorcze**: Dopisywanie wyników do bazy danych po zakończeniu treningu.
 
 ## 3. Komunikacja międzyurządzeniowa
 - [x] **Aplikacja na telefon (Mobile App)**:
     - [x] Stworzenie szkieletu interfejsu (Material 3).
-    - [x] Synchronizacja `Wearable Data Layer API`.
+    - [x] Synchronizacja `Wearable Data Layer API` (treningi i definicje sportów).
     - [x] Wyświetlanie statystyk i listy aktywności.
 - [ ] **Analiza danych (Mobile)**:
     - [ ] **Szczegóły aktywności (Ekran ActivityDetailScreen)**:
@@ -44,8 +41,7 @@
         - [x] Personalizacja widoku (wybór i kolejność wykresów/mapy).
         - [x] Wybór koloru śladu na mapie.
         - [ ] **Nowe widgety statystyczne**: Dodanie podsumowań takich jak Max HR, Max Speed, średnie tempo, średnia prędkość itp.
-        - [x] **Optymalizacja wykresów**: Poprawa czytelności osi X (format czasu, brak ucinania etykiet), naprawa błędów renderowania 'NONE'.
-        - [ ] **Próbkowanie danych**: Implementacja algorytmu (np. LTTB) do ograniczenia liczby punktów na wykresie (max 500).
+        - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
         - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
         - [ ] **Wykresy per aktywność**: Rozszerzenie opcji aktywności o możliwość definiowania widocznych wykresów dla konkretnego sportu.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
@@ -53,10 +49,10 @@
 - [x] **Ustawienia i Personalizacja (Mobile)**:
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
     - [x] Wybór okresu raportowania (dziś, tydzień, m-c, rok).
-    - [ ] **Poprawa Layoutu**: Przesunięcie tytułów ekranów opcji w dół (aby nie chowały się za kamerką).
-    - [ ] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definicji aktywności.
-    - [ ] **Odświeżenie UI**: Zmiana wyglądu tabel/list oraz wdrożenie sliderów do regulacji parametrów.
-    - [ ] **Branding**: Dodanie oficjalnego logo aplikacji.
+    - [x] **Poprawa Layoutu**: Przesunięcie tytułów ekranów opcji w dół (aby nie chowały się za kamerką).
+    - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definicji aktywności.
+    - [ ] **Odświeżenie UI**: Zmiana wyglądu tabel/list (dodano paski przewijania) oraz wdrożenie sliderów do regulacji parametrów.
+    - [x] **Branding**: Dodanie oficjalnego logo aplikacji (wewnątrz apki oraz ikony systemowe Adaptive Icons).
     - [ ] **Więcej widgetów**: Dodanie dodatkowych typów widgetów do wyboru w ustawieniach strony głównej.
 
 ## 4. Funkcje Wear OS (Zegarek)
@@ -64,13 +60,14 @@
     - [x] Wyświetlanie podsumowania widgetów z ostatniego tygodnia (dystans, kcal, kroki).
 - [ ] **Optymalizacja UI**:
     - [x] **Responsywność korony zegarka**: Zwiększenie czułości kółka przy przewijaniu długich list treningowych.
+    - [x] **Dynamiczny układ treningu**: Mapa wyświetlana na końcu listy czujników (płynne przewijanie).
     - [ ] **Obsługa Ambient Mode**: Implementacja trybu oszczędzania energii dla ekranów treningowych.
     - [ ] **Centrowanie mapy**: Automatyczne odświeżanie mapy tak, aby kropka pozycji była zawsze w centrum.
 
 ## 5. Chmura i Bezpieczeństwo
 - [ ] **Integracja z Google**:
     - [ ] Dodanie logowania przez konto Google.
-    - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań w chmudze (backup/sync).
+    - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań w chmurze (backup/sync).
     - [ ] **Health Connect**: Synchronizacja danych treningowych z Google Health Connect.
 
 ## 6. Jakość i Testy
@@ -82,14 +79,13 @@
 
 ## 7. Refaktoryzacja i Dobre Praktyki
 - [x] **Wstrzykiwanie Zależności**: Wdrożenie **Hilt** w modułach `mobile` i `wear`.
-- [x] **Migracja na KSP**: Przejście z Kapt na KSP w module `mobile` (lepsza kompatybilność z Kotlin 2.x i Hilt).
+- [x] **Migracja na KSP**: Przejście z Kapt na KSP w module `mobile`.
 - [x] **Usunięcie manualnych fabryk ViewModeli**: Pełne przejście na `@HiltViewModel`.
 - [ ] **Cleanup**: Usunięcie trybu deweloperskiego oraz nieużywanych mechanizmów obsługi plików CSV.
 - [ ] **Internacjonalizacja**: Dodanie wsparcia dla wielu języków (tłumaczenia).
 - [ ] **Clean Code**: Usunięcie hardkodowanych stringów (klucze CSV, trasy nawigacji) do stałych/typów enumeratywnych.
-- [ ] **Usprawnienie modelu danych**: Rozważenie przejścia z metadanych w nazwie pliku na metadane wewnątrz pliku lub bazę Room.
 
 ## PRIORYTETY
-1. **Własne dyscypliny** - Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników i ich wizualizacji.
-2. **Widget 'średnia prędkość' i 'średni prędkość (kroki)'** - Implementacja i wyświetlanie średniej prędkości na ekranie szczegółów aktywności.
+1. **Dynamiczne podsumowanie na zegarku** - Wyświetlanie statystyk końcowych tylko dla wybranych czujników (zrealizowane).
+2. **Widget 'średnia prędkość' i 'średnia prędkość (kroki)'** - Implementacja i wyświetlanie średniej prędkości na telefonie.
 3. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
