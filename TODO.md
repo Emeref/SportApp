@@ -25,6 +25,7 @@
     - [x] **Migracja na bazę danych (Room)**: Wdrożenie bazy danych Room (`AppDatabase`, `WorkoutDao`) dla efektywnego zarządzania danymi sesji.
     - [ ] **Refaktoring Tętna**: Usunięcie kolumny `avgBpm` z tabeli `workouts` i zastąpienie jej dynamicznym obliczaniem średniej z `workout_points`.
     - [x] **Zarządzanie aktywnościami**: Dodanie opcji trwałego usuwania aktywności z historii.
+    - [x] **Zaokrąglanie danych**: Upewnienie się, że wszystkie pola liczbowe w tabeli `workouts` mają zaokrąglenie do 2 miejsc po przecinku.
 - [x] **Globalne Stałe**: Dodano plik `AppConstants.kt` ze zmiennymi, gdzie są definie z całej aplikacji (np. czułość kółka).
 - [x] **Logowanie treningów**: Rejestracja parametrów co sekundę do bazy danych (metry, zaokrąglone) zgodnie z flagami zapisu.
 - [x] **Podsumowanie zbiorcze**: Dopisywanie wyników do bazy danych po zakończeniu treningu.
@@ -42,11 +43,12 @@
         - [x] Wybór koloru śladu na mapie.
         - [x] **Wykresy per aktywność**: Rozszerzenie opcji aktywności o możliwość definiowania widocznych wykresów dla konkretnego sportu.
         - [x] **Widgety per aktywność**: Możliwość wyboru i ustawienia kolejności kafelków podsumowania niezależnie dla każdego sportu.
-        - [ ] **Rozbudowa metryk sesji**: Dodanie Max HR, Max Speed, średniego tempa, przewyższeń i kadencji.
+        - [x] **Rozbudowa metryk sesji**: Dodanie Max HR, Max Speed, średniego tempa, przewyższeń i kadencji.
         - [ ] **Najlepsze tempo na km (Best Split)**: Automatyczne wykrywanie najszybszego odcinka 1km.
         - [ ] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu.
         - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
         - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
+        - [ ] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
     - [ ] **Analiza stref tętna**: Podział treningu na strefy (Z1-Z5) i ich wizualizacja na ekranie szczegółów.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
     - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
@@ -54,7 +56,7 @@
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
     - [x] Wybór okresu raportowania (dziś, tydzień, m-c, rok).
     - [x] **Poprawa Layoutu**: Przesunięcie tytułów ekranów opcji w dół (aby nie chowały się za kamerką).
-    - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definicji aktywności.
+    - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definicje aktywności.
     - [ ] **Odświeżenie UI**: Zmiana wyglądu tabel/list (dodano paski przewijania) oraz wdrożenie sliderów do regulacji parametrów.
     - [x] **Branding**: Dodanie oficjalnego logo aplikacji (wewnątrz apki oraz ikony systemowe Adaptive Icons).
     - [ ] **Więcej widgetów**: Dodanie dodatkowych typów widgetów do wyboru w ustawieniach strony głównej.
@@ -90,7 +92,7 @@
 - [ ] **Clean Code**: Usunięcie hardkodowanych stringów (trasy nawigacji) do stałych/typów enumeratywnych.
 
 ## PRIORYTETY
-1. **Rozbudowa metryk sesji** - Dodanie Max HR, Max Speed, średniego tempa, przewyższeń i kadencji.
+1. **Weryfikacja obliczeń** - Sprawdzenie poprawności `avgPace` i `avgStepLength`.
 2. **Widget 'Best Split' i Wykres długości kroku** - Implementacja zaawansowanej analizy techniki biegu.
 3. **Analiza stref tętna** - Wyliczanie i prezentacja czasu w strefach Z1-Z5.
 4. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
