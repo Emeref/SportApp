@@ -29,6 +29,10 @@ class WorkoutLogger(
     private val heartRates = mutableListOf<Float>()
     private var maxCalorieMin: Double = 0.0
 
+    // Historia kroków do obliczania kadencji z ostatnich 20 sekund
+    private val stepHistory = mutableListOf<Pair<Long, Int>>()
+    private val CADENCE_WINDOW_MS = 20000L
+
     private fun Double?.round(decimals: Int = 2): Double? {
         if (this == null) return null
         return "%.${decimals}f".format(Locale.US, this).toDouble()
@@ -56,7 +60,25 @@ class WorkoutLogger(
         val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", (durationMillis / 3600000), (durationMillis / 60000) % 60, (durationMillis / 1000) % 60)
 
         if (bpm != null && bpm > 0) heartRates.add(bpm)
-        val stepsMin = if (kroki != null && kroki > 0 && durationMillis > 0) (kroki.toDouble() / (durationMillis / 60000.0)) else null
+
+        // Obliczanie stepsMin (kadencji) na podstawie okna 20 sekund
+        if (kroki != null) {
+            stepHistory.add(currentTime to kroki)
+            // Usuwamy wpisy starsze niż 20 sekund
+            stepHistory.removeAll { it.first < currentTime - CADENCE_WINDOW_MS }
+        }
+
+        val stepsMin = if (stepHistory.size >= 2) {
+            val (oldTime, oldSteps) = stepHistory.first()
+            val (newTime, newSteps) = stepHistory.last()
+            val timeDiffMin = (newTime - oldTime) / 60000.0
+            val stepDiff = newSteps - oldSteps
+            if (timeDiffMin > 0) (stepDiff / timeDiffMin) else 0.0
+        } else if (kroki != null && kroki > 0 && durationMillis > 0) {
+            // Fallback na średnią globalną, jeśli mamy za mało danych w oknie (początek treningu)
+            (kroki.toDouble() / (durationMillis / 60000.0))
+        } else null
+
         val predkoscKroki = if (stepsMin != null && stepsMin > 0) (stepsMin * healthData.stepLength * 60.0) / 100000.0 else null
         val odlKrokiRounded = (kroki?.times(healthData.stepLength / 100.0))?.roundToInt()
         val gpsDystansRounded = gpsDystans?.roundToInt()

@@ -210,7 +210,8 @@ class WorkoutService : Service(), SensorEventListener {
                 points = points,
                 durationSeconds = totalSeconds,
                 totalDistanceMeters = officialDistanceMeters,
-                totalSteps = currentSteps
+                totalSteps = currentSteps,
+                totalDistanceGpsMeters = totalDistance.toDouble()
             )
             
             val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0

@@ -33,10 +33,11 @@ class SessionRepositoryTest {
         speedGps: Double = 0.0,
         speedSteps: Double = 0.0
     ) = WorkoutPointEntity(
+        id = 0,
         workoutId = workoutId,
         time = time,
-        latitude = null,
-        longitude = null,
+        latitude = 52.0,
+        longitude = 21.0,
         bpm = null,
         steps = steps,
         stepsMin = null,
@@ -80,7 +81,7 @@ class SessionRepositoryTest {
         `when`(workoutDao.getWorkoutById(workoutId)).thenReturn(workout)
         `when`(workoutDao.getPointsForWorkout(workoutId)).thenReturn(points)
 
-        val result = repository.getSessionData(workoutId.toString())
+        val result = repository.getSessionData(workoutId)
 
         assertEquals("Walking", result.activityName)
         assertEquals(100, result.totalSteps)

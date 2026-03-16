@@ -77,7 +77,8 @@ class ActivityDetailViewModel @Inject constructor(
             }
 
             try {
-                val data = sessionRepository.getSessionData(activityId.toString())
+                // Fixed: activityId is already Long, no need for toString()
+                val data = sessionRepository.getSessionData(activityId)
                 if (data.error != null) {
                     _error.value = data.error
                 } else {
@@ -92,14 +93,8 @@ class ActivityDetailViewModel @Inject constructor(
 
     private fun updateCharts(data: SessionData) {
         chartProducers.forEach { (id, producer) ->
-            // Mapowanie kluczy z SessionData.charts na te używane w UI
-            val internalKey = when(id) {
-                "predkosc" -> "predkosc_gps"
-                "odl_kroki" -> "kroki_dystans"
-                else -> id
-            }
-            
-            val points = data.charts[internalKey] ?: emptyList()
+            // Klucze w SessionData.charts są teraz zsynchronizowane z chartProducers
+            val points = data.charts[id] ?: emptyList()
             if (points.isNotEmpty()) {
                 producer.setEntries(points.mapIndexed { index, value ->
                     entryOf(index, value ?: 0f)
