@@ -18,7 +18,13 @@ object WorkoutMath {
         val maxCadence: Double = 0.0
     )
 
-    fun calculateSessionStats(points: List<WorkoutPointEntity>, durationSeconds: Long, totalDistanceMeters: Double, totalSteps: Int): SessionStats {
+    fun calculateSessionStats(
+        points: List<WorkoutPointEntity>,
+        durationSeconds: Long,
+        totalDistanceMeters: Double,
+        totalSteps: Int,
+        totalDistanceGpsMeters: Double = 0.0
+    ): SessionStats {
         if (points.isEmpty()) return SessionStats()
 
         var maxHr = 0
@@ -77,8 +83,9 @@ object WorkoutMath {
             }
         }
 
-        val avgPace = if (totalDistanceMeters > 0) {
-            (durationSeconds / 60.0) / (totalDistanceMeters / 1000.0)
+        // Pace calculated ONLY based on GPS distance
+        val avgPace = if (totalDistanceGpsMeters > 0) {
+            (durationSeconds / 60.0) / (totalDistanceGpsMeters / 1000.0)
         } else 0.0
 
         val avgStepLength = if (totalSteps > 0) {

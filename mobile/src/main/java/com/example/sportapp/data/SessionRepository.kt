@@ -1,8 +1,7 @@
 package com.example.sportapp.data
 
-import android.util.Log
+import android.content.Context
 import com.example.sportapp.data.db.WorkoutDao
-import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
@@ -15,79 +14,57 @@ class SessionRepository @Inject constructor(
     private val workoutDao: WorkoutDao
 ) {
 
-    suspend fun getSessionData(workoutIdString: String): SessionData = withContext(Dispatchers.IO) {
-        val workoutId = workoutIdString.toLongOrNull() 
-            ?: return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Niepoprawne ID treningu")
-
-        val workout = workoutDao.getWorkoutById(workoutId)
-            ?: return@withContext SessionData(emptyList(), emptyList(), emptyMap(), "Trening nie istnieje w bazie")
-
+    suspend fun getSessionData(workoutId: Long): SessionData = withContext(Dispatchers.IO) {
+        val workout = workoutDao.getWorkoutById(workoutId) ?: return@withContext SessionData(error = "Nie znaleziono treningu")
         val points = workoutDao.getPointsForWorkout(workoutId)
 
         val times = mutableListOf<String>()
         val route = mutableListOf<LatLng>()
-        val chartData = mutableMapOf<String, MutableList<Float?>>()
-        
-        val uiColumns = listOf(
-            "bpm", "kalorie_min", "kalorie_suma", 
-            "kroki_min", "kroki_dystans", "predkosc_kroki", 
-            "gps_dystans", "predkosc_gps", "wysokosc", 
-            "przewyzszenia_gora", "przewyzszenia_dol"
-        )
-        
-        uiColumns.forEach { chartData[it] = mutableListOf() }
-
-        // Statystyki liczone z punktów (fallback dla starszych treningów)
-        var maxBpm = 0
         val heartRates = mutableListOf<Int>()
+        val calories = mutableListOf<Float>()
+        val speeds = mutableListOf<Float>()
+        val altitudes = mutableListOf<Float>()
+
         var totalCalories = 0.0
-        var maxCaloriesMin = 0.0f
+        var maxCaloriesMin = 0f
         var maxSpeed = 0.0
         var totalDistanceGps = 0.0
         var totalDistanceSteps = 0.0
         var maxSteps = 0
-        var maxAlt = -10000.0
         var totalAscent = 0.0
         var totalDescent = 0.0
+        var maxAlt = -10000.0
         var lastAltRef: Double? = null
 
         points.forEach { point ->
-            times.add(point.time)
+            val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(point.timestamp))
+            times.add(timestamp)
             
-            if (point.latitude != null && point.longitude != null) {
-                route.add(LatLng(point.latitude, point.longitude))
+            point.lat?.let { lat ->
+                point.lon?.let { lon ->
+                    route.add(LatLng(lat, lon))
+                }
             }
-
-            // Mapowanie pól encji na wykresy
-            chartData["bpm"]?.add(point.bpm?.toFloat())
-            chartData["kalorie_min"]?.add(point.calorieMin?.toFloat())
-            chartData["kalorie_suma"]?.add(point.calorieSum?.toFloat())
-            chartData["kroki_min"]?.add(point.stepsMin?.toFloat())
-            chartData["kroki_dystans"]?.add(point.distanceSteps?.toFloat())
-            chartData["predkosc_kroki"]?.add(point.speedSteps?.toFloat())
-            chartData["gps_dystans"]?.add(point.distanceGps?.toFloat())
-            chartData["predkosc_gps"]?.add(point.speedGps?.toFloat())
-            chartData["wysokosc"]?.add(point.altitude?.toFloat())
-            chartData["przewyzszenia_gora"]?.add(point.totalAscent?.toFloat())
-            chartData["przewyzszenia_dol"]?.add(point.totalDescent?.toFloat())
-
-            point.bpm?.let { 
-                if (it > maxBpm) maxBpm = it 
-                heartRates.add(it)
+            
+            point.bpm?.let { heartRates.add(it) }
+            point.calorieMin?.let { 
+                calories.add(it.toFloat())
+                if (it.toFloat() > maxCaloriesMin) maxCaloriesMin = it.toFloat()
             }
-            point.calorieSum?.let { if (it > totalCalories) totalCalories = it }
-            point.calorieMin?.let { if (it.toFloat() > maxCaloriesMin) maxCaloriesMin = it.toFloat() }
+            point.calorieSum?.let { totalCalories = it }
             
             val sGps = point.speedGps ?: 0.0
             val sSteps = point.speedSteps ?: 0.0
             val currentMax = if (sGps > sSteps) sGps else sSteps
             if (currentMax > maxSpeed) maxSpeed = currentMax
+            speeds.add(sGps.toFloat()) // Używamy GPS do wykresu prędkości
 
             point.distanceGps?.let { if (it.toDouble() > totalDistanceGps) totalDistanceGps = it.toDouble() }
             point.distanceSteps?.let { if (it.toDouble() > totalDistanceSteps) totalDistanceSteps = it.toDouble() }
             point.steps?.let { if (it > maxSteps) maxSteps = it }
 
             point.altitude?.let { alt ->
+                altitudes.add(alt.toFloat())
                 if (alt > maxAlt) maxAlt = alt
                 if (lastAltRef == null) {
                     lastAltRef = alt
@@ -99,12 +76,20 @@ class SessionRepository @Inject constructor(
             }
         }
 
+        val chartData = mapOf(
+            "Tętno (BPM)" to heartRates.map { it.toFloat() },
+            "Spalone kalorie (kcal/min)" to calories,
+            "Prędkość (km/h)" to speeds,
+            "Wysokość (m)" to altitudes
+        )
+
         val finalTotalDistanceGps = if (totalDistanceGps > 0) totalDistanceGps else (workout.distanceGps ?: 0.0)
         val finalTotalDistanceSteps = if (totalDistanceSteps > 0) totalDistanceSteps else (workout.distanceSteps ?: 0.0)
         val finalTotalSteps = if (maxSteps > 0) maxSteps else (workout.steps ?: 0)
         
         val officialDistanceMeters = if (finalTotalDistanceGps > 0) finalTotalDistanceGps else finalTotalDistanceSteps
-        val calculatedPace = if (officialDistanceMeters > 0) (workout.durationSeconds / 60.0) / (officialDistanceMeters / 1000.0) else 0.0
+        // Pace calculated ONLY based on GPS distance
+        val calculatedPace = if (finalTotalDistanceGps > 0) (workout.durationSeconds / 60.0) / (finalTotalDistanceGps / 1000.0) else 0.0
         val calculatedAvgBpm = if (heartRates.isNotEmpty()) heartRates.average().toInt() else 0
 
         return@withContext SessionData(
@@ -114,7 +99,7 @@ class SessionRepository @Inject constructor(
             activityName = workout.activityName,
             activityDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(workout.startTime)),
             duration = workout.durationFormatted,
-            maxBpm = workout.maxBpm ?: maxBpm,
+            maxBpm = workout.maxBpm ?: (if (heartRates.isNotEmpty()) heartRates.max() else 0),
             avgBpm = workout.avgBpm?.toInt() ?: calculatedAvgBpm,
             totalCalories = workout.totalCalories?.toInt() ?: totalCalories.toInt(),
             maxCaloriesMin = workout.maxCalorieMin?.toFloat() ?: maxCaloriesMin,
