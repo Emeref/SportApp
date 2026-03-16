@@ -149,16 +149,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Screen.ActivityDetailSettingsEdit.route) {
                             val detailSettingsViewModel: ActivityDetailSettingsViewModel = hiltViewModel()
-                            val detailSettings by detailSettingsViewModel.settings.collectAsState()
-                            
-                            WidgetSelectionScreen(
-                                widgets = detailSettings.visibleElements,
-                                title = "Wykresy: ${detailSettingsViewModel.typeName}",
-                                onSave = { updatedWidgets ->
-                                    detailSettingsViewModel.saveVisibleElements(updatedWidgets)
-                                    navController.popBackStack()
-                                },
-                                onCancel = { navController.popBackStack() }
+                            ActivityDetailSettingsEditScreen(
+                                viewModel = detailSettingsViewModel,
+                                onNavigateBack = { navController.popBackStack() }
                             )
                         }
                         composable(Screen.ActivityDetail.route) {

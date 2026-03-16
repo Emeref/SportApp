@@ -42,8 +42,9 @@ class ActivityDetailViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ActivityDetailSettings(
-                ActivityDetailSettingsManager.DEFAULT_ELEMENTS, 
-                ActivityDetailSettingsManager.DEFAULT_COLOR
+                visibleCharts = ActivityDetailSettingsManager.DEFAULT_CHARTS,
+                visibleWidgets = ActivityDetailSettingsManager.DEFAULT_WIDGETS,
+                trackColor = ActivityDetailSettingsManager.DEFAULT_COLOR
             )
         )
 
@@ -107,10 +108,10 @@ class ActivityDetailViewModel @Inject constructor(
         }
     }
 
-    fun saveVisibleElements(elements: List<WidgetItem>) {
+    fun saveVisibleCharts(charts: List<WidgetItem>) {
         val typeName = _sessionData.value?.activityName ?: return
         viewModelScope.launch {
-            settingsManager.saveVisibleElements(typeName, elements)
+            settingsManager.saveVisibleCharts(typeName, charts)
         }
     }
 

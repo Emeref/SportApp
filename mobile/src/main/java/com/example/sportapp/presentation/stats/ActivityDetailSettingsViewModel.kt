@@ -25,14 +25,21 @@ class ActivityDetailSettingsViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ActivityDetailSettings(
-            visibleElements = ActivityDetailSettingsManager.DEFAULT_ELEMENTS,
+            visibleCharts = ActivityDetailSettingsManager.DEFAULT_CHARTS,
+            visibleWidgets = ActivityDetailSettingsManager.DEFAULT_WIDGETS,
             trackColor = ActivityDetailSettingsManager.DEFAULT_COLOR
         )
     )
 
-    fun saveVisibleElements(elements: List<WidgetItem>) {
+    fun saveVisibleCharts(charts: List<WidgetItem>) {
         viewModelScope.launch {
-            settingsManager.saveVisibleElements(typeName, elements)
+            settingsManager.saveVisibleCharts(typeName, charts)
+        }
+    }
+
+    fun saveVisibleWidgets(widgets: List<WidgetItem>) {
+        viewModelScope.launch {
+            settingsManager.saveVisibleWidgets(typeName, widgets)
         }
     }
 }
