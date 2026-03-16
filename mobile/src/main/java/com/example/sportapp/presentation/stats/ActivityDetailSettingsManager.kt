@@ -48,10 +48,16 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("avg_bpm", "Średnie tętno"),
             WidgetItem("total_calories", "Spalone kalorie"),
             WidgetItem("max_calories_min", "Maks spalanie kalorii"),
-            WidgetItem("max_speed_gps", "Maks prędkość"),
-            WidgetItem("total_distance_gps", "Dystans"),
-            WidgetItem("max_speed_steps", "Maks prędkość (kroki)"),
+            WidgetItem("avg_pace", "Średnie tempo"),
+            WidgetItem("max_speed", "Maks prędkość"),
+            WidgetItem("max_altitude", "Maks wysokość"),
+            WidgetItem("total_ascent", "Suma podejść"),
+            WidgetItem("total_descent", "Suma zejść"),
+            WidgetItem("avg_step_length", "Śr. długość kroku"),
+            WidgetItem("avg_cadence", "Śr. kadencja"),
+            WidgetItem("max_cadence", "Maks. kadencja"),
             WidgetItem("total_steps", "Liczba kroków"),
+            WidgetItem("total_distance_gps", "Dystans (GPS)"),
             WidgetItem("total_distance_steps", "Dystans (kroki)")
         )
         
@@ -86,12 +92,15 @@ class ActivityDetailSettingsManager(private val context: Context) {
             val decoded: List<WidgetItem> = gson.fromJson(json, type)
             if (decoded.isEmpty()) return default
             
-            // Ensure all default items are present
-            val missing = default.filter { def -> decoded.none { it.id == def.id } }
+            // Filter out old/removed items and add new ones from default
+            val currentIds = default.map { it.id }.toSet()
+            val filtered = decoded.filter { it.id in currentIds }
+            
+            val missing = default.filter { def -> filtered.none { it.id == def.id } }
             if (missing.isNotEmpty()) {
-                decoded + missing
+                filtered + missing
             } else {
-                decoded
+                filtered
             }
         } catch (e: Exception) {
             default

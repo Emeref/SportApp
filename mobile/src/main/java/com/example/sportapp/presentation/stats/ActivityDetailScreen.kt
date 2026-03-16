@@ -125,7 +125,7 @@ fun ActivityDetailScreen(
                         }
                         else -> {
                             val producer = viewModel.chartProducers[widget.id]
-                            // Mapowanie klucza na SessionData.charts (predkosc -> predkosc_gps, odl_kroki -> kroki_dystans)
+                            // Mapowanie klucza na SessionData.charts
                             val chartKey = when(widget.id) {
                                 "predkosc" -> "predkosc_gps"
                                 "odl_kroki" -> "kroki_dystans"
@@ -164,10 +164,16 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidge
         "avg_bpm" to ("Średnie tętno" to "${data.avgBpm} bpm"),
         "total_calories" to ("Spalone kalorie" to "${data.totalCalories} kcal"),
         "max_calories_min" to ("Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin)),
-        "max_speed_gps" to ("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeedGps)),
-        "total_distance_gps" to ("Dystans" to formatDistance(data.totalDistanceGps)),
-        "max_speed_steps" to ("Maks prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps)),
+        "avg_pace" to ("Średnie tempo" to formatPace(data.avgPace)),
+        "max_speed" to ("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeed)),
+        "max_altitude" to ("Maks wysokość" to String.format(Locale.US, "%.0f m n.p.m.", data.maxAltitude)),
+        "total_ascent" to ("Suma podejść" to String.format(Locale.US, "+%.0f m", data.totalAscent)),
+        "total_descent" to ("Suma zejść" to String.format(Locale.US, "-%.0f m", data.totalDescent)),
+        "avg_step_length" to ("Śr. długość kroku" to String.format(Locale.US, "%.2f m", data.avgStepLength)),
+        "avg_cadence" to ("Śr. kadencja" to String.format(Locale.US, "%.0f kr/min", data.avgCadence)),
+        "max_cadence" to ("Maks. kadencja" to String.format(Locale.US, "%.0f kr/min", data.maxCadence)),
         "total_steps" to ("Liczba kroków" to "${data.totalSteps}"),
+        "total_distance_gps" to ("Dystans (GPS)" to formatDistance(data.totalDistanceGps)),
         "total_distance_steps" to ("Dystans (kroki)" to formatDistance(data.totalDistanceSteps))
     )
 
@@ -189,6 +195,13 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidge
             }
         }
     }
+}
+
+private fun formatPace(paceDecimal: Double): String {
+    if (paceDecimal <= 0 || paceDecimal > 60) return "--:--"
+    val minutes = paceDecimal.toInt()
+    val seconds = ((paceDecimal - minutes) * 60).toInt()
+    return String.format(Locale.US, "%02d:%02d min/km", minutes, seconds)
 }
 
 private fun formatDistance(distanceMeters: Double): String {

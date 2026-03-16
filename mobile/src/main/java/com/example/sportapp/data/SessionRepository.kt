@@ -37,16 +37,19 @@ class SessionRepository @Inject constructor(
         
         uiColumns.forEach { chartData[it] = mutableListOf() }
 
-        // Statystyki liczone z punktów (tak jak "Maks. Spalanie" i wykresy)
+        // Statystyki liczone z punktów (fallback dla starszych treningów)
         var maxBpm = 0
         var lastAvgBpm = 0.0
         var totalCalories = 0.0
         var maxCaloriesMin = 0.0f
-        var maxSpeedGps = 0.0
-        var maxSpeedSteps = 0.0
+        var maxSpeed = 0.0
         var totalDistanceGps = 0.0
         var totalDistanceSteps = 0.0
         var maxSteps = 0
+        var maxAlt = -10000.0
+        var totalAscent = 0.0
+        var totalDescent = 0.0
+        var lastAltRef: Double? = null
 
         points.forEach { point ->
             times.add(point.time)
@@ -69,31 +72,38 @@ class SessionRepository @Inject constructor(
             chartData["przewyzszenia_gora"]?.add(point.totalAscent?.toFloat())
             chartData["przewyzszenia_dol"]?.add(point.totalDescent?.toFloat())
 
-            // Statystyki liczone w pętli (identycznie jak Maks. Spalanie)
             point.bpm?.let { if (it > maxBpm) maxBpm = it }
             point.avgBpm?.let { lastAvgBpm = it }
             point.calorieSum?.let { if (it > totalCalories) totalCalories = it }
             point.calorieMin?.let { if (it.toFloat() > maxCaloriesMin) maxCaloriesMin = it.toFloat() }
             
-            // Nowe 5 widgetów liczone w pętli
-            point.speedGps?.let { if (it > maxSpeedGps) maxSpeedGps = it }
-            point.speedSteps?.let { if (it > maxSpeedSteps) maxSpeedSteps = it }
+            val sGps = point.speedGps ?: 0.0
+            val sSteps = point.speedSteps ?: 0.0
+            val currentMax = if (sGps > sSteps) sGps else sSteps
+            if (currentMax > maxSpeed) maxSpeed = currentMax
+
             point.distanceGps?.let { if (it.toDouble() > totalDistanceGps) totalDistanceGps = it.toDouble() }
             point.distanceSteps?.let { if (it.toDouble() > totalDistanceSteps) totalDistanceSteps = it.toDouble() }
             point.steps?.let { if (it > maxSteps) maxSteps = it }
+
+            point.altitude?.let { alt ->
+                if (alt > maxAlt) maxAlt = alt
+                if (lastAltRef == null) {
+                    lastAltRef = alt
+                } else {
+                    val diff = alt - lastAltRef!!
+                    if (diff >= 2.0) { totalAscent += diff; lastAltRef = alt }
+                    else if (diff <= -2.0) { totalDescent += Math.abs(diff); lastAltRef = alt }
+                }
+            }
         }
 
-        // Fallback do nagłówka treningu jeśli punkty są puste lub nie mają danych
-        val finalMaxSpeedGps = if (maxSpeedGps > 0) maxSpeedGps else (workout.avgSpeedGps ?: 0.0)
-        val finalMaxSpeedSteps = if (maxSpeedSteps > 0) maxSpeedSteps else (workout.avgSpeedSteps ?: 0.0)
         val finalTotalDistanceGps = if (totalDistanceGps > 0) totalDistanceGps else (workout.distanceGps ?: 0.0)
         val finalTotalDistanceSteps = if (totalDistanceSteps > 0) totalDistanceSteps else (workout.distanceSteps ?: 0.0)
         val finalTotalSteps = if (maxSteps > 0) maxSteps else (workout.steps ?: 0)
         
-        val finalMaxBpm = if (maxBpm > 0) maxBpm else (workout.maxBpm ?: 0)
-        val finalAvgBpm = if (lastAvgBpm > 0) lastAvgBpm.toInt() else (workout.avgBpm?.toInt() ?: 0)
-        val finalTotalCalories = if (totalCalories > 0) totalCalories.toInt() else (workout.totalCalories?.toInt() ?: 0)
-        val finalMaxCaloriesMin = if (maxCaloriesMin > 0f) maxCaloriesMin else (workout.maxCalorieMin?.toFloat() ?: 0f)
+        val officialDistanceMeters = if (finalTotalDistanceGps > 0) finalTotalDistanceGps else finalTotalDistanceSteps
+        val calculatedPace = if (officialDistanceMeters > 0) (workout.durationSeconds / 60.0) / (officialDistanceMeters / 1000.0) else 0.0
 
         return@withContext SessionData(
             times = times,
@@ -102,15 +112,21 @@ class SessionRepository @Inject constructor(
             activityName = workout.activityName,
             activityDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(workout.startTime)),
             duration = workout.durationFormatted,
-            maxBpm = finalMaxBpm,
-            avgBpm = finalAvgBpm,
-            totalCalories = finalTotalCalories,
-            maxCaloriesMin = finalMaxCaloriesMin,
-            maxSpeedGps = finalMaxSpeedGps,
-            maxSpeedSteps = finalMaxSpeedSteps,
+            maxBpm = workout.maxBpm ?: maxBpm,
+            avgBpm = workout.avgBpm?.toInt() ?: lastAvgBpm.toInt(),
+            totalCalories = workout.totalCalories?.toInt() ?: totalCalories.toInt(),
+            maxCaloriesMin = workout.maxCalorieMin?.toFloat() ?: maxCaloriesMin,
+            maxSpeed = workout.maxSpeed ?: maxSpeed,
             totalDistanceGps = finalTotalDistanceGps,
             totalDistanceSteps = finalTotalDistanceSteps,
-            totalSteps = finalTotalSteps
+            totalSteps = finalTotalSteps,
+            avgPace = workout.avgPace ?: calculatedPace,
+            totalAscent = workout.totalAscent ?: totalAscent,
+            totalDescent = workout.totalDescent ?: totalDescent,
+            maxAltitude = workout.maxAltitude ?: (if (maxAlt == -10000.0) 0.0 else maxAlt),
+            avgStepLength = workout.avgStepLength ?: (if (finalTotalSteps > 0) officialDistanceMeters / finalTotalSteps else 0.0),
+            avgCadence = workout.avgCadence ?: 0.0,
+            maxCadence = workout.maxCadence ?: 0.0
         )
     }
 }
@@ -127,9 +143,15 @@ data class SessionData(
     val avgBpm: Int = 0,
     val totalCalories: Int = 0,
     val maxCaloriesMin: Float = 0f,
-    val maxSpeedGps: Double = 0.0,
-    val maxSpeedSteps: Double = 0.0,
+    val maxSpeed: Double = 0.0,
     val totalDistanceGps: Double = 0.0,
     val totalDistanceSteps: Double = 0.0,
-    val totalSteps: Int = 0
+    val totalSteps: Int = 0,
+    val avgPace: Double = 0.0,
+    val totalAscent: Double = 0.0,
+    val totalDescent: Double = 0.0,
+    val maxAltitude: Double = 0.0,
+    val avgStepLength: Double = 0.0,
+    val avgCadence: Double = 0.0,
+    val maxCadence: Double = 0.0
 )

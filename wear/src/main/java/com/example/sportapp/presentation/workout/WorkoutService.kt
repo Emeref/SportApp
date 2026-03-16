@@ -197,28 +197,45 @@ class WorkoutService : Service(), SensorEventListener {
         wakeLock?.let { if (it.isHeld) it.release() }
         
         serviceScope.launch {
-            val stats = logger?.getFinalStats() ?: emptyMap()
+            val points = workoutDao.getPointsForWorkout(currentWorkoutId)
             val durationHours = totalSeconds / 3600.0
             val distanceKm = totalDistance / 1000.0
             val distanceStepsMeters = (currentSteps * (healthData?.stepLength ?: 0).toDouble() / 100.0)
             
+            val officialDistanceMeters = if (totalDistance > 0) totalDistance.toDouble() else distanceStepsMeters
+            
+            val sessionStats = WorkoutMath.calculateSessionStats(
+                points = points,
+                durationSeconds = totalSeconds,
+                totalDistanceMeters = officialDistanceMeters,
+                totalSteps = currentSteps
+            )
+            
             val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
             val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
 
-            val finalWorkout = workoutDao.getWorkoutById(currentWorkoutId)?.copy(
+            val workout = workoutDao.getWorkoutById(currentWorkoutId)
+            val finalWorkout = workout?.copy(
                 durationFormatted = formatTime(totalSeconds),
                 steps = if (isRecording(WorkoutSensor.STEPS)) currentSteps else null,
                 distanceSteps = if (isRecording(WorkoutSensor.DISTANCE_STEPS)) distanceStepsMeters else null,
                 distanceGps = if (isRecording(WorkoutSensor.DISTANCE_GPS)) totalDistance.toDouble() else null,
                 avgSpeedSteps = if (isRecording(WorkoutSensor.SPEED_STEPS)) avgSpeedSteps else null,
                 avgSpeedGps = if (isRecording(WorkoutSensor.SPEED_GPS)) avgSpeedGps else null,
-                totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) (stats["totalAscent"] as? Double ?: 0.0) else null,
-                totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) (stats["totalDescent"] as? Double ?: 0.0) else null,
-                avgBpm = if (isRecording(WorkoutSensor.AVG_HEART_RATE)) (stats["avgBpm"] as? Double) else null,
-                maxBpm = if (isRecording(WorkoutSensor.HEART_RATE)) maxBpm else null,
+                totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) sessionStats.totalAscent else null,
+                totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) sessionStats.totalDescent else null,
+                avgBpm = if (isRecording(WorkoutSensor.AVG_HEART_RATE)) (if (points.isNotEmpty()) points.mapNotNull { it.bpm }.average() else null) else null,
+                maxBpm = if (isRecording(WorkoutSensor.HEART_RATE)) sessionStats.maxHr else null,
                 totalCalories = if (isRecording(WorkoutSensor.CALORIES_SUM)) totalCaloriesAcc else null,
-                maxCalorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) (stats["maxCalorieMin"] as? Double ?: 0.0) else null,
-                durationSeconds = totalSeconds
+                maxCalorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) (points.mapNotNull { it.calorieMin }.maxOrNull() ?: 0.0) else null,
+                durationSeconds = totalSeconds,
+                // Nowe pola
+                avgPace = sessionStats.avgPace,
+                maxSpeed = sessionStats.maxSpeed,
+                maxAltitude = sessionStats.maxAltitude,
+                avgStepLength = sessionStats.avgStepLength,
+                avgCadence = sessionStats.avgCadence,
+                maxCadence = sessionStats.maxCadence
             )
             
             if (finalWorkout != null) {
