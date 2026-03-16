@@ -38,8 +38,8 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("gps_dystans", "Dystans (GPS)"),
             WidgetItem("predkosc", "Prędkość (GPS)"),
             WidgetItem("wysokosc", "Wysokość"),
-            WidgetItem("przewyzszenia_gora", "Przewyższenia +"),
-            WidgetItem("przewyzszenia_dol", "Przewyższenia -")
+            WidgetItem("przewyzszenia_gora", "Suma podejść"),
+            WidgetItem("przewyzszenia_dol", "Suma zejść")
         )
 
         val DEFAULT_WIDGETS = listOf(

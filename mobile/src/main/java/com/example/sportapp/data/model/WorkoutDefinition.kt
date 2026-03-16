@@ -13,8 +13,8 @@ enum class WorkoutSensor(val id: String, val label: String) {
     SPEED_GPS("speedGps", "Prędkość"),
     SPEED_STEPS("speedSteps", "Prędkość (kroki)"),
     ALTITUDE("altitude", "Wysokość"),
-    TOTAL_ASCENT("totalAscent", "Przewyższenie +"),
-    TOTAL_DESCENT("totalDescent", "Przewyższenie -"),
+    TOTAL_ASCENT("totalAscent", "W sumie w górę"),
+    TOTAL_DESCENT("totalDescent", "W sumie do dołu"),
     CALORIES_PER_MINUTE("calorieMin", "Kalorie na minutę"),
     CALORIES_SUM("calorieSum", "Spalone kalorie")
 }

@@ -114,10 +114,10 @@ fun rememberWorkoutSession(
 
             // Przewyższenia
             if (isRec(WorkoutSensor.TOTAL_ASCENT)) {
-                lastPoint.totalAscent?.let { if (it > 0) summary.add("Przewyższenie +" to String.format(Locale.US, "%.0f m", it)) }
+                lastPoint.totalAscent?.let { if (it > 0) summary.add("W sumie w górę" to String.format(Locale.US, "%.0f m", it)) }
             }
             if (isRec(WorkoutSensor.TOTAL_DESCENT)) {
-                lastPoint.totalDescent?.let { if (it > 0) summary.add("Przewyższenie -" to String.format(Locale.US, "%.0f m", it)) }
+                lastPoint.totalDescent?.let { if (it > 0) summary.add("W sumie do dołu" to String.format(Locale.US, "%.0f m", it)) }
             }
 
             // Kalorie

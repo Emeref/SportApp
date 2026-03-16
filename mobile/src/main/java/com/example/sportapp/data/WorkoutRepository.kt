@@ -109,16 +109,28 @@ class WorkoutRepository @Inject constructor(
 
         val totalWorkouts = filtered.size
         val totalDuration = filtered.sumOf { it.durationSeconds }
-        val totalDistance = filtered.sumOf { it.distanceGps ?: it.distanceSteps ?: 0.0 }
+        val totalDistanceGps = filtered.sumOf { it.distanceGps ?: 0.0 }
+        val totalDistanceSteps = filtered.sumOf { it.distanceSteps ?: 0.0 }
         val totalCalories = filtered.sumOf { it.totalCalories ?: 0.0 }
+        val totalSteps = filtered.sumOf { it.steps ?: 0 }
+        val totalAscent = filtered.sumOf { it.totalAscent ?: 0.0 }
+        val totalDescent = filtered.sumOf { it.totalDescent ?: 0.0 }
         val avgBpm = if (filtered.any { it.avgBpm != null }) filtered.mapNotNull { it.avgBpm }.average() else 0.0
 
         return mapOf(
+            "count" to totalWorkouts,
             "totalWorkouts" to totalWorkouts,
             "totalDuration" to totalDuration,
-            "totalDistance" to totalDistance,
+            "totalDistance" to (totalDistanceGps + totalDistanceSteps), // Suma dla starego klucza jeśli potrzebny
+            "distanceGpsM" to totalDistanceGps,
+            "distanceStepsM" to totalDistanceSteps,
+            "calories" to totalCalories,
             "totalCalories" to totalCalories,
-            "avgBpm" to avgBpm
+            "steps" to totalSteps,
+            "ascent" to totalAscent,
+            "descent" to totalDescent,
+            "avgBpm" to avgBpm,
+            "raw_data" to filtered
         )
     }
 

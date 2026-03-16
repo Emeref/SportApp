@@ -16,8 +16,8 @@ data class MobileSettingsState(
         WidgetItem("calories", "Spalone kalorie"),
         WidgetItem("distanceGps", "Dystans (GPS)"),
         WidgetItem("distanceSteps", "Dystans (kroki)"),
-        WidgetItem("ascent", "Przewyższenia w górę"),
-        WidgetItem("descent", "Przewyższenia w dół"),
+        WidgetItem("ascent", "W sumie w górę"),
+        WidgetItem("descent", "W sumie do dołu"),
         WidgetItem("steps", "Wszystkie kroki")
     ),
     val period: ReportingPeriod = ReportingPeriod.WEEK,
