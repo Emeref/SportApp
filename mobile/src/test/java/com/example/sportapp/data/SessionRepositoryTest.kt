@@ -100,8 +100,7 @@ class SessionRepositoryTest {
         assertEquals(50, result.totalSteps)
         assertEquals(46.0, result.totalDistanceSteps, 0.1)
         assertEquals(55.0, result.totalDistanceGps, 0.1)
-        assertEquals(7.0, result.maxSpeedGps, 0.1)
-        assertEquals(6.0, result.maxSpeedSteps, 0.1)
+        assertEquals(7.0, result.maxSpeed, 0.1)
     }
 
     @Test
