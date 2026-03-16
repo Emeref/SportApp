@@ -7,10 +7,11 @@
     - [x] Obliczanie odległości na podstawie kroków i GPS.
     - [x] Wyliczanie spalonych kalorii (Modele: Keytel, MET, HRR).
     - [x] Śledzenie trasy (GPS Location tracking).
-- [ ] **Stabilność i Precyzja**:
+- [ ] **Sensory i Precyzja**:
     - [x] **Wprowadzenie Foreground Service**: Przeniesienie logiki sesji z UI do usługi w tle (zapobieganie ubijaniu treningu).
     - [ ] **Centralny PermissionManager**: Ujednolicona obsługa uprawnień przed startem aktywności.
     - [ ] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych GPS i barometru (eliminacja szumów).
+    - [ ] **Przegląd sensorów**: Sprawdzić jakie czujniki mają zegarki, które nie są jeszcze wykorzystane (np. temperatura, tlen we krwi).
 - [x] **Własne dyscypliny**: Możliwanie dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
 
 ## 2. Zarządzanie danymi i plikami
@@ -51,8 +52,9 @@
         - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
         - [ ] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
         - [x] **Opcja przycinania treningu**: Możliwość usunięcia niechcianych fragmentów na początku lub końcu sesji.
+        - [x] **Aktualizacja statystyk po przycięciu**: Nowe wartości są przeliczane i odświeżane w czasie rzeczywistym na liście.
     - [ ] **Analiza stref tętna**: Podział treningu na strefy (Z1-Z5) i ich wizualizacja na ekranie szczegółów.
-    - [x] **Naprawa danych w widgetach**: Statystyki na ekranie głównym i ogólnych statystykach są teraz poprawnie wyliczane i wyświetlane.
+    - [x] **Naprawa danych w widgetach**: Statystyki na ekranie głównym i ogólnych statystykach are teraz poprawnie wyliczane i wyświetlane.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
     - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
 - [x] **Ustawienia i Personalizacja (Mobile)**:
@@ -82,6 +84,7 @@
 ## 6. Jakość i Testy
 - [x] **Unit testy**:
     - [x] Testy logiki biznesowej (Kalkulatory, Repozytoria, ViewModele).
+    - [x] **Testy edycji treningu**: Weryfikacja logiki przycinania i przeliczania statystyk w `ActivityTrimViewModel`.
 - [x] **Testy komponentów UI**:
     - [x] Weryfikacja wyświetlania wykresów i filtrowania (OverallStats).
     - [ ] **Testy ekranu szczegółów**: Weryfikacja interakcji z wykresami i mapą.
