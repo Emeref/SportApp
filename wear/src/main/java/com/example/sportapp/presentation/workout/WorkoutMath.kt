@@ -7,6 +7,7 @@ object WorkoutMath {
 
     data class SessionStats(
         val maxHr: Int = 0,
+        val avgHr: Int = 0,
         val avgPace: Double = 0.0,
         val maxSpeed: Double = 0.0,
         val totalAscent: Double = 0.0,
@@ -21,6 +22,8 @@ object WorkoutMath {
         if (points.isEmpty()) return SessionStats()
 
         var maxHr = 0
+        var hrSum = 0
+        var hrCount = 0
         var maxSpeed = 0.0
         var maxAltitude = -10000.0
         var maxCadence = 0.0
@@ -35,8 +38,12 @@ object WorkoutMath {
         val threshold = 2.0 // 2 meters threshold to filter noise
 
         points.forEach { point ->
-            // Max HR
-            point.bpm?.let { if (it > maxHr) maxHr = it }
+            // Max & Avg HR
+            point.bpm?.let { 
+                if (it > maxHr) maxHr = it 
+                hrSum += it
+                hrCount++
+            }
             
             // Max Speed (GPS or Steps)
             val speedGps = point.speedGps ?: 0.0
@@ -81,9 +88,12 @@ object WorkoutMath {
         val avgCadence = if (cadencePointsCount > 0) {
             totalCadenceSum / cadencePointsCount
         } else 0.0
+        
+        val avgHr = if (hrCount > 0) hrSum / hrCount else 0
 
         return SessionStats(
             maxHr = maxHr,
+            avgHr = avgHr,
             avgPace = avgPace,
             maxSpeed = maxSpeed,
             totalAscent = totalAscent,

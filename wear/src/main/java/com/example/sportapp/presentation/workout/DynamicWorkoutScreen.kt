@@ -177,7 +177,6 @@ fun DynamicSensorDispatcher(
     
     when (id) {
         "bpm" -> SportDataRow(label, p?.bpm?.let { "$it" } ?: "--", Color.Red, true)
-        "avgBpm" -> SportDataRow(label, p?.avgBpm?.let { String.format(Locale.US, "%.0f", it) } ?: "--", Color.Red)
         "steps" -> SportDataRow(label, p?.steps?.let { "$it" } ?: "0", Color.Green)
         "stepsMin" -> SportDataRow(label, p?.stepsMin?.let { String.format(Locale.US, "%.1f", it) } ?: "--", Color.Green)
         "distanceSteps" -> SportDataRow(label, p?.distanceSteps?.let { "$it m" } ?: "-- m", Color.Cyan)

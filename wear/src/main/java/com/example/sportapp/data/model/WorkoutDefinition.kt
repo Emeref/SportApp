@@ -6,7 +6,6 @@ import androidx.room.PrimaryKey
 enum class WorkoutSensor(val id: String, val label: String) {
     MAP("map", "Mapa"),
     HEART_RATE("bpm", "Tętno"),
-    AVG_HEART_RATE("avgBpm", "Średnie tętno"),
     STEPS("steps", "Kroki"),
     STEPS_PER_MINUTE("stepsMin", "Kroki na minutę"),
     DISTANCE_STEPS("distanceSteps", "Dystans (kroki)"),

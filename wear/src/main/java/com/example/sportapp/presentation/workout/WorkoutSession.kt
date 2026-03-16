@@ -84,7 +84,8 @@ fun rememberWorkoutSession(
         if (lastPoint != null) {
             // Tętno -> Średnie i Maksymalne
             if (isRec(WorkoutSensor.HEART_RATE)) {
-                lastPoint.avgBpm?.let { summary.add("Średnie tętno" to String.format(Locale.US, "%.0f BPM", it)) }
+                val avgBpm = service?.getAvgBpm() ?: 0
+                if (avgBpm > 0) summary.add("Średnie tętno" to "$avgBpm BPM")
                 if (data.maxBpm > 0) summary.add("Maksymalne tętno" to "${data.maxBpm} BPM")
             }
 

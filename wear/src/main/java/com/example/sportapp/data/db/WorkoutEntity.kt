@@ -38,7 +38,6 @@ data class WorkoutPointEntity(
     val latitude: Double?,
     val longitude: Double?,
     val bpm: Int?,
-    val avgBpm: Double?,
     val steps: Int?,
     val stepsMin: Double?,
     val distanceSteps: Int?,
