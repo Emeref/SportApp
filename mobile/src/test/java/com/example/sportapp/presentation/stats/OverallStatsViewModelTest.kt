@@ -33,7 +33,7 @@ class OverallStatsViewModelTest {
         context = ApplicationProvider.getApplicationContext()
         
         fakeRepository = FakeWorkoutRepository().apply {
-            workouts = mutableListOf(
+            workouts.value = listOf(
                 WorkoutEntity(
                     id = 1,
                     activityName = "Spacer",

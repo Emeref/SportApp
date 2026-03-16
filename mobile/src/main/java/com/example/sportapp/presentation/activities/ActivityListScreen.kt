@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,6 +39,7 @@ fun ActivityListScreen(
     viewModel: ActivityListViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToTrim: (String) -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
     val activities by viewModel.activities.collectAsState()
@@ -252,10 +254,18 @@ fun ActivityListScreen(
                 ) {
                     Button(
                         onClick = { onNavigateToDetail(selectedActivityId!!) },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(2f),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)) // Zielony
                     ) {
                         Text("Pokaż szczegóły")
+                    }
+                    Button(
+                        onClick = { onNavigateToTrim(selectedActivityId!!) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+
+                        Text("Edytuj")
                     }
                     Button(
                         onClick = { 
