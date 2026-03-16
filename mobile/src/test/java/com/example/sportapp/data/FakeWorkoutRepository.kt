@@ -5,33 +5,45 @@ import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import java.util.*
 
 class FakeWorkoutRepository : IWorkoutRepository {
-    var workouts = mutableListOf<WorkoutEntity>()
+    var workouts = MutableStateFlow<List<WorkoutEntity>>(emptyList())
+    var points = mutableMapOf<Long, List<WorkoutPointEntity>>()
 
-    override fun getAllWorkouts(): Flow<List<WorkoutEntity>> = flowOf(workouts)
+    override fun getAllWorkouts(): Flow<List<WorkoutEntity>> = workouts
 
-    override suspend fun getWorkoutById(id: Long): WorkoutEntity? = workouts.find { it.id == id }
+    override suspend fun getWorkoutById(id: Long): WorkoutEntity? = workouts.value.find { it.id == id }
 
-    override suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity> = emptyList()
+    override suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity> = points[workoutId] ?: emptyList()
 
     override suspend fun deleteWorkout(workout: WorkoutEntity) {
-        workouts.remove(workout)
+        workouts.value = workouts.value.filter { it.id != workout.id }
+    }
+
+    override suspend fun updateWorkout(workout: WorkoutEntity) {
+        workouts.value = workouts.value.map { if (it.id == workout.id) workout else it }
+    }
+
+    override suspend fun trimWorkout(workout: WorkoutEntity, startPointId: Long, endPointId: Long) {
+        val currentPoints = points[workout.id] ?: return
+        points[workout.id] = currentPoints.filter { it.id in startPointId..endPointId }
+        updateWorkout(workout)
     }
 
     override suspend fun getUniqueActivityTypes(): List<String> {
-        return workouts.map { it.activityName }.distinct().filter { it.isNotEmpty() }
+        return workouts.value.map { it.activityName }.distinct().filter { it.isNotEmpty() }.sorted()
     }
 
     override fun getFilteredStatsFlow(
         activityType: String?,
         startDate: Date?,
         endDate: Date?
-    ): Flow<Map<String, Any>> = flow {
-        emit(getFilteredStats(activityType, startDate, endDate))
+    ): Flow<Map<String, Any>> = workouts.map { list ->
+        calculateStats(list, activityType, startDate, endDate)
     }
 
     override suspend fun getFilteredStats(
@@ -39,11 +51,20 @@ class FakeWorkoutRepository : IWorkoutRepository {
         startDate: Date?,
         endDate: Date?
     ): Map<String, Any> {
-        val filtered = workouts.filter { workout ->
+        return calculateStats(workouts.value, activityType, startDate, endDate)
+    }
+
+    private fun calculateStats(
+        list: List<WorkoutEntity>,
+        activityType: String?,
+        startDate: Date?,
+        endDate: Date?
+    ): Map<String, Any> {
+        val filtered = list.filter { workout ->
             val typeMatch = activityType == null || workout.activityName == activityType
-            val dateMatch = (startDate == null || workout.startTime >= startDate.time) &&
-                            (endDate == null || workout.startTime <= endDate.time)
-            typeMatch && dateMatch
+            val startMatch = startDate == null || workout.startTime >= startDate.time
+            val endMatch = endDate == null || workout.startTime <= endDate.time
+            typeMatch && startMatch && endMatch
         }
 
         return mapOf(
@@ -64,5 +85,26 @@ class FakeWorkoutRepository : IWorkoutRepository {
 
     override fun formatDistance(meters: Double): String = "${meters.toInt()} m"
 
-    override suspend fun getActivityItems(): List<ActivityItem> = emptyList()
+    override suspend fun getActivityItems(): List<ActivityItem> {
+        return workouts.value.map { workout ->
+            ActivityItem(
+                id = workout.id.toString(),
+                type = workout.activityName,
+                date = "2023-10-15 10:30",
+                duration = workout.durationFormatted,
+                calories = "${workout.totalCalories?.toInt()} kcal",
+                distanceGps = "${workout.distanceGps?.toInt()} m",
+                distanceSteps = "${workout.distanceSteps?.toInt()} m",
+                rawTimestamp = workout.startTime,
+                rawDurationSeconds = workout.durationSeconds,
+                rawCalories = workout.totalCalories ?: 0.0,
+                rawDistanceGps = workout.distanceGps ?: 0.0,
+                rawDistanceSteps = workout.distanceSteps ?: 0.0
+            )
+        }
+    }
+
+    override fun getActivityItemsFlow(): Flow<List<ActivityItem>> = flow {
+        emit(getActivityItems())
+    }
 }
