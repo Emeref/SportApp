@@ -125,12 +125,8 @@ fun ActivityDetailScreen(
                         }
                         else -> {
                             val producer = viewModel.chartProducers[widget.id]
-                            // Mapowanie klucza na SessionData.charts
-                            val chartKey = when(widget.id) {
-                                "predkosc" -> "predkosc_gps"
-                                "odl_kroki" -> "kroki_dystans"
-                                else -> widget.id
-                            }
+                            // Klucze w SessionData.charts są zsynchronizowane z chartProducers
+                            val chartKey = widget.id
                             
                             if (producer != null && (data.charts[chartKey]?.filterNotNull()?.isNotEmpty() == true)) {
                                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {

@@ -19,11 +19,18 @@ class SessionRepository @Inject constructor(
 
         val times = mutableListOf<String>()
         val route = mutableListOf<LatLng>()
-        val heartRates = mutableListOf<Int>()
-        val calories = mutableListOf<Float>()
-        val speeds = mutableListOf<Float>()
-        val altitudes = mutableListOf<Float>()
-        val cadence = mutableListOf<Float>()
+        
+        val heartRates = mutableListOf<Float?>()
+        val caloriesMin = mutableListOf<Float?>()
+        val caloriesSum = mutableListOf<Float?>()
+        val stepsMin = mutableListOf<Float?>()
+        val distanceSteps = mutableListOf<Float?>()
+        val speedSteps = mutableListOf<Float?>()
+        val distanceGps = mutableListOf<Float?>()
+        val speedGps = mutableListOf<Float?>()
+        val altitudes = mutableListOf<Float?>()
+        val ascents = mutableListOf<Float?>()
+        val descents = mutableListOf<Float?>()
 
         var totalCalories = 0.0
         var maxCaloriesMin = 0f
@@ -45,23 +52,39 @@ class SessionRepository @Inject constructor(
                 }
             }
             
-            point.bpm?.let { heartRates.add(it) }
+            heartRates.add(point.bpm?.toFloat())
+            
             point.calorieMin?.let { 
-                calories.add(it.toFloat())
-                if (it.toFloat() > maxCaloriesMin) maxCaloriesMin = it.toFloat()
-            }
-            point.calorieSum?.let { totalCalories = it }
+                val valF = it.toFloat()
+                caloriesMin.add(valF)
+                if (valF > maxCaloriesMin) maxCaloriesMin = valF
+            } ?: caloriesMin.add(null)
+            
+            point.calorieSum?.let { 
+                caloriesSum.add(it.toFloat())
+                totalCalories = it 
+            } ?: caloriesSum.add(null)
             
             val sGps = point.speedGps ?: 0.0
             val sSteps = point.speedSteps ?: 0.0
             val currentMax = if (sGps > sSteps) sGps else sSteps
             if (currentMax > maxSpeed) maxSpeed = currentMax
-            speeds.add(sGps.toFloat())
+            
+            speedGps.add(point.speedGps?.toFloat())
+            speedSteps.add(point.speedSteps?.toFloat())
 
-            point.stepsMin?.let { cadence.add(it.toFloat()) }
+            stepsMin.add(point.stepsMin?.toFloat())
 
-            point.distanceGps?.let { if (it.toDouble() > totalDistanceGps) totalDistanceGps = it.toDouble() }
-            point.distanceSteps?.let { if (it.toDouble() > totalDistanceSteps) totalDistanceSteps = it.toDouble() }
+            point.distanceGps?.let { 
+                if (it.toDouble() > totalDistanceGps) totalDistanceGps = it.toDouble()
+                distanceGps.add(it.toFloat())
+            } ?: distanceGps.add(null)
+            
+            point.distanceSteps?.let { 
+                if (it.toDouble() > totalDistanceSteps) totalDistanceSteps = it.toDouble()
+                distanceSteps.add(it.toFloat())
+            } ?: distanceSteps.add(null)
+            
             point.steps?.let { if (it > maxSteps) maxSteps = it }
 
             point.altitude?.let { alt ->
@@ -74,15 +97,24 @@ class SessionRepository @Inject constructor(
                     if (diff >= 2.0) { totalAscent += diff; lastAltRef = alt }
                     else if (diff <= -2.0) { totalDescent += Math.abs(diff); lastAltRef = alt }
                 }
-            }
+            } ?: altitudes.add(null)
+            
+            ascents.add(point.totalAscent?.toFloat())
+            descents.add(point.totalDescent?.toFloat())
         }
 
         val chartData = mapOf(
-            "bpm" to heartRates.map { it.toFloat() },
-            "kalorie_min" to calories,
-            "predkosc" to speeds,
+            "bpm" to heartRates,
+            "kalorie_min" to caloriesMin,
+            "kalorie_suma" to caloriesSum,
+            "kroki_min" to stepsMin,
+            "odl_kroki" to distanceSteps,
+            "predkosc_kroki" to speedSteps,
+            "gps_dystans" to distanceGps,
+            "predkosc" to speedGps,
             "wysokosc" to altitudes,
-            "kroki_min" to cadence
+            "przewyzszenia_gora" to ascents,
+            "przewyzszenia_dol" to descents
         )
 
         val finalTotalDistanceGps = if (totalDistanceGps > 0) totalDistanceGps else (workout.distanceGps ?: 0.0)
@@ -95,7 +127,7 @@ class SessionRepository @Inject constructor(
             (workout.durationSeconds / 60.0) / (finalTotalDistanceGps / 1000.0)
         } else 0.0
 
-        val calculatedAvgBpm = if (heartRates.isNotEmpty()) heartRates.average().toInt() else 0
+        val calculatedAvgBpm = if (heartRates.filterNotNull().isNotEmpty()) heartRates.filterNotNull().average().toInt() else 0
 
         return@withContext SessionData(
             times = times,
@@ -104,7 +136,7 @@ class SessionRepository @Inject constructor(
             activityName = workout.activityName,
             activityDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(workout.startTime)),
             duration = workout.durationFormatted,
-            maxBpm = workout.maxBpm ?: (if (heartRates.isNotEmpty()) heartRates.maxOrNull() ?: 0 else 0),
+            maxBpm = workout.maxBpm ?: (if (heartRates.filterNotNull().isNotEmpty()) heartRates.filterNotNull().maxOrNull()?.toInt() ?: 0 else 0),
             avgBpm = workout.avgBpm?.toInt() ?: calculatedAvgBpm,
             totalCalories = workout.totalCalories?.toInt() ?: totalCalories.toInt(),
             maxCaloriesMin = workout.maxCalorieMin?.toFloat() ?: maxCaloriesMin,
