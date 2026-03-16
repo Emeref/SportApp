@@ -163,12 +163,6 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Autor: Konrad Rafałko",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -177,13 +171,13 @@ fun SettingsScreen(
                     Image(
                         painter = painterResource(id = R.drawable.logo_mrf),
                         contentDescription = "Logo MRF",
-                        modifier = Modifier.height(30.dp).width(60.dp)
+                        modifier = Modifier.height(40.dp).width(80.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Image(
                         painter = painterResource(id = R.drawable.logo_emeref),
                         contentDescription = "Logo Emeref",
-                        modifier = Modifier.height(30.dp).width(60.dp)
+                        modifier = Modifier.height(40.dp).width(80.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(32.dp))
