@@ -1,7 +1,6 @@
 package com.example.sportapp.presentation.stats
 
 import android.content.Context
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -24,8 +23,8 @@ class ActivityDetailSettingsManager(private val context: Context) {
     private val gson = Gson()
 
     companion object {
-        private val VISIBLE_ELEMENTS_JSON = stringPreferencesKey("visible_elements_json")
-        private val TRACK_COLOR = stringPreferencesKey("track_color")
+        private fun getVisibleElementsKey(typeName: String) = stringPreferencesKey("visible_elements_$typeName")
+        private fun getTrackColorKey(typeName: String) = stringPreferencesKey("track_color_$typeName")
 
         val DEFAULT_ELEMENTS = listOf(
             WidgetItem("map", "Mapa"),
@@ -44,14 +43,13 @@ class ActivityDetailSettingsManager(private val context: Context) {
         val DEFAULT_COLOR = 0xFFFF9800.toInt()
     }
 
-    val settingsFlow: Flow<ActivityDetailSettings> = context.activityDetailDataStore.data.map { preferences ->
-        val elementsJson = preferences[VISIBLE_ELEMENTS_JSON]
+    fun getSettingsFlow(typeName: String): Flow<ActivityDetailSettings> = context.activityDetailDataStore.data.map { preferences ->
+        val elementsJson = preferences[getVisibleElementsKey(typeName)]
         val elements = if (elementsJson != null) {
             try {
                 val type = object : TypeToken<List<WidgetItem>>() {}.type
                 val decoded: List<WidgetItem>? = gson.fromJson(elementsJson, type)
                 
-                // Filtrujemy niechciane elementy (srednie_bpm, kroki, kalorie_suma)
                 val filtered = decoded?.filter { 
                     it.id != "srednie_bpm" && it.id != "kroki" && it.id != "kalorie_suma" 
                 }
@@ -73,7 +71,7 @@ class ActivityDetailSettingsManager(private val context: Context) {
             DEFAULT_ELEMENTS
         }
         
-        val colorHex = preferences[TRACK_COLOR]
+        val colorHex = preferences[getTrackColorKey(typeName)]
         val color = if (colorHex != null) {
             try {
                 colorHex.toLong(16).toInt()
@@ -87,15 +85,22 @@ class ActivityDetailSettingsManager(private val context: Context) {
         ActivityDetailSettings(elements, color)
     }
 
-    suspend fun saveVisibleElements(elements: List<WidgetItem>) {
+    suspend fun saveVisibleElements(typeName: String, elements: List<WidgetItem>) {
         context.activityDetailDataStore.edit { preferences ->
-            preferences[VISIBLE_ELEMENTS_JSON] = gson.toJson(elements)
+            preferences[getVisibleElementsKey(typeName)] = gson.toJson(elements)
         }
     }
 
-    suspend fun saveTrackColor(color: Int) {
+    suspend fun saveTrackColor(typeName: String, color: Int) {
         context.activityDetailDataStore.edit { preferences ->
-            preferences[TRACK_COLOR] = Integer.toHexString(color)
+            preferences[getTrackColorKey(typeName)] = Integer.toHexString(color)
+        }
+    }
+
+    suspend fun deleteSettings(typeName: String) {
+        context.activityDetailDataStore.edit { preferences ->
+            preferences.remove(getVisibleElementsKey(typeName))
+            preferences.remove(getTrackColorKey(typeName))
         }
     }
 }
