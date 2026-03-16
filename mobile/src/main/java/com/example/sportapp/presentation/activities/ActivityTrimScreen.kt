@@ -77,14 +77,7 @@ fun ActivityTrimScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
                     }
                 },
-                actions = {
-                    if (points.isNotEmpty()) {
-                        IconButton(onClick = { showConfirmDialog = true }, enabled = !isSaving) {
-                            if (isSaving) CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            else Icon(Icons.Default.Check, contentDescription = "Zapisz")
-                        }
-                    }
-                }
+
             )
         }
     ) { padding ->
