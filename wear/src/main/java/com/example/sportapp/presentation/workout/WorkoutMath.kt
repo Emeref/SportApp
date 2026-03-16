@@ -84,7 +84,7 @@ object WorkoutMath {
         }
 
         // Pace calculated ONLY based on GPS distance
-        val avgPace = if (totalDistanceGpsMeters > 0) {
+        val avgPace = if (totalDistanceGpsMeters > 500.0) {
             (durationSeconds / 60.0) / (totalDistanceGpsMeters / 1000.0)
         } else 0.0
 
