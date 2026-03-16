@@ -10,6 +10,14 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
+enum class SortOrder {
+    ASC, DESC
+}
+
+enum class SortColumn {
+    TYPE, DATE, DURATION, CALORIES, DISTANCE_GPS, DISTANCE_STEPS
+}
+
 @HiltViewModel
 class ActivityListViewModel @Inject constructor(
     private val repository: IWorkoutRepository
@@ -27,11 +35,22 @@ class ActivityListViewModel @Inject constructor(
     private val _endDate = MutableStateFlow<Date?>(null)
     val endDate = _endDate.asStateFlow()
 
+    private val _sortColumn = MutableStateFlow(SortColumn.DATE)
+    val sortColumn = _sortColumn.asStateFlow()
+
+    private val _sortOrder = MutableStateFlow(SortOrder.DESC)
+    val sortOrder = _sortOrder.asStateFlow()
+
     private val _allActivities = MutableStateFlow<List<ActivityItem>>(emptyList())
     
-    val activities = combine(_allActivities, _selectedType, _startDate, _endDate) { list, type, start, end ->
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-        list.filter { activity ->
+    val activities: StateFlow<List<ActivityItem>> = combine(
+        _allActivities, 
+        _selectedType, 
+        _startDate, 
+        _endDate
+    ) { all, type, start, end ->
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+        all.filter { activity ->
             val typeMatch = type == null || activity.type == type
             val dateMatch = try {
                 val date = sdf.parse(activity.date)
@@ -40,12 +59,20 @@ class ActivityListViewModel @Inject constructor(
             } catch (e: Exception) { true }
             typeMatch && dateMatch
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }.combine(_sortColumn) { filtered, col ->
+        filtered to col
+    }.combine(_sortOrder) { (filtered, col), order ->
+        val sorted = when (col) {
+            SortColumn.TYPE -> filtered.sortedBy { it.type.lowercase() }
+            SortColumn.DATE -> filtered.sortedBy { it.rawTimestamp }
+            SortColumn.DURATION -> filtered.sortedBy { it.rawDurationSeconds }
+            SortColumn.CALORIES -> filtered.sortedBy { it.rawCalories }
+            SortColumn.DISTANCE_GPS -> filtered.sortedBy { it.rawDistanceGps }
+            SortColumn.DISTANCE_STEPS -> filtered.sortedBy { it.rawDistanceSteps }
+        }
 
-    init {
-        refreshActivityTypes()
-        refreshActivities()
-    }
+        if (order == SortOrder.DESC) sorted.reversed() else sorted
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private fun isSameDay(d1: Date?, d2: Date?): Boolean {
         if (d1 == null || d2 == null) return false
@@ -53,6 +80,11 @@ class ActivityListViewModel @Inject constructor(
         val cal2 = Calendar.getInstance().apply { time = d2 }
         return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
+    init {
+        refreshActivityTypes()
+        refreshActivities()
     }
 
     fun refreshActivityTypes() {
@@ -74,6 +106,15 @@ class ActivityListViewModel @Inject constructor(
     fun onDateRangeSelected(start: Date?, end: Date?) {
         _startDate.value = start
         _endDate.value = end
+    }
+
+    fun onSortChanged(column: SortColumn) {
+        if (_sortColumn.value == column) {
+            _sortOrder.value = if (_sortOrder.value == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC
+        } else {
+            _sortColumn.value = column
+            _sortOrder.value = SortOrder.DESC
+        }
     }
 
     fun deleteActivity(id: String) {

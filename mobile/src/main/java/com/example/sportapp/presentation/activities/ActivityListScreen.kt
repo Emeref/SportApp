@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -44,6 +45,8 @@ fun ActivityListScreen(
     val selectedType by viewModel.selectedType.collectAsState()
     val startDate by viewModel.startDate.collectAsState()
     val endDate by viewModel.endDate.collectAsState()
+    val sortColumn by viewModel.sortColumn.collectAsState()
+    val sortOrder by viewModel.sortOrder.collectAsState()
     
     var selectedActivityId by remember { mutableStateOf<String?>(null) }
     var showTypeMenu by remember { mutableStateOf(false) }
@@ -191,12 +194,12 @@ fun ActivityListScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text("", modifier = Modifier.width(48.dp))
-                                HeaderCell("Typ", 100.dp)
-                                HeaderCell("Data", 150.dp)
-                                HeaderCell("Czas", 100.dp)
-                                HeaderCell("Kalorie", 80.dp)
-                                HeaderCell("Dystans (GPS)", 120.dp)
-                                HeaderCell("Dystans (Kroki)", 120.dp)
+                                HeaderCell("Typ", 100.dp, SortColumn.TYPE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.TYPE) }
+                                HeaderCell("Data", 150.dp, SortColumn.DATE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DATE) }
+                                HeaderCell("Czas", 100.dp, SortColumn.DURATION, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DURATION) }
+                                HeaderCell("Kalorie", 80.dp, SortColumn.CALORIES, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.CALORIES) }
+                                HeaderCell("Dystans (GPS)", 120.dp, SortColumn.DISTANCE_GPS, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DISTANCE_GPS) }
+                                HeaderCell("Dystans (Kroki)", 120.dp, SortColumn.DISTANCE_STEPS, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DISTANCE_STEPS) }
                             }
                             
                             LazyColumn(modifier = Modifier.fillMaxWidth(), state = lazyListState) {
@@ -274,14 +277,37 @@ fun ActivityListScreen(
 }
 
 @Composable
-fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
-    Text(
-        text = text,
-        modifier = Modifier.width(width).padding(horizontal = 4.dp),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary
-    )
+fun HeaderCell(
+    text: String, 
+    width: androidx.compose.ui.unit.Dp,
+    column: SortColumn,
+    currentSortColumn: SortColumn,
+    sortOrder: SortOrder,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .width(width)
+            .clickable { onClick() }
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.weight(1f, fill = false),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = if (currentSortColumn == column) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        )
+        if (currentSortColumn == column) {
+            Icon(
+                imageVector = if (sortOrder == SortOrder.ASC) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
 }
 
 @Composable
