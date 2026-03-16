@@ -89,7 +89,7 @@ fun WorkoutDefinitionEditScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    "Czujnik", 
+                    "Widget w aktywności",
                     style = MaterialTheme.typography.titleSmall, 
                     modifier = Modifier.weight(1f)
                 )
