@@ -140,8 +140,8 @@ fun HomeScreen(
             Spacer(modifier = Modifier.weight(1f))
             
             Image(
-                painter = painterResource(id = R.drawable.logo_emeref),
-                contentDescription = "Logo Emeref",
+                painter = painterResource(id = R.drawable.logo_apki_biale),
+                contentDescription = "Logo Apki",
                 modifier = Modifier
                     .height(40.dp)
                     .padding(vertical = 8.dp)
