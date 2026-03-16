@@ -82,6 +82,8 @@ class WorkoutService : Service(), SensorEventListener {
 
     fun getSportDefinition(): WorkoutDefinition? = sportDefinition
 
+    fun getAvgBpm(): Int = logger?.getAvgBpm() ?: 0
+
     private fun isRecording(sensor: WorkoutSensor): Boolean {
         return sportDefinition?.sensors?.find { it.sensorId == sensor.id }?.isRecording == true
     }
@@ -224,7 +226,7 @@ class WorkoutService : Service(), SensorEventListener {
                 avgSpeedGps = if (isRecording(WorkoutSensor.SPEED_GPS)) avgSpeedGps else null,
                 totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) sessionStats.totalAscent else null,
                 totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) sessionStats.totalDescent else null,
-                avgBpm = if (isRecording(WorkoutSensor.AVG_HEART_RATE)) (if (points.isNotEmpty()) points.mapNotNull { it.bpm }.average() else null) else null,
+                avgBpm = if (isRecording(WorkoutSensor.HEART_RATE)) sessionStats.avgHr.toDouble() else null,
                 maxBpm = if (isRecording(WorkoutSensor.HEART_RATE)) sessionStats.maxHr else null,
                 totalCalories = if (isRecording(WorkoutSensor.CALORIES_SUM)) totalCaloriesAcc else null,
                 maxCalorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) (points.mapNotNull { it.calorieMin }.maxOrNull() ?: 0.0) else null,

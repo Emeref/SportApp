@@ -38,6 +38,8 @@ class WorkoutLogger(
         return sensorConfigs.find { it.sensorId == sensor.id }?.isRecording == true
     }
 
+    fun getAvgBpm(): Int = if (heartRates.isNotEmpty()) heartRates.average().toInt() else 0
+
     suspend fun logData(
         lat: Double? = null,
         lon: Double? = null,
@@ -54,7 +56,6 @@ class WorkoutLogger(
         val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", (durationMillis / 3600000), (durationMillis / 60000) % 60, (durationMillis / 1000) % 60)
 
         if (bpm != null && bpm > 0) heartRates.add(bpm)
-        val avgBpm = if (heartRates.isNotEmpty()) heartRates.average() else null
         val stepsMin = if (kroki != null && kroki > 0 && durationMillis > 0) (kroki.toDouble() / (durationMillis / 60000.0)) else null
         val predkoscKroki = if (stepsMin != null && stepsMin > 0) (stepsMin * healthData.stepLength * 60.0) / 100000.0 else null
         val odlKrokiRounded = (kroki?.times(healthData.stepLength / 100.0))?.roundToInt()
@@ -88,7 +89,6 @@ class WorkoutLogger(
             latitude = if (isRecording(WorkoutSensor.MAP)) lat else null,
             longitude = if (isRecording(WorkoutSensor.MAP)) lon else null,
             bpm = if (isRecording(WorkoutSensor.HEART_RATE)) bpm?.toInt() else null,
-            avgBpm = if (isRecording(WorkoutSensor.AVG_HEART_RATE)) avgBpm.round(2) else null,
             steps = if (isRecording(WorkoutSensor.STEPS)) kroki else null,
             stepsMin = if (isRecording(WorkoutSensor.STEPS_PER_MINUTE)) stepsMin.round(2) else null,
             distanceSteps = if (isRecording(WorkoutSensor.DISTANCE_STEPS)) odlKrokiRounded else null,
