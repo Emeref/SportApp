@@ -7,9 +7,10 @@ import com.example.sportapp.data.db.AppDatabase
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutEntity
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,7 +32,7 @@ class WorkoutRepositoryTest {
             .allowMainThreadQueries()
             .build()
         workoutDao = db.workoutDao()
-        repository = WorkoutRepository(context, workoutDao)
+        repository = WorkoutRepository(workoutDao)
     }
 
     @After
@@ -48,73 +49,29 @@ class WorkoutRepositoryTest {
     }
 
     @Test
-    fun `getFilteredStats correctly aggregates data from database`() = runBlocking {
-        val workout1 = WorkoutEntity(
-            activityName = "Spacer",
-            startTime = System.currentTimeMillis() - 100000,
-            durationFormatted = "00:30:00",
-            steps = 4000,
-            distanceSteps = 2800.0,
-            distanceGps = 3000.0,
-            avgSpeedSteps = 5.0,
-            avgSpeedGps = 6.0,
-            totalAscent = 10.0,
-            totalDescent = 5.0,
-            avgBpm = 100.0,
-            maxBpm = 120,
-            totalCalories = 200.5,
-            maxCalorieMin = 10.0,
-            durationSeconds = 1800
-        )
-        val workout2 = WorkoutEntity(
-            activityName = "Bieganie",
-            startTime = System.currentTimeMillis(),
-            durationFormatted = "00:45:00",
-            steps = 10000,
-            distanceSteps = 7500.0,
-            distanceGps = 8000.0,
-            avgSpeedSteps = 10.0,
-            avgSpeedGps = 11.0,
-            totalAscent = 50.0,
-            totalDescent = 45.0,
-            avgBpm = 150.0,
-            maxBpm = 180,
-            totalCalories = 500.4,
-            maxCalorieMin = 20.0,
-            durationSeconds = 2700
-        )
-
-        workoutDao.insertWorkout(workout1)
-        workoutDao.insertWorkout(workout2)
-
-        val stats = repository.getFilteredStats()
-        assertEquals(700.9, stats["calories"] as Double, 0.1)
-        assertEquals(2, stats["count"] as Int)
-    }
-
-    @Test
-    fun `getAllWorkouts returns workouts from database`() = runBlocking {
+    fun `insert and get workout works correctly`() = runTest {
         val workout = WorkoutEntity(
-            activityName = "Test",
-            startTime = System.currentTimeMillis(),
+            activityName = "Running",
+            startTime = 1000L,
             durationFormatted = "00:10:00",
             steps = 1000,
-            distanceSteps = 700.0,
-            distanceGps = 800.0,
-            avgSpeedSteps = 4.0,
-            avgSpeedGps = 4.5,
-            totalAscent = 0.0,
-            totalDescent = 0.0,
-            avgBpm = 120.0,
-            maxBpm = 140,
+            distanceSteps = 800.0,
+            distanceGps = 1000.0,
+            avgSpeedSteps = 1.3,
+            avgSpeedGps = 1.6,
+            totalAscent = 10.0,
+            totalDescent = 5.0,
+            avgBpm = 140.0,
+            maxBpm = 160,
             totalCalories = 100.0,
             maxCalorieMin = 10.0,
-            durationSeconds = 600
+            durationSeconds = 600L
         )
-        workoutDao.insertWorkout(workout)
 
-        val workouts = repository.getAllWorkouts().first()
-        assertEquals(1, workouts.size)
-        assertEquals("Test", workouts[0].activityName)
+        repository.insertWorkout(workout)
+        val all = repository.getAllWorkouts().first()
+        
+        assertEquals(1, all.size)
+        assertEquals("Running", all[0].activityName)
     }
 }

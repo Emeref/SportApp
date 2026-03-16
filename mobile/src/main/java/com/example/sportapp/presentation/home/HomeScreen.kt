@@ -158,8 +158,8 @@ fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
         "calories" -> StatCard(modifier, "Spalone kalorie", "${formatLargeNumber(stats["calories"])} kcal")
         "distanceGps" -> StatCard(modifier, "Dystans (GPS)", formatDistanceUI(stats["distanceGpsM"] as? Double ?: 0.0))
         "distanceSteps" -> StatCard(modifier, "Dystans (kroki)", formatDistanceUI(stats["distanceStepsM"] as? Double ?: 0.0))
-        "ascent" -> StatCard(modifier, "Przewyższenia do góry", "${formatLargeNumber(stats["ascent"])} m")
-        "descent" -> StatCard(modifier, "Przewyższenia do dołu", "${formatLargeNumber(stats["descent"])} m")
+        "ascent" -> StatCard(modifier, "W sumie w górę", "${formatLargeNumber(stats["ascent"])} m")
+        "descent" -> StatCard(modifier, "W sumie do dołu", "${formatLargeNumber(stats["descent"])} m")
         "steps" -> StatCard(modifier, "Kroki", formatLargeNumber(stats["steps"]))
     }
 }

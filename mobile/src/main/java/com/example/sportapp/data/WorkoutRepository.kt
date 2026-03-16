@@ -1,12 +1,10 @@
 package com.example.sportapp.data
 
-import android.content.Context
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,29 +16,42 @@ import javax.inject.Singleton
 
 @Singleton
 class WorkoutRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val workoutDao: WorkoutDao
 ) : IWorkoutRepository {
 
-    override fun getAllWorkouts(): Flow<List<WorkoutEntity>> {
-        return workoutDao.getAllWorkouts()
+    suspend fun insertWorkout(workout: WorkoutEntity): Long = withContext(Dispatchers.IO) {
+        workoutDao.insertWorkout(workout)
     }
 
-    override suspend fun getWorkoutById(id: Long): WorkoutEntity? {
-        return workoutDao.getWorkoutById(id)
+    suspend fun updateWorkout(workout: WorkoutEntity) = withContext(Dispatchers.IO) {
+        workoutDao.updateWorkout(workout)
     }
 
-    override suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity> {
-        return workoutDao.getPointsForWorkout(workoutId)
+    override fun getAllWorkouts(): Flow<List<WorkoutEntity>> = workoutDao.getAllWorkouts()
+
+    override suspend fun getWorkoutById(id: Long): WorkoutEntity? = withContext(Dispatchers.IO) {
+        workoutDao.getWorkoutById(id)
     }
 
-    override suspend fun deleteWorkout(workout: WorkoutEntity) {
+    override suspend fun deleteWorkout(workout: WorkoutEntity) = withContext(Dispatchers.IO) {
         workoutDao.deletePointsForWorkout(workout.id)
         workoutDao.deleteWorkout(workout)
     }
 
+    suspend fun insertPoints(points: List<WorkoutPointEntity>) = withContext(Dispatchers.IO) {
+        workoutDao.insertPoints(points)
+    }
+
+    override suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity> = withContext(Dispatchers.IO) {
+        workoutDao.getPointsForWorkout(workoutId)
+    }
+
+    suspend fun getWorkoutsSince(since: Long): List<WorkoutEntity> = withContext(Dispatchers.IO) {
+        workoutDao.getWorkoutsSince(since)
+    }
+
     override suspend fun getUniqueActivityTypes(): List<String> = withContext(Dispatchers.IO) {
-        workoutDao.getWorkoutsSince(0).map { it.activityName }.distinct().filter { it.isNotEmpty() }
+        workoutDao.getWorkoutsSince(0).map { it.activityName }.distinct().sorted()
     }
 
     override fun getFilteredStatsFlow(
@@ -48,25 +59,8 @@ class WorkoutRepository @Inject constructor(
         startDate: Date?,
         endDate: Date?
     ): Flow<Map<String, Any>> {
-        return workoutDao.getAllWorkouts().map { allWorkouts ->
-            val filtered = allWorkouts.filter { workout ->
-                val typeMatch = activityType == null || workout.activityName == activityType
-                val workoutDate = workout.startTime
-                val startMatch = startDate == null || workoutDate >= startDate.time
-                val endMatch = endDate == null || workoutDate <= endDate.time
-                typeMatch && startMatch && endMatch
-            }
-
-            mapOf(
-                "count" to filtered.size,
-                "calories" to filtered.sumOf { it.totalCalories ?: 0.0 },
-                "distanceGpsM" to filtered.sumOf { it.distanceGps ?: 0.0 },
-                "distanceStepsM" to filtered.sumOf { it.distanceSteps ?: 0.0 },
-                "ascent" to filtered.sumOf { it.totalAscent ?: 0.0 },
-                "descent" to filtered.sumOf { it.totalDescent ?: 0.0 },
-                "steps" to filtered.sumOf { it.steps?.toLong() ?: 0L },
-                "raw_data" to filtered
-            )
+        return getAllWorkouts().map { list ->
+            calculateStats(list, activityType, startDate, endDate)
         }
     }
 
@@ -75,47 +69,69 @@ class WorkoutRepository @Inject constructor(
         startDate: Date?,
         endDate: Date?
     ): Map<String, Any> = withContext(Dispatchers.IO) {
-        val workouts = workoutDao.getWorkoutsSince(0)
-
-        val filtered = workouts.filter { workout ->
-            val typeMatch = activityType == null || workout.activityName == activityType
-            val workoutDate = workout.startTime
-            val startMatch = startDate == null || workoutDate >= startDate.time
-            val endMatch = endDate == null || workoutDate <= endDate.time
-            typeMatch && startMatch && endMatch
-        }
-
-        mapOf(
-            "count" to filtered.size,
-            "calories" to filtered.sumOf { it.totalCalories ?: 0.0 },
-            "distanceGpsM" to filtered.sumOf { it.distanceGps ?: 0.0 },
-            "distanceStepsM" to filtered.sumOf { it.distanceSteps ?: 0.0 },
-            "ascent" to filtered.sumOf { it.totalAscent ?: 0.0 },
-            "descent" to filtered.sumOf { it.totalDescent ?: 0.0 },
-            "steps" to filtered.sumOf { it.steps?.toLong() ?: 0L },
-            "raw_data" to filtered
-        )
+        val all = workoutDao.getWorkoutsSince(0)
+        calculateStats(all, activityType, startDate, endDate)
     }
 
-    override suspend fun getStatsForPeriod(period: ReportingPeriod, customDays: Int): Map<String, Any> {
+    override suspend fun getStatsForPeriod(
+        period: ReportingPeriod,
+        customDays: Int
+    ): Map<String, Any> = withContext(Dispatchers.IO) {
         val calendar = Calendar.getInstance()
-        val endDate = calendar.time
-        
         when (period) {
             ReportingPeriod.TODAY -> {
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
             }
             ReportingPeriod.WEEK -> calendar.add(Calendar.DAY_OF_YEAR, -7)
             ReportingPeriod.MONTH -> calendar.add(Calendar.MONTH, -1)
             ReportingPeriod.YEAR -> calendar.add(Calendar.YEAR, -1)
             ReportingPeriod.CUSTOM -> calendar.add(Calendar.DAY_OF_YEAR, -customDays)
         }
-        
-        val startDate = calendar.time
-        return getFilteredStats(null, startDate, endDate)
+        val since = calendar.timeInMillis
+        val workouts = workoutDao.getWorkoutsSince(since)
+        calculateStats(workouts, null, null, null)
+    }
+
+    private fun calculateStats(
+        list: List<WorkoutEntity>,
+        activityType: String?,
+        startDate: Date?,
+        endDate: Date?
+    ): Map<String, Any> {
+        val filtered = list.filter { w ->
+            val typeMatch = activityType == null || w.activityName == activityType
+            val startMatch = startDate == null || w.startTime >= startDate.time
+            val endMatch = endDate == null || w.startTime <= endDate.time
+            typeMatch && startMatch && endMatch
+        }
+
+        val totalWorkouts = filtered.size
+        val totalDuration = filtered.sumOf { it.durationSeconds }
+        val totalDistanceGps = filtered.sumOf { it.distanceGps ?: 0.0 }
+        val totalDistanceSteps = filtered.sumOf { it.distanceSteps ?: 0.0 }
+        val totalCalories = filtered.sumOf { it.totalCalories ?: 0.0 }
+        val totalSteps = filtered.sumOf { it.steps ?: 0 }
+        val totalAscent = filtered.sumOf { it.totalAscent ?: 0.0 }
+        val totalDescent = filtered.sumOf { it.totalDescent ?: 0.0 }
+        val avgBpm = if (filtered.any { it.avgBpm != null }) filtered.mapNotNull { it.avgBpm }.average() else 0.0
+
+        return mapOf(
+            "count" to totalWorkouts,
+            "totalWorkouts" to totalWorkouts,
+            "totalDuration" to totalDuration,
+            "totalDistance" to (totalDistanceGps + totalDistanceSteps), // Suma dla starego klucza jeśli potrzebny
+            "distanceGpsM" to totalDistanceGps,
+            "distanceStepsM" to totalDistanceSteps,
+            "calories" to totalCalories,
+            "totalCalories" to totalCalories,
+            "steps" to totalSteps,
+            "ascent" to totalAscent,
+            "descent" to totalDescent,
+            "avgBpm" to avgBpm,
+            "raw_data" to filtered
+        )
     }
 
     override fun formatDistance(meters: Double): String {
@@ -130,7 +146,6 @@ class WorkoutRepository @Inject constructor(
     override suspend fun getActivityItems(): List<ActivityItem> = withContext(Dispatchers.IO) {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
         workoutDao.getWorkoutsSince(0)
-            .sortedByDescending { it.startTime }
             .map { workout ->
                 ActivityItem(
                     id = workout.id.toString(),
@@ -139,7 +154,12 @@ class WorkoutRepository @Inject constructor(
                     duration = workout.durationFormatted,
                     calories = "${workout.totalCalories?.toInt() ?: 0} kcal",
                     distanceGps = formatDistance(workout.distanceGps ?: 0.0),
-                    distanceSteps = formatDistance(workout.distanceSteps ?: 0.0)
+                    distanceSteps = formatDistance(workout.distanceSteps ?: 0.0),
+                    rawTimestamp = workout.startTime,
+                    rawDurationSeconds = workout.durationSeconds,
+                    rawCalories = workout.totalCalories ?: 0.0,
+                    rawDistanceGps = workout.distanceGps ?: 0.0,
+                    rawDistanceSteps = workout.distanceSteps ?: 0.0
                 )
             }
     }
