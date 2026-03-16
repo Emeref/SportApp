@@ -41,38 +41,43 @@ class ActivityListViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(SortOrder.DESC)
     val sortOrder = _sortOrder.asStateFlow()
 
-    private val _allActivities = MutableStateFlow<List<ActivityItem>>(emptyList())
-    
-    val activities: StateFlow<List<ActivityItem>> = combine(
-        _allActivities, 
-        _selectedType, 
-        _startDate, 
-        _endDate
-    ) { all, type, start, end ->
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
-        all.filter { activity ->
-            val typeMatch = type == null || activity.type == type
-            val dateMatch = try {
-                val date = sdf.parse(activity.date)
-                (start == null || date?.after(start) == true || isSameDay(date, start)) && 
-                (end == null || date?.before(end) == true || isSameDay(date, end))
-            } catch (e: Exception) { true }
-            typeMatch && dateMatch
+    val activities: StateFlow<List<ActivityItem>> = repository.getActivityItemsFlow()
+        .combine(_selectedType) { all, type ->
+            if (type == null) all else all.filter { it.type == type }
         }
-    }.combine(_sortColumn) { filtered, col ->
-        filtered to col
-    }.combine(_sortOrder) { (filtered, col), order ->
-        val sorted = when (col) {
-            SortColumn.TYPE -> filtered.sortedBy { it.type.lowercase() }
-            SortColumn.DATE -> filtered.sortedBy { it.rawTimestamp }
-            SortColumn.DURATION -> filtered.sortedBy { it.rawDurationSeconds }
-            SortColumn.CALORIES -> filtered.sortedBy { it.rawCalories }
-            SortColumn.DISTANCE_GPS -> filtered.sortedBy { it.rawDistanceGps }
-            SortColumn.DISTANCE_STEPS -> filtered.sortedBy { it.rawDistanceSteps }
+        .combine(_startDate) { filtered, start ->
+            if (start == null) filtered else filtered.filter { 
+                val date = parseDate(it.date)
+                date != null && (date.after(start) || isSameDay(date, start))
+            }
         }
+        .combine(_endDate) { filtered, end ->
+            if (end == null) filtered else filtered.filter { 
+                val date = parseDate(it.date)
+                date != null && (date.before(end) || isSameDay(date, end))
+            }
+        }
+        .combine(_sortColumn) { filtered, col ->
+            val sorted = when (col) {
+                SortColumn.TYPE -> filtered.sortedBy { it.type.lowercase() }
+                SortColumn.DATE -> filtered.sortedBy { it.rawTimestamp }
+                SortColumn.DURATION -> filtered.sortedBy { it.rawDurationSeconds }
+                SortColumn.CALORIES -> filtered.sortedBy { it.rawCalories }
+                SortColumn.DISTANCE_GPS -> filtered.sortedBy { it.rawDistanceGps }
+                SortColumn.DISTANCE_STEPS -> filtered.sortedBy { it.rawDistanceSteps }
+            }
+            sorted
+        }
+        .combine(_sortOrder) { sorted, order ->
+            if (order == SortOrder.DESC) sorted.reversed() else sorted
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-        if (order == SortOrder.DESC) sorted.reversed() else sorted
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private fun parseDate(dateStr: String): Date? {
+        return try {
+            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).parse(dateStr)
+        } catch (e: Exception) { null }
+    }
 
     private fun isSameDay(d1: Date?, d2: Date?): Boolean {
         if (d1 == null || d2 == null) return false
@@ -84,18 +89,11 @@ class ActivityListViewModel @Inject constructor(
 
     init {
         refreshActivityTypes()
-        refreshActivities()
     }
 
     fun refreshActivityTypes() {
         viewModelScope.launch {
             _activityTypes.value = repository.getUniqueActivityTypes()
-        }
-    }
-
-    fun refreshActivities() {
-        viewModelScope.launch {
-            _allActivities.value = repository.getActivityItems()
         }
     }
 
@@ -123,7 +121,6 @@ class ActivityListViewModel @Inject constructor(
             val workout = repository.getWorkoutById(workoutId)
             if (workout != null) {
                 repository.deleteWorkout(workout)
-                refreshActivities()
                 refreshActivityTypes()
             }
         }

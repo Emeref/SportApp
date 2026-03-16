@@ -17,6 +17,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.sportapp.presentation.activities.ActivityListScreen
 import com.example.sportapp.presentation.activities.ActivityListViewModel
+import com.example.sportapp.presentation.activities.ActivityTrimScreen
+import com.example.sportapp.presentation.activities.ActivityTrimViewModel
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionEditScreen
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionListScreen
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionViewModel
@@ -134,6 +136,9 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToDetail = { id -> 
                                     navController.navigate(Screen.ActivityDetail.createRoute(id))
                                 },
+                                onNavigateToTrim = { id ->
+                                    navController.navigate(Screen.ActivityTrim.createRoute(id))
+                                },
                                 onNavigateToSettings = { navController.navigate(Screen.ActivityDetailSettingsList.route) }
                             )
                         }
@@ -158,6 +163,13 @@ class MainActivity : ComponentActivity() {
                             val detailViewModel: ActivityDetailViewModel = hiltViewModel()
                             ActivityDetailScreen(
                                 viewModel = detailViewModel,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.ActivityTrim.route) {
+                            val trimViewModel: ActivityTrimViewModel = hiltViewModel()
+                            ActivityTrimScreen(
+                                viewModel = trimViewModel,
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }

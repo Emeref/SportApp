@@ -32,6 +32,15 @@ interface WorkoutDao {
     @Query("DELETE FROM workout_points WHERE workoutId = :workoutId")
     suspend fun deletePointsForWorkout(workoutId: Long)
 
+    @Query("DELETE FROM workout_points WHERE workoutId = :workoutId AND id NOT BETWEEN :startId AND :endId")
+    suspend fun deletePointsOutsideRange(workoutId: Long, startId: Long, endId: Long)
+
+    @Transaction
+    suspend fun trimWorkout(workout: WorkoutEntity, startId: Long, endId: Long) {
+        deletePointsOutsideRange(workout.id, startId, endId)
+        updateWorkout(workout)
+    }
+
     @Query("SELECT MAX(speedGps) FROM workout_points WHERE workoutId = :workoutId")
     suspend fun getMaxSpeedGps(workoutId: Long): Double?
 

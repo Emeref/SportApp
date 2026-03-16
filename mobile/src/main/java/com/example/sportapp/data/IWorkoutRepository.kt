@@ -12,6 +12,8 @@ interface IWorkoutRepository {
     suspend fun getWorkoutById(id: Long): WorkoutEntity?
     suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity>
     suspend fun deleteWorkout(workout: WorkoutEntity)
+    suspend fun updateWorkout(workout: WorkoutEntity)
+    suspend fun trimWorkout(workout: WorkoutEntity, startPointId: Long, endPointId: Long)
 
     suspend fun getUniqueActivityTypes(): List<String>
     
@@ -35,4 +37,5 @@ interface IWorkoutRepository {
     fun formatDistance(meters: Double): String
     
     suspend fun getActivityItems(): List<ActivityItem>
+    fun getActivityItemsFlow(): Flow<List<ActivityItem>>
 }

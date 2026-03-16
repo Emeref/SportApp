@@ -23,7 +23,7 @@ class WorkoutRepository @Inject constructor(
         workoutDao.insertWorkout(workout)
     }
 
-    suspend fun updateWorkout(workout: WorkoutEntity) = withContext(Dispatchers.IO) {
+    override suspend fun updateWorkout(workout: WorkoutEntity) = withContext(Dispatchers.IO) {
         workoutDao.updateWorkout(workout)
     }
 
@@ -52,6 +52,52 @@ class WorkoutRepository @Inject constructor(
 
     override suspend fun getUniqueActivityTypes(): List<String> = withContext(Dispatchers.IO) {
         workoutDao.getWorkoutsSince(0).map { it.activityName }.distinct().sorted()
+    }
+
+    override suspend fun trimWorkout(workout: WorkoutEntity, startPointId: Long, endPointId: Long) = withContext(Dispatchers.IO) {
+        // 1. Get remaining points to recalculate stats
+        val points = workoutDao.getPointsForWorkout(workout.id)
+            .filter { it.id in startPointId..endPointId }
+        
+        if (points.isEmpty()) return@withContext
+
+        // 2. Recalculate stats
+        val totalSteps = (points.last().steps ?: 0) - (points.first().steps ?: 0)
+        val distanceSteps = (points.last().distanceSteps ?: 0).toDouble() - (points.first().distanceSteps ?: 0).toDouble()
+        val distanceGps = (points.last().distanceGps ?: 0).toDouble() - (points.first().distanceGps ?: 0).toDouble()
+        val avgBpm = points.mapNotNull { it.bpm }.average()
+        val maxBpm = points.mapNotNull { it.bpm }.maxOrNull()
+        val totalCalories = (points.last().calorieSum ?: 0.0) - (points.first().calorieSum ?: 0.0)
+        val maxCalorieMin = points.mapNotNull { it.calorieMin }.maxOrNull()
+        val totalAscent = points.mapNotNull { it.totalAscent }.let { if (it.isEmpty()) 0.0 else it.last() - it.first() }
+        val totalDescent = points.mapNotNull { it.totalDescent }.let { if (it.isEmpty()) 0.0 else it.last() - it.first() }
+        
+        val durationSeconds = points.size.toLong()
+        
+        val updatedWorkout = workout.copy(
+            steps = totalSteps.coerceAtLeast(0),
+            distanceSteps = distanceSteps.coerceAtLeast(0.0),
+            distanceGps = distanceGps.coerceAtLeast(0.0),
+            avgBpm = if (avgBpm.isNaN()) null else avgBpm,
+            maxBpm = maxBpm,
+            totalCalories = totalCalories.coerceAtLeast(0.0),
+            maxCalorieMin = maxCalorieMin,
+            totalAscent = Math.abs(totalAscent),
+            totalDescent = Math.abs(totalDescent),
+            durationSeconds = durationSeconds,
+            durationFormatted = formatDuration(durationSeconds)
+        )
+
+        // 3. Perform atomic trim
+        workoutDao.trimWorkout(updatedWorkout, startPointId, endPointId)
+    }
+
+    private fun formatDuration(seconds: Long): String {
+        val h = seconds / 3600
+        val m = (seconds % 3600) / 60
+        val s = seconds % 60
+        return if (h > 0) String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+        else String.format(Locale.US, "%02d:%02d", m, s)
     }
 
     override fun getFilteredStatsFlow(
@@ -162,5 +208,27 @@ class WorkoutRepository @Inject constructor(
                     rawDistanceSteps = workout.distanceSteps ?: 0.0
                 )
             }
+    }
+
+    override fun getActivityItemsFlow(): Flow<List<ActivityItem>> {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+        return workoutDao.getAllWorkouts().map { list ->
+            list.map { workout ->
+                ActivityItem(
+                    id = workout.id.toString(),
+                    type = workout.activityName,
+                    date = sdf.format(Date(workout.startTime)),
+                    duration = workout.durationFormatted,
+                    calories = "${workout.totalCalories?.toInt() ?: 0} kcal",
+                    distanceGps = formatDistance(workout.distanceGps ?: 0.0),
+                    distanceSteps = formatDistance(workout.distanceSteps ?: 0.0),
+                    rawTimestamp = workout.startTime,
+                    rawDurationSeconds = workout.durationSeconds,
+                    rawCalories = workout.totalCalories ?: 0.0,
+                    rawDistanceGps = workout.distanceGps ?: 0.0,
+                    rawDistanceSteps = workout.distanceSteps ?: 0.0
+                )
+            }
+        }
     }
 }
