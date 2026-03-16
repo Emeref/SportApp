@@ -10,16 +10,16 @@ import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.presentation.settings.WidgetItem
-import com.google.android.gms.maps.model.LatLng
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ActivityDetailViewModel @Inject constructor(
     @ApplicationContext context: Context,
@@ -30,17 +30,23 @@ class ActivityDetailViewModel @Inject constructor(
     private val activityId: Long = savedStateHandle.get<String>("activityId")?.toLongOrNull() ?: -1L
     private val settingsManager = ActivityDetailSettingsManager(context)
 
-    val settings = settingsManager.settingsFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ActivityDetailSettings(
-            ActivityDetailSettingsManager.DEFAULT_ELEMENTS, 
-            ActivityDetailSettingsManager.DEFAULT_COLOR
-        )
-    )
-
     private val _sessionData = MutableStateFlow<SessionData?>(null)
     val sessionData = _sessionData.asStateFlow()
+
+    val settings: StateFlow<ActivityDetailSettings> = _sessionData
+        .filterNotNull()
+        .flatMapLatest { data -> 
+            settingsManager.getSettingsFlow(data.activityName)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ActivityDetailSettings(
+                visibleCharts = ActivityDetailSettingsManager.DEFAULT_CHARTS,
+                visibleWidgets = ActivityDetailSettingsManager.DEFAULT_WIDGETS,
+                trackColor = ActivityDetailSettingsManager.DEFAULT_COLOR
+            )
+        )
 
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
@@ -102,15 +108,17 @@ class ActivityDetailViewModel @Inject constructor(
         }
     }
 
-    fun saveVisibleElements(elements: List<WidgetItem>) {
+    fun saveVisibleCharts(charts: List<WidgetItem>) {
+        val typeName = _sessionData.value?.activityName ?: return
         viewModelScope.launch {
-            settingsManager.saveVisibleElements(elements)
+            settingsManager.saveVisibleCharts(typeName, charts)
         }
     }
 
     fun saveTrackColor(color: Color) {
+        val typeName = _sessionData.value?.activityName ?: return
         viewModelScope.launch {
-            settingsManager.saveTrackColor(color.toArgb())
+            settingsManager.saveTrackColor(typeName, color.toArgb())
         }
     }
     

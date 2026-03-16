@@ -1,7 +1,6 @@
 package com.example.sportapp.presentation.stats
 
 import android.content.Context
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -16,7 +15,8 @@ import kotlinx.coroutines.flow.map
 private val Context.activityDetailDataStore: DataStore<Preferences> by preferencesDataStore(name = "activity_detail_settings")
 
 data class ActivityDetailSettings(
-    val visibleElements: List<WidgetItem>,
+    val visibleCharts: List<WidgetItem>,
+    val visibleWidgets: List<WidgetItem>,
     val trackColor: Int
 )
 
@@ -24,10 +24,11 @@ class ActivityDetailSettingsManager(private val context: Context) {
     private val gson = Gson()
 
     companion object {
-        private val VISIBLE_ELEMENTS_JSON = stringPreferencesKey("visible_elements_json")
-        private val TRACK_COLOR = stringPreferencesKey("track_color")
+        private fun getVisibleChartsKey(typeName: String) = stringPreferencesKey("visible_charts_$typeName")
+        private fun getVisibleWidgetsKey(typeName: String) = stringPreferencesKey("visible_widgets_$typeName")
+        private fun getTrackColorKey(typeName: String) = stringPreferencesKey("track_color_$typeName")
 
-        val DEFAULT_ELEMENTS = listOf(
+        val DEFAULT_CHARTS = listOf(
             WidgetItem("map", "Mapa"),
             WidgetItem("bpm", "Tętno (bpm)"),
             WidgetItem("kalorie_min", "Kalorie/min"),
@@ -40,40 +41,37 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("przewyzszenia_gora", "Przewyższenia +"),
             WidgetItem("przewyzszenia_dol", "Przewyższenia -")
         )
+
+        val DEFAULT_WIDGETS = listOf(
+            WidgetItem("duration", "Czas trwania"),
+            WidgetItem("max_bpm", "Maksymalne tętno"),
+            WidgetItem("avg_bpm", "Średnie tętno"),
+            WidgetItem("total_calories", "Spalone kalorie"),
+            WidgetItem("max_calories_min", "Maks spalanie kalorii"),
+            WidgetItem("avg_pace", "Średnie tempo"),
+            WidgetItem("max_speed", "Maks prędkość"),
+            WidgetItem("max_altitude", "Maks wysokość"),
+            WidgetItem("total_ascent", "Suma podejść"),
+            WidgetItem("total_descent", "Suma zejść"),
+            WidgetItem("avg_step_length", "Śr. długość kroku"),
+            WidgetItem("avg_cadence", "Śr. kadencja"),
+            WidgetItem("max_cadence", "Maks. kadencja"),
+            WidgetItem("total_steps", "Liczba kroków"),
+            WidgetItem("total_distance_gps", "Dystans (GPS)"),
+            WidgetItem("total_distance_steps", "Dystans (kroki)")
+        )
         
         val DEFAULT_COLOR = 0xFFFF9800.toInt()
     }
 
-    val settingsFlow: Flow<ActivityDetailSettings> = context.activityDetailDataStore.data.map { preferences ->
-        val elementsJson = preferences[VISIBLE_ELEMENTS_JSON]
-        val elements = if (elementsJson != null) {
-            try {
-                val type = object : TypeToken<List<WidgetItem>>() {}.type
-                val decoded: List<WidgetItem>? = gson.fromJson(elementsJson, type)
-                
-                // Filtrujemy niechciane elementy (srednie_bpm, kroki, kalorie_suma)
-                val filtered = decoded?.filter { 
-                    it.id != "srednie_bpm" && it.id != "kroki" && it.id != "kalorie_suma" 
-                }
-                
-                if (filtered.isNullOrEmpty()) {
-                    DEFAULT_ELEMENTS
-                } else {
-                    val missing = DEFAULT_ELEMENTS.filter { def -> filtered.none { it.id == def.id } }
-                    if (missing.isNotEmpty()) {
-                        filtered + missing
-                    } else {
-                        filtered
-                    }
-                }
-            } catch (e: Exception) {
-                DEFAULT_ELEMENTS
-            }
-        } else {
-            DEFAULT_ELEMENTS
-        }
+    fun getSettingsFlow(typeName: String): Flow<ActivityDetailSettings> = context.activityDetailDataStore.data.map { preferences ->
+        val chartsJson = preferences[getVisibleChartsKey(typeName)]
+        val charts = decodeList(chartsJson, DEFAULT_CHARTS)
         
-        val colorHex = preferences[TRACK_COLOR]
+        val widgetsJson = preferences[getVisibleWidgetsKey(typeName)]
+        val widgets = decodeList(widgetsJson, DEFAULT_WIDGETS)
+        
+        val colorHex = preferences[getTrackColorKey(typeName)]
         val color = if (colorHex != null) {
             try {
                 colorHex.toLong(16).toInt()
@@ -84,18 +82,54 @@ class ActivityDetailSettingsManager(private val context: Context) {
             DEFAULT_COLOR
         }
 
-        ActivityDetailSettings(elements, color)
+        ActivityDetailSettings(charts, widgets, color)
     }
 
-    suspend fun saveVisibleElements(elements: List<WidgetItem>) {
-        context.activityDetailDataStore.edit { preferences ->
-            preferences[VISIBLE_ELEMENTS_JSON] = gson.toJson(elements)
+    private fun decodeList(json: String?, default: List<WidgetItem>): List<WidgetItem> {
+        if (json == null) return default
+        return try {
+            val type = object : TypeToken<List<WidgetItem>>() {}.type
+            val decoded: List<WidgetItem> = gson.fromJson(json, type)
+            if (decoded.isEmpty()) return default
+            
+            // Filter out old/removed items and add new ones from default
+            val currentIds = default.map { it.id }.toSet()
+            val filtered = decoded.filter { it.id in currentIds }
+            
+            val missing = default.filter { def -> filtered.none { it.id == def.id } }
+            if (missing.isNotEmpty()) {
+                filtered + missing
+            } else {
+                filtered
+            }
+        } catch (e: Exception) {
+            default
         }
     }
 
-    suspend fun saveTrackColor(color: Int) {
+    suspend fun saveVisibleCharts(typeName: String, charts: List<WidgetItem>) {
         context.activityDetailDataStore.edit { preferences ->
-            preferences[TRACK_COLOR] = Integer.toHexString(color)
+            preferences[getVisibleChartsKey(typeName)] = gson.toJson(charts)
+        }
+    }
+
+    suspend fun saveVisibleWidgets(typeName: String, widgets: List<WidgetItem>) {
+        context.activityDetailDataStore.edit { preferences ->
+            preferences[getVisibleWidgetsKey(typeName)] = gson.toJson(widgets)
+        }
+    }
+
+    suspend fun saveTrackColor(typeName: String, color: Int) {
+        context.activityDetailDataStore.edit { preferences ->
+            preferences[getTrackColorKey(typeName)] = Integer.toHexString(color)
+        }
+    }
+
+    suspend fun deleteSettings(typeName: String) {
+        context.activityDetailDataStore.edit { preferences ->
+            preferences.remove(getVisibleChartsKey(typeName))
+            preferences.remove(getVisibleWidgetsKey(typeName))
+            preferences.remove(getTrackColorKey(typeName))
         }
     }
 }

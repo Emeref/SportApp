@@ -7,4 +7,8 @@ sealed class Screen(val route: String) {
     object ActivityDetail : Screen("activity_detail/{activityId}") {
         fun createRoute(activityId: String) = "activity_detail/$activityId"
     }
+    object ActivityDetailSettingsList : Screen("activity_detail_settings_list")
+    object ActivityDetailSettingsEdit : Screen("activity_detail_settings_edit/{typeName}") {
+        fun createRoute(typeName: String) = "activity_detail_settings_edit/$typeName"
+    }
 }

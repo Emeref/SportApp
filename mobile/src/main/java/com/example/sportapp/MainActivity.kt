@@ -3,17 +3,18 @@ package com.example.sportapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.sportapp.presentation.activities.ActivityListScreen
 import com.example.sportapp.presentation.activities.ActivityListViewModel
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionEditScreen
@@ -25,12 +26,7 @@ import com.example.sportapp.presentation.navigation.Screen
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.SettingsScreen
 import com.example.sportapp.presentation.settings.WidgetSelectionScreen
-import com.example.sportapp.presentation.stats.ActivityDetailScreen
-import com.example.sportapp.presentation.stats.ActivityDetailSettingsViewModel
-import com.example.sportapp.presentation.stats.ActivityDetailViewModel
-import com.example.sportapp.presentation.stats.OverallStatsScreen
-import com.example.sportapp.presentation.stats.OverallStatsViewModel
-import com.example.sportapp.presentation.stats.OverallStatsWidgetScreen
+import com.example.sportapp.presentation.stats.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -43,23 +39,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
         setContent {
             MaterialTheme {
-                Surface(color = MaterialTheme.colorScheme.background) {
-                    val navController = rememberNavController()
-                    val homeViewModel: HomeViewModel = hiltViewModel()
-                    val settingsState by homeViewModel.settings.collectAsState()
-                    val scope = rememberCoroutineScope()
-                    
-                    // Współdzielony ViewModel dla statystyk
-                    val statsViewModel: OverallStatsViewModel = hiltViewModel()
+                val navController = rememberNavController()
+                val settingsState by settingsManager.settingsFlow.collectAsState(initial = null)
+                val scope = rememberCoroutineScope()
+                val statsViewModel: OverallStatsViewModel = hiltViewModel()
 
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = Screen.Home.route
+                        startDestination = Screen.Home.route,
+                        modifier = Modifier.padding(innerPadding)
                     ) {
                         composable(Screen.Home.route) {
+                            val homeViewModel: HomeViewModel = hiltViewModel()
                             HomeScreen(
                                 viewModel = homeViewModel,
                                 onNavigateToStats = { navController.navigate(Screen.OverallStats.route) },
@@ -68,50 +62,51 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("settings") {
-                            SettingsScreen(
-                                initialState = settingsState,
-                                onSave = { updated ->
-                                    scope.launch { 
-                                        settingsManager.saveSettings(updated)
-                                        navController.popBackStack()
-                                    }
-                                },
-                                onCancel = { navController.popBackStack() },
-                                onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
-                                onNavigateToDefinitions = { navController.navigate("definitions_list") }
-                            )
+                            settingsState?.let { state ->
+                                SettingsScreen(
+                                    initialState = state,
+                                    onSave = { updatedSettings ->
+                                        scope.launch {
+                                            settingsManager.saveSettings(updatedSettings)
+                                            navController.popBackStack()
+                                        }
+                                    },
+                                    onCancel = { navController.popBackStack() },
+                                    onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
+                                    onNavigateToDefinitions = { navController.navigate("definitions") }
+                                )
+                            }
                         }
-                        composable("definitions_list") {
-                            val definitionViewModel: WorkoutDefinitionViewModel = hiltViewModel()
+                        composable("definitions") {
+                            val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
                             WorkoutDefinitionListScreen(
-                                viewModel = definitionViewModel,
+                                viewModel = viewModel,
                                 onNavigateToEdit = { id -> navController.navigate("definition_edit/$id") },
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }
-                        composable(
-                            "definition_edit/{id}",
-                            arguments = listOf(navArgument("id") { type = NavType.LongType })
-                        ) { backStackEntry ->
-                            val id = backStackEntry.arguments?.getLong("id") ?: 0L
-                            val definitionViewModel: WorkoutDefinitionViewModel = hiltViewModel()
+                        composable("definition_edit/{definitionId}") { backStackEntry ->
+                            val id = backStackEntry.arguments?.getString("definitionId")?.toLongOrNull() ?: 0L
+                            val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
                             WorkoutDefinitionEditScreen(
-                                viewModel = definitionViewModel,
+                                viewModel = viewModel,
                                 definitionId = id,
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }
                         composable("widget_selection") {
-                            WidgetSelectionScreen(
-                                widgets = settingsState.widgets,
-                                onSave = { updatedWidgets ->
-                                    scope.launch {
-                                        settingsManager.saveSettings(settingsState.copy(widgets = updatedWidgets))
-                                        navController.popBackStack()
-                                    }
-                                },
-                                onCancel = { navController.popBackStack() }
-                            )
+                            settingsState?.let { state ->
+                                WidgetSelectionScreen(
+                                    widgets = state.widgets,
+                                    onSave = { updatedWidgets ->
+                                        scope.launch {
+                                            settingsManager.saveSettings(state.copy(widgets = updatedWidgets))
+                                            navController.popBackStack()
+                                        }
+                                    },
+                                    onCancel = { navController.popBackStack() }
+                                )
+                            }
                         }
                         composable(Screen.OverallStats.route) {
                             OverallStatsScreen(
@@ -139,21 +134,24 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToDetail = { id -> 
                                     navController.navigate(Screen.ActivityDetail.createRoute(id))
                                 },
-                                onNavigateToSettings = { navController.navigate("activity_detail_settings") }
+                                onNavigateToSettings = { navController.navigate(Screen.ActivityDetailSettingsList.route) }
                             )
                         }
-                        composable("activity_detail_settings") {
-                            val detailSettingsViewModel: ActivityDetailSettingsViewModel = hiltViewModel()
-                            val detailSettings by detailSettingsViewModel.settings.collectAsState()
-                            
-                            WidgetSelectionScreen(
-                                widgets = detailSettings.visibleElements,
-                                title = "Wykresy w szczegółach",
-                                onSave = { updatedWidgets ->
-                                    detailSettingsViewModel.saveVisibleElements(updatedWidgets)
-                                    navController.popBackStack()
+                        composable(Screen.ActivityDetailSettingsList.route) {
+                            val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
+                            ActivityDetailSettingsListScreen(
+                                viewModel = viewModel,
+                                onNavigateToEdit = { typeName ->
+                                    navController.navigate(Screen.ActivityDetailSettingsEdit.createRoute(typeName))
                                 },
-                                onCancel = { navController.popBackStack() }
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.ActivityDetailSettingsEdit.route) {
+                            val detailSettingsViewModel: ActivityDetailSettingsViewModel = hiltViewModel()
+                            ActivityDetailSettingsEditScreen(
+                                viewModel = detailSettingsViewModel,
+                                onNavigateBack = { navController.popBackStack() }
                             )
                         }
                         composable(Screen.ActivityDetail.route) {

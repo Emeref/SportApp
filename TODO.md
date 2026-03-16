@@ -11,7 +11,7 @@
     - [x] **Wprowadzenie Foreground Service**: Przeniesienie logiki sesji z UI do usługi w tle (zapobieganie ubijaniu treningu).
     - [ ] **Centralny PermissionManager**: Ujednolicona obsługa uprawnień przed startem aktywności.
     - [ ] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych GPS i barometru (eliminacja szumów).
-- [x] **Własne dyscypliny**: Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
+- [x] **Własne dyscypliny**: Możliwanie dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
 
 ## 2. Zarządzanie danymi i plikami
 - [x] **Zapis konfiguracji aplikacji**:
@@ -25,7 +25,7 @@
     - [x] **Migracja na bazę danych (Room)**: Wdrożenie bazy danych Room (`AppDatabase`, `WorkoutDao`) dla efektywnego zarządzania danymi sesji.
     - [ ] **Refaktoring Tętna**: Usunięcie kolumny `avgBpm` z tabeli `workouts` i zastąpienie jej dynamicznym obliczaniem średniej z `workout_points`.
     - [x] **Zarządzanie aktywnościami**: Dodanie opcji trwałego usuwania aktywności z historii.
-- [x] **Globalne Stałe**: Dodano plik `AppConstants.kt` ze zmiennymi, gdzie są definicje z całej aplikacji (np. czułość kółka).
+- [x] **Globalne Stałe**: Dodano plik `AppConstants.kt` ze zmiennymi, gdzie są definie z całej aplikacji (np. czułość kółka).
 - [x] **Logowanie treningów**: Rejestracja parametrów co sekundę do bazy danych (metry, zaokrąglone) zgodnie z flagami zapisu.
 - [x] **Podsumowanie zbiorcze**: Dopisywanie wyników do bazy danych po zakończeniu treningu.
 
@@ -40,10 +40,14 @@
         - [ ] Interaktywna mapa trasy z oznaczeniem startu (kółko) i końca (flaga).
         - [x] Personalizacja widoku (wybór i kolejność wykresów/mapy).
         - [x] Wybór koloru śladu na mapie.
-        - [ ] **Nowe widgety statystyczne**: Dodanie podsumowań takich jak Max HR, Max Speed, średnie tempo, średnia prędkość itp.
+        - [x] **Wykresy per aktywność**: Rozszerzenie opcji aktywności o możliwość definiowania widocznych wykresów dla konkretnego sportu.
+        - [x] **Widgety per aktywność**: Możliwość wyboru i ustawienia kolejności kafelków podsumowania niezależnie dla każdego sportu.
+        - [ ] **Rozbudowa metryk sesji**: Dodanie Max HR, Max Speed, średniego tempa, przewyższeń i kadencji.
+        - [ ] **Najlepsze tempo na km (Best Split)**: Automatyczne wykrywanie najszybszego odcinka 1km.
+        - [ ] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu.
         - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
         - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
-        - [ ] **Wykresy per aktywność**: Rozszerzenie opcji aktywności o możliwość definiowania widocznych wykresów dla konkretnego sportu.
+    - [ ] **Analiza stref tętna**: Podział treningu na strefy (Z1-Z5) i ich wizualizacja na ekranie szczegółów.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
     - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
 - [x] **Ustawienia i Personalizacja (Mobile)**:
@@ -86,6 +90,7 @@
 - [ ] **Clean Code**: Usunięcie hardkodowanych stringów (trasy nawigacji) do stałych/typów enumeratywnych.
 
 ## PRIORYTETY
-1. **Widget 'średnia prędkość' i 'średnia prędkość (kroki)'** - Implementacja i wyświetlanie średniej prędkości na telefonie.
-2. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
-3. **Integracja z Health Connect** - Synchronizacja danych treningowych z Google Health Connect.
+1. **Rozbudowa metryk sesji** - Dodanie Max HR, Max Speed, średniego tempa, przewyższeń i kadencji.
+2. **Widget 'Best Split' i Wykres długości kroku** - Implementacja zaawansowanej analizy techniki biegu.
+3. **Analiza stref tętna** - Wyliczanie i prezentacja czasu w strefach Z1-Z5.
+4. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.

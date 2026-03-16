@@ -89,12 +89,12 @@ fun ActivityDetailScreen(
                 }
 
                 // Widgety z podsumowaniem (Grid) uzależnione od ustawień
-                SummaryWidgetsGrid(data, settings.visibleElements)
+                SummaryWidgetsGrid(data, settings.visibleWidgets)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Wyświetlamy elementy w kolejności zdefiniowanej w ustawieniach i tylko te zaznaczone
-                settings.visibleElements.filter { it.isEnabled }.forEach { widget ->
+                // Wyświetlamy wykresy w kolejności zdefiniowanej w ustawieniach i tylko te zaznaczone
+                settings.visibleCharts.filter { it.isEnabled }.forEach { widget ->
                     when (widget.id) {
                         "map" -> {
                             if (data.route.isNotEmpty()) {
@@ -125,7 +125,7 @@ fun ActivityDetailScreen(
                         }
                         else -> {
                             val producer = viewModel.chartProducers[widget.id]
-                            // Mapowanie klucza na SessionData.charts (predkosc -> predkosc_gps, odl_kroki -> kroki_dystans)
+                            // Mapowanie klucza na SessionData.charts
                             val chartKey = when(widget.id) {
                                 "predkosc" -> "predkosc_gps"
                                 "odl_kroki" -> "kroki_dystans"
@@ -155,57 +155,53 @@ fun ActivityDetailScreen(
 }
 
 @Composable
-fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleElements: List<WidgetItem>) {
-    val isEnabled = { id: String -> visibleElements.any { it.id == id && it.isEnabled } }
+fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidgets: List<WidgetItem>) {
+    val enabledWidgets = visibleWidgets.filter { it.isEnabled }
     
-    // Lista wszystkich potencjalnych widgetów (z nowymi nazwami)
-    val allPossibleWidgets = mutableListOf<Pair<String, String>>()
-    
-    if (isEnabled("bpm")) {
-        allPossibleWidgets.add("Maksymalne tętno" to "${data.maxBpm} bpm")
-        allPossibleWidgets.add("Średnie tętno" to "${data.avgBpm} bpm")
-    }
-    
-    if (isEnabled("kalorie_min")) {
-        allPossibleWidgets.add("Spalone kalorie" to "${data.totalCalories} kcal")
-        allPossibleWidgets.add("Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin))
-    }
-
-    val showGpsStats = isEnabled("map") || isEnabled("gps_dystans") || isEnabled("wysokosc") || 
-                       isEnabled("przewyzszenia_gora") || isEnabled("przewyzszenia_dol") || isEnabled("predkosc")
-    
-    if (showGpsStats) {
-        allPossibleWidgets.add("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeedGps))
-        allPossibleWidgets.add("Dystans" to formatDistance(data.totalDistanceGps))
-    }
-
-    val showStepsStats = isEnabled("odl_kroki") || isEnabled("predkosc_kroki") || isEnabled("kroki_min")
-    
-    if (showStepsStats) {
-        allPossibleWidgets.add("Maks prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps))
-        allPossibleWidgets.add("Liczba kroków" to "${data.totalSteps}")
-        allPossibleWidgets.add("Dystans (kroki)" to formatDistance(data.totalDistanceSteps))
-    }
+    val widgetValues = mapOf(
+        "duration" to ("Czas trwania" to data.duration),
+        "max_bpm" to ("Maksymalne tętno" to "${data.maxBpm} bpm"),
+        "avg_bpm" to ("Średnie tętno" to "${data.avgBpm} bpm"),
+        "total_calories" to ("Spalone kalorie" to "${data.totalCalories} kcal"),
+        "max_calories_min" to ("Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin)),
+        "avg_pace" to ("Średnie tempo" to formatPace(data.avgPace)),
+        "max_speed" to ("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeed)),
+        "max_altitude" to ("Maks wysokość" to String.format(Locale.US, "%.0f m n.p.m.", data.maxAltitude)),
+        "total_ascent" to ("Suma podejść" to String.format(Locale.US, "+%.0f m", data.totalAscent)),
+        "total_descent" to ("Suma zejść" to String.format(Locale.US, "-%.0f m", data.totalDescent)),
+        "avg_step_length" to ("Śr. długość kroku" to String.format(Locale.US, "%.2f m", data.avgStepLength)),
+        "avg_cadence" to ("Śr. kadencja" to String.format(Locale.US, "%.0f kr/min", data.avgCadence)),
+        "max_cadence" to ("Maks. kadencja" to String.format(Locale.US, "%.0f kr/min", data.maxCadence)),
+        "total_steps" to ("Liczba kroków" to "${data.totalSteps}"),
+        "total_distance_gps" to ("Dystans (GPS)" to formatDistance(data.totalDistanceGps)),
+        "total_distance_steps" to ("Dystans (kroki)" to formatDistance(data.totalDistanceSteps))
+    )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        // 1. Pierwszy wiersz to zawsze 'Czas trwania'
-        SummaryItem(label = "Czas trwania", value = data.duration, modifier = Modifier.fillMaxWidth())
-        
-        // 2. Kolejne wiersze (2 widgety na wiersz, ostatni na pełną szerokość jeśli nieparzyste)
-        val chunks = allPossibleWidgets.chunked(2)
-        chunks.forEach { chunk ->
-            Spacer(modifier = Modifier.height(8.dp))
+        val chunks = enabledWidgets.chunked(2)
+        chunks.forEachIndexed { index, chunk ->
+            if (index > 0) Spacer(modifier = Modifier.height(8.dp))
+            
             if (chunk.size == 2) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SummaryItem(label = chunk[0].first, value = chunk[0].second, modifier = Modifier.weight(1f))
-                    SummaryItem(label = chunk[1].first, value = chunk[1].second, modifier = Modifier.weight(1f))
+                    val w1 = widgetValues[chunk[0].id]
+                    val w2 = widgetValues[chunk[1].id]
+                    if (w1 != null) SummaryItem(label = w1.first, value = w1.second, modifier = Modifier.weight(1f))
+                    if (w2 != null) SummaryItem(label = w2.first, value = w2.second, modifier = Modifier.weight(1f))
                 }
             } else {
-                // Ostatni widget w nieparzystym zestawie na całą długość
-                SummaryItem(label = chunk[0].first, value = chunk[0].second, modifier = Modifier.fillMaxWidth())
+                val w = widgetValues[chunk[0].id]
+                if (w != null) SummaryItem(label = w.first, value = w.second, modifier = Modifier.fillMaxWidth())
             }
         }
     }
+}
+
+private fun formatPace(paceDecimal: Double): String {
+    if (paceDecimal <= 0 || paceDecimal > 60) return "--:--"
+    val minutes = paceDecimal.toInt()
+    val seconds = ((paceDecimal - minutes) * 60).toInt()
+    return String.format(Locale.US, "%02d:%02d min/km", minutes, seconds)
 }
 
 private fun formatDistance(distanceMeters: Double): String {

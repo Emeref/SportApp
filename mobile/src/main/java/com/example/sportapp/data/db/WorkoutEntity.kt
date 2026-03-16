@@ -20,7 +20,14 @@ data class WorkoutEntity(
     val maxBpm: Int?,
     val totalCalories: Double?,
     val maxCalorieMin: Double?,
-    val durationSeconds: Long
+    val durationSeconds: Long,
+    // Nowe metryki statystyczne
+    val avgPace: Double? = null, // min/km
+    val maxSpeed: Double? = null, // km/h
+    val maxAltitude: Double? = null, // m
+    val avgStepLength: Double? = null, // m
+    val avgCadence: Double? = null, // kroki/min
+    val maxCadence: Double? = null // kroki/min
 )
 
 @Entity(tableName = "workout_points")

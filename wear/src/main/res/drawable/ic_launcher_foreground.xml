@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Wstawiamy logo z marginesem (safe zone dla Adaptive Icons) -->
     <item
         android:drawable="@drawable/logo_apki_biale"
         android:bottom="24dp"

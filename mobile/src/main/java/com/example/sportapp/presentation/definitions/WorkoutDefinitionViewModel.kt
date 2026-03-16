@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.definitions
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.db.WorkoutDefinitionDao
@@ -7,7 +8,9 @@ import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.data.WorkoutDefinitionSyncManager
+import com.example.sportapp.presentation.stats.ActivityDetailSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -18,8 +21,11 @@ import javax.inject.Inject
 @HiltViewModel
 class WorkoutDefinitionViewModel @Inject constructor(
     private val dao: WorkoutDefinitionDao,
-    private val syncManager: WorkoutDefinitionSyncManager
+    private val syncManager: WorkoutDefinitionSyncManager,
+    @ApplicationContext context: Context
 ) : ViewModel() {
+
+    private val detailSettingsManager = ActivityDetailSettingsManager(context)
 
     val definitions: StateFlow<List<WorkoutDefinition>> = dao.getAllDefinitions()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -71,6 +77,7 @@ class WorkoutDefinitionViewModel @Inject constructor(
         if (definition.isDefault) return
         viewModelScope.launch {
             dao.deleteDefinition(definition)
+            detailSettingsManager.deleteSettings(definition.name)
         }
     }
 }
