@@ -12,6 +12,8 @@ import android.location.Location
 import android.os.*
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.wear.ongoing.OngoingActivity
+import androidx.wear.ongoing.Status
 import com.example.sportapp.R
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
@@ -183,10 +185,31 @@ class WorkoutService : Service(), SensorEventListener {
             startForeground(NOTIFICATION_ID, notification)
         }
         
+        setupOngoingActivity()
+        
         registerSensors()
         startTimer()
         startLocationUpdates()
         updateState(null)
+    }
+
+    private fun setupOngoingActivity() {
+        val intent = Intent(this, com.example.sportapp.presentation.MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+
+        val ongoingActivity = OngoingActivity.Builder(
+            applicationContext, NOTIFICATION_ID, createNotificationBuilder()
+        ).setStaticIcon(R.mipmap.ic_launcher)
+            .setTouchIntent(pendingIntent)
+            .setStatus(
+                Status.Builder()
+                    .addPart("name", Status.TextPart(sportDefinition?.name ?: fallbackActivityName))
+                    .addPart("duration", Status.StopwatchPart(SystemClock.elapsedRealtime() - (totalSeconds * 1000)))
+                    .build()
+            )
+            .build()
+
+        ongoingActivity.apply(applicationContext)
     }
 
     private fun togglePause() {
@@ -198,6 +221,7 @@ class WorkoutService : Service(), SensorEventListener {
             lastResumeTimeMillis = System.currentTimeMillis()
         }
         updateNotification()
+        setupOngoingActivity() // Refresh status (stopwatch)
         updateState(null)
     }
 
@@ -385,7 +409,7 @@ class WorkoutService : Service(), SensorEventListener {
         )
     }
 
-    private fun createNotification(): Notification {
+    private fun createNotificationBuilder(): NotificationCompat.Builder {
         val intent = Intent(this, com.example.sportapp.presentation.MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
@@ -395,7 +419,12 @@ class WorkoutService : Service(), SensorEventListener {
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
-            .build()
+            .setCategory(NotificationCompat.CATEGORY_WORKOUT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+    }
+
+    private fun createNotification(): Notification {
+        return createNotificationBuilder().build()
     }
 
     private fun updateNotification() {

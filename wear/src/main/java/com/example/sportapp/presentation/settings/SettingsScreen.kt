@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Watch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +23,12 @@ import androidx.wear.compose.material.Text
 import com.google.maps.android.compose.MapType
 
 @Composable
-fun SettingsScreen(navController: NavHostController, currentMapType: MapType, currentClockColor: Color?) {
+fun SettingsScreen(
+    navController: NavHostController, 
+    currentMapType: MapType, 
+    currentClockColor: Color?,
+    currentScreenBehavior: ScreenBehavior
+) {
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -48,6 +54,22 @@ fun SettingsScreen(navController: NavHostController, currentMapType: MapType, cu
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
+
+        item {
+            val behaviorLabel = when (currentScreenBehavior) {
+                ScreenBehavior.KEEP_SCREEN_ON -> "Zawsze włączony"
+                ScreenBehavior.AMBIENT -> "Tryb Ambient"
+                ScreenBehavior.SYSTEM -> "Systemowe"
+            }
+            Chip(
+                label = { Text("Ekran") },
+                secondaryLabel = { Text(behaviorLabel) },
+                onClick = { navController.navigate("screen_behavior_selection") },
+                icon = { Icon(Icons.Default.Watch, contentDescription = "Ekran") },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
+
         item {
             val colorLabel = when (currentClockColor) {
                 Color.Red -> "Czerwony"
