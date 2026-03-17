@@ -40,6 +40,7 @@ fun DynamicWorkoutScreen(
     mapType: MapType,
     clockColor: Color?,
     healthData: HealthData,
+    autoCenterDelay: Int,
     onEndWorkout: (String, List<Pair<String, String>>) -> Unit,
     viewModel: DynamicWorkoutViewModel = hiltViewModel()
 ) {
@@ -146,7 +147,12 @@ fun DynamicWorkoutScreen(
                                     .fillMaxWidth()
                                     .height(200.dp)
                             ) {
-                                MapScreen(mapType, focusRequester)
+                                MapScreen(
+                                    mapType = mapType, 
+                                    focusRequester = focusRequester,
+                                    lastPoint = session.lastPoint,
+                                    autoCenterDelay = autoCenterDelay
+                                )
                             }
                         }
                     }

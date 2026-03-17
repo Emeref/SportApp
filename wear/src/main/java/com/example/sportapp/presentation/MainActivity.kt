@@ -40,16 +40,18 @@ class MainActivity : ComponentActivity() {
             val navController = rememberSwipeDismissableNavController()
             val scope = rememberCoroutineScope()
             
-            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData()))
+            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData(), 5))
             
             var selectedMapType by remember { mutableStateOf(MapType.NORMAL) }
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
             var healthData by remember { mutableStateOf(HealthData()) }
+            var autoCenterDelay by remember { mutableIntStateOf(5) }
 
             LaunchedEffect(settingsState) {
                 selectedMapType = settingsState.mapType
                 selectedClockColor = settingsState.clockColor
                 healthData = settingsState.healthData
+                autoCenterDelay = settingsState.autoCenterDelay
             }
             
             // Permissions
@@ -105,12 +107,27 @@ class MainActivity : ComponentActivity() {
                                 currentClockColor = selectedClockColor
                             ) 
                         }
+
+                        composable("map_settings") {
+                            MapSettingsScreen(
+                                navController = navController,
+                                currentMapType = selectedMapType,
+                                currentAutoCenterDelay = autoCenterDelay
+                            )
+                        }
                         
                         composable("map_type_selection") { 
                             MapTypeSelectionScreen(selectedMapType) { 
                                 selectedMapType = it
                                 scope.launch { settingsManager.saveMapType(it) }
                             } 
+                        }
+
+                        composable("auto_center_delay_selection") {
+                            AutoCenterDelaySelectionScreen(autoCenterDelay) {
+                                autoCenterDelay = it
+                                scope.launch { settingsManager.saveAutoCenterDelay(it) }
+                            }
                         }
                         
                         composable("clock_color_selection") {
@@ -232,6 +249,7 @@ class MainActivity : ComponentActivity() {
                                 mapType = selectedMapType,
                                 clockColor = selectedClockColor,
                                 healthData = healthData,
+                                autoCenterDelay = autoCenterDelay,
                                 onEndWorkout = { name, summary ->
                                     currentSummaryData = name to summary
                                     navController.navigate("workout_summary") {

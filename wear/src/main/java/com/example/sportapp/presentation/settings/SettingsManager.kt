@@ -25,6 +25,7 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         private val MAP_TYPE_KEY = stringPreferencesKey("map_type")
         private val CLOCK_COLOR_KEY = longPreferencesKey("clock_color")
         private val HEALTH_DATA_KEY = stringPreferencesKey("health_data")
+        private val AUTO_CENTER_DELAY_KEY = intPreferencesKey("auto_center_delay")
     }
 
     val settingsFlow: Flow<UserSettings> = context.dataStore.data
@@ -45,8 +46,9 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             } else {
                 HealthData()
             }
+            val autoCenterDelay = preferences[AUTO_CENTER_DELAY_KEY] ?: 5 // Default 5 seconds
 
-            UserSettings(mapType, clockColor, healthData)
+            UserSettings(mapType, clockColor, healthData, autoCenterDelay)
         }
 
     suspend fun saveMapType(type: MapType) {
@@ -66,10 +68,17 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             preferences[HEALTH_DATA_KEY] = gson.toJson(data)
         }
     }
+
+    suspend fun saveAutoCenterDelay(delaySeconds: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_CENTER_DELAY_KEY] = delaySeconds
+        }
+    }
 }
 
 data class UserSettings(
     val mapType: MapType,
     val clockColor: Color?,
-    val healthData: HealthData
+    val healthData: HealthData,
+    val autoCenterDelay: Int
 )

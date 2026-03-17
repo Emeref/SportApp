@@ -41,18 +41,10 @@ fun SettingsScreen(navController: NavHostController, currentMapType: MapType, cu
         }
 
         item {
-            val mapTypeLabel = when (currentMapType) {
-                MapType.NORMAL -> "Normalna"
-                MapType.SATELLITE -> "Satelitarna"
-                MapType.TERRAIN -> "Terenowa"
-                MapType.HYBRID -> "Hybrydowa"
-                else -> currentMapType.name
-            }
             Chip(
-                label = { Text("Rodzaj mapy") },
-                secondaryLabel = { Text(mapTypeLabel) },
-                onClick = { navController.navigate("map_type_selection") },
-                icon = { Icon(Icons.Default.Map, contentDescription = "Rodzaj mapy") },
+                label = { Text("Mapa") },
+                onClick = { navController.navigate("map_settings") },
+                icon = { Icon(Icons.Default.Map, contentDescription = "Mapa") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
