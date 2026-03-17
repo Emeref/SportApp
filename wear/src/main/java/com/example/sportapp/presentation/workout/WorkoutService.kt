@@ -64,6 +64,7 @@ class WorkoutService : Service(), SensorEventListener {
 
     private var status = WorkoutStatus.IDLE
     private var currentWorkoutId: Long = -1
+    private var currentDefinitionId: Long = -1
     private var totalMillisBeforePause: Long = 0L
     private var lastResumeTimeMillis: Long = 0L
     private var totalSeconds = 0L
@@ -114,6 +115,7 @@ class WorkoutService : Service(), SensorEventListener {
         when (intent.action) {
             ACTION_START -> {
                 val definitionId = intent.getLongExtra(EXTRA_DEFINITION_ID, -1L)
+                currentDefinitionId = definitionId
                 fallbackActivityName = intent.getStringExtra(EXTRA_ACTIVITY_NAME) ?: "Aktywność"
                 val hDataJson = intent.getStringExtra(EXTRA_HEALTH_DATA_JSON)
                 val hData = if (hDataJson != null) gson.fromJson(hDataJson, HealthData::class.java) else HealthData()
@@ -194,7 +196,10 @@ class WorkoutService : Service(), SensorEventListener {
     }
 
     private fun setupOngoingActivity() {
-        val intent = Intent(this, com.example.sportapp.presentation.MainActivity::class.java)
+        val intent = Intent(this, com.example.sportapp.presentation.MainActivity::class.java).apply {
+            putExtra("EXTRA_DEFINITION_ID", currentDefinitionId)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val ongoingActivity = OngoingActivity.Builder(
@@ -204,7 +209,6 @@ class WorkoutService : Service(), SensorEventListener {
             .setStatus(
                 Status.Builder()
                     .addPart("name", Status.TextPart(sportDefinition?.name ?: fallbackActivityName))
-                    .addPart("duration", Status.StopwatchPart(SystemClock.elapsedRealtime() - (totalSeconds * 1000)))
                     .build()
             )
             .build()
@@ -221,20 +225,26 @@ class WorkoutService : Service(), SensorEventListener {
             lastResumeTimeMillis = System.currentTimeMillis()
         }
         updateNotification()
-        setupOngoingActivity() // Refresh status (stopwatch)
         updateState(null)
     }
 
     private fun stopWorkout() {
+        // Natychmiastowe zatrzymanie timera, aby uniknąć kolejnych aktualizacji powiadomienia
+        timerJob?.cancel()
+        
         if (status == WorkoutStatus.ACTIVE) {
             totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
         }
         totalSeconds = totalMillisBeforePause / 1000
         status = WorkoutStatus.IDLE
         unregisterSensors()
-        timerJob?.cancel()
         locationCallback?.let { fusedLocationClient.removeLocationUpdates(it) }
         wakeLock?.let { if (it.isHeld) it.release() }
+        
+        // Priorytetowe usunięcie Ongoing Activity i powiadomienia
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(NOTIFICATION_ID)
+        stopForeground(STOP_FOREGROUND_REMOVE)
         
         serviceScope.launch {
             val points = workoutDao.getPointsForWorkout(currentWorkoutId)
@@ -270,7 +280,6 @@ class WorkoutService : Service(), SensorEventListener {
                 totalCalories = if (isRecording(WorkoutSensor.CALORIES_SUM)) totalCaloriesAcc else null,
                 maxCalorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) (points.mapNotNull { it.calorieMin }.maxOrNull() ?: 0.0) else null,
                 durationSeconds = totalSeconds,
-                // Nowe pola
                 avgPace = sessionStats.avgPace,
                 maxSpeed = sessionStats.maxSpeed,
                 maxAltitude = sessionStats.maxAltitude,
@@ -284,8 +293,9 @@ class WorkoutService : Service(), SensorEventListener {
                 dataLayerManager.syncActivities()
             }
             
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
+            withContext(Dispatchers.Main) {
+                stopSelf()
+            }
         }
     }
 
@@ -308,6 +318,7 @@ class WorkoutService : Service(), SensorEventListener {
     private fun startTimer() {
         timerJob = serviceScope.launch {
             var lastUpdateMillis = System.currentTimeMillis()
+            var lastNotificationUpdateMillis = 0L
             while (isActive) {
                 if (status == WorkoutStatus.ACTIVE) {
                     delay(1000)
@@ -336,16 +347,19 @@ class WorkoutService : Service(), SensorEventListener {
                     
                     if (lastPoint != null) {
                         pointsList.add(lastPoint)
-                        // Keep only last 200 points for UI to be safe (min 100 required)
                         if (pointsList.size > 200) pointsList.removeAt(0)
                     }
                     
-                    // Track aggregates for UI summary
                     if (heartRate > maxBpm) maxBpm = heartRate.toInt()
                     if (speedKmH > maxSpeedGps) maxSpeedGps = speedKmH.toDouble()
                     lastPoint?.speedSteps?.let { if (it > maxSpeedSteps) maxSpeedSteps = it }
 
                     updateState(lastPoint)
+
+                    if (now - lastNotificationUpdateMillis > 5000) {
+                        updateNotification()
+                        lastNotificationUpdateMillis = now
+                    }
                 } else {
                     delay(500)
                     lastUpdateMillis = System.currentTimeMillis()
@@ -410,17 +424,21 @@ class WorkoutService : Service(), SensorEventListener {
     }
 
     private fun createNotificationBuilder(): NotificationCompat.Builder {
-        val intent = Intent(this, com.example.sportapp.presentation.MainActivity::class.java)
+        val intent = Intent(this, com.example.sportapp.presentation.MainActivity::class.java).apply {
+            putExtra("EXTRA_DEFINITION_ID", currentDefinitionId)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Aktywny trening: ${sportDefinition?.name ?: fallbackActivityName}")
+            .setContentTitle("${sportDefinition?.name ?: fallbackActivityName}")
             .setContentText("Czas: ${formatTime(totalSeconds)}")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_WORKOUT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOnlyAlertOnce(true)
     }
 
     private fun createNotification(): Notification {

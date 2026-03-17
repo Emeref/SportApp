@@ -59,7 +59,7 @@ fun SettingsScreen(
             val behaviorLabel = when (currentScreenBehavior) {
                 ScreenBehavior.KEEP_SCREEN_ON -> "Zawsze włączony"
                 ScreenBehavior.AMBIENT -> "Tryb Ambient"
-                ScreenBehavior.SYSTEM -> "Systemowe"
+                ScreenBehavior.SYSTEM -> "Tryb Automatyczny"
             }
             Chip(
                 label = { Text("Ekran") },

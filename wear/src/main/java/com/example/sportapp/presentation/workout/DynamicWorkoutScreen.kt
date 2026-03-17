@@ -30,6 +30,7 @@ import com.example.sportapp.presentation.components.SportDataRow
 import com.example.sportapp.presentation.settings.HealthData
 import com.example.sportapp.presentation.settings.ScreenBehavior
 import com.google.maps.android.compose.MapType
+import kotlinx.coroutines.delay
 import java.util.*
 
 @OptIn(ExperimentalWearFoundationApi::class)
@@ -249,6 +250,15 @@ private fun ActiveWorkoutUI(
 
 @Composable
 private fun AmbientWorkoutUI(session: WorkoutSessionState, dataSensors: List<SensorConfig>) {
+    var currentTime by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val cal = Calendar.getInstance()
+            currentTime = String.format(Locale.getDefault(), "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+            delay(1000)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -256,23 +266,49 @@ private fun AmbientWorkoutUI(session: WorkoutSessionState, dataSensors: List<Sen
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // 1. Zegarek (mniejszy od czasu aktywności)
+        Text(
+            text = currentTime,
+            style = MaterialTheme.typography.caption2,
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // 2. Czas aktywności
         Text(
             text = session.workoutTimerState.formattedTime,
             style = MaterialTheme.typography.title1,
-            fontSize = 42.sp,
+            fontSize = 32.sp,
             color = Color.White
         )
+        
         Spacer(modifier = Modifier.height(8.dp))
         
-        val sensorsToShow = dataSensors.take(2)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            sensorsToShow.forEach { sensor ->
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    DynamicSensorDispatcher(sensor.sensorId, session, true)
+        // 3. Dwa pierwsze sensory w jednej linii
+        val firstTwoSensors = dataSensors.take(2)
+        if (firstTwoSensors.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                firstTwoSensors.forEach { sensor ->
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        DynamicSensorDispatcher(sensor.sensorId, session, true)
+                    }
                 }
+            }
+        }
+
+        // 4. Trzeci sensor wycentrowany pod nimi
+        if (dataSensors.size >= 3) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                DynamicSensorDispatcher(dataSensors[2].sensorId, session, true)
             }
         }
     }
