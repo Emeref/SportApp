@@ -81,6 +81,10 @@ dependencies {
     implementation(libs.androidx.watchface.complications.data.source.ktx)
     implementation(libs.kotlinx.coroutines.play.services)
     
+    // Ambient Mode & Ongoing Activity
+    implementation(libs.androidx.wear.core)
+    implementation(libs.androidx.wear.ongoing)
+    
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

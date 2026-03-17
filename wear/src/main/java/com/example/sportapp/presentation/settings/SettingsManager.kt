@@ -18,6 +18,10 @@ import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
+enum class ScreenBehavior {
+    KEEP_SCREEN_ON, AMBIENT, SYSTEM
+}
+
 @Singleton
 class SettingsManager @Inject constructor(@ApplicationContext private val context: Context) {
     private val gson = Gson()
@@ -29,6 +33,7 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         private val AUTO_CENTER_DELAY_KEY = intPreferencesKey("auto_center_delay")
         private val SHOW_ROUTE_KEY = booleanPreferencesKey("show_route")
         private val ROUTE_COLOR_KEY = longPreferencesKey("route_color")
+        private val SCREEN_BEHAVIOR_KEY = stringPreferencesKey("screen_behavior")
         
         val Orange = Color(0xFFFFA500)
         val Transparent = Color.Transparent
@@ -56,8 +61,9 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             val showRoute = preferences[SHOW_ROUTE_KEY] ?: true
             val routeColorValue = preferences[ROUTE_COLOR_KEY] ?: Orange.toArgb().toLong()
             val routeColor = if (routeColorValue == -1L) Transparent else Color(routeColorValue.toULong())
+            val screenBehavior = preferences[SCREEN_BEHAVIOR_KEY]?.let { ScreenBehavior.valueOf(it) } ?: ScreenBehavior.KEEP_SCREEN_ON
 
-            UserSettings(mapType, clockColor, healthData, autoCenterDelay, showRoute, routeColor)
+            UserSettings(mapType, clockColor, healthData, autoCenterDelay, showRoute, routeColor, screenBehavior)
         }
 
     suspend fun saveMapType(type: MapType) {
@@ -95,6 +101,12 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             preferences[ROUTE_COLOR_KEY] = if (color == Transparent) -1L else color.value.toLong()
         }
     }
+
+    suspend fun saveScreenBehavior(behavior: ScreenBehavior) {
+        context.dataStore.edit { preferences ->
+            preferences[SCREEN_BEHAVIOR_KEY] = behavior.name
+        }
+    }
 }
 
 data class UserSettings(
@@ -103,5 +115,6 @@ data class UserSettings(
     val healthData: HealthData,
     val autoCenterDelay: Int,
     val showRoute: Boolean,
-    val routeColor: Color
+    val routeColor: Color,
+    val screenBehavior: ScreenBehavior
 )

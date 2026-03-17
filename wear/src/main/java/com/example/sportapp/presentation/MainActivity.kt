@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material.*
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
@@ -34,13 +35,35 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsManager: SettingsManager
 
+    private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
+        override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
+            _isAmbient.value = true
+        }
+
+        override fun onExitAmbient() {
+            _isAmbient.value = false
+        }
+
+        override fun onUpdateAmbient() {
+            // Update UI if needed
+        }
+    }
+
+    private val ambientObserver = AmbientLifecycleObserver(this, ambientCallback)
+    private val _isAmbient = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        lifecycle.addObserver(ambientObserver)
+        
         setContent {
             val navController = rememberSwipeDismissableNavController()
             val scope = rememberCoroutineScope()
             
-            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData(), 5, true, SettingsManager.Orange))
+            val isAmbient by _isAmbient
+            
+            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData(), 5, true, SettingsManager.Orange, ScreenBehavior.KEEP_SCREEN_ON))
             
             var selectedMapType by remember { mutableStateOf(MapType.NORMAL) }
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
@@ -48,6 +71,7 @@ class MainActivity : ComponentActivity() {
             var autoCenterDelay by remember { mutableIntStateOf(5) }
             var showRoute by remember { mutableStateOf(true) }
             var routeColor by remember { mutableStateOf(SettingsManager.Orange) }
+            var screenBehavior by remember { mutableStateOf(ScreenBehavior.KEEP_SCREEN_ON) }
 
             LaunchedEffect(settingsState) {
                 selectedMapType = settingsState.mapType
@@ -56,6 +80,7 @@ class MainActivity : ComponentActivity() {
                 autoCenterDelay = settingsState.autoCenterDelay
                 showRoute = settingsState.showRoute
                 routeColor = settingsState.routeColor
+                screenBehavior = settingsState.screenBehavior
             }
             
             // Permissions
@@ -81,7 +106,7 @@ class MainActivity : ComponentActivity() {
             SportAppTheme {
                 Scaffold(
                     timeText = { 
-                        if (selectedClockColor != null) {
+                        if (selectedClockColor != null && !isAmbient) {
                             TimeText(
                                 timeTextStyle = MaterialTheme.typography.caption1.copy(
                                     color = selectedClockColor!!
@@ -108,8 +133,16 @@ class MainActivity : ComponentActivity() {
                             SettingsScreen(
                                 navController = navController, 
                                 currentMapType = selectedMapType, 
-                                currentClockColor = selectedClockColor
+                                currentClockColor = selectedClockColor,
+                                currentScreenBehavior = screenBehavior
                             ) 
+                        }
+
+                        composable("screen_behavior_selection") {
+                            ScreenBehaviorSelectionScreen(screenBehavior) {
+                                screenBehavior = it
+                                scope.launch { settingsManager.saveScreenBehavior(it) }
+                            }
                         }
 
                         composable("map_settings") {
@@ -269,6 +302,8 @@ class MainActivity : ComponentActivity() {
                                 autoCenterDelay = autoCenterDelay,
                                 showRoute = showRoute,
                                 routeColor = routeColor,
+                                screenBehavior = screenBehavior,
+                                isAmbient = isAmbient,
                                 onEndWorkout = { name, summary ->
                                     currentSummaryData = name to summary
                                     navController.navigate("workout_summary") {
