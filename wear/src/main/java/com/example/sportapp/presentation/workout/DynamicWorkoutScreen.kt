@@ -97,9 +97,13 @@ fun DynamicWorkoutScreen(
     )
 
     // Decyzja o wyświetleniu trybu uproszczonego:
-    // 1. Zawsze gdy system jest w trybie isAmbient (ochrona ekranu)
+    // 1. Zawsze gdy system jest w trybie isAmbient (ochrona ekranu) - CHYBA ŻE wymuszono KEEP_SCREEN_ON
     // 2. Gdy użytkownik wybrał tryb AMBIENT w ustawieniach i NIE kliknął jeszcze w ekran (forceActiveUI == false)
-    val shouldShowAmbientUI = isAmbient || (screenBehavior == ScreenBehavior.AMBIENT && !forceActiveUI)
+    val shouldShowAmbientUI = if (screenBehavior == ScreenBehavior.KEEP_SCREEN_ON) {
+        false // W trybie "Zawsze włączony" nigdy nie przechodzimy do Ambient UI wewnątrz aplikacji
+    } else {
+        isAmbient || (screenBehavior == ScreenBehavior.AMBIENT && !forceActiveUI)
+    }
 
     if (shouldShowAmbientUI) {
         Box(
