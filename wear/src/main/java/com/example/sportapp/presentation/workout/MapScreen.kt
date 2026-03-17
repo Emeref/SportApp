@@ -83,16 +83,16 @@ fun MapScreen(mapType: MapType, focusRequester: FocusRequester) {
                 val zoomProgress = (cameraPositionState.position.zoom - 2f) / 18f
                 CircularProgressIndicator(
                     progress = 1f - zoomProgress,
-                    modifier = Modifier.fillMaxSize().padding(6.dp),
+                    modifier = Modifier.fillMaxSize().padding(2.dp),
                     startAngle = 320f,
                     endAngle = 40f,
-                    strokeWidth = 8.dp,
+                    strokeWidth = 6.dp,
                     indicatorColor = Color.DarkGray.copy(alpha = 0.5f),
                     trackColor = Color.LightGray.copy(alpha = 0.9f)
                 )
 
                 Box(
-                    modifier = Modifier.fillMaxHeight().width(50.dp).align(Alignment.CenterEnd)
+                    modifier = Modifier.fillMaxHeight().width(40.dp).align(Alignment.CenterEnd)
                         .pointerInput(Unit) {
                             detectVerticalDragGestures { change, dragAmount ->
                                 change.consume()

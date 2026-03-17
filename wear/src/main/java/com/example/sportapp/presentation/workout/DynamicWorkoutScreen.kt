@@ -102,10 +102,11 @@ fun DynamicWorkoutScreen(
                     state = listState,
                     userScrollEnabled = isScrollEnabled,
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 20.dp)
                 ) {
                     item {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 24.dp)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 10.dp, start = 8.dp, end = 8.dp)) {
                             Text("CZAS AKTYWNOŚCI", style = androidx.wear.compose.material.MaterialTheme.typography.caption2, color = Color.Gray)
                             Text(session.workoutTimerState.formattedTime, style = androidx.wear.compose.material.MaterialTheme.typography.title1, fontSize = 28.sp)
                         }
@@ -113,7 +114,9 @@ fun DynamicWorkoutScreen(
 
                     if (dataSensors.size <= 3) {
                         items(dataSensors.size) { index ->
-                            DynamicSensorDispatcher(dataSensors[index].sensorId, session)
+                            Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                DynamicSensorDispatcher(dataSensors[index].sensorId, session)
+                            }
                         }
                     } else {
                         val rows = dataSensors.chunked(2)
@@ -135,14 +138,13 @@ fun DynamicWorkoutScreen(
                     if (hasMap) {
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("MAPA", style = androidx.wear.compose.material.MaterialTheme.typography.caption2, color = Color.Gray)
+                            Text("MAPA", style = androidx.wear.compose.material.MaterialTheme.typography.caption2, color = Color.Gray, modifier = Modifier.padding(horizontal = 8.dp))
                         }
                         item {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(160.dp)
-                                    .padding(horizontal = 8.dp)
+                                    .height(200.dp)
                             ) {
                                 MapScreen(mapType, focusRequester)
                             }
