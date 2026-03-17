@@ -17,8 +17,6 @@ class WorkoutLogger(
     private val healthData: HealthData,
     private val sensorConfigs: List<SensorConfig>
 ) {
-    private var startTime: Long = System.currentTimeMillis()
-    
     // Logika przewyższeń
     private var lastAscentRef: Double? = null
     private var lastDescentRef: Double? = null
@@ -45,6 +43,7 @@ class WorkoutLogger(
     fun getAvgBpm(): Int = if (heartRates.isNotEmpty()) heartRates.average().toInt() else 0
 
     suspend fun logData(
+        durationSeconds: Long,
         lat: Double? = null,
         lon: Double? = null,
         bpm: Float? = null,
@@ -55,12 +54,14 @@ class WorkoutLogger(
         calorieMin: Double? = null,
         calorieSum: Double? = null
     ): WorkoutPointEntity = withContext(Dispatchers.IO) {
-        val currentTime = System.currentTimeMillis()
-        val durationMillis = currentTime - startTime
-        val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", (durationMillis / 3600000), (durationMillis / 60000) % 60, (durationMillis / 1000) % 60)
+        val h = durationSeconds / 3600
+        val m = (durationSeconds % 3600) / 60
+        val s = durationSeconds % 60
+        val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
 
         if (bpm != null && bpm > 0) heartRates.add(bpm)
 
+        val currentTime = System.currentTimeMillis()
         // Obliczanie stepsMin (kadencji) na podstawie okna 20 sekund
         if (kroki != null) {
             stepHistory.add(currentTime to kroki)
@@ -74,9 +75,9 @@ class WorkoutLogger(
             val timeDiffMin = (newTime - oldTime) / 60000.0
             val stepDiff = newSteps - oldSteps
             if (timeDiffMin > 0) (stepDiff / timeDiffMin) else 0.0
-        } else if (kroki != null && kroki > 0 && durationMillis > 0) {
+        } else if (kroki != null && kroki > 0 && durationSeconds > 0) {
             // Fallback na średnią globalną, jeśli mamy za mało danych w oknie (początek treningu)
-            (kroki.toDouble() / (durationMillis / 60000.0))
+            (kroki.toDouble() / (durationSeconds / 60.0))
         } else null
 
         val predkoscKroki = if (stepsMin != null && stepsMin > 0) (stepsMin * healthData.stepLength * 60.0) / 100000.0 else null

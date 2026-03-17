@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.menu
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,6 +15,7 @@ import androidx.navigation.NavHostController
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
@@ -27,36 +29,45 @@ fun ChooseSportScreen(
     val definitions by viewModel.definitions.collectAsState()
     val listState = rememberScalingLazyListState()
 
-    ScalingLazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        state = listState,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        item { ListHeader { Text("Wybierz sport") } }
-        
-        if (definitions.isEmpty()) {
-            item {
-                Text(
-                    text = "Brak definicji aktywności. Zdefiniuj je w aplikacji na telefonie.",
-                    modifier = Modifier.padding(16.dp),
-                    style = androidx.wear.compose.material.MaterialTheme.typography.body2,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+    if (definitions == null) {
+        // Stan ładowania - pokazujemy pusty ekran lub spinner, aby nie migał komunikat o braku danych
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item { ListHeader { Text("Wybierz sport") } }
+            
+            val currentDefinitions = definitions!!
+            
+            if (currentDefinitions.isEmpty()) {
+                item {
+                    Text(
+                        text = "Brak definicji aktywności. Zdefiniuj je w aplikacji na telefonie.",
+                        modifier = Modifier.padding(16.dp),
+                        style = androidx.wear.compose.material.MaterialTheme.typography.body2,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+
+            items(currentDefinitions) { definition ->
+                Chip(
+                    label = { Text(definition.name) },
+                    onClick = { navController.navigate("workout_ready/${definition.id}") },
+                    icon = { 
+                        Icon(
+                            imageVector = getIconForName(definition.iconName), 
+                            contentDescription = definition.name 
+                        ) 
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
                 )
             }
-        }
-
-        items(definitions) { definition ->
-            Chip(
-                label = { Text(definition.name) },
-                onClick = { navController.navigate("dynamic_workout/${definition.id}") },
-                icon = { 
-                    Icon(
-                        imageVector = getIconForName(definition.iconName), 
-                        contentDescription = definition.name 
-                    ) 
-                },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
-            )
         }
     }
 }

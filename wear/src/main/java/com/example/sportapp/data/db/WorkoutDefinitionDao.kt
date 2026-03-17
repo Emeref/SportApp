@@ -15,6 +15,12 @@ interface WorkoutDefinitionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDefinitions(definitions: List<WorkoutDefinition>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDefinition(definition: WorkoutDefinition): Long
+
+    @Query("SELECT COUNT(*) FROM workout_definitions WHERE isDefault = 1")
+    suspend fun getDefaultCount(): Int
+
     @Query("DELETE FROM workout_definitions")
     suspend fun deleteAllDefinitions()
 

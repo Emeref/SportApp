@@ -18,6 +18,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.example.sportapp.presentation.menu.ChooseSportScreen
 import com.example.sportapp.presentation.menu.MainMenuScreen
 import com.example.sportapp.presentation.menu.StatisticsScreen
+import com.example.sportapp.presentation.menu.WorkoutReadyScreen
 import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.theme.SportAppTheme
 import com.example.sportapp.presentation.workout.DynamicWorkoutScreen
@@ -39,16 +40,22 @@ class MainActivity : ComponentActivity() {
             val navController = rememberSwipeDismissableNavController()
             val scope = rememberCoroutineScope()
             
-            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData()))
+            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData(), 5, true, SettingsManager.Orange))
             
             var selectedMapType by remember { mutableStateOf(MapType.NORMAL) }
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
             var healthData by remember { mutableStateOf(HealthData()) }
+            var autoCenterDelay by remember { mutableIntStateOf(5) }
+            var showRoute by remember { mutableStateOf(true) }
+            var routeColor by remember { mutableStateOf(SettingsManager.Orange) }
 
             LaunchedEffect(settingsState) {
                 selectedMapType = settingsState.mapType
                 selectedClockColor = settingsState.clockColor
                 healthData = settingsState.healthData
+                autoCenterDelay = settingsState.autoCenterDelay
+                showRoute = settingsState.showRoute
+                routeColor = settingsState.routeColor
             }
             
             // Permissions
@@ -89,6 +96,13 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("main_menu") { MainMenuScreen(navController) }
                         composable("choose_sport") { ChooseSportScreen(navController) }
+                        composable(
+                            "workout_ready/{definitionId}",
+                            arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
+                        ) { backStackEntry ->
+                            val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
+                            WorkoutReadyScreen(navController, definitionId)
+                        }
                         composable("statistics") { StatisticsScreen() }
                         composable("settings") { 
                             SettingsScreen(
@@ -97,12 +111,40 @@ class MainActivity : ComponentActivity() {
                                 currentClockColor = selectedClockColor
                             ) 
                         }
+
+                        composable("map_settings") {
+                            MapSettingsScreen(
+                                navController = navController,
+                                currentMapType = selectedMapType,
+                                currentAutoCenterDelay = autoCenterDelay,
+                                showRoute = showRoute,
+                                onShowRouteToggle = {
+                                    showRoute = it
+                                    scope.launch { settingsManager.saveShowRoute(it) }
+                                },
+                                routeColor = routeColor
+                            )
+                        }
                         
                         composable("map_type_selection") { 
                             MapTypeSelectionScreen(selectedMapType) { 
                                 selectedMapType = it
                                 scope.launch { settingsManager.saveMapType(it) }
                             } 
+                        }
+
+                        composable("auto_center_delay_selection") {
+                            AutoCenterDelaySelectionScreen(autoCenterDelay) {
+                                autoCenterDelay = it
+                                scope.launch { settingsManager.saveAutoCenterDelay(it) }
+                            }
+                        }
+
+                        composable("route_color_selection") {
+                            RouteColorSelectionScreen(routeColor) {
+                                routeColor = it
+                                scope.launch { settingsManager.saveRouteColor(it) }
+                            }
                         }
                         
                         composable("clock_color_selection") {
@@ -224,6 +266,9 @@ class MainActivity : ComponentActivity() {
                                 mapType = selectedMapType,
                                 clockColor = selectedClockColor,
                                 healthData = healthData,
+                                autoCenterDelay = autoCenterDelay,
+                                showRoute = showRoute,
+                                routeColor = routeColor,
                                 onEndWorkout = { name, summary ->
                                     currentSummaryData = name to summary
                                     navController.navigate("workout_summary") {

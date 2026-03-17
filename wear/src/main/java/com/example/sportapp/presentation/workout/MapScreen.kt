@@ -6,8 +6,9 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,19 +20,33 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
-import com.google.android.gms.location.LocationServices
+import com.example.sportapp.data.db.WorkoutPointEntity
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 
 @SuppressLint("MissingPermission")
 @Composable
-fun MapScreen(mapType: MapType, focusRequester: FocusRequester) {
+fun MapScreen(
+    mapType: MapType,
+    focusRequester: FocusRequester,
+    lastPoint: WorkoutPointEntity? = null,
+    allPoints: List<WorkoutPointEntity> = emptyList(),
+    autoCenterDelay: Int = 5,
+    showRoute: Boolean = true,
+    routeColor: Color = Color.Cyan
+) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
     var hasLocationPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -48,16 +63,49 @@ fun MapScreen(mapType: MapType, focusRequester: FocusRequester) {
     }
 
     if (hasLocationPermission) {
-        val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
         val cameraPositionState = rememberCameraPositionState {
-            position = CameraPosition.fromLatLngZoom(LatLng(52.2297, 21.0122), 10f)
+            position = CameraPosition.fromLatLngZoom(LatLng(52.2297, 21.0122), 15f)
         }
 
-        LaunchedEffect(hasLocationPermission) {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                location?.let {
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(it.latitude, it.longitude), 15f)
+        // State for intelligent auto-centering
+        var isAutoCenteringEnabled by remember { mutableStateOf(true) }
+        
+        // Filter points for polyline (last 100 points as requested/fallback for 2 minutes)
+        val routePoints by remember(allPoints) {
+            derivedStateOf {
+                allPoints.takeLast(100).mapNotNull { p ->
+                    if (p.latitude != null && p.longitude != null) {
+                        LatLng(p.latitude, p.longitude)
+                    } else null
                 }
+            }
+        }
+
+        // Effect for new location data
+        LaunchedEffect(lastPoint) {
+            if (isAutoCenteringEnabled && lastPoint != null) {
+                lastPoint.latitude?.let { lat ->
+                    lastPoint.longitude?.let { lng ->
+                        cameraPositionState.animate(
+                            CameraUpdateFactory.newLatLng(LatLng(lat, lng))
+                        )
+                    }
+                }
+            }
+        }
+
+        // Effect for returning to auto-centering after inactivity
+        LaunchedEffect(isAutoCenteringEnabled) {
+            if (!isAutoCenteringEnabled) {
+                delay(autoCenterDelay * 1000L)
+                isAutoCenteringEnabled = true
+            }
+        }
+
+        // Detect manual camera movement
+        LaunchedEffect(cameraPositionState.isMoving) {
+            if (cameraPositionState.isMoving && cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
+                isAutoCenteringEnabled = false
             }
         }
 
@@ -75,29 +123,65 @@ fun MapScreen(mapType: MapType, focusRequester: FocusRequester) {
                     mapType = mapType
                 ),
                 uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false)
-            )
+            ) {
+                if (showRoute && routePoints.isNotEmpty()) {
+                    Polyline(
+                        points = routePoints,
+                        color = routeColor,
+                        width = 6f,
+                        jointType = JointType.ROUND,
+                        startCap = RoundCap(),
+                        endCap = RoundCap()
+                    )
+                }
+            }
+
+            // Auto-centering Icon (visible when suspended)
+            if (!isAutoCenteringEnabled) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 12.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Button(
+                        onClick = { isAutoCenteringEnabled = true },
+                        modifier = Modifier.size(36.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color.Black.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MyLocation,
+                            contentDescription = "Centruj",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
 
             // Zoom Control
-            val scope = rememberCoroutineScope()
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
                 val zoomProgress = (cameraPositionState.position.zoom - 2f) / 18f
                 CircularProgressIndicator(
-                    progress = 1f - zoomProgress,
-                    modifier = Modifier.fillMaxSize().padding(6.dp),
+                    progress = (1f - zoomProgress).coerceIn(0f, 1f),
+                    modifier = Modifier.fillMaxSize().padding(2.dp),
                     startAngle = 320f,
                     endAngle = 40f,
-                    strokeWidth = 8.dp,
+                    strokeWidth = 6.dp,
                     indicatorColor = Color.DarkGray.copy(alpha = 0.5f),
                     trackColor = Color.LightGray.copy(alpha = 0.9f)
                 )
 
                 Box(
-                    modifier = Modifier.fillMaxHeight().width(50.dp).align(Alignment.CenterEnd)
+                    modifier = Modifier.fillMaxHeight().width(40.dp).align(Alignment.CenterEnd)
                         .pointerInput(Unit) {
                             detectVerticalDragGestures { change, dragAmount ->
                                 change.consume()
                                 val newZoom = (cameraPositionState.position.zoom - dragAmount * 0.05f).coerceIn(2f, 20f)
                                 scope.launch { cameraPositionState.move(CameraUpdateFactory.zoomTo(newZoom)) }
+                                isAutoCenteringEnabled = false
                             }
                         }
                 )

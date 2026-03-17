@@ -35,6 +35,7 @@ data class WorkoutData(
     val totalSeconds: Long = 0L,
     val formattedTime: String = "00:00",
     val lastPoint: WorkoutPointEntity? = null,
+    val allPoints: List<WorkoutPointEntity> = emptyList(),
     val maxBpm: Int = 0,
     val maxSpeedGps: Double = 0.0,
     val maxSpeedSteps: Double = 0.0
@@ -61,6 +62,8 @@ class WorkoutService : Service(), SensorEventListener {
 
     private var status = WorkoutStatus.IDLE
     private var currentWorkoutId: Long = -1
+    private var totalMillisBeforePause: Long = 0L
+    private var lastResumeTimeMillis: Long = 0L
     private var totalSeconds = 0L
     private var heartRate = 0f
     private var maxBpm = 0
@@ -76,6 +79,8 @@ class WorkoutService : Service(), SensorEventListener {
     private var sportDefinition: WorkoutDefinition? = null
     private var fallbackActivityName: String = "Aktywność"
     private var totalCaloriesAcc = 0.0
+    
+    private val pointsList = mutableListOf<WorkoutPointEntity>()
 
     private var timerJob: Job? = null
     private var locationCallback: LocationCallback? = null
@@ -149,6 +154,8 @@ class WorkoutService : Service(), SensorEventListener {
         
         this.healthData = hData
         status = WorkoutStatus.ACTIVE
+        lastResumeTimeMillis = System.currentTimeMillis()
+        totalMillisBeforePause = 0L
         totalSeconds = 0L
         heartRate = 0f
         maxBpm = 0
@@ -161,6 +168,7 @@ class WorkoutService : Service(), SensorEventListener {
         maxSpeedSteps = 0.0
         altitude = 0.0
         totalCaloriesAcc = 0.0
+        pointsList.clear()
         
         logger = WorkoutLogger(workoutDao, currentWorkoutId, hData, sportDefinition?.sensors ?: emptyList())
         
@@ -184,14 +192,20 @@ class WorkoutService : Service(), SensorEventListener {
     private fun togglePause() {
         if (status == WorkoutStatus.ACTIVE) {
             status = WorkoutStatus.PAUSED
+            totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
         } else if (status == WorkoutStatus.PAUSED) {
             status = WorkoutStatus.ACTIVE
+            lastResumeTimeMillis = System.currentTimeMillis()
         }
         updateNotification()
         updateState(null)
     }
 
     private fun stopWorkout() {
+        if (status == WorkoutStatus.ACTIVE) {
+            totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
+        }
+        totalSeconds = totalMillisBeforePause / 1000
         status = WorkoutStatus.IDLE
         unregisterSensors()
         timerJob?.cancel()
@@ -269,15 +283,22 @@ class WorkoutService : Service(), SensorEventListener {
 
     private fun startTimer() {
         timerJob = serviceScope.launch {
+            var lastUpdateMillis = System.currentTimeMillis()
             while (isActive) {
                 if (status == WorkoutStatus.ACTIVE) {
                     delay(1000)
-                    totalSeconds++
+                    val now = System.currentTimeMillis()
+                    val deltaMillis = now - lastUpdateMillis
+                    lastUpdateMillis = now
+                    
+                    val totalMillis = totalMillisBeforePause + (now - lastResumeTimeMillis)
+                    totalSeconds = totalMillis / 1000
                     
                     val calorieMinNow = healthData?.let { CalorieCalculator.calculateHRR(heartRate, it) } ?: 0.0
-                    totalCaloriesAcc += (calorieMinNow / 60.0)
+                    totalCaloriesAcc += (calorieMinNow / 60000.0) * deltaMillis
                     
                     val lastPoint = logger?.logData(
+                        durationSeconds = totalSeconds,
                         lat = lastLocation?.latitude,
                         lon = lastLocation?.longitude,
                         bpm = heartRate,
@@ -289,6 +310,12 @@ class WorkoutService : Service(), SensorEventListener {
                         calorieSum = totalCaloriesAcc
                     )
                     
+                    if (lastPoint != null) {
+                        pointsList.add(lastPoint)
+                        // Keep only last 200 points for UI to be safe (min 100 required)
+                        if (pointsList.size > 200) pointsList.removeAt(0)
+                    }
+                    
                     // Track aggregates for UI summary
                     if (heartRate > maxBpm) maxBpm = heartRate.toInt()
                     if (speedKmH > maxSpeedGps) maxSpeedGps = speedKmH.toDouble()
@@ -297,6 +324,7 @@ class WorkoutService : Service(), SensorEventListener {
                     updateState(lastPoint)
                 } else {
                     delay(500)
+                    lastUpdateMillis = System.currentTimeMillis()
                 }
             }
         }
@@ -350,6 +378,7 @@ class WorkoutService : Service(), SensorEventListener {
             totalSeconds = totalSeconds,
             formattedTime = formatTime(totalSeconds),
             lastPoint = lastPoint,
+            allPoints = pointsList.toList(),
             maxBpm = maxBpm,
             maxSpeedGps = maxSpeedGps,
             maxSpeedSteps = maxSpeedSteps

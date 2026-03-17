@@ -52,4 +52,19 @@ class DataLayerManager @Inject constructor(
             }
         }
     }
+
+    suspend fun requestDefinitionsSync() {
+        try {
+            val nodeClient = Wearable.getNodeClient(context)
+            val messageClient = Wearable.getMessageClient(context)
+            val nodes = nodeClient.connectedNodes.await()
+            
+            nodes.forEach { node ->
+                messageClient.sendMessage(node.id, "/request_definitions", null).await()
+            }
+            Log.d("DataLayerManager", "Requested definitions sync from ${nodes.size} nodes")
+        } catch (e: Exception) {
+            Log.e("DataLayerManager", "Failed to request definitions sync", e)
+        }
+    }
 }

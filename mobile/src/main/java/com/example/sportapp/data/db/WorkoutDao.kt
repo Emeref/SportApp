@@ -36,8 +36,9 @@ interface WorkoutDao {
     suspend fun deletePointsOutsideRange(workoutId: Long, startId: Long, endId: Long)
 
     @Transaction
-    suspend fun trimWorkout(workout: WorkoutEntity, startId: Long, endId: Long) {
+    suspend fun trimWorkout(workout: WorkoutEntity, startId: Long, endId: Long, updatedPoints: List<WorkoutPointEntity>) {
         deletePointsOutsideRange(workout.id, startId, endId)
+        insertPoints(updatedPoints)
         updateWorkout(workout)
     }
 
