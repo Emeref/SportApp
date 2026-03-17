@@ -58,7 +58,7 @@ fun ChooseSportScreen(
             items(currentDefinitions) { definition ->
                 Chip(
                     label = { Text(definition.name) },
-                    onClick = { navController.navigate("dynamic_workout/${definition.id}") },
+                    onClick = { navController.navigate("workout_ready/${definition.id}") },
                     icon = { 
                         Icon(
                             imageVector = getIconForName(definition.iconName), 

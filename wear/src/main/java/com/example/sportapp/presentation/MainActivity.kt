@@ -18,6 +18,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.example.sportapp.presentation.menu.ChooseSportScreen
 import com.example.sportapp.presentation.menu.MainMenuScreen
 import com.example.sportapp.presentation.menu.StatisticsScreen
+import com.example.sportapp.presentation.menu.WorkoutReadyScreen
 import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.theme.SportAppTheme
 import com.example.sportapp.presentation.workout.DynamicWorkoutScreen
@@ -89,6 +90,13 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("main_menu") { MainMenuScreen(navController) }
                         composable("choose_sport") { ChooseSportScreen(navController) }
+                        composable(
+                            "workout_ready/{definitionId}",
+                            arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
+                        ) { backStackEntry ->
+                            val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
+                            WorkoutReadyScreen(navController, definitionId)
+                        }
                         composable("statistics") { StatisticsScreen() }
                         composable("settings") { 
                             SettingsScreen(
