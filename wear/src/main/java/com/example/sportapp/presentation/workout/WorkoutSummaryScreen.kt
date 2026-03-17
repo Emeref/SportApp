@@ -46,6 +46,17 @@ fun WorkoutSummaryScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     item {
+                        Button(
+                            onClick = onConfirm,
+                            modifier = Modifier.size(ButtonDefaults.DefaultButtonSize)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Potwierdź"
+                            )
+                        }
+                    }
+                    item {
                         Text(
                             text = "PODSUMOWANIE",
                             style = MaterialTheme.typography.caption1,

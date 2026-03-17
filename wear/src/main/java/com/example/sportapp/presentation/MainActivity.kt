@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -26,6 +27,7 @@ import com.example.sportapp.presentation.workout.DynamicWorkoutScreen
 import com.example.sportapp.presentation.workout.WorkoutSummaryScreen
 import com.google.maps.android.compose.MapType
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -45,17 +47,20 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun onUpdateAmbient() {
-            // Update UI if needed
         }
     }
 
     private val ambientObserver = AmbientLifecycleObserver(this, ambientCallback)
     private val _isAmbient = mutableStateOf(false)
+    
+    // StateFlow do obsługi nawigacji z Intencji
+    private val navigationIntentId = MutableStateFlow<Long?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         lifecycle.addObserver(ambientObserver)
+        handleIntent(intent)
         
         setContent {
             val navController = rememberSwipeDismissableNavController()
@@ -81,6 +86,18 @@ class MainActivity : ComponentActivity() {
                 showRoute = settingsState.showRoute
                 routeColor = settingsState.routeColor
                 screenBehavior = settingsState.screenBehavior
+            }
+
+            // Reagowanie na zmiany w StateFlow nawigacji
+            val targetWorkoutId by navigationIntentId.collectAsState()
+            LaunchedEffect(targetWorkoutId) {
+                targetWorkoutId?.let { id ->
+                    navController.navigate("dynamic_workout/$id") {
+                        popUpTo("main_menu") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                    navigationIntentId.value = null // Reset po obsłużeniu
+                }
             }
             
             // Permissions
@@ -315,6 +332,18 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        val id = intent?.getLongExtra("EXTRA_DEFINITION_ID", -1L) ?: -1L
+        if (id != -1L) {
+            navigationIntentId.value = id
         }
     }
 }
