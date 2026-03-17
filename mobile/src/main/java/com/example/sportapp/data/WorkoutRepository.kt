@@ -56,25 +56,59 @@ class WorkoutRepository @Inject constructor(
 
     override suspend fun trimWorkout(workout: WorkoutEntity, startPointId: Long, endPointId: Long) = withContext(Dispatchers.IO) {
         // 1. Get remaining points to recalculate stats
-        val points = workoutDao.getPointsForWorkout(workout.id)
-            .filter { it.id in startPointId..endPointId }
+        val allPoints = workoutDao.getPointsForWorkout(workout.id)
+        val points = allPoints.filter { it.id in startPointId..endPointId }
         
         if (points.isEmpty()) return@withContext
 
-        // 2. Recalculate stats
-        val totalSteps = (points.last().steps ?: 0) - (points.first().steps ?: 0)
-        val distanceSteps = (points.last().distanceSteps ?: 0).toDouble() - (points.first().distanceSteps ?: 0).toDouble()
-        val distanceGps = (points.last().distanceGps ?: 0).toDouble() - (points.first().distanceGps ?: 0).toDouble()
+        val firstPoint = points.first()
+        val lastPoint = points.last()
+
+        // 2. Recalculate stats for the workout entity
+        val totalSteps = (lastPoint.steps ?: 0) - (firstPoint.steps ?: 0)
+        val distanceSteps = (lastPoint.distanceSteps ?: 0).toDouble() - (firstPoint.distanceSteps ?: 0).toDouble()
+        val distanceGps = (lastPoint.distanceGps ?: 0).toDouble() - (firstPoint.distanceGps ?: 0).toDouble()
         val avgBpm = points.mapNotNull { it.bpm }.average()
         val maxBpm = points.mapNotNull { it.bpm }.maxOrNull()
-        val totalCalories = (points.last().calorieSum ?: 0.0) - (points.first().calorieSum ?: 0.0)
+        val totalCalories = (lastPoint.calorieSum ?: 0.0) - (firstPoint.calorieSum ?: 0.0)
         val maxCalorieMin = points.mapNotNull { it.calorieMin }.maxOrNull()
-        val totalAscent = points.mapNotNull { it.totalAscent }.let { if (it.isEmpty()) 0.0 else it.last() - it.first() }
-        val totalDescent = points.mapNotNull { it.totalDescent }.let { if (it.isEmpty()) 0.0 else it.last() - it.first() }
+        val totalAscent = points.mapNotNull { it.totalAscent ?: 0.0 }.let { if (it.isEmpty()) 0.0 else it.last() - it.first() }
+        val totalDescent = points.mapNotNull { it.totalDescent ?: 0.0 }.let { if (it.isEmpty()) 0.0 else it.last() - it.first() }
         
         val durationSeconds = points.size.toLong()
+
+        // 3. Recalculate point data to start from 0 at the new start point
+        val baseSteps = firstPoint.steps ?: 0
+        val baseDistSteps = firstPoint.distanceSteps ?: 0
+        val baseDistGps = firstPoint.distanceGps ?: 0
+        val baseAscent = firstPoint.totalAscent ?: 0.0
+        val baseDescent = firstPoint.totalDescent ?: 0.0
+        val baseCalorieSum = firstPoint.calorieSum ?: 0.0
+
+        val updatedPoints = points.mapIndexed { index, point ->
+            val seconds = index.toLong()
+            val h = seconds / 3600
+            val m = (seconds % 3600) / 60
+            val s = seconds % 60
+            val newTime = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+            
+            point.copy(
+                time = newTime,
+                steps = (point.steps ?: 0) - baseSteps,
+                distanceSteps = (point.distanceSteps ?: 0) - baseDistSteps,
+                distanceGps = (point.distanceGps ?: 0) - baseDistGps,
+                totalAscent = (point.totalAscent ?: 0.0) - baseAscent,
+                totalDescent = (point.totalDescent ?: 0.0) - baseDescent,
+                calorieSum = (point.calorieSum ?: 0.0) - baseCalorieSum
+            )
+        }
+
+        // Update workout start time based on the number of trimmed points
+        val originalStartIndex = allPoints.indexOfFirst { it.id == startPointId }.coerceAtLeast(0)
+        val newStartTime = workout.startTime + (originalStartIndex * 1000L) // Assuming 1 point per second
         
         val updatedWorkout = workout.copy(
+            startTime = newStartTime,
             steps = totalSteps.coerceAtLeast(0),
             distanceSteps = distanceSteps.coerceAtLeast(0.0),
             distanceGps = distanceGps.coerceAtLeast(0.0),
@@ -88,8 +122,8 @@ class WorkoutRepository @Inject constructor(
             durationFormatted = formatDuration(durationSeconds)
         )
 
-        // 3. Perform atomic trim
-        workoutDao.trimWorkout(updatedWorkout, startPointId, endPointId)
+        // 4. Perform atomic trim
+        workoutDao.trimWorkout(updatedWorkout, startPointId, endPointId, updatedPoints)
     }
 
     private fun formatDuration(seconds: Long): String {
