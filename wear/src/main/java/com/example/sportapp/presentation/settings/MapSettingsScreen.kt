@@ -6,20 +6,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ListHeader
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.*
 import com.google.maps.android.compose.MapType
 
 @Composable
 fun MapSettingsScreen(
     navController: NavHostController,
     currentMapType: MapType,
-    currentAutoCenterDelay: Int
+    currentAutoCenterDelay: Int,
+    showRoute: Boolean,
+    onShowRouteToggle: (Boolean) -> Unit,
+    routeColor: Color
 ) {
     val listState = rememberScalingLazyListState()
     
@@ -53,6 +55,39 @@ fun MapSettingsScreen(
                 onClick = { navController.navigate("auto_center_delay_selection") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
             )
+        }
+
+        item {
+            ToggleChip(
+                checked = showRoute,
+                onCheckedChange = onShowRouteToggle,
+                label = { Text("Pokaż ślad trasy") },
+                toggleControl = {
+                    Switch(checked = showRoute)
+                },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+            )
+        }
+
+        if (showRoute) {
+            item {
+                val colorLabel = when (routeColor) {
+                    SettingsManager.Orange -> "Pomarańczowy"
+                    Color.White -> "Biały"
+                    Color.Black -> "Czarny"
+                    Color.Red -> "Czerwony"
+                    Color.Cyan -> "Niebieski"
+                    Color.Green -> "Zielony"
+                    Color.Yellow -> "Żółty"
+                    else -> "Niestandardowy"
+                }
+                Chip(
+                    label = { Text("Kolor śladu") },
+                    secondaryLabel = { Text(colorLabel) },
+                    onClick = { navController.navigate("route_color_selection") },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
         }
     }
 }

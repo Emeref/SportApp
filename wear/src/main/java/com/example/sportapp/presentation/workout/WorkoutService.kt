@@ -35,6 +35,7 @@ data class WorkoutData(
     val totalSeconds: Long = 0L,
     val formattedTime: String = "00:00",
     val lastPoint: WorkoutPointEntity? = null,
+    val allPoints: List<WorkoutPointEntity> = emptyList(),
     val maxBpm: Int = 0,
     val maxSpeedGps: Double = 0.0,
     val maxSpeedSteps: Double = 0.0
@@ -78,6 +79,8 @@ class WorkoutService : Service(), SensorEventListener {
     private var sportDefinition: WorkoutDefinition? = null
     private var fallbackActivityName: String = "Aktywność"
     private var totalCaloriesAcc = 0.0
+    
+    private val pointsList = mutableListOf<WorkoutPointEntity>()
 
     private var timerJob: Job? = null
     private var locationCallback: LocationCallback? = null
@@ -165,6 +168,7 @@ class WorkoutService : Service(), SensorEventListener {
         maxSpeedSteps = 0.0
         altitude = 0.0
         totalCaloriesAcc = 0.0
+        pointsList.clear()
         
         logger = WorkoutLogger(workoutDao, currentWorkoutId, hData, sportDefinition?.sensors ?: emptyList())
         
@@ -306,6 +310,12 @@ class WorkoutService : Service(), SensorEventListener {
                         calorieSum = totalCaloriesAcc
                     )
                     
+                    if (lastPoint != null) {
+                        pointsList.add(lastPoint)
+                        // Keep only last 200 points for UI to be safe (min 100 required)
+                        if (pointsList.size > 200) pointsList.removeAt(0)
+                    }
+                    
                     // Track aggregates for UI summary
                     if (heartRate > maxBpm) maxBpm = heartRate.toInt()
                     if (speedKmH > maxSpeedGps) maxSpeedGps = speedKmH.toDouble()
@@ -368,6 +378,7 @@ class WorkoutService : Service(), SensorEventListener {
             totalSeconds = totalSeconds,
             formattedTime = formatTime(totalSeconds),
             lastPoint = lastPoint,
+            allPoints = pointsList.toList(),
             maxBpm = maxBpm,
             maxSpeedGps = maxSpeedGps,
             maxSpeedSteps = maxSpeedSteps

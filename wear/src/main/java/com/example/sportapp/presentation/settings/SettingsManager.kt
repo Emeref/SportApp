@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.settings
 
 import android.content.Context
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
@@ -26,6 +27,11 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         private val CLOCK_COLOR_KEY = longPreferencesKey("clock_color")
         private val HEALTH_DATA_KEY = stringPreferencesKey("health_data")
         private val AUTO_CENTER_DELAY_KEY = intPreferencesKey("auto_center_delay")
+        private val SHOW_ROUTE_KEY = booleanPreferencesKey("show_route")
+        private val ROUTE_COLOR_KEY = longPreferencesKey("route_color")
+        
+        val Orange = Color(0xFFFFA500)
+        val Transparent = Color.Transparent
     }
 
     val settingsFlow: Flow<UserSettings> = context.dataStore.data
@@ -47,8 +53,11 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
                 HealthData()
             }
             val autoCenterDelay = preferences[AUTO_CENTER_DELAY_KEY] ?: 5 // Default 5 seconds
+            val showRoute = preferences[SHOW_ROUTE_KEY] ?: true
+            val routeColorValue = preferences[ROUTE_COLOR_KEY] ?: Orange.toArgb().toLong()
+            val routeColor = if (routeColorValue == -1L) Transparent else Color(routeColorValue.toULong())
 
-            UserSettings(mapType, clockColor, healthData, autoCenterDelay)
+            UserSettings(mapType, clockColor, healthData, autoCenterDelay, showRoute, routeColor)
         }
 
     suspend fun saveMapType(type: MapType) {
@@ -74,11 +83,25 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             preferences[AUTO_CENTER_DELAY_KEY] = delaySeconds
         }
     }
+
+    suspend fun saveShowRoute(show: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SHOW_ROUTE_KEY] = show
+        }
+    }
+
+    suspend fun saveRouteColor(color: Color) {
+        context.dataStore.edit { preferences ->
+            preferences[ROUTE_COLOR_KEY] = if (color == Transparent) -1L else color.value.toLong()
+        }
+    }
 }
 
 data class UserSettings(
     val mapType: MapType,
     val clockColor: Color?,
     val healthData: HealthData,
-    val autoCenterDelay: Int
+    val autoCenterDelay: Int,
+    val showRoute: Boolean,
+    val routeColor: Color
 )

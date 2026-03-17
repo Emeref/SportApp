@@ -138,6 +138,7 @@ fun rememberWorkoutSession(
         status = workoutData.status,
         workoutTimerState = WorkoutTimerState(workoutData.formattedTime, workoutData.totalSeconds),
         lastPoint = workoutData.lastPoint,
+        allPoints = workoutData.allPoints,
         togglePause = togglePause,
         endWorkout = endWorkout
     )
@@ -147,6 +148,7 @@ data class WorkoutSessionState(
     val status: WorkoutStatus,
     val workoutTimerState: WorkoutTimerState,
     val lastPoint: WorkoutPointEntity?,
+    val allPoints: List<WorkoutPointEntity>,
     val togglePause: () -> Unit,
     val endWorkout: () -> Unit
 )

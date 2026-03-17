@@ -6,9 +6,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.runtime.*
@@ -28,13 +26,12 @@ import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import com.example.sportapp.data.db.WorkoutPointEntity
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -42,7 +39,10 @@ fun MapScreen(
     mapType: MapType,
     focusRequester: FocusRequester,
     lastPoint: WorkoutPointEntity? = null,
-    autoCenterDelay: Int = 5
+    allPoints: List<WorkoutPointEntity> = emptyList(),
+    autoCenterDelay: Int = 5,
+    showRoute: Boolean = true,
+    routeColor: Color = Color.Cyan
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -69,7 +69,17 @@ fun MapScreen(
 
         // State for intelligent auto-centering
         var isAutoCenteringEnabled by remember { mutableStateOf(true) }
-        var lastInteractionTime by remember { mutableLongStateOf(0L) }
+        
+        // Filter points for polyline (last 100 points as requested/fallback for 2 minutes)
+        val routePoints by remember(allPoints) {
+            derivedStateOf {
+                allPoints.takeLast(100).mapNotNull { p ->
+                    if (p.latitude != null && p.longitude != null) {
+                        LatLng(p.latitude, p.longitude)
+                    } else null
+                }
+            }
+        }
 
         // Effect for new location data
         LaunchedEffect(lastPoint) {
@@ -85,7 +95,7 @@ fun MapScreen(
         }
 
         // Effect for returning to auto-centering after inactivity
-        LaunchedEffect(isAutoCenteringEnabled, lastInteractionTime) {
+        LaunchedEffect(isAutoCenteringEnabled) {
             if (!isAutoCenteringEnabled) {
                 delay(autoCenterDelay * 1000L)
                 isAutoCenteringEnabled = true
@@ -96,7 +106,6 @@ fun MapScreen(
         LaunchedEffect(cameraPositionState.isMoving) {
             if (cameraPositionState.isMoving && cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
                 isAutoCenteringEnabled = false
-                lastInteractionTime = System.currentTimeMillis()
             }
         }
 
@@ -114,7 +123,18 @@ fun MapScreen(
                     mapType = mapType
                 ),
                 uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false)
-            )
+            ) {
+                if (showRoute && routePoints.isNotEmpty()) {
+                    Polyline(
+                        points = routePoints,
+                        color = routeColor,
+                        width = 6f,
+                        jointType = JointType.ROUND,
+                        startCap = RoundCap(),
+                        endCap = RoundCap()
+                    )
+                }
+            }
 
             // Auto-centering Icon (visible when suspended)
             if (!isAutoCenteringEnabled) {
@@ -161,10 +181,7 @@ fun MapScreen(
                                 change.consume()
                                 val newZoom = (cameraPositionState.position.zoom - dragAmount * 0.05f).coerceIn(2f, 20f)
                                 scope.launch { cameraPositionState.move(CameraUpdateFactory.zoomTo(newZoom)) }
-                                
-                                // Zooming also suspends auto-centering
                                 isAutoCenteringEnabled = false
-                                lastInteractionTime = System.currentTimeMillis()
                             }
                         }
                 )
