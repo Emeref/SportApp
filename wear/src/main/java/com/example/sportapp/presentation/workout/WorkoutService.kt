@@ -61,6 +61,8 @@ class WorkoutService : Service(), SensorEventListener {
 
     private var status = WorkoutStatus.IDLE
     private var currentWorkoutId: Long = -1
+    private var totalMillisBeforePause: Long = 0L
+    private var lastResumeTimeMillis: Long = 0L
     private var totalSeconds = 0L
     private var heartRate = 0f
     private var maxBpm = 0
@@ -149,6 +151,8 @@ class WorkoutService : Service(), SensorEventListener {
         
         this.healthData = hData
         status = WorkoutStatus.ACTIVE
+        lastResumeTimeMillis = System.currentTimeMillis()
+        totalMillisBeforePause = 0L
         totalSeconds = 0L
         heartRate = 0f
         maxBpm = 0
@@ -184,14 +188,20 @@ class WorkoutService : Service(), SensorEventListener {
     private fun togglePause() {
         if (status == WorkoutStatus.ACTIVE) {
             status = WorkoutStatus.PAUSED
+            totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
         } else if (status == WorkoutStatus.PAUSED) {
             status = WorkoutStatus.ACTIVE
+            lastResumeTimeMillis = System.currentTimeMillis()
         }
         updateNotification()
         updateState(null)
     }
 
     private fun stopWorkout() {
+        if (status == WorkoutStatus.ACTIVE) {
+            totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
+        }
+        totalSeconds = totalMillisBeforePause / 1000
         status = WorkoutStatus.IDLE
         unregisterSensors()
         timerJob?.cancel()
@@ -269,15 +279,22 @@ class WorkoutService : Service(), SensorEventListener {
 
     private fun startTimer() {
         timerJob = serviceScope.launch {
+            var lastUpdateMillis = System.currentTimeMillis()
             while (isActive) {
                 if (status == WorkoutStatus.ACTIVE) {
                     delay(1000)
-                    totalSeconds++
+                    val now = System.currentTimeMillis()
+                    val deltaMillis = now - lastUpdateMillis
+                    lastUpdateMillis = now
+                    
+                    val totalMillis = totalMillisBeforePause + (now - lastResumeTimeMillis)
+                    totalSeconds = totalMillis / 1000
                     
                     val calorieMinNow = healthData?.let { CalorieCalculator.calculateHRR(heartRate, it) } ?: 0.0
-                    totalCaloriesAcc += (calorieMinNow / 60.0)
+                    totalCaloriesAcc += (calorieMinNow / 60000.0) * deltaMillis
                     
                     val lastPoint = logger?.logData(
+                        durationSeconds = totalSeconds,
                         lat = lastLocation?.latitude,
                         lon = lastLocation?.longitude,
                         bpm = heartRate,
@@ -297,6 +314,7 @@ class WorkoutService : Service(), SensorEventListener {
                     updateState(lastPoint)
                 } else {
                     delay(500)
+                    lastUpdateMillis = System.currentTimeMillis()
                 }
             }
         }
