@@ -50,7 +50,7 @@
         - [ ] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu.
         - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
         - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
-        - [ ] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
+        - [x] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
         - [x] **Opcja przycinania treningu**: Możliwość usunięcia niechcianych fragmentów na początku lub końcu sesji.
         - [x] **Aktualizacja statystyk po przycięciu**: Nowe wartości są przeliczane i odświeżane w czasie rzeczywistym na liście.
     - [ ] **Analiza stref tętna**: Podział treningu na strefy (Z1-Z5) i ich wizualizacja na ekranie szczegółów.
@@ -72,8 +72,8 @@
 - [ ] **Optymalizacja UI**:
     - [x] **Responsywność korony zegarka**: Zwiększenie czułości kółka przy przewijaniu długich list treningowych.
     - [x] **Dynamiczny układ treningu**: Mapa wyświetlana na końcu listy czujników (płynne przewijanie).
-    - [ ] **Obsługa Ambient Mode**: Implementacja trybu oszczędzania energii dla ekranów treningowych.
-    - [ ] **Centrowanie mapy**: Automatyczne odświeżanie mapy tak, aby kropka pozycji była zawsze w centrum.
+    - [x] **Obsługa Ambient Mode**: Implementacja trybu oszczędzania energii dla ekranów treningowych.
+    - [x] **Centrowanie mapy**: Automatyczne odświeżanie mapy tak, aby kropka pozycji była zawsze w centrum.
 
 ## 5. Chmura i Bezpieczeństwo
 - [ ] **Integracja z Google**:
@@ -98,7 +98,6 @@
 - [ ] **Clean Code**: Usunięcie hardkodowanych stringów (trasy nawigacji) do stałych/typów enumeratywnych.
 
 ## PRIORYTETY
-1. **Weryfikacja obliczeń** - Sprawdzenie poprawności `avgPace` i `avgStepLength`.
-2. **Widget 'Best Split' i Wykres długości kroku** - Implementacja zaawansowanej analizy techniki biegu.
-3. **Analiza stref tętna** - Wyliczanie i prezentacja czasu w strefach Z1-Z5.
-4. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
+1. **Widget 'Best Split' i Wykres długości kroku** - Implementacja zaawansowanej analizy techniki biegu.
+2. **Analiza stref tętna** - Wyliczanie i prezentacja czasu w strefach Z1-Z5.
+3. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
