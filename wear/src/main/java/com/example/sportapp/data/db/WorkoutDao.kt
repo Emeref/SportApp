@@ -23,6 +23,9 @@ interface WorkoutDao {
     @Insert
     suspend fun insertPoint(point: WorkoutPointEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPoints(points: List<WorkoutPointEntity>)
+
     @Query("SELECT * FROM workout_points WHERE workoutId = :workoutId ORDER BY id ASC")
     suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity>
     
