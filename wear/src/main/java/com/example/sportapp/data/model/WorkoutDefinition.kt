@@ -34,6 +34,6 @@ data class WorkoutDefinition(
     val sensors: List<SensorConfig>,
     val baseType: String,
     val isDefault: Boolean = false,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
     val displayOrder: Int = 0
 )
