@@ -295,7 +295,9 @@ fun IconPickerSelection(onIconSelected: (String) -> Unit, onDismiss: () -> Unit)
         "SportsVolleyball" to (Icons.Default.SportsVolleyball to "Siatkówka"),
         "SportsBaseball" to (Icons.Default.SportsBaseball to "Baseball"),
         "Sailing" to (Icons.Default.Sailing to "Żeglarstwo"),
-        "Skateboarding" to (Icons.Default.Skateboarding to "Deskorolka")
+        "Skateboarding" to (Icons.Default.Skateboarding to "Deskorolka"),
+        "Sports" to (Icons.Default.EmojiEvents to "Zawody"),
+        "Timer" to (Icons.Default.Timer to "Stoper")
     )
 
     AlertDialog(
