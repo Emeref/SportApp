@@ -17,10 +17,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
+import androidx.wear.compose.foundation.SwipeToDismissValue
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.pager.HorizontalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
+import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.material.*
@@ -96,39 +98,49 @@ fun DynamicWorkoutScreen(
         onEndWorkout = { summary -> onEndWorkout(sportDef.name, summary) }
     )
 
-    // Decyzja o wyświetleniu trybu uproszczonego:
-    // 1. Zawsze gdy system jest w trybie isAmbient (ochrona ekranu) - CHYBA ŻE wymuszono KEEP_SCREEN_ON
-    // 2. Gdy użytkownik wybrał tryb AMBIENT w ustawieniach i NIE kliknął jeszcze w ekran (forceActiveUI == false)
-    val shouldShowAmbientUI = if (screenBehavior == ScreenBehavior.KEEP_SCREEN_ON) {
-        false // W trybie "Zawsze włączony" nigdy nie przechodzimy do Ambient UI wewnątrz aplikacji
-    } else {
-        isAmbient || (screenBehavior == ScreenBehavior.AMBIENT && !forceActiveUI)
-    }
+    // BLOKADA GESTU WYJŚCIA (Swipe-to-dismiss)
+    // confirmStateChange = { false } uniemożliwia wyjście gestem przesunięcia w prawo.
+    // Używamy foundation.rememberSwipeToDismissBoxState oraz material.SwipeToDismissBox
+    val swipeToDismissState = rememberSwipeToDismissBoxState(
+        confirmStateChange = { false }
+    )
+    
+    SwipeToDismissBox(
+        state = swipeToDismissState
+    ) { isBackground ->
+        if (!isBackground) {
+            // Decyzja o wyświetleniu trybu uproszczonego
+            val shouldShowAmbientUI = if (screenBehavior == ScreenBehavior.KEEP_SCREEN_ON) {
+                false 
+            } else {
+                isAmbient || (screenBehavior == ScreenBehavior.AMBIENT && !forceActiveUI)
+            }
 
-    if (shouldShowAmbientUI) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable {
-                    // Pozwól na przełączenie w tryb aktywny tylko jeśli nie jesteśmy w systemowym trybie Ambient
-                    if (!isAmbient) {
-                        forceActiveUI = true
-                    }
+            if (shouldShowAmbientUI) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable {
+                            if (!isAmbient) {
+                                forceActiveUI = true
+                            }
+                        }
+                ) {
+                    AmbientWorkoutUI(session, dataSensors)
                 }
-        ) {
-            AmbientWorkoutUI(session, dataSensors)
+            } else {
+                ActiveWorkoutUI(
+                    session = session,
+                    dataSensors = dataSensors,
+                    hasMap = hasMap,
+                    mapType = mapType,
+                    clockColor = clockColor,
+                    autoCenterDelay = autoCenterDelay,
+                    showRoute = showRoute,
+                    routeColor = routeColor
+                )
+            }
         }
-    } else {
-        ActiveWorkoutUI(
-            session = session,
-            dataSensors = dataSensors,
-            hasMap = hasMap,
-            mapType = mapType,
-            clockColor = clockColor,
-            autoCenterDelay = autoCenterDelay,
-            showRoute = showRoute,
-            routeColor = routeColor
-        )
     }
 }
 
@@ -270,7 +282,6 @@ private fun AmbientWorkoutUI(session: WorkoutSessionState, dataSensors: List<Sen
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // 1. Zegarek (mniejszy od czasu aktywności)
         Text(
             text = currentTime,
             style = MaterialTheme.typography.caption2,
@@ -280,7 +291,6 @@ private fun AmbientWorkoutUI(session: WorkoutSessionState, dataSensors: List<Sen
         
         Spacer(modifier = Modifier.height(4.dp))
 
-        // 2. Czas aktywności
         Text(
             text = session.workoutTimerState.formattedTime,
             style = MaterialTheme.typography.title1,
@@ -290,7 +300,6 @@ private fun AmbientWorkoutUI(session: WorkoutSessionState, dataSensors: List<Sen
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // 3. Dwa pierwsze sensory w jednej linii
         val firstTwoSensors = dataSensors.take(2)
         if (firstTwoSensors.isNotEmpty()) {
             Row(
@@ -305,7 +314,6 @@ private fun AmbientWorkoutUI(session: WorkoutSessionState, dataSensors: List<Sen
             }
         }
 
-        // 4. Trzeci sensor wycentrowany pod nimi
         if (dataSensors.size >= 3) {
             Spacer(modifier = Modifier.height(4.dp))
             Box(
