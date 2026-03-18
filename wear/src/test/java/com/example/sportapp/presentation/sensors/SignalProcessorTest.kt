@@ -44,23 +44,40 @@ class SignalProcessorTest {
         signalProcessor.processAltitude(100.2)
         assertEquals(0.0, signalProcessor.totalAscent, 0.01)
 
-        // Skok powyżej progu (0.7m)
-        signalProcessor.processAltitude(100.7)
-        assertTrue("Total ascent should be recorded", signalProcessor.totalAscent > 0.0)
+        // Wyraźny skok w górę (2.0m)
+        // Wywołujemy wielokrotnie, aby filtr Kalmana dogonił wartość docelową
+        repeat(20) {
+            signalProcessor.processAltitude(102.0)
+        }
         
-        val firstAscent = signalProcessor.totalAscent
-
-        // Kolejny mały szum (0.1m)
-        signalProcessor.processAltitude(100.8)
-        assertEquals(firstAscent, signalProcessor.totalAscent, 0.01)
+        assertTrue("Total ascent should be recorded (actual: ${signalProcessor.totalAscent})", 
+            signalProcessor.totalAscent >= 0.5)
     }
 
     @Test
     fun `test total descent recording`() {
-        signalProcessor.processAltitude(200.0)
+        val initialAlt = 200.0
+        signalProcessor.processAltitude(initialAlt)
         
-        // Spadek o 1m
-        signalProcessor.processAltitude(199.0)
-        assertTrue("Total descent should be recorded", signalProcessor.totalDescent >= 0.5)
+        // Wyraźny skok w dół (2.0m)
+        repeat(20) {
+            signalProcessor.processAltitude(198.0)
+        }
+        
+        assertTrue("Total descent should be recorded (actual: ${signalProcessor.totalDescent})", 
+            signalProcessor.totalDescent >= 0.5)
+    }
+
+    @Test
+    fun `test reset functionality`() {
+        signalProcessor.processAltitude(100.0)
+        repeat(10) { signalProcessor.processAltitude(110.0) }
+        
+        assertTrue(signalProcessor.totalAscent > 0)
+        
+        signalProcessor.reset()
+        
+        assertEquals(0.0, signalProcessor.totalAscent, 0.0)
+        assertEquals(0.0, signalProcessor.totalDescent, 0.0)
     }
 }

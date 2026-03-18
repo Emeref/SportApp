@@ -50,7 +50,6 @@
         - [x] **Pełna synchronizacja wykresów**: Wszystkie kolumny z `workout_points` są teraz poprawnie mapowane i wyświetlane na wykresach.
         - [ ] **Najlepsze tempo na km (Best Split)**: Automatyczne wykrywanie najszybszego odcinka 1km.
         - [ ] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu.
-        - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
         - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
         - [x] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
         - [x] **Opcja przycinania treningu**: Możliwość usunięcia niechcianych fragmentów na początku lub końcu sesji.

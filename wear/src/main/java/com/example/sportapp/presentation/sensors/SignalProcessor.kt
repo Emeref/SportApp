@@ -28,19 +28,20 @@ class SignalProcessor {
     fun processAltitude(rawAltitude: Double): Double {
         val filteredAltitude = altitudeFilter.process(rawAltitude)
 
-        lastFilteredAltitude?.let { last ->
-            val diff = filteredAltitude - last
-            
-            // Histereza: dodajemy tylko jeśli zmiana jest większa niż próg (np. 0.5m)
-            if (Math.abs(diff) >= AppConstants.ALTITUDE_HYSTERESIS_THRESHOLD) {
-                if (diff > 0) {
-                    totalAscent += diff
-                } else {
-                    totalDescent += Math.abs(diff)
-                }
-                lastFilteredAltitude = filteredAltitude
+        if (lastFilteredAltitude == null) {
+            lastFilteredAltitude = filteredAltitude
+            return filteredAltitude
+        }
+
+        val diff = filteredAltitude - lastFilteredAltitude!!
+        
+        // Histereza: dodajemy tylko jeśli zmiana jest większa niż próg (np. 0.5m)
+        if (Math.abs(diff) >= AppConstants.ALTITUDE_HYSTERESIS_THRESHOLD) {
+            if (diff > 0) {
+                totalAscent += diff
+            } else {
+                totalDescent += Math.abs(diff)
             }
-        } ?: run {
             lastFilteredAltitude = filteredAltitude
         }
 
