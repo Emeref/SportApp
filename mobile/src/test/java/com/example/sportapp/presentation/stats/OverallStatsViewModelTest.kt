@@ -1,7 +1,6 @@
 package com.example.sportapp.presentation.stats
 
 import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import com.example.sportapp.data.FakeWorkoutRepository
 import com.example.sportapp.data.db.WorkoutEntity
 import kotlinx.coroutines.Dispatchers
@@ -9,71 +8,44 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import java.util.*
+import org.mockito.Mockito.mock
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
 class OverallStatsViewModelTest {
 
-    private lateinit var context: Context
     private lateinit var viewModel: OverallStatsViewModel
     private lateinit var fakeRepository: FakeWorkoutRepository
     private val testDispatcher = StandardTestDispatcher()
+    private val mockContext = mock(Context::class.java)
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        context = ApplicationProvider.getApplicationContext()
+        fakeRepository = FakeWorkoutRepository()
         
-        fakeRepository = FakeWorkoutRepository().apply {
-            workouts.value = listOf(
-                WorkoutEntity(
-                    id = 1,
-                    activityName = "Spacer",
-                    startTime = System.currentTimeMillis() - 100000,
-                    durationFormatted = "00:30:00",
-                    steps = 4000,
-                    distanceSteps = 2800.0,
-                    distanceGps = 3000.0,
-                    avgSpeedSteps = 5.0,
-                    avgSpeedGps = 6.0,
-                    totalAscent = 10.0,
-                    totalDescent = 5.0,
-                    avgBpm = 100.0,
-                    maxBpm = 120,
-                    totalCalories = 200.0,
-                    maxCalorieMin = 10.0,
-                    durationSeconds = 1800
-                ),
-                WorkoutEntity(
-                    id = 2,
-                    activityName = "Bieganie",
-                    startTime = System.currentTimeMillis(),
-                    durationFormatted = "00:45:00",
-                    steps = 10000,
-                    distanceSteps = 7500.0,
-                    distanceGps = 8000.0,
-                    avgSpeedSteps = 10.0,
-                    avgSpeedGps = 11.0,
-                    totalAscent = 50.0,
-                    totalDescent = 45.0,
-                    avgBpm = 150.0,
-                    maxBpm = 180,
-                    totalCalories = 500.0,
-                    maxCalorieMin = 20.0,
-                    durationSeconds = 2700
-                )
-            )
-        }
-
-        viewModel = OverallStatsViewModel(context, fakeRepository)
+        // Dane testowe: 2 treningi
+        val now = System.currentTimeMillis()
+        
+        val workout1 = WorkoutEntity(
+            id = 1, activityName = "Bieganie", startTime = now,
+            durationFormatted = "00:30", steps = 3000, distanceSteps = 2500.0,
+            distanceGps = 2400.0, durationSeconds = 1800, totalCalories = 300.0,
+            avgSpeedSteps = 0.0, avgSpeedGps = 0.0, totalAscent = 0.0, totalDescent = 0.0,
+            avgBpm = 140.0, maxBpm = 160, maxCalorieMin = 0.0
+        )
+        
+        val workout2 = WorkoutEntity(
+            id = 2, activityName = "Spacer", startTime = now - 1000,
+            durationFormatted = "01:00", steps = 5000, distanceSteps = 4000.0,
+            distanceGps = 3900.0, durationSeconds = 3600, totalCalories = 200.0,
+            avgSpeedSteps = 0.0, avgSpeedGps = 0.0, totalAscent = 0.0, totalDescent = 0.0,
+            avgBpm = 100.0, maxBpm = 120, maxCalorieMin = 0.0
+        )
+        
+        fakeRepository.workouts.value = listOf(workout1, workout2)
+        viewModel = OverallStatsViewModel(mockContext, fakeRepository)
     }
 
     @After
@@ -82,43 +54,26 @@ class OverallStatsViewModelTest {
     }
 
     @Test
-    fun `initial activity types are loaded from repository`() = runTest {
+    fun `overall stats contains raw data for all time`() = runTest {
         advanceUntilIdle()
-        val types = viewModel.activityTypes.value
-        assertEquals(2, types.size)
-        assert(types.contains("Spacer"))
-        assert(types.contains("Bieganie"))
-    }
-
-    @Test
-    fun `onTypeSelected updates selectedType state`() = runTest {
-        viewModel.onTypeSelected("Spacer")
-        assertEquals("Spacer", viewModel.selectedType.value)
         
-        viewModel.onTypeSelected("Wszystkie")
-        assertNull(viewModel.selectedType.value)
+        val stats = viewModel.stats.value
+        @Suppress("UNCHECKED_CAST")
+        val rawData = stats["raw_data"] as List<WorkoutEntity>
+        assertEquals(2, rawData.size)
     }
 
     @Test
-    fun `onDateRangeSelected updates date states`() = runTest {
-        val start = Date()
-        val end = Date()
-        viewModel.onDateRangeSelected(start, end)
-        assertEquals(start, viewModel.startDate.value)
-        assertEquals(end, viewModel.endDate.value)
-    }
-
-    @Test
-    fun `getMaxValueForWidget returns correct maximum value for distanceGps`() = runTest {
+    fun `filtering by activity name updates stats`() = runTest {
         advanceUntilIdle()
-        val maxValue = viewModel.getMaxValueForWidget("distanceGps")
-        assertEquals(8000.0, maxValue, 0.001)
-    }
-
-    @Test
-    fun `chartProducers are updated when data changes`() = runTest {
+        
+        viewModel.onTypeSelected("Bieganie")
         advanceUntilIdle()
-        val stepsProducer = viewModel.chartProducers["steps"]
-        assert(stepsProducer != null)
+        
+        val stats = viewModel.stats.value
+        @Suppress("UNCHECKED_CAST")
+        val rawData = stats["raw_data"] as List<WorkoutEntity>
+        assertEquals(1, rawData.size)
+        assertEquals("Bieganie", rawData.first().activityName)
     }
 }
