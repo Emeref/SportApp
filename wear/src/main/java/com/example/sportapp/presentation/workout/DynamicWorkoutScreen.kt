@@ -342,6 +342,7 @@ fun DynamicSensorDispatcher(
         "speedGps", "speedSteps" -> Color.Yellow
         "altitude", "totalAscent", "totalDescent" -> Color.Magenta
         "calorieMin", "calorieSum" -> Color.LightGray
+        "pressure" -> Color.LightGray
         else -> Color.White
     }
     
@@ -358,5 +359,6 @@ fun DynamicSensorDispatcher(
         "totalDescent" -> SportDataRow(label, p?.totalDescent?.let { String.format(Locale.US, "%.0f m", it) } ?: "-- m", color)
         "calorieMin" -> SportDataRow(label, p?.calorieMin?.let { String.format(Locale.US, "%.1f", it) } ?: "--", color)
         "calorieSum" -> SportDataRow(label, p?.calorieSum?.let { String.format(Locale.US, "%.0f kcal", it) } ?: "0 kcal", color)
+        "pressure" -> SportDataRow(label, p?.pressure?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa", color)
     }
 }

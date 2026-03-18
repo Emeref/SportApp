@@ -9,6 +9,9 @@ interface WorkoutDefinitionDao {
     @Query("SELECT * FROM workout_definitions ORDER BY isDefault DESC, name ASC")
     fun getAllDefinitions(): Flow<List<WorkoutDefinition>>
 
+    @Query("SELECT * FROM workout_definitions ORDER BY isDefault DESC, name ASC")
+    suspend fun getAllDefinitionsOnce(): List<WorkoutDefinition>
+
     @Query("SELECT * FROM workout_definitions WHERE id = :id")
     suspend fun getDefinitionById(id: Long): WorkoutDefinition?
 

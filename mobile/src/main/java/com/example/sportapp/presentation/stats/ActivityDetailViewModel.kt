@@ -62,7 +62,8 @@ class ActivityDetailViewModel @Inject constructor(
         "predkosc" to ChartEntryModelProducer(),
         "wysokosc" to ChartEntryModelProducer(),
         "przewyzszenia_gora" to ChartEntryModelProducer(),
-        "przewyzszenia_dol" to ChartEntryModelProducer()
+        "przewyzszenia_dol" to ChartEntryModelProducer(),
+        "pressure" to ChartEntryModelProducer()
     )
 
     init {

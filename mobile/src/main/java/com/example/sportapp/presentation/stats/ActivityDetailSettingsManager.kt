@@ -39,7 +39,8 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("predkosc", "Prędkość (GPS)"),
             WidgetItem("wysokosc", "Wysokość"),
             WidgetItem("przewyzszenia_gora", "Suma podejść"),
-            WidgetItem("przewyzszenia_dol", "Suma zejść")
+            WidgetItem("przewyzszenia_dol", "Suma zejść"),
+            WidgetItem("pressure", "Ciśnienie atmosferyczne")
         )
 
         val DEFAULT_WIDGETS = listOf(
@@ -58,7 +59,9 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("max_cadence", "Maks. kadencja"),
             WidgetItem("total_steps", "Liczba kroków"),
             WidgetItem("total_distance_gps", "Dystans (GPS)"),
-            WidgetItem("total_distance_steps", "Dystans (kroki)")
+            WidgetItem("total_distance_steps", "Dystans (kroki)"),
+            WidgetItem("pressure_start", "Ciśnienie atm. (start)"),
+            WidgetItem("pressure_end", "Ciśnienie atm.(koniec)")
         )
         
         val DEFAULT_COLOR = 0xFFFF9800.toInt()
@@ -94,14 +97,13 @@ class ActivityDetailSettingsManager(private val context: Context) {
             
             // Filter out old/removed items and add new ones from default
             val currentIds = default.map { it.id }.toSet()
-            val filtered = decoded.filter { it.id in currentIds }
+            val filtered = decoded.filter { it.id in currentIds }.toMutableList()
             
             val missing = default.filter { def -> filtered.none { it.id == def.id } }
             if (missing.isNotEmpty()) {
-                filtered + missing
-            } else {
-                filtered
+                filtered.addAll(missing)
             }
+            filtered
         } catch (e: Exception) {
             default
         }

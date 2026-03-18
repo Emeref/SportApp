@@ -52,7 +52,8 @@ class WorkoutLogger(
         predkoscGps: Float? = null,
         wysokosc: Double? = null,
         calorieMin: Double? = null,
-        calorieSum: Double? = null
+        calorieSum: Double? = null,
+        pressure: Double? = null
     ): WorkoutPointEntity = withContext(Dispatchers.IO) {
         val h = durationSeconds / 3600
         val m = (durationSeconds % 3600) / 60
@@ -122,7 +123,8 @@ class WorkoutLogger(
             totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) totalAscent.round(2) else null,
             totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) totalDescent.round(2) else null,
             calorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) calorieMin.round(2) else null,
-            calorieSum = if (isRecording(WorkoutSensor.CALORIES_SUM)) calorieSum.round(2) else null
+            calorieSum = if (isRecording(WorkoutSensor.CALORIES_SUM)) calorieSum.round(2) else null,
+            pressure = if (isRecording(WorkoutSensor.PRESSURE)) pressure.round(2) else null
         )
         
         workoutDao.insertPoint(point)

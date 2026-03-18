@@ -25,6 +25,8 @@ fun MainDataScreen(
     distanceMeters: Float,
     speedKmH: Float,
     workoutTimerState: WorkoutTimerState,
+    pressure: Double? = null,
+    altitude: Double? = null,
     configFileName: String = "workout_walking.xml"
 ) {
     val context = LocalContext.current
@@ -44,7 +46,7 @@ fun MainDataScreen(
             item {
                 if (row.sensors.size == 1) {
                     // Jeden czujnik w wierszu
-                    SensorDispatcher(row.sensors[0].id, heartRate, stepCount, distanceMeters, speedKmH, workoutTimerState)
+                    SensorDispatcher(row.sensors[0].id, heartRate, stepCount, distanceMeters, speedKmH, workoutTimerState, pressure, altitude)
                 } else {
                     // Wiele czujników w wierszu (Row)
                     Row(
@@ -53,7 +55,7 @@ fun MainDataScreen(
                     ) {
                         row.sensors.forEach { sensor ->
                             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                SensorDispatcher(sensor.id, heartRate, stepCount, distanceMeters, speedKmH, workoutTimerState)
+                                SensorDispatcher(sensor.id, heartRate, stepCount, distanceMeters, speedKmH, workoutTimerState, pressure, altitude)
                             }
                         }
                     }
@@ -73,7 +75,9 @@ fun SensorDispatcher(
     stepCount: Int,
     distanceMeters: Float,
     speedKmH: Float,
-    workoutTimerState: WorkoutTimerState
+    workoutTimerState: WorkoutTimerState,
+    pressure: Double? = null,
+    altitude: Double? = null
 ) {
     when (id) {
         "timer" -> {
@@ -86,5 +90,7 @@ fun SensorDispatcher(
         "distance" -> SportDataRow("Dystans", String.format(Locale.US, "%.2f km", distanceMeters / 1000f), Color.Cyan)
         "speed" -> SportDataRow("Prędkość", String.format(Locale.US, "%.1f km/h", speedKmH), Color.Yellow)
         "heart_rate" -> SportDataRow("Tętno", if (heartRate > 0) "${heartRate.toInt()} BPM" else "-- BPM", Color.Red, true)
+        "pressure" -> SportDataRow("Ciśnienie", if (pressure != null) String.format(Locale.US, "%.1f hPa", pressure) else "-- hPa", Color.LightGray)
+        "altitude" -> SportDataRow("Wysokość", if (altitude != null) "${altitude.toInt()} m" else "-- m", Color.Magenta)
     }
 }

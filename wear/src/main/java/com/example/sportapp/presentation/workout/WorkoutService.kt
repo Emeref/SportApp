@@ -78,6 +78,7 @@ class WorkoutService : Service(), SensorEventListener {
     private var maxSpeedGps = 0.0
     private var maxSpeedSteps = 0.0
     private var altitude = 0.0
+    private var pressure = 0.0
     private var healthData: HealthData? = null
     private var sportDefinition: WorkoutDefinition? = null
     private var fallbackActivityName: String = "Aktywność"
@@ -176,6 +177,7 @@ class WorkoutService : Service(), SensorEventListener {
         maxSpeedGps = 0.0
         maxSpeedSteps = 0.0
         altitude = 0.0
+        pressure = 0.0
         totalCaloriesAcc = 0.0
         pointsList.clear()
         
@@ -347,7 +349,8 @@ class WorkoutService : Service(), SensorEventListener {
                         predkoscGps = speedKmH,
                         wysokosc = altitude,
                         calorieMin = calorieMinNow,
-                        calorieSum = totalCaloriesAcc
+                        calorieSum = totalCaloriesAcc,
+                        pressure = if (pressure > 0) pressure else null
                     )
                     
                     if (lastPoint != null) {
@@ -407,6 +410,7 @@ class WorkoutService : Service(), SensorEventListener {
                     currentSteps = steps - stepCountStart
                 }
                 Sensor.TYPE_PRESSURE -> if (it.values.isNotEmpty()) {
+                    pressure = it.values[0].toDouble()
                     altitude = SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, it.values[0]).toDouble()
                 }
             }
