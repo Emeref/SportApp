@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "main", "master", "develop" ]
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  checks: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -21,13 +27,27 @@ jobs:
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: wrapper
-        # To cache more aggressively, you can uncomment the following:
-        # cache-read-only: false
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
     - name: Run Unit Tests
-      run: ./gradlew testDebugUnitTest
+      # Dodajemy ignoreExitCode, aby workflow kontynuował do kroku raportowania
+      run: ./gradlew testDebugUnitTest --continue || true
+
+    - name: Publish Test Report
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: "**/test-results/**/*.xml"
+        check_name: "📊 Raport Jakości Kodu (Testy)"
+        comment_mode: always
+        report_individual_runs: true
+        deduplicate_classes_by_file_name: false
+
+    - name: Upload HTML Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-report
+        path: "**/build/reports/tests/testDebugUnitTest/"
