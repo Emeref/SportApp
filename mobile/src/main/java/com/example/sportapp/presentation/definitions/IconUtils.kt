@@ -26,6 +26,8 @@ fun getIconForName(name: String): ImageVector {
         "SportsBaseball" -> Icons.Default.SportsBaseball
         "Sailing" -> Icons.Default.Sailing
         "Skateboarding" -> Icons.Default.Skateboarding
+        "Sports" -> Icons.Default.EmojiEvents
+        "Timer" -> Icons.Default.Timer
         else -> Icons.AutoMirrored.Filled.DirectionsRun
     }
 }

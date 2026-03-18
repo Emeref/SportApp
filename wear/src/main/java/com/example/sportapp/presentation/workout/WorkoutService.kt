@@ -114,6 +114,11 @@ class WorkoutService : Service(), SensorEventListener {
         
         when (intent.action) {
             ACTION_START -> {
+                if (status != WorkoutStatus.IDLE) {
+                    Log.d("WorkoutService", "Workout already in progress, ignoring ACTION_START")
+                    return START_STICKY
+                }
+
                 val definitionId = intent.getLongExtra(EXTRA_DEFINITION_ID, -1L)
                 currentDefinitionId = definitionId
                 fallbackActivityName = intent.getStringExtra(EXTRA_ACTIVITY_NAME) ?: "Aktywność"
