@@ -67,10 +67,15 @@ fun MapScreen(
             position = CameraPosition.fromLatLngZoom(LatLng(52.2297, 21.0122), 15f)
         }
 
+        // Always reset zoom to 15 when entering the screen
+        LaunchedEffect(Unit) {
+            cameraPositionState.move(CameraUpdateFactory.zoomTo(15f))
+        }
+
         // State for intelligent auto-centering
         var isAutoCenteringEnabled by remember { mutableStateOf(true) }
         
-        // Filter points for polyline (last 100 points as requested/fallback for 2 minutes)
+        // Filter points for polyline
         val routePoints by remember(allPoints) {
             derivedStateOf {
                 allPoints.takeLast(100).mapNotNull { p ->
@@ -120,9 +125,15 @@ fun MapScreen(
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(
                     isMyLocationEnabled = true,
-                    mapType = mapType
+                    mapType = mapType,
+                    minZoomPreference = 10f, // Limit minimum zoom
+                    maxZoomPreference = 20f  // Limit maximum zoom
                 ),
-                uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false)
+                uiSettings = MapUiSettings(
+                    zoomControlsEnabled = false, 
+                    myLocationButtonEnabled = false,
+                    compassEnabled = false
+                )
             ) {
                 if (showRoute && routePoints.isNotEmpty()) {
                     Polyline(
@@ -161,11 +172,13 @@ fun MapScreen(
                 }
             }
 
-            // Zoom Control
+            // Zoom Control (Slider)
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
-                val zoomProgress = (cameraPositionState.position.zoom - 2f) / 18f
+                val currentZoom = cameraPositionState.position.zoom
+                val zoomProgress = ((currentZoom - 10f) / 10f).coerceIn(0f, 1f)
+                
                 CircularProgressIndicator(
-                    progress = (1f - zoomProgress).coerceIn(0f, 1f),
+                    progress = (1f - zoomProgress),
                     modifier = Modifier.fillMaxSize().padding(2.dp),
                     startAngle = 320f,
                     endAngle = 40f,
@@ -174,13 +187,17 @@ fun MapScreen(
                     trackColor = Color.LightGray.copy(alpha = 0.9f)
                 )
 
+                // Invisible drag area for zoom
                 Box(
-                    modifier = Modifier.fillMaxHeight().width(40.dp).align(Alignment.CenterEnd)
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(35.dp)
+                        .align(Alignment.CenterEnd)
                         .pointerInput(Unit) {
                             detectVerticalDragGestures { change, dragAmount ->
                                 change.consume()
-                                val newZoom = (cameraPositionState.position.zoom - dragAmount * 0.05f).coerceIn(2f, 20f)
-                                scope.launch { cameraPositionState.move(CameraUpdateFactory.zoomTo(newZoom)) }
+                                val nextZoom = (cameraPositionState.position.zoom - dragAmount * 0.04f).coerceIn(10f, 20f)
+                                scope.launch { cameraPositionState.move(CameraUpdateFactory.zoomTo(nextZoom)) }
                                 isAutoCenteringEnabled = false
                             }
                         }
