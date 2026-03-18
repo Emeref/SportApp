@@ -12,7 +12,9 @@
     - [ ] **Centralny PermissionManager**: Ujednolicona obsługa uprawnień przed startem aktywności.
     - [ ] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych GPS i barometru (eliminacja szumów).
     - [x] **Przegląd sensorów**: Sprawdzono i dodano obsługę SpO2 oraz ciśnienia atmosferycznego (barometru).
-- [x] **Własne dyscypliny**: Możliwanie dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
+- [x] **Własne dyscypliny**: 
+    - [x] Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
+    - [x] Zarządzanie kolejnością dyscyplin na liście (Mobile & Wear).
 
 ## 2. Zarządzanie danymi i plikami
 - [x] **Zapis konfiguracji aplikacji**:
@@ -34,7 +36,7 @@
 ## 3. Komunikacja międzyurządzeniowa
 - [x] **Aplikacja na telefon (Mobile App)**:
     - [x] Stworzenie szkieletu interfejsu (Material 3).
-    - [x] Synchronizacja `Wearable Data Layer API` (treningi i definicje sportów).
+    - [x] Synchronizacja `Wearable Data Layer API` (treningi, definicje sportów, ustawienia statystyk).
     - [x] Wyświetlanie statystyk i listy aktywności.
 - [ ] **Analiza danych (Mobile)**:
     - [ ] **Szczegóły aktywności (Ekran ActivityDetailScreen)**:
@@ -60,6 +62,7 @@
 - [x] **Ustawienia i Personalizacja (Mobile)**:
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
     - [x] Wybór okresu raportowania (dziś, tydzień, m-c, rok).
+    - [x] **Zdalna konfiguracja zegarka**: Możliwość ustawienia pól statystyk i okresu dla zegarka z poziomu aplikacji mobilnej.
     - [x] **Poprawa Layoutu**: Przesunięcie tytułów ekranów opcji w dół (aby nie chowały się za kamerką).
     - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definie aktywności.
     - [ ] **Odświeżenie UI**: Zmiana wyglądu tabel/list (dodano paski przewijania) oraz wdrożenie sliderów do regulacji parametrów.
@@ -68,7 +71,8 @@
 
 ## 4. Funkcje Wear OS (Zegarek)
 - [x] **Statystyki na zegarku**:
-    - [x] Wyświetlanie podsumowania widgetów z ostatniego tygodnia (dystans, kcal, kroki).
+    - [x] Dynamiczne wyświetlanie widgetów (dystans, kcal, kroki, przewyższenia itp.) zgodnie z ustawieniami z telefonu.
+    - [x] Obsługa różnych okresów raportowania synchronizowanych z Mobile.
 - [ ] **Optymalizacja UI**:
     - [x] **Responsywność korony zegarka**: Zwiększenie czułości kółka przy przewijaniu długich list treningowych.
     - [x] **Dynamiczny układ treningu**: Mapa wyświetlana na końcu listy czujników (płynne przewijanie).
@@ -98,6 +102,6 @@
 - [ ] **Clean Code**: Usunięcie hardkodowanych stringów (trasy nawigacji) do stałych/typów enumeratywnych.
 
 ## PRIORYTETY
-1. **Widget 'Best Split' i Wykres długości kroku** - Implementacja zaawansowanej analizy techniki biegu.
-2. **Analiza stref tętna** - Wyliczanie i prezentacja czasu w strefach Z1-Z5.
-3. **Interaktywna mapa trasy** - Dodanie mapy do ekranu szczegółów aktywności z oznaczeniem startu i końca trasy.
+1. **Analiza stref tętna** - Wyliczanie i prezentacja czasu w strefach Z1-Z5 na ekranie szczegółów.
+2. **Interaktywna mapa trasy** - Implementacja mapy w `ActivityDetailScreen` z pełnym śladem GPS i markerami.
+3. **Widget 'Best Split' i Wykres długości kroku** - Zaawansowana analiza statystyk biegowych.
