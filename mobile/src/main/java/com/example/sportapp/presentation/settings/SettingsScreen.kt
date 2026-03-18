@@ -27,6 +27,7 @@ fun SettingsScreen(
     onSave: (MobileSettingsState) -> Unit,
     onCancel: () -> Unit,
     onNavigateToWidgetSelection: () -> Unit,
+    onNavigateToWatchWidgetSelection: () -> Unit,
     onNavigateToDefinitions: () -> Unit
 ) {
     var state by remember { mutableStateOf(initialState) }
@@ -38,7 +39,7 @@ fun SettingsScreen(
                 title = { 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 16.dp) // Przesunięcie pod kamerkę
+                        modifier = Modifier.padding(top = 16.dp)
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.logo_apki_biale),
@@ -82,7 +83,7 @@ fun SettingsScreen(
                 }
             }
 
-            // 2. Sekcja Widgety
+            // 2. Sekcja Widgety na stronie głównej
             SettingsSection(title = "Widok ekranu głównego") {
                 OutlinedCard(
                     onClick = onNavigateToWidgetSelection,
@@ -95,33 +96,70 @@ fun SettingsScreen(
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
                 }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(text = "Za jaki okres pokazujemy widgety?", style = MaterialTheme.typography.bodyMedium)
+                PeriodSelectionGrid(
+                    selectedPeriod = state.period,
+                    onSelect = { state = state.copy(period = it) }
+                )
+
+                if (state.period == ReportingPeriod.CUSTOM) {
+                    OutlinedTextField(
+                        value = state.customDays.toString(),
+                        onValueChange = { 
+                            val days = it.toIntOrNull() ?: 0
+                            if (days in 1..35000) {
+                                state = state.copy(customDays = days)
+                            }
+                        },
+                        label = { Text("Liczba dni") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        )
+                    )
+                }
             }
 
-            // 3. Sekcja Okresu
-            SettingsSection(title = "Za jaki okres pokazujemy widgety?") {
-                Column {
-                    PeriodOption("Dziś", ReportingPeriod.TODAY, state.period) { state = state.copy(period = it) }
-                    PeriodOption("Tydzień", ReportingPeriod.WEEK, state.period) { state = state.copy(period = it) }
-                    PeriodOption("Miesiąc", ReportingPeriod.MONTH, state.period) { state = state.copy(period = it) }
-                    PeriodOption("Rok", ReportingPeriod.YEAR, state.period) { state = state.copy(period = it) }
-                    PeriodOption("Inne", ReportingPeriod.CUSTOM, state.period) { state = state.copy(period = it) }
+            // 3. Sekcja Statystyki na zegarku
+            SettingsSection(title = "Statystyki na zegarku") {
+                OutlinedCard(
+                    onClick = onNavigateToWatchWidgetSelection,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Pola statystyk") },
+                        supportingContent = { Text("Wybierz i ustaw kolejność pól na zegarku") },
+                        leadingContent = { Icon(Icons.Default.Watch, null) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
+                    )
+                }
 
-                    if (state.period == ReportingPeriod.CUSTOM) {
-                        OutlinedTextField(
-                            value = state.customDays.toString(),
-                            onValueChange = { 
-                                val days = it.toIntOrNull() ?: 0
-                                if (days in 1..35000) {
-                                    state = state.copy(customDays = days)
-                                }
-                            },
-                            label = { Text("Liczba dni") },
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                            )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = "Z jakiego okresu statystyki?", style = MaterialTheme.typography.bodyMedium)
+                PeriodSelectionGrid(
+                    selectedPeriod = state.watchStatsPeriod,
+                    onSelect = { state = state.copy(watchStatsPeriod = it) }
+                )
+
+                if (state.watchStatsPeriod == ReportingPeriod.CUSTOM) {
+                    OutlinedTextField(
+                        value = state.watchStatsCustomDays.toString(),
+                        onValueChange = { 
+                            val days = it.toIntOrNull() ?: 0
+                            if (days in 1..35000) {
+                                state = state.copy(watchStatsCustomDays = days)
+                            }
+                        },
+                        label = { Text("Liczba dni") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
                         )
-                    }
+                    )
                 }
             }
 
@@ -145,14 +183,14 @@ fun SettingsScreen(
                 Button(
                     onClick = { onSave(state) },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)) // Zielony
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
                     Text("Zapisz", color = Color.White)
                 }
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)) // Czerwony
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
                 ) {
                     Text("Zamknij", color = Color.White)
                 }
@@ -187,23 +225,47 @@ fun SettingsScreen(
 }
 
 @Composable
-fun SettingsSection(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        content()
+fun PeriodSelectionGrid(
+    selectedPeriod: ReportingPeriod,
+    onSelect: (ReportingPeriod) -> Unit
+) {
+    Column {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            PeriodOptionChip("Dziś", ReportingPeriod.TODAY, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip("Tydzień", ReportingPeriod.WEEK, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip("Miesiąc", ReportingPeriod.MONTH, selectedPeriod, onSelect, Modifier.weight(1f))
+        }
+        Row(modifier = Modifier.fillMaxWidth()) {
+            PeriodOptionChip("Rok", ReportingPeriod.YEAR, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip("Inne", ReportingPeriod.CUSTOM, selectedPeriod, onSelect, Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
+        }
     }
 }
 
 @Composable
-fun PeriodOption(label: String, period: ReportingPeriod, selectedPeriod: ReportingPeriod, onSelect: (ReportingPeriod) -> Unit) {
+fun PeriodOptionChip(
+    label: String,
+    period: ReportingPeriod,
+    selectedPeriod: ReportingPeriod,
+    onSelect: (ReportingPeriod) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .clickable { onSelect(period) }
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(selected = period == selectedPeriod, onClick = { onSelect(period) })
-        Text(text = label, modifier = Modifier.padding(start = 8.dp))
+        Text(text = label, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+fun SettingsSection(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        content()
     }
 }

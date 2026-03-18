@@ -6,10 +6,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WorkoutDefinitionDao {
-    @Query("SELECT * FROM workout_definitions ORDER BY isDefault DESC, name ASC")
+    @Query("SELECT * FROM workout_definitions ORDER BY sortOrder ASC, id ASC")
     fun getAllDefinitions(): Flow<List<WorkoutDefinition>>
 
-    @Query("SELECT * FROM workout_definitions ORDER BY isDefault DESC, name ASC")
+    @Query("SELECT * FROM workout_definitions ORDER BY sortOrder ASC, id ASC")
     suspend fun getAllDefinitionsOnce(): List<WorkoutDefinition>
 
     @Query("SELECT * FROM workout_definitions WHERE id = :id")
@@ -26,4 +26,9 @@ interface WorkoutDefinitionDao {
 
     @Query("SELECT COUNT(*) FROM workout_definitions WHERE isDefault = 1")
     suspend fun getDefaultCount(): Int
+    
+    @Transaction
+    suspend fun updateDefinitions(definitions: List<WorkoutDefinition>) {
+        definitions.forEach { updateDefinition(it) }
+    }
 }

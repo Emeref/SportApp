@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WorkoutDefinitionDao {
-    @Query("SELECT * FROM workout_definitions ORDER BY isDefault DESC, name ASC")
+    @Query("SELECT * FROM workout_definitions ORDER BY sortOrder ASC, id ASC")
     fun getAllDefinitions(): Flow<List<WorkoutDefinition>>
 
     @Query("SELECT * FROM workout_definitions WHERE id = :id")

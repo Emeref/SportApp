@@ -21,5 +21,17 @@ data class MobileSettingsState(
         WidgetItem("steps", "Wszystkie kroki")
     ),
     val period: ReportingPeriod = ReportingPeriod.WEEK,
-    val customDays: Int = 7
+    val customDays: Int = 7,
+    // Sekcja: Statystyki na zegarku
+    val watchStatsWidgets: List<WidgetItem> = listOf(
+        WidgetItem("count", "Liczba aktywności"),
+        WidgetItem("calories", "Spalone kalorie"),
+        WidgetItem("distanceGps", "Dystans (GPS)"),
+        WidgetItem("distanceSteps", "Dystans (kroki)"),
+        WidgetItem("ascent", "Przewyższenia w górę"),
+        WidgetItem("descent", "Przewyższenia w dół"),
+        WidgetItem("steps", "Wszystkie kroki")
+    ),
+    val watchStatsPeriod: ReportingPeriod = ReportingPeriod.WEEK,
+    val watchStatsCustomDays: Int = 7
 )

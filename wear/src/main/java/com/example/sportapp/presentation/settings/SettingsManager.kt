@@ -6,7 +6,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.sportapp.presentation.settings.ReportingPeriod
+import com.example.sportapp.presentation.settings.WidgetItem
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.google.maps.android.compose.MapType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +38,10 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         private val ROUTE_COLOR_KEY = longPreferencesKey("route_color")
         private val SCREEN_BEHAVIOR_KEY = stringPreferencesKey("screen_behavior")
         
+        private val WATCH_STATS_WIDGETS_KEY = stringPreferencesKey("watch_stats_widgets")
+        private val WATCH_STATS_PERIOD_KEY = stringPreferencesKey("watch_stats_period")
+        private val WATCH_STATS_CUSTOM_DAYS_KEY = intPreferencesKey("watch_stats_custom_days")
+        
         val Orange = Color(0xFFFFA500)
         val Transparent = Color.Transparent
     }
@@ -57,14 +64,49 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             } else {
                 HealthData()
             }
-            val autoCenterDelay = preferences[AUTO_CENTER_DELAY_KEY] ?: 5 // Default 5 seconds
+            val autoCenterDelay = preferences[AUTO_CENTER_DELAY_KEY] ?: 5
             val showRoute = preferences[SHOW_ROUTE_KEY] ?: true
             val routeColorValue = preferences[ROUTE_COLOR_KEY] ?: Orange.toArgb().toLong()
             val routeColor = if (routeColorValue == -1L) Transparent else Color(routeColorValue.toULong())
             val screenBehavior = preferences[SCREEN_BEHAVIOR_KEY]?.let { ScreenBehavior.valueOf(it) } ?: ScreenBehavior.KEEP_SCREEN_ON
 
-            UserSettings(mapType, clockColor, healthData, autoCenterDelay, showRoute, routeColor, screenBehavior)
+            val watchStatsWidgetsJson = preferences[WATCH_STATS_WIDGETS_KEY]
+            val watchStatsWidgets = if (watchStatsWidgetsJson != null) {
+                try {
+                    val type = object : TypeToken<List<WidgetItem>>() {}.type
+                    gson.fromJson<List<WidgetItem>>(watchStatsWidgetsJson, type) ?: defaultWatchStatsWidgets
+                } catch (e: Exception) {
+                    defaultWatchStatsWidgets
+                }
+            } else {
+                defaultWatchStatsWidgets
+            }
+            val watchStatsPeriod = preferences[WATCH_STATS_PERIOD_KEY]?.let { ReportingPeriod.valueOf(it) } ?: ReportingPeriod.WEEK
+            val watchStatsCustomDays = preferences[WATCH_STATS_CUSTOM_DAYS_KEY] ?: 7
+
+            UserSettings(
+                mapType, clockColor, healthData, autoCenterDelay, showRoute, routeColor, screenBehavior,
+                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays
+            )
         }
+
+    private val defaultWatchStatsWidgets = listOf(
+        WidgetItem("count", "Liczba aktywności"),
+        WidgetItem("calories", "Spalone kalorie"),
+        WidgetItem("distanceGps", "Dystans (GPS)"),
+        WidgetItem("distanceSteps", "Dystans (kroki)"),
+        WidgetItem("ascent", "Przewyższenia w górę"),
+        WidgetItem("descent", "Przewyższenia w dół"),
+        WidgetItem("steps", "Wszystkie kroki")
+    )
+
+    suspend fun saveWatchStatsSettings(widgets: List<WidgetItem>, period: ReportingPeriod, customDays: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[WATCH_STATS_WIDGETS_KEY] = gson.toJson(widgets)
+            preferences[WATCH_STATS_PERIOD_KEY] = period.name
+            preferences[WATCH_STATS_CUSTOM_DAYS_KEY] = customDays
+        }
+    }
 
     suspend fun saveMapType(type: MapType) {
         context.dataStore.edit { preferences ->
@@ -116,5 +158,8 @@ data class UserSettings(
     val autoCenterDelay: Int,
     val showRoute: Boolean,
     val routeColor: Color,
-    val screenBehavior: ScreenBehavior
+    val screenBehavior: ScreenBehavior,
+    val watchStatsWidgets: List<WidgetItem>,
+    val watchStatsPeriod: ReportingPeriod,
+    val watchStatsCustomDays: Int
 )

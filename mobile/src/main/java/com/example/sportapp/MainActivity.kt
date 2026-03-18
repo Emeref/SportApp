@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onCancel = { navController.popBackStack() },
                                     onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
+                                    onNavigateToWatchWidgetSelection = { navController.navigate("watch_widget_selection") },
                                     onNavigateToDefinitions = { navController.navigate("definitions") }
                                 )
                             }
@@ -100,9 +101,25 @@ class MainActivity : ComponentActivity() {
                             settingsState?.let { state ->
                                 WidgetSelectionScreen(
                                     widgets = state.widgets,
+                                    title = "Widgety na stronie głównej",
                                     onSave = { updatedWidgets ->
                                         scope.launch {
                                             settingsManager.saveSettings(state.copy(widgets = updatedWidgets))
+                                            navController.popBackStack()
+                                        }
+                                    },
+                                    onCancel = { navController.popBackStack() }
+                                )
+                            }
+                        }
+                        composable("watch_widget_selection") {
+                            settingsState?.let { state ->
+                                WidgetSelectionScreen(
+                                    widgets = state.watchStatsWidgets,
+                                    title = "Statystyki na zegarku",
+                                    onSave = { updatedWidgets ->
+                                        scope.launch {
+                                            settingsManager.saveSettings(state.copy(watchStatsWidgets = updatedWidgets))
                                             navController.popBackStack()
                                         }
                                     },

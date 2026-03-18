@@ -73,11 +73,6 @@ fun ActivityDetailSettingsListScreen(
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Text(
-                                    text = if (definition.isDefault) "Standardowa" else "Niestandardowa",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
-                                )
                             }
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null)
