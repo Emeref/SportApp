@@ -38,11 +38,22 @@ fun WorkoutDefinitionEditScreen(
     var iconName by remember(existingDefinition) { mutableStateOf(existingDefinition?.iconName ?: "DirectionsRun") }
     var baseType by remember(existingDefinition) { mutableStateOf(existingDefinition?.baseType ?: "Other") }
     var sensors by remember(existingDefinition) {
-        mutableStateOf(
-            existingDefinition?.sensors ?: WorkoutSensor.entries.map {
+        val allSensorIds = WorkoutSensor.entries.map { it.id }.toSet()
+        val initialSensors = if (existingDefinition != null) {
+            // Filter out sensors that are no longer in the enum
+            val filtered = existingDefinition.sensors.filter { it.sensorId in allSensorIds }
+            // Add any new sensors from the enum that might be missing
+            val existingIds = filtered.map { it.sensorId }.toSet()
+            val missing = WorkoutSensor.entries.filter { it.id !in existingIds }.map {
                 SensorConfig(it.id, isVisible = false, isRecording = false)
             }
-        )
+            filtered + missing
+        } else {
+            WorkoutSensor.entries.map {
+                SensorConfig(it.id, isVisible = false, isRecording = false)
+            }
+        }
+        mutableStateOf(initialSensors)
     }
 
     var showIconPicker by remember { mutableStateOf(false) }
