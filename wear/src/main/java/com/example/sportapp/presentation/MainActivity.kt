@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -73,7 +72,18 @@ class MainActivity : ComponentActivity() {
             
             val isAmbient by _isAmbient
             
-            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(MapType.NORMAL, Color.Red, HealthData(), 5, true, SettingsManager.Orange, ScreenBehavior.KEEP_SCREEN_ON))
+            val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(
+                mapType = MapType.NORMAL,
+                clockColor = Color.Red,
+                healthData = HealthData(),
+                autoCenterDelay = 5,
+                showRoute = true,
+                routeColor = SettingsManager.Orange,
+                screenBehavior = ScreenBehavior.KEEP_SCREEN_ON,
+                watchStatsWidgets = emptyList(),
+                watchStatsPeriod = ReportingPeriod.WEEK,
+                watchStatsCustomDays = 7
+            ))
             
             var selectedMapType by remember { mutableStateOf(MapType.NORMAL) }
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
