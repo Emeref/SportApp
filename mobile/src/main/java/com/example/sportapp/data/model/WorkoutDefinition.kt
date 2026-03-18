@@ -35,5 +35,6 @@ data class WorkoutDefinition(
     val baseType: String,
     val isDefault: Boolean = false,
     val sortOrder: Int = 0,
-    val displayOrder: Int = 0
+    val displayOrder: Int = 0,
+    val autoLapDistance: Double? = null
 )

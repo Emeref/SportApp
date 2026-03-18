@@ -1,6 +1,11 @@
 package com.example.sportapp.presentation.stats
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -13,9 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.presentation.settings.WidgetItem
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
 import java.util.Locale
 
@@ -26,6 +36,8 @@ fun ActivityDetailScreen(
     onNavigateBack: () -> Unit
 ) {
     val sessionData by viewModel.sessionData.collectAsState()
+    val laps by viewModel.laps.collectAsState()
+    val selectedLap by viewModel.selectedLap.collectAsState()
     val error by viewModel.error.collectAsState()
     val settings by viewModel.settings.collectAsState()
 
@@ -102,6 +114,25 @@ fun ActivityDetailScreen(
                                 val cameraPositionState = rememberCameraPositionState {
                                     position = CameraPosition.fromLatLngZoom(startPos, 15f)
                                 }
+
+                                // Update camera when lap is selected
+                                LaunchedEffect(selectedLap) {
+                                    selectedLap?.let { lap ->
+                                        val lapPoints = data.route.subList(
+                                            lap.startLocationIndex.coerceIn(data.route.indices),
+                                            (lap.endLocationIndex + 1).coerceIn(data.route.indices)
+                                        )
+                                        if (lapPoints.isNotEmpty()) {
+                                            val boundsBuilder = LatLngBounds.Builder()
+                                            lapPoints.forEach { boundsBuilder.include(it) }
+                                            val bounds = boundsBuilder.build()
+                                            cameraPositionState.animate(
+                                                CameraUpdateFactory.newLatLngBounds(bounds, 50)
+                                            )
+                                        }
+                                    }
+                                }
+
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -111,21 +142,46 @@ fun ActivityDetailScreen(
                                 ) {
                                     GoogleMap(
                                         modifier = Modifier.fillMaxSize(),
-                                        cameraPositionState = cameraPositionState
+                                        cameraPositionState = cameraPositionState,
+                                        onMapClick = { viewModel.selectLap(null) }
                                     ) {
                                         Polyline(
                                             points = data.route,
                                             color = Color(settings.trackColor),
                                             width = 10f
                                         )
+                                        
+                                        selectedLap?.let { lap ->
+                                            val lapPoints = data.route.subList(
+                                                lap.startLocationIndex.coerceIn(data.route.indices),
+                                                (lap.endLocationIndex + 1).coerceIn(data.route.indices)
+                                            )
+                                            if (lapPoints.isNotEmpty()) {
+                                                Polyline(
+                                                    points = lapPoints,
+                                                    color = Color.Cyan,
+                                                    width = 15f,
+                                                    zIndex = 1f
+                                                )
+                                            }
+                                        }
                                     }
                                 }
+                                
+                                if (laps.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    LapsTable(
+                                        laps = laps,
+                                        selectedLap = selectedLap,
+                                        onLapClick = { viewModel.selectLap(it) }
+                                    )
+                                }
+                                
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
                         else -> {
                             val producer = viewModel.chartProducers[widget.id]
-                            // Klucze w SessionData.charts są zsynchronizowane z chartProducers
                             val chartKey = widget.id
                             
                             if (producer != null && (data.charts[chartKey]?.filterNotNull()?.isNotEmpty() == true)) {
@@ -148,6 +204,120 @@ fun ActivityDetailScreen(
             }
         }
     }
+}
+
+@Composable
+fun LapsTable(
+    laps: List<WorkoutLap>,
+    selectedLap: WorkoutLap?,
+    onLapClick: (WorkoutLap) -> Unit
+) {
+    val fastestPace = laps.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    val slowestPace = laps.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    val horizontalScrollState = rememberScrollState()
+
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Text("Odcinki", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Box(modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column {
+                // Header Row
+                Row {
+                    // Fixed "Nr" Header
+                    Box(modifier = Modifier
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(8.dp)
+                    ) {
+                        LapCell("Nr", width = 40.dp, isHeader = true)
+                    }
+                    
+                    // Scrollable Headers
+                    Box(modifier = Modifier.horizontalScroll(horizontalScrollState)) {
+                        Row(modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .padding(8.dp)
+                        ) {
+                            LapCell("Czas", width = 80.dp, isHeader = true)
+                            LapCell("Śr. Tempo", width = 90.dp, isHeader = true)
+                            LapCell("Śr. Prędkość", width = 100.dp, isHeader = true)
+                            LapCell("Max Prędkość", width = 100.dp, isHeader = true)
+                            LapCell("Śr. HR", width = 70.dp, isHeader = true)
+                            LapCell("Max HR", width = 70.dp, isHeader = true)
+                            LapCell("Góra/Dół", width = 100.dp, isHeader = true)
+                        }
+                    }
+                }
+
+                laps.forEach { lap ->
+                    val isSelected = selectedLap?.id == lap.id
+                    val bgColor = when {
+                        isSelected -> Color.Cyan.copy(alpha = 0.3f)
+                        lap.avgPaceSecondsPerKm == fastestPace && laps.size > 1 -> Color(0xFFC8E6C9) // Green
+                        lap.avgPaceSecondsPerKm == slowestPace && laps.size > 1 -> Color(0xFFFFCDD2) // Red
+                        else -> Color.Transparent
+                    }
+
+                    Row {
+                        // Fixed "Nr" Cell
+                        Box(modifier = Modifier
+                            .background(if (isSelected) Color.Cyan.copy(alpha = 0.3f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+                            .clickable { onLapClick(lap) }
+                            .padding(8.dp)
+                        ) {
+                            LapCell("${lap.lapNumber}", width = 40.dp)
+                        }
+
+                        // Scrollable Content
+                        Box(modifier = Modifier.horizontalScroll(horizontalScrollState)) {
+                            Row(modifier = Modifier
+                                .clickable { onLapClick(lap) }
+                                .background(bgColor)
+                                .padding(8.dp)
+                            ) {
+                                LapCell(formatMillis(lap.durationMillis), width = 80.dp)
+                                LapCell(formatPaceFromSeconds(lap.avgPaceSecondsPerKm), width = 90.dp)
+                                LapCell(String.format(Locale.US, "%.1f km/h", lap.avgSpeed), width = 100.dp)
+                                LapCell(String.format(Locale.US, "%.1f km/h", lap.maxSpeed), width = 100.dp)
+                                LapCell("${lap.avgHeartRate}", width = 70.dp)
+                                LapCell("${lap.maxHeartRate}", width = 70.dp)
+                                LapCell(String.format(Locale.US, "+%.0f/-%.0f", lap.totalAscent, lap.totalDescent), width = 100.dp)
+                            }
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LapCell(text: String, width: androidx.compose.ui.unit.Dp, isHeader: Boolean = false) {
+    Text(
+        text = text,
+        modifier = Modifier.width(width),
+        style = if (isHeader) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodySmall,
+        fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
+        textAlign = TextAlign.Center
+    )
+}
+
+private fun formatMillis(millis: Long): String {
+    val totalSeconds = millis / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format(Locale.US, "%02d:%02d", minutes, seconds)
+}
+
+private fun formatPaceFromSeconds(totalSeconds: Int): String {
+    if (totalSeconds <= 0) return "--:--"
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format(Locale.US, "%02d:%02d/km", minutes, seconds)
 }
 
 @Composable

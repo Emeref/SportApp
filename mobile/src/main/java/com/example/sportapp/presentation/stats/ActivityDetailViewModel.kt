@@ -7,8 +7,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
+import com.example.sportapp.data.LapManager
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
+import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
@@ -25,6 +28,8 @@ class ActivityDetailViewModel @Inject constructor(
     @ApplicationContext context: Context,
     private val repository: IWorkoutRepository,
     private val sessionRepository: SessionRepository,
+    private val workoutDao: WorkoutDao,
+    private val lapManager: LapManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val activityId: Long = savedStateHandle.get<String>("activityId")?.toLongOrNull() ?: -1L
@@ -32,6 +37,12 @@ class ActivityDetailViewModel @Inject constructor(
 
     private val _sessionData = MutableStateFlow<SessionData?>(null)
     val sessionData = _sessionData.asStateFlow()
+
+    private val _laps = MutableStateFlow<List<WorkoutLap>>(emptyList())
+    val laps = _laps.asStateFlow()
+
+    private val _selectedLap = MutableStateFlow<WorkoutLap?>(null)
+    val selectedLap = _selectedLap.asStateFlow()
 
     val settings: StateFlow<ActivityDetailSettings> = _sessionData
         .filterNotNull()
@@ -68,6 +79,7 @@ class ActivityDetailViewModel @Inject constructor(
 
     init {
         loadSessionData()
+        loadLaps()
     }
 
     private fun loadSessionData() {
@@ -78,13 +90,13 @@ class ActivityDetailViewModel @Inject constructor(
             }
 
             try {
-                // Fixed: activityId is already Long, no need for toString()
                 val data = sessionRepository.getSessionData(activityId)
                 if (data.error != null) {
                     _error.value = data.error
                 } else {
                     _sessionData.value = data
                     updateCharts(data)
+                    checkAndGenerateLaps(data)
                 }
             } catch (e: Exception) {
                 _error.value = "Błąd ładowania danych: ${e.message}"
@@ -92,9 +104,37 @@ class ActivityDetailViewModel @Inject constructor(
         }
     }
 
+    private fun loadLaps() {
+        viewModelScope.launch {
+            if (activityId != -1L) {
+                _laps.value = workoutDao.getLapsForWorkout(activityId)
+            }
+        }
+    }
+
+    private suspend fun checkAndGenerateLaps(data: SessionData) {
+        if (activityId == -1L) return
+        
+        val existingLaps = workoutDao.getLapsForWorkout(activityId)
+        if (existingLaps.isNotEmpty()) return
+
+        val workout = workoutDao.getWorkoutById(activityId) ?: return
+        val definitions = repository.getAllDefinitions().first()
+        val definition = definitions.find { it.name == workout.activityName }
+        
+        val autoLapDist = definition?.autoLapDistance
+        if (autoLapDist != null && autoLapDist > 0.0) {
+            val points = workoutDao.getPointsForWorkout(activityId)
+            val generatedLaps = lapManager.processLaps(activityId, points, autoLapDist)
+            if (generatedLaps.isNotEmpty()) {
+                workoutDao.insertLaps(generatedLaps)
+                _laps.value = generatedLaps
+            }
+        }
+    }
+
     private fun updateCharts(data: SessionData) {
         chartProducers.forEach { (id, producer) ->
-            // Klucze w SessionData.charts są teraz zsynchronizowane z chartProducers
             val points = data.charts[id] ?: emptyList()
             if (points.isNotEmpty()) {
                 producer.setEntries(points.mapIndexed { index, value ->
@@ -102,6 +142,10 @@ class ActivityDetailViewModel @Inject constructor(
                 })
             }
         }
+    }
+
+    fun selectLap(lap: WorkoutLap?) {
+        _selectedLap.value = lap
     }
 
     fun saveVisibleCharts(charts: List<WidgetItem>) {

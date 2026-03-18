@@ -1,6 +1,7 @@
 package com.example.sportapp.data.db
 
 import androidx.room.*
+import com.example.sportapp.data.model.WorkoutLap
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -56,4 +57,13 @@ interface WorkoutDao {
 
     @Query("SELECT MAX(steps) FROM workout_points WHERE workoutId = :workoutId")
     suspend fun getMaxSteps(workoutId: Long): Int?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLaps(laps: List<WorkoutLap>)
+
+    @Query("SELECT * FROM workout_laps WHERE workoutId = :workoutId ORDER BY lapNumber ASC")
+    suspend fun getLapsForWorkout(workoutId: Long): List<WorkoutLap>
+
+    @Query("DELETE FROM workout_laps WHERE workoutId = :workoutId")
+    suspend fun deleteLapsForWorkout(workoutId: Long)
 }
