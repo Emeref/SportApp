@@ -2,11 +2,13 @@ package com.example.sportapp.data
 
 import android.util.Log
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import com.google.gson.Gson
@@ -23,8 +25,21 @@ import javax.inject.Inject
 class SyncService : WearableListenerService() {
 
     @Inject lateinit var workoutDao: WorkoutDao
+    @Inject lateinit var workoutDefinitionDao: WorkoutDefinitionDao
+    @Inject lateinit var syncManager: WorkoutDefinitionSyncManager
+    
     private val gson = Gson()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    override fun onMessageReceived(messageEvent: MessageEvent) {
+        if (messageEvent.path == "/request_definitions") {
+            Log.d("SyncService", "Request for definitions received from wear")
+            scope.launch {
+                val definitions = workoutDefinitionDao.getAllDefinitionsOnce()
+                syncManager.syncDefinitions(definitions)
+            }
+        }
+    }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         Log.d("SyncService", "onDataChanged: Received ${dataEvents.count} events")

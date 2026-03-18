@@ -170,7 +170,9 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidge
         "max_cadence" to ("Maks. kadencja" to String.format(Locale.US, "%.0f kr/min", data.maxCadence)),
         "total_steps" to ("Liczba kroków" to "${data.totalSteps}"),
         "total_distance_gps" to ("Dystans (GPS)" to formatDistance(data.totalDistanceGps)),
-        "total_distance_steps" to ("Dystans (kroki)" to formatDistance(data.totalDistanceSteps))
+        "total_distance_steps" to ("Dystans (kroki)" to formatDistance(data.totalDistanceSteps)),
+        "pressure_start" to ("Ciśnienie (start)" to (data.pressureStart?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")),
+        "pressure_end" to ("Ciśnienie (koniec)" to (data.pressureEnd?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa"))
     )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -232,6 +234,7 @@ private fun getUnitForWidget(id: String): String {
         "odl_kroki", "gps_dystans" -> "m"
         "predkosc", "predkosc_kroki" -> "km/h"
         "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"
+        "pressure" -> "hPa"
         else -> ""
     }
 }

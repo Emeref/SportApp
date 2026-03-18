@@ -48,5 +48,6 @@ data class WorkoutPointEntity(
     val totalAscent: Double?,
     val totalDescent: Double?,
     val calorieMin: Double?,
-    val calorieSum: Double?
+    val calorieSum: Double?,
+    val pressure: Double? = null
 )

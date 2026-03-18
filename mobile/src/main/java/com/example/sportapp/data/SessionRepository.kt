@@ -31,6 +31,7 @@ class SessionRepository @Inject constructor(
         val altitudes = mutableListOf<Float?>()
         val ascents = mutableListOf<Float?>()
         val descents = mutableListOf<Float?>()
+        val pressures = mutableListOf<Float?>()
 
         var totalCalories = 0.0
         var maxCaloriesMin = 0f
@@ -101,6 +102,8 @@ class SessionRepository @Inject constructor(
             
             ascents.add(point.totalAscent?.toFloat())
             descents.add(point.totalDescent?.toFloat())
+
+            pressures.add(point.pressure?.toFloat())
         }
 
         val chartData = mapOf(
@@ -114,7 +117,8 @@ class SessionRepository @Inject constructor(
             "predkosc" to speedGps,
             "wysokosc" to altitudes,
             "przewyzszenia_gora" to ascents,
-            "przewyzszenia_dol" to descents
+            "przewyzszenia_dol" to descents,
+            "pressure" to pressures
         )
 
         val finalTotalDistanceGps = if (totalDistanceGps > 0) totalDistanceGps else (workout.distanceGps ?: 0.0)
@@ -128,6 +132,9 @@ class SessionRepository @Inject constructor(
         } else 0.0
 
         val calculatedAvgBpm = if (heartRates.filterNotNull().isNotEmpty()) heartRates.filterNotNull().average().toInt() else 0
+
+        val pressureStart = pressures.filterNotNull().firstOrNull()?.toDouble()
+        val pressureEnd = pressures.filterNotNull().lastOrNull()?.toDouble()
 
         return@withContext SessionData(
             times = times,
@@ -150,7 +157,9 @@ class SessionRepository @Inject constructor(
             maxAltitude = workout.maxAltitude ?: (if (maxAlt == -10000.0) 0.0 else maxAlt),
             avgStepLength = workout.avgStepLength ?: (if (finalTotalSteps > 0) officialDistanceMeters / finalTotalSteps else 0.0),
             avgCadence = workout.avgCadence ?: 0.0,
-            maxCadence = workout.maxCadence ?: 0.0
+            maxCadence = workout.maxCadence ?: 0.0,
+            pressureStart = pressureStart,
+            pressureEnd = pressureEnd
         )
     }
 }
@@ -177,5 +186,7 @@ data class SessionData(
     val maxAltitude: Double = 0.0,
     val avgStepLength: Double = 0.0,
     val avgCadence: Double = 0.0,
-    val maxCadence: Double = 0.0
+    val maxCadence: Double = 0.0,
+    val pressureStart: Double? = null,
+    val pressureEnd: Double? = null
 )

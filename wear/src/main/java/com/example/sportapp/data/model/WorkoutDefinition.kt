@@ -16,7 +16,8 @@ enum class WorkoutSensor(val id: String, val label: String) {
     TOTAL_ASCENT("totalAscent", "W sumie w górę"),
     TOTAL_DESCENT("totalDescent", "W sumie do dołu"),
     CALORIES_PER_MINUTE("calorieMin", "Kalorie na minutę"),
-    CALORIES_SUM("calorieSum", "Spalone kalorie")
+    CALORIES_SUM("calorieSum", "Spalone kalorie"),
+    PRESSURE("pressure", "Ciśnienie")
 }
 
 data class SensorConfig(
