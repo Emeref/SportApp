@@ -10,10 +10,10 @@
 - [ ] **Sensory i Precyzja**:
     - [x] **Wprowadzenie Foreground Service**: Przeniesienie logiki sesji z UI do usługi w tle (zapobieganie ubijaniu treningu).
     - [ ] **Centralny PermissionManager**: Ujednolicona obsługa uprawnień przed startem aktywności.
-    - [ ] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych GPS i barometru (eliminacja szumów).
+    - [x] **Filtracja sygnałów**: Implementacja filtrów Kalmana dla danych GPS i barometru (eliminacja szumów).
     - [x] **Przegląd sensorów**: Sprawdzono i dodano obsługę SpO2 oraz ciśnienia atmosferycznego (barometru).
 - [x] **Własne dyscypliny**: 
-    - [x] Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
+    - [x] Możliwanie dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
     - [x] Zarządzanie kolejnością dyscyplin na liście (Mobile & Wear).
 
 ## 2. Zarządzanie danymi i plikami
@@ -29,7 +29,7 @@
     - [x] **Refaktoring Tętna**: Usunięcie kolumny `avgBpm` z tabeli `workouts` i zastąpienie jej dynamicznym obliczaniem średniej z `workout_points`.
     - [x] **Zarządzanie aktywnościami**: Dodanie opcji trwałego usuwania aktywności z historii.
     - [x] **Zaokrąglanie danych**: Upewnienie się, że wszystkie pola liczbowe w tabeli `workouts` mają zaokrąglenie do 2 miejsc po przecinku.
-- [x] **Globalne Stałe**: Dodano plik `AppConstants.kt` ze zmiennymi, gdzie are definie z całej aplikacji (np. czułość kółka).
+- [x] **Globalne Stałe**: Dodano plik `AppConstants.kt` ze zmiennymi, które są definiowane z całej aplikacji (np. czułość kółka).
 - [x] **Logowanie treningów**: Rejestracja parametrów co sekundę do bazy danych (metry, zaokrąglone) zgodnie z flagami zapisu.
 - [x] **Podsumowanie zbiorcze**: Dopisywanie wyników do bazy danych po zakończeniu treningu.
 
@@ -47,16 +47,16 @@
         - [x] **Wykresy per aktywność**: Rozszerzenie opcji aktywności o możliwość definiowania widocznych wykresów dla konkretnego sportu.
         - [x] **Widgety per aktywność**: Możliwość wyboru i ustawienia kolejności kafelków podsumowania niezależnie dla każdego sportu.
         - [x] **Rozbudowa metryk sesji**: Dodanie Max HR, Max Speed, średniego tempa, przewyższeń i kadencji.
-        - [x] **Pełna synchronizacja wykresów**: Wszystkie kolumny z `workout_points` are teraz poprawnie mapowane i wyświetlane na wykresach.
+        - [x] **Pełna synchronizacja wykresów**: Wszystkie kolumny z `workout_points` są teraz poprawnie mapowane i wyświetlane na wykresach.
         - [ ] **Najlepsze tempo na km (Best Split)**: Automatyczne wykrywanie najszybszego odcinka 1km.
         - [ ] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu.
         - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
         - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
         - [x] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
-        - [x] **Opcja przycinania treningu**: Możliwanie usunięcia niechcianych fragmentów na początku lub końcu sesji.
-        - [x] **Aktualizacja statystyk po przycięciu**: Nowe wartości are przeliczane i odświeżane w czasie rzeczywistym na liście.
+        - [x] **Opcja przycinania treningu**: Możliwość usunięcia niechcianych fragmentów na początku lub końcu sesji.
+        - [x] **Aktualizacja statystyk po przycięciu**: Nowe wartości są przeliczane i odświeżane w czasie rzeczywistym na liście.
     - [ ] **Analiza stref tętna**: Podział treningu na strefy (Z1-Z5) i ich wizualizacja na ekranie szczegółów.
-    - [x] **Naprawa danych w widgetach**: Statystyki na ekranie głównym i ogólnych statystykach are teraz poprawnie wyliczane i wyświetlane.
+    - [x] **Naprawa danych w widgetach**: Statystyki na ekranie głównym i ogólnych statystykach są teraz poprawnie wyliczane i wyświetlane.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
     - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
 - [x] **Ustawienia i Personalizacja (Mobile)**:
@@ -64,7 +64,7 @@
     - [x] Wybór okresu raportowania (dziś, tydzień, m-c, rok).
     - [x] **Zdalna konfiguracja zegarka**: Możliwość ustawienia pól statystyk i okresu dla zegarka z poziomu aplikacji mobilnej.
     - [x] **Poprawa Layoutu**: Przesunięcie tytułów ekranów opcji w dół (aby nie chowały się za kamerką).
-    - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definie aktywności.
+    - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definicjach aktywności.
     - [ ] **Odświeżenie UI**: Zmiana wyglądu tabel/list (dodano paski przewijania) oraz wdrożenie sliderów do regulacji parametrów.
     - [x] **Branding**: Dodanie oficjalnego logo aplikacji (wewnątrz apki oraz ikony systemowe Adaptive Icons).
     - [ ] **Więcej widgetów**: Dodanie dodatkowych typów widgetów do wyboru w ustawieniach strony głównej.

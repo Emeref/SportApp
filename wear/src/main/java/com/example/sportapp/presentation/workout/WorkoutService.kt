@@ -62,6 +62,8 @@ class WorkoutService : Service(), SensorEventListener {
     private var _workoutState = MutableStateFlow<WorkoutData>(WorkoutData())
     val workoutState = _workoutState.asStateFlow()
 
+    private val signalProcessor = SignalProcessor()
+
     private var status = WorkoutStatus.IDLE
     private var currentWorkoutId: Long = -1
     private var currentDefinitionId: Long = -1
@@ -180,6 +182,7 @@ class WorkoutService : Service(), SensorEventListener {
         pressure = 0.0
         totalCaloriesAcc = 0.0
         pointsList.clear()
+        signalProcessor.reset()
         
         logger = WorkoutLogger(workoutDao, currentWorkoutId, hData, sportDefinition?.sensors ?: emptyList())
         
@@ -280,8 +283,8 @@ class WorkoutService : Service(), SensorEventListener {
                 distanceGps = if (isRecording(WorkoutSensor.DISTANCE_GPS)) totalDistance.toDouble() else null,
                 avgSpeedSteps = if (isRecording(WorkoutSensor.SPEED_STEPS)) avgSpeedSteps else null,
                 avgSpeedGps = if (isRecording(WorkoutSensor.SPEED_GPS)) avgSpeedGps else null,
-                totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) sessionStats.totalAscent else null,
-                totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) sessionStats.totalDescent else null,
+                totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) signalProcessor.totalAscent else null,
+                totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) signalProcessor.totalDescent else null,
                 avgBpm = if (isRecording(WorkoutSensor.HEART_RATE)) sessionStats.avgHr.toDouble() else null,
                 maxBpm = if (isRecording(WorkoutSensor.HEART_RATE)) sessionStats.maxHr else null,
                 totalCalories = if (isRecording(WorkoutSensor.CALORIES_SUM)) totalCaloriesAcc else null,
@@ -385,8 +388,13 @@ class WorkoutService : Service(), SensorEventListener {
             override fun onLocationResult(result: LocationResult) {
                 if (status != WorkoutStatus.ACTIVE) return
                 for (location in result.locations) {
-                    lastLocation?.let { totalDistance += it.distanceTo(location) }
-                    lastLocation = location
+                    val filtered = signalProcessor.processLocation(location.latitude, location.longitude, location.accuracy)
+                    val filteredLocation = Location(location).apply {
+                        latitude = filtered.first
+                        longitude = filtered.second
+                    }
+                    lastLocation?.let { totalDistance += it.distanceTo(filteredLocation) }
+                    lastLocation = filteredLocation
                     speedKmH = location.speed * 3.6f
                 }
             }
@@ -411,7 +419,8 @@ class WorkoutService : Service(), SensorEventListener {
                 }
                 Sensor.TYPE_PRESSURE -> if (it.values.isNotEmpty()) {
                     pressure = it.values[0].toDouble()
-                    altitude = SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, it.values[0]).toDouble()
+                    val rawAltitude = SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, it.values[0]).toDouble()
+                    altitude = signalProcessor.processAltitude(rawAltitude)
                 }
             }
         }
