@@ -4,14 +4,16 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.WorkoutLap
 
 @Database(
     entities = [
         WorkoutEntity::class, 
         WorkoutPointEntity::class, 
-        WorkoutDefinition::class
+        WorkoutDefinition::class,
+        WorkoutLap::class
     ], 
-    version = 11
+    version = 12
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

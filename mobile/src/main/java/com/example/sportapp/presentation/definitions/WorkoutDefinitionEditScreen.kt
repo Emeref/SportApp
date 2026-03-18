@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +39,9 @@ fun WorkoutDefinitionEditScreen(
     var name by remember(existingDefinition) { mutableStateOf(existingDefinition?.name ?: "") }
     var iconName by remember(existingDefinition) { mutableStateOf(existingDefinition?.iconName ?: "DirectionsRun") }
     var baseType by remember(existingDefinition) { mutableStateOf(existingDefinition?.baseType ?: "Other") }
+    var autoLapDistance by remember(existingDefinition) { 
+        mutableStateOf(existingDefinition?.autoLapDistance?.toInt()?.toString() ?: "") 
+    }
     var sensors by remember(existingDefinition) {
         val allSensorIds = WorkoutSensor.entries.map { it.id }.toSet()
         val initialSensors = if (existingDefinition != null) {
@@ -91,6 +96,21 @@ fun WorkoutDefinitionEditScreen(
                         Icon(getIconForName(iconName), contentDescription = "Wybierz ikonę")
                     }
                 }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = autoLapDistance,
+                onValueChange = { newValue ->
+                    if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
+                        autoLapDistance = newValue
+                    }
+                },
+                label = { Text("Automatyczny odcinek (metry, opcjonalnie)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -171,7 +191,8 @@ fun WorkoutDefinitionEditScreen(
                             iconName = iconName,
                             sensors = sensors,
                             baseType = baseType,
-                            isDefault = existingDefinition?.isDefault ?: false
+                            isDefault = existingDefinition?.isDefault ?: false,
+                            autoLapDistance = autoLapDistance.toDoubleOrNull()
                         )
                         viewModel.saveDefinition(newDef)
                         onNavigateBack()
