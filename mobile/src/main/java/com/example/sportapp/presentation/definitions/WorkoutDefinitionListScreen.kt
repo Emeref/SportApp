@@ -3,7 +3,7 @@ package com.example.sportapp.presentation.definitions
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -50,11 +50,13 @@ fun WorkoutDefinitionListScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(definitions) { definition ->
+            itemsIndexed(definitions) { index, definition ->
                 WorkoutDefinitionItem(
                     definition = definition,
                     onEdit = { onNavigateToEdit(definition.id) },
-                    onDelete = { if (!definition.isDefault) definitionToDelete = definition }
+                    onDelete = { if (!definition.isDefault) definitionToDelete = definition },
+                    onMoveUp = if (index > 0) { { viewModel.moveUp(definition) } } else null,
+                    onMoveDown = if (index < definitions.size - 1) { { viewModel.moveDown(definition) } } else null
                 )
             }
         }
@@ -89,7 +91,9 @@ fun WorkoutDefinitionListScreen(
 fun WorkoutDefinitionItem(
     definition: WorkoutDefinition,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
@@ -104,7 +108,10 @@ fun WorkoutDefinitionItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
                     imageVector = getIconForName(definition.iconName), 
                     contentDescription = null, 
@@ -117,14 +124,17 @@ fun WorkoutDefinitionItem(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = if (definition.isDefault) "Standardowa" else "Niestandardowa",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
                 }
             }
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    IconButton(onClick = onMoveUp ?: {}, enabled = onMoveUp != null, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Przesuń w górę")
+                    }
+                    IconButton(onClick = onMoveDown ?: {}, enabled = onMoveDown != null, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Przesuń w dół")
+                    }
+                }
                 IconButton(onClick = onEdit) {
                     Icon(Icons.Default.Edit, contentDescription = "Edytuj")
                 }
@@ -132,6 +142,9 @@ fun WorkoutDefinitionItem(
                     IconButton(onClick = onDelete) {
                         Icon(Icons.Default.Delete, contentDescription = "Usuń", tint = Color.Red)
                     }
+                } else {
+                    // Spacer to keep layout consistent when delete button is missing
+                    Spacer(modifier = Modifier.width(48.dp))
                 }
             }
         }

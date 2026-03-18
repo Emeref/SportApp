@@ -46,7 +46,8 @@ class WorkoutDefinitionViewModel @Inject constructor(
                     iconName = "DirectionsRun",
                     sensors = defaultSensors,
                     baseType = "Other",
-                    isDefault = true
+                    isDefault = true,
+                    sortOrder = 0
                 )
                 dao.insertDefinition(defaultDef)
             }
@@ -66,7 +67,8 @@ class WorkoutDefinitionViewModel @Inject constructor(
     fun saveDefinition(definition: WorkoutDefinition) {
         viewModelScope.launch {
             if (definition.id == 0L) {
-                dao.insertDefinition(definition)
+                val currentMaxOrder = definitions.value.maxOfOrNull { it.sortOrder } ?: -1
+                dao.insertDefinition(definition.copy(sortOrder = currentMaxOrder + 1))
             } else {
                 dao.updateDefinition(definition)
             }
@@ -78,6 +80,41 @@ class WorkoutDefinitionViewModel @Inject constructor(
         viewModelScope.launch {
             dao.deleteDefinition(definition)
             detailSettingsManager.deleteSettings(definition.name)
+            reorderAfterDeletion()
+        }
+    }
+
+    private suspend fun reorderAfterDeletion() {
+        val currentList = dao.getAllDefinitionsOnce()
+        val updatedList = currentList.mapIndexed { index, def ->
+            def.copy(sortOrder = index)
+        }
+        dao.updateDefinitions(updatedList)
+    }
+
+    fun moveUp(definition: WorkoutDefinition) {
+        val list = definitions.value.toMutableList()
+        val index = list.indexOfFirst { it.id == definition.id }
+        if (index > 0) {
+            val other = list[index - 1]
+            list[index - 1] = definition.copy(sortOrder = index - 1)
+            list[index] = other.copy(sortOrder = index)
+            viewModelScope.launch {
+                dao.updateDefinitions(list)
+            }
+        }
+    }
+
+    fun moveDown(definition: WorkoutDefinition) {
+        val list = definitions.value.toMutableList()
+        val index = list.indexOfFirst { it.id == definition.id }
+        if (index != -1 && index < list.size - 1) {
+            val other = list[index + 1]
+            list[index + 1] = definition.copy(sortOrder = index + 1)
+            list[index] = other.copy(sortOrder = index)
+            viewModelScope.launch {
+                dao.updateDefinitions(list)
+            }
         }
     }
 }

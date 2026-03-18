@@ -33,5 +33,6 @@ data class WorkoutDefinition(
     val iconName: String,
     val sensors: List<SensorConfig>,
     val baseType: String,
-    val isDefault: Boolean = false
+    val isDefault: Boolean = false,
+    val sortOrder: Int = 0
 )

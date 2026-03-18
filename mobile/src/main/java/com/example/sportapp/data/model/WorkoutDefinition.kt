@@ -4,20 +4,20 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 enum class WorkoutSensor(val id: String, val label: String) {
-    MAP("map", "Mapa"),
     HEART_RATE("bpm", "Tętno"),
+    CALORIES_SUM("calorieSum", "Spalone kalorie"),
+    CALORIES_PER_MINUTE("calorieMin", "Kalorie na minutę"),
     STEPS("steps", "Kroki"),
     STEPS_PER_MINUTE("stepsMin", "Kroki na minutę"),
     DISTANCE_STEPS("distanceSteps", "Dystans (kroki)"),
-    DISTANCE_GPS("distanceGps", "Dystans"),
     SPEED_GPS("speedGps", "Prędkość"),
     SPEED_STEPS("speedSteps", "Prędkość (kroki)"),
+    DISTANCE_GPS("distanceGps", "Dystans"),
     ALTITUDE("altitude", "Wysokość"),
     TOTAL_ASCENT("totalAscent", "W sumie w górę"),
     TOTAL_DESCENT("totalDescent", "W sumie do dołu"),
-    CALORIES_PER_MINUTE("calorieMin", "Kalorie na minutę"),
-    CALORIES_SUM("calorieSum", "Spalone kalorie"),
-    PRESSURE("pressure", "Ciśnienie")
+    PRESSURE("pressure", "Ciśnienie"),
+    MAP("map", "Mapa")
 }
 
 data class SensorConfig(
@@ -33,5 +33,6 @@ data class WorkoutDefinition(
     val iconName: String,
     val sensors: List<SensorConfig>,
     val baseType: String,
-    val isDefault: Boolean = false
+    val isDefault: Boolean = false,
+    val sortOrder: Int = 0
 )
