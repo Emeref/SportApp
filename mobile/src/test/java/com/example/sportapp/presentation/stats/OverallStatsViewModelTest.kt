@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation.stats
 
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.example.sportapp.data.FakeWorkoutRepository
 import com.example.sportapp.data.db.WorkoutEntity
 import kotlinx.coroutines.Dispatchers
@@ -10,20 +11,25 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.mock
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class OverallStatsViewModelTest {
 
     private lateinit var viewModel: OverallStatsViewModel
     private lateinit var fakeRepository: FakeWorkoutRepository
     private val testDispatcher = StandardTestDispatcher()
-    private val mockContext = mock(Context::class.java)
+    private lateinit var context: Context
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         fakeRepository = FakeWorkoutRepository()
+        context = ApplicationProvider.getApplicationContext()
         
         // Dane testowe: 2 treningi
         val now = System.currentTimeMillis()
@@ -45,7 +51,7 @@ class OverallStatsViewModelTest {
         )
         
         fakeRepository.workouts.value = listOf(workout1, workout2)
-        viewModel = OverallStatsViewModel(mockContext, fakeRepository)
+        viewModel = OverallStatsViewModel(context, fakeRepository)
     }
 
     @After
