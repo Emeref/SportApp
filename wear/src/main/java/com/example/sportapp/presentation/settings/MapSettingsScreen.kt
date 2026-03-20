@@ -21,7 +21,8 @@ fun MapSettingsScreen(
     currentAutoCenterDelay: Int,
     showRoute: Boolean,
     onShowRouteToggle: (Boolean) -> Unit,
-    routeColor: Color
+    routeColor: Color,
+    currentZoom: Float
 ) {
     val listState = rememberScalingLazyListState()
     
@@ -45,6 +46,15 @@ fun MapSettingsScreen(
                 secondaryLabel = { Text(mapTypeLabel) },
                 onClick = { navController.navigate("map_type_selection") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+            )
+        }
+
+        item {
+            Chip(
+                label = { Text("Przybliżenie") },
+                secondaryLabel = { Text("Poziom: ${currentZoom.toInt()}") },
+                onClick = { navController.navigate("map_zoom_selection") },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
 
