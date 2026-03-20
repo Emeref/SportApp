@@ -19,6 +19,8 @@ class WorkoutLogger(
 ) {
     private val heartRates = mutableListOf<Float>()
     private var maxCalorieMin: Double = 0.0
+    private var currentTotalAscent: Double = 0.0
+    private var currentTotalDescent: Double = 0.0
 
     // Historia kroków do obliczania kadencji z ostatnich 20 sekund
     private val stepHistory = mutableListOf<Pair<Long, Int>>()
@@ -51,7 +53,9 @@ class WorkoutLogger(
         wysokosc: Double? = null,
         calorieMin: Double? = null,
         calorieSum: Double? = null,
-        pressure: Double? = null
+        pressure: Double? = null,
+        totalAscent: Double? = null,
+        totalDescent: Double? = null
     ): WorkoutPointEntity = withContext(Dispatchers.Default) {
         val h = durationSeconds / 3600
         val m = (durationSeconds % 3600) / 60
@@ -59,12 +63,13 @@ class WorkoutLogger(
         val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
 
         if (bpm != null && bpm > 0) heartRates.add(bpm)
+        
+        if (totalAscent != null) currentTotalAscent = totalAscent
+        if (totalDescent != null) currentTotalDescent = totalDescent
 
         val currentTime = System.currentTimeMillis()
-        // Obliczanie stepsMin (kadencji) na podstawie okna 20 sekund
         if (kroki != null) {
             stepHistory.add(currentTime to kroki)
-            // Usuwamy wpisy starsze niż 20 sekund
             stepHistory.removeAll { it.first < currentTime - CADENCE_WINDOW_MS }
         }
 
@@ -75,7 +80,6 @@ class WorkoutLogger(
             val stepDiff = newSteps - oldSteps
             if (timeDiffMin > 0) (stepDiff / timeDiffMin) else 0.0
         } else if (kroki != null && kroki > 0 && durationSeconds > 0) {
-            // Fallback na średnią globalną, jeśli mamy za mało danych w oknie (początek treningu)
             (kroki.toDouble() / (durationSeconds / 60.0))
         } else null
 
@@ -100,8 +104,8 @@ class WorkoutLogger(
             speedGps = if (isRecording(WorkoutSensor.SPEED_GPS)) predkoscGps?.toDouble().round(2) else null,
             speedSteps = if (isRecording(WorkoutSensor.SPEED_STEPS)) predkoscKroki.round(2) else null,
             altitude = if (isRecording(WorkoutSensor.ALTITUDE)) wysokosc.round(2) else null,
-            totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) totalAscent.round(2) else null,
-            totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) totalDescent.round(2) else null,
+            totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) currentTotalAscent.round(2) else null,
+            totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) currentTotalDescent.round(2) else null,
             calorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) calorieMin.round(2) else null,
             calorieSum = if (isRecording(WorkoutSensor.CALORIES_SUM)) calorieSum.round(2) else null,
             pressure = if (isRecording(WorkoutSensor.PRESSURE)) pressure.round(2) else null
@@ -113,9 +117,6 @@ class WorkoutLogger(
         point
     }
 
-    /**
-     * Zapisuje zbuforowane punkty do bazy danych.
-     */
     suspend fun flushPoints() = withContext(Dispatchers.IO) {
         val pointsToSave = synchronized(pointBuffer) {
             val list = pointBuffer.toList()
@@ -127,10 +128,10 @@ class WorkoutLogger(
         }
     }
 
-    suspend fun getFinalStats(): Map<String, Any?> {
+    fun getFinalStats(): Map<String, Any?> {
         return mapOf(
-            "totalAscent" to totalAscent,
-            "totalDescent" to totalDescent,
+            "totalAscent" to currentTotalAscent,
+            "totalDescent" to currentTotalDescent,
             "avgBpm" to if (heartRates.isNotEmpty()) heartRates.average() else null,
             "maxCalorieMin" to maxCalorieMin,
             "maxBpm" to if (heartRates.isNotEmpty()) heartRates.maxOrNull()?.toInt() else null

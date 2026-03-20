@@ -17,14 +17,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
-import androidx.wear.compose.foundation.SwipeToDismissValue
-import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.pager.HorizontalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.foundation.rotary.rotaryScrollable
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutSensor
@@ -54,17 +53,14 @@ fun DynamicWorkoutScreen(
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Lokalny stan wymuszający pełny UI w trybie Ambient po kliknięciu
     var forceActiveUI by remember { mutableStateOf(false) }
 
-    // Resetuj wymuszenie aktywnego UI, gdy system wejdzie w prawdziwy tryb Ambient
     LaunchedEffect(isAmbient) {
         if (isAmbient) {
             forceActiveUI = false
         }
     }
 
-    // Obsługa FLAG_KEEP_SCREEN_ON
     DisposableEffect(screenBehavior) {
         if (screenBehavior == ScreenBehavior.KEEP_SCREEN_ON) {
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -99,48 +95,85 @@ fun DynamicWorkoutScreen(
         onEndWorkout = { summary -> onEndWorkout(sportDef.name, summary) }
     )
 
-    // BLOKADA GESTU WYJŚCIA (Swipe-to-dismiss)
-    // confirmStateChange = { false } uniemożliwia wyjście gestem przesunięcia w prawo.
-    // Używamy foundation.rememberSwipeToDismissBoxState oraz material.SwipeToDismissBox
     val swipeToDismissState = rememberSwipeToDismissBoxState(
         confirmStateChange = { false }
     )
     
+    // Nowa kolejność: 0 -> Kontrola, 1 -> Dane, 2 -> Mapa (jeśli jest)
+    val pageCount = if (hasMap) 3 else 2
+    val initialPage = 1 // Startujemy zawsze na ekranie danych
+    val horizontalPagerState = rememberPagerState(initialPage = initialPage, pageCount = { pageCount })
+
     SwipeToDismissBox(
         state = swipeToDismissState
     ) { isBackground ->
         if (!isBackground) {
-            // Decyzja o wyświetleniu trybu uproszczonego
             val shouldShowAmbientUI = if (screenBehavior == ScreenBehavior.KEEP_SCREEN_ON) {
                 false 
             } else {
                 isAmbient || (screenBehavior == ScreenBehavior.AMBIENT && !forceActiveUI)
             }
 
-            if (shouldShowAmbientUI) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable {
-                            if (!isAmbient) {
-                                forceActiveUI = true
+            Box(modifier = Modifier.fillMaxSize()) {
+                HorizontalPager(state = horizontalPagerState) { page ->
+                    val screenType = if (hasMap) {
+                        when (page) {
+                            0 -> "CONTROLS"
+                            1 -> "DATA"
+                            else -> "MAP"
+                        }
+                    } else {
+                        when (page) {
+                            0 -> "CONTROLS"
+                            else -> "DATA"
+                        }
+                    }
+
+                    when (screenType) {
+                        "CONTROLS" -> {
+                            WorkoutControls(
+                                status = session.status,
+                                onTogglePause = session.togglePause,
+                                onEnd = session.endWorkout
+                            )
+                        }
+                        "DATA" -> {
+                            if (shouldShowAmbientUI) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clickable {
+                                            if (!isAmbient) {
+                                                forceActiveUI = true
+                                            }
+                                        }
+                                ) {
+                                    AmbientWorkoutUI(session, dataSensors)
+                                }
+                            } else {
+                                DynamicDataList(session, dataSensors)
                             }
                         }
-                ) {
-                    AmbientWorkoutUI(session, dataSensors)
+                        "MAP" -> {
+                            MapScreen(
+                                mapType = mapType,
+                                focusRequester = remember { FocusRequester() },
+                                lastPoint = session.lastPoint,
+                                allPoints = session.allPoints,
+                                autoCenterDelay = autoCenterDelay,
+                                showRoute = showRoute,
+                                routeColor = routeColor,
+                                mapZoomLevel = mapZoomLevel
+                            )
+                        }
+                    }
                 }
-            } else {
-                ActiveWorkoutUI(
-                    session = session,
-                    dataSensors = dataSensors,
-                    hasMap = hasMap,
-                    mapType = mapType,
-                    clockColor = clockColor,
-                    autoCenterDelay = autoCenterDelay,
-                    showRoute = showRoute,
-                    routeColor = routeColor,
-                    mapZoomLevel = mapZoomLevel
-                )
+
+                if (clockColor != null) {
+                    Box(modifier = Modifier.fillMaxWidth().wrapContentHeight(), contentAlignment = Alignment.TopCenter) {
+                        TimeText(timeTextStyle = MaterialTheme.typography.caption1.copy(color = clockColor, fontWeight = FontWeight.Bold))
+                    }
+                }
             }
         }
     }
@@ -148,123 +181,71 @@ fun DynamicWorkoutScreen(
 
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
-private fun ActiveWorkoutUI(
+private fun DynamicDataList(
     session: WorkoutSessionState,
-    dataSensors: List<SensorConfig>,
-    hasMap: Boolean,
-    mapType: MapType,
-    clockColor: Color?,
-    autoCenterDelay: Int,
-    showRoute: Boolean,
-    routeColor: Color,
-    mapZoomLevel: Float
+    dataSensors: List<SensorConfig>
 ) {
-    val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
+    val listState = rememberScalingLazyListState()
+    val focusRequester = remember { FocusRequester() }
+    
+    val isScrollEnabled = dataSensors.size > 4
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        HorizontalPager(state = horizontalPagerState) { hPage ->
-            if (hPage == 0) {
-                WorkoutControls(
-                    status = session.status,
-                    onTogglePause = session.togglePause,
-                    onEnd = session.endWorkout
-                )
-            } else {
-                val listState = rememberScalingLazyListState()
-                val focusRequester = remember { FocusRequester() }
-                
-                val isScrollEnabled = dataSensors.size > 4 || hasMap
+    ScalingLazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colors.background)
+            .then(if (isScrollEnabled) {
+                Modifier
+                    .rotaryScrollable(
+                        behavior = RotaryScrollableDefaults.behavior(
+                            scrollableState = listState,
+                            hapticFeedbackEnabled = true
+                        ),
+                        focusRequester = focusRequester
+                    )
+            } else Modifier)
+            .focusRequester(focusRequester),
+        state = listState,
+        userScrollEnabled = isScrollEnabled,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 20.dp)
+    ) {
+        item {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 10.dp, start = 8.dp, end = 8.dp)) {
+                Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
+                Text(session.workoutTimerState.formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
+            }
+        }
 
-                ScalingLazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colors.background)
-                        .then(if (isScrollEnabled) {
-                            Modifier
-                                .rotaryScrollable(
-                                    behavior = RotaryScrollableDefaults.behavior(
-                                        scrollableState = listState,
-                                        hapticFeedbackEnabled = true
-                                    ),
-                                    focusRequester = focusRequester
-                                )
-                        } else Modifier)
-                        .focusRequester(focusRequester),
-                    state = listState,
-                    userScrollEnabled = isScrollEnabled,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 20.dp)
-                ) {
-                    item {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 10.dp, start = 8.dp, end = 8.dp)) {
-                            Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
-                            Text(session.workoutTimerState.formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
-                        }
-                    }
-
-                    if (dataSensors.size <= 3) {
-                        items(dataSensors.size) { index ->
-                            Box(modifier = Modifier.padding(horizontal = 8.dp)) {
-                                DynamicSensorDispatcher(dataSensors[index].sensorId, session, false)
-                            }
-                        }
-                    } else {
-                        val rows = dataSensors.chunked(2)
-                        items(rows.size) { rowIndex ->
-                            val rowSensors = rows[rowIndex]
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                rowSensors.forEach { sensor ->
-                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                        DynamicSensorDispatcher(sensor.sensorId, session, false)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (hasMap) {
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("MAPA", style = MaterialTheme.typography.caption2, color = Color.Gray, modifier = Modifier.padding(horizontal = 8.dp))
-                        }
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                            ) {
-                                MapScreen(
-                                    mapType = mapType, 
-                                    focusRequester = focusRequester,
-                                    lastPoint = session.lastPoint,
-                                    allPoints = session.allPoints,
-                                    autoCenterDelay = autoCenterDelay,
-                                    showRoute = showRoute,
-                                    routeColor = routeColor,
-                                    mapZoomLevel = mapZoomLevel
-                                )
-                            }
-                        }
-                    }
-                    
-                    item { Spacer(modifier = Modifier.height(24.dp)) }
+        if (dataSensors.size <= 3) {
+            items(dataSensors.size) { index ->
+                Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                    DynamicSensorDispatcher(dataSensors[index].sensorId, session, false)
                 }
-
-                LaunchedEffect(Unit) {
-                    focusRequester.requestFocus()
+            }
+        } else {
+            val rows = dataSensors.chunked(2)
+            items(rows.size) { rowIndex ->
+                val rowSensors = rows[rowIndex]
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    rowSensors.forEach { sensor ->
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            DynamicSensorDispatcher(sensor.sensorId, session, false)
+                        }
+                    }
                 }
             }
         }
         
-        if (clockColor != null) {
-            Box(modifier = Modifier.fillMaxWidth().wrapContentHeight(), contentAlignment = Alignment.TopCenter) {
-                TimeText(timeTextStyle = MaterialTheme.typography.caption1.copy(color = clockColor, fontWeight = FontWeight.Bold))
-            }
-        }
+        item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
     }
 }
 
