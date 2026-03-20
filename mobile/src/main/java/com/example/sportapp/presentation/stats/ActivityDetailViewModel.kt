@@ -128,7 +128,8 @@ class ActivityDetailViewModel @Inject constructor(
             val generatedLaps = lapManager.processLaps(activityId, points, autoLapDist)
             if (generatedLaps.isNotEmpty()) {
                 workoutDao.insertLaps(generatedLaps)
-                _laps.value = generatedLaps
+                // Reload laps from database to get correct IDs
+                _laps.value = workoutDao.getLapsForWorkout(activityId)
             }
         }
     }

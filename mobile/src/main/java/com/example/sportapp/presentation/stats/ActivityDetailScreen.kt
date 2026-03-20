@@ -210,8 +210,10 @@ fun LapsTable(
     selectedLap: WorkoutLap?,
     onLapClick: (WorkoutLap) -> Unit
 ) {
-    val fastestPace = laps.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
-    val slowestPace = laps.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    val validLapsForPace = laps.filter { it.avgPaceSecondsPerKm > 0 }
+    val fastestPace = validLapsForPace.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    val slowestPace = validLapsForPace.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberScrollState()
 
@@ -258,11 +260,11 @@ fun LapsTable(
                         .verticalScroll(verticalScrollState)
                 ) {
                     laps.forEach { lap ->
-                        val isSelected = selectedLap?.id == lap.id
+                        val isSelected = selectedLap?.lapNumber == lap.lapNumber
                         val bgColor = when {
                             isSelected -> Color.Cyan.copy(alpha = 0.3f)
-                            lap.avgPaceSecondsPerKm == fastestPace && laps.size > 1 -> Color(0xFFC8E6C9) // Green
-                            lap.avgPaceSecondsPerKm == slowestPace && laps.size > 1 -> Color(0xFFFFCDD2) // Red
+                            lap.avgPaceSecondsPerKm > 0 && lap.avgPaceSecondsPerKm == fastestPace && laps.size > 1 -> Color(0xFFC8E6C9) // Green
+                            lap.avgPaceSecondsPerKm > 0 && lap.avgPaceSecondsPerKm == slowestPace && laps.size > 1 -> Color(0xFFFFCDD2) // Red
                             else -> Color.Transparent
                         }
 
