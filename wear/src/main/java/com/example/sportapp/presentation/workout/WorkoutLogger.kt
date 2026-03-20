@@ -51,9 +51,7 @@ class WorkoutLogger(
         wysokosc: Double? = null,
         calorieMin: Double? = null,
         calorieSum: Double? = null,
-        pressure: Double? = null,
-        totalAscent: Double? = null,
-        totalDescent: Double? = null
+        pressure: Double? = null
     ): WorkoutPointEntity = withContext(Dispatchers.Default) {
         val h = durationSeconds / 3600
         val m = (durationSeconds % 3600) / 60
@@ -127,5 +125,15 @@ class WorkoutLogger(
         if (pointsToSave.isNotEmpty()) {
             workoutDao.insertPoints(pointsToSave)
         }
+    }
+
+    suspend fun getFinalStats(): Map<String, Any?> {
+        return mapOf(
+            "totalAscent" to totalAscent,
+            "totalDescent" to totalDescent,
+            "avgBpm" to if (heartRates.isNotEmpty()) heartRates.average() else null,
+            "maxCalorieMin" to maxCalorieMin,
+            "maxBpm" to if (heartRates.isNotEmpty()) heartRates.maxOrNull()?.toInt() else null
+        )
     }
 }

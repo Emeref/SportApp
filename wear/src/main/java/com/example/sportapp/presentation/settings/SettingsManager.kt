@@ -37,6 +37,7 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         private val SHOW_ROUTE_KEY = booleanPreferencesKey("show_route")
         private val ROUTE_COLOR_KEY = longPreferencesKey("route_color")
         private val SCREEN_BEHAVIOR_KEY = stringPreferencesKey("screen_behavior")
+        private val MAP_ZOOM_LEVEL_KEY = floatPreferencesKey("map_zoom_level")
         
         private val WATCH_STATS_WIDGETS_KEY = stringPreferencesKey("watch_stats_widgets")
         private val WATCH_STATS_PERIOD_KEY = stringPreferencesKey("watch_stats_period")
@@ -69,6 +70,7 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             val routeColorValue = preferences[ROUTE_COLOR_KEY] ?: Orange.toArgb().toLong()
             val routeColor = if (routeColorValue == -1L) Transparent else Color(routeColorValue.toULong())
             val screenBehavior = preferences[SCREEN_BEHAVIOR_KEY]?.let { ScreenBehavior.valueOf(it) } ?: ScreenBehavior.KEEP_SCREEN_ON
+            val mapZoomLevel = preferences[MAP_ZOOM_LEVEL_KEY] ?: 16f
 
             val watchStatsWidgetsJson = preferences[WATCH_STATS_WIDGETS_KEY]
             val watchStatsWidgets = if (watchStatsWidgetsJson != null) {
@@ -86,7 +88,7 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
 
             UserSettings(
                 mapType, clockColor, healthData, autoCenterDelay, showRoute, routeColor, screenBehavior,
-                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays
+                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays, mapZoomLevel
             )
         }
 
@@ -149,6 +151,12 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             preferences[SCREEN_BEHAVIOR_KEY] = behavior.name
         }
     }
+
+    suspend fun saveMapZoomLevel(zoomLevel: Float) {
+        context.dataStore.edit { preferences ->
+            preferences[MAP_ZOOM_LEVEL_KEY] = zoomLevel
+        }
+    }
 }
 
 data class UserSettings(
@@ -161,5 +169,6 @@ data class UserSettings(
     val screenBehavior: ScreenBehavior,
     val watchStatsWidgets: List<WidgetItem>,
     val watchStatsPeriod: ReportingPeriod,
-    val watchStatsCustomDays: Int
+    val watchStatsCustomDays: Int,
+    val mapZoomLevel: Float
 )

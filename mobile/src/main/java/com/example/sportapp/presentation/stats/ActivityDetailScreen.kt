@@ -167,7 +167,7 @@ fun ActivityDetailScreen(
                                         }
                                     }
                                 }
-                                
+
                                 if (laps.isNotEmpty()) {
                                     Spacer(modifier = Modifier.height(16.dp))
                                     LapsTable(
@@ -176,7 +176,7 @@ fun ActivityDetailScreen(
                                         onLapClick = { viewModel.selectLap(it) }
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
@@ -212,9 +212,12 @@ fun LapsTable(
     selectedLap: WorkoutLap?,
     onLapClick: (WorkoutLap) -> Unit
 ) {
-    val fastestPace = laps.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
-    val slowestPace = laps.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    val validLapsForPace = laps.filter { it.avgPaceSecondsPerKm > 0 }
+    val fastestPace = validLapsForPace.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    val slowestPace = validLapsForPace.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    
     val horizontalScrollState = rememberScrollState()
+    val verticalScrollState = rememberScrollState()
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text("Odcinki", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -225,7 +228,7 @@ fun LapsTable(
             .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column {
-                // Header Row
+                // Header Row - stays fixed at the top
                 Row {
                     // Fixed "Nr" Header
                     Box(modifier = Modifier
@@ -252,43 +255,50 @@ fun LapsTable(
                     }
                 }
 
-                laps.forEach { lap ->
-                    val isSelected = selectedLap?.id == lap.id
-                    val bgColor = when {
-                        isSelected -> Color.Cyan.copy(alpha = 0.3f)
-                        lap.avgPaceSecondsPerKm == fastestPace && laps.size > 1 -> Color(0xFFC8E6C9) // Green
-                        lap.avgPaceSecondsPerKm == slowestPace && laps.size > 1 -> Color(0xFFFFCDD2) // Red
-                        else -> Color.Transparent
-                    }
-
-                    Row {
-                        // Fixed "Nr" Cell
-                        Box(modifier = Modifier
-                            .background(if (isSelected) Color.Cyan.copy(alpha = 0.3f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
-                            .clickable { onLapClick(lap) }
-                            .padding(8.dp)
-                        ) {
-                            LapCell("${lap.lapNumber}", width = 40.dp)
+                // Scrollable Rows - limited to approx 8 records
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 280.dp)
+                        .verticalScroll(verticalScrollState)
+                ) {
+                    laps.forEach { lap ->
+                        val isSelected = selectedLap?.lapNumber == lap.lapNumber
+                        val bgColor = when {
+                            isSelected -> Color.Cyan.copy(alpha = 0.3f)
+                            lap.avgPaceSecondsPerKm > 0 && lap.avgPaceSecondsPerKm == fastestPace && laps.size > 1 -> Color(0xFFC8E6C9) // Green
+                            lap.avgPaceSecondsPerKm > 0 && lap.avgPaceSecondsPerKm == slowestPace && laps.size > 1 -> Color(0xFFFFCDD2) // Red
+                            else -> Color.Transparent
                         }
 
-                        // Scrollable Content
-                        Box(modifier = Modifier.horizontalScroll(horizontalScrollState)) {
-                            Row(modifier = Modifier
+                        Row {
+                            // Fixed "Nr" Cell
+                            Box(modifier = Modifier
+                                .background(if (isSelected) Color.Cyan.copy(alpha = 0.3f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
                                 .clickable { onLapClick(lap) }
-                                .background(bgColor)
                                 .padding(8.dp)
                             ) {
-                                LapCell(formatMillis(lap.durationMillis), width = 80.dp)
-                                LapCell(formatPaceFromSeconds(lap.avgPaceSecondsPerKm), width = 90.dp)
-                                LapCell(String.format(Locale.US, "%.1f km/h", lap.avgSpeed), width = 100.dp)
-                                LapCell(String.format(Locale.US, "%.1f km/h", lap.maxSpeed), width = 100.dp)
-                                LapCell("${lap.avgHeartRate}", width = 70.dp)
-                                LapCell("${lap.maxHeartRate}", width = 70.dp)
-                                LapCell(String.format(Locale.US, "+%.0f/-%.0f", lap.totalAscent, lap.totalDescent), width = 100.dp)
+                                LapCell("${lap.lapNumber}", width = 40.dp)
+                            }
+
+                            // Scrollable Content
+                            Box(modifier = Modifier.horizontalScroll(horizontalScrollState)) {
+                                Row(modifier = Modifier
+                                    .clickable { onLapClick(lap) }
+                                    .background(bgColor)
+                                    .padding(8.dp)
+                                ) {
+                                    LapCell(formatMillis(lap.durationMillis), width = 80.dp)
+                                    LapCell(formatPaceFromSeconds(lap.avgPaceSecondsPerKm), width = 90.dp)
+                                    LapCell(String.format(Locale.US, "%.1f km/h", lap.avgSpeed), width = 100.dp)
+                                    LapCell(String.format(Locale.US, "%.1f km/h", lap.maxSpeed), width = 100.dp)
+                                    LapCell("${lap.avgHeartRate}", width = 70.dp)
+                                    LapCell("${lap.maxHeartRate}", width = 70.dp)
+                                    LapCell(String.format(Locale.US, "+%.0f/-%.0f", lap.totalAscent, lap.totalDescent), width = 100.dp)
+                                }
                             }
                         }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
         }

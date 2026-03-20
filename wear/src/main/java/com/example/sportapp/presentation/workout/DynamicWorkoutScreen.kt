@@ -47,6 +47,7 @@ fun DynamicWorkoutScreen(
     routeColor: Color,
     screenBehavior: ScreenBehavior,
     isAmbient: Boolean,
+    mapZoomLevel: Float,
     onEndWorkout: (String, List<Pair<String, String>>) -> Unit,
     viewModel: DynamicWorkoutViewModel = hiltViewModel()
 ) {
@@ -137,7 +138,8 @@ fun DynamicWorkoutScreen(
                     clockColor = clockColor,
                     autoCenterDelay = autoCenterDelay,
                     showRoute = showRoute,
-                    routeColor = routeColor
+                    routeColor = routeColor,
+                    mapZoomLevel = mapZoomLevel
                 )
             }
         }
@@ -154,7 +156,8 @@ private fun ActiveWorkoutUI(
     clockColor: Color?,
     autoCenterDelay: Int,
     showRoute: Boolean,
-    routeColor: Color
+    routeColor: Color,
+    mapZoomLevel: Float
 ) {
     val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
 
@@ -241,7 +244,8 @@ private fun ActiveWorkoutUI(
                                     allPoints = session.allPoints,
                                     autoCenterDelay = autoCenterDelay,
                                     showRoute = showRoute,
-                                    routeColor = routeColor
+                                    routeColor = routeColor,
+                                    mapZoomLevel = mapZoomLevel
                                 )
                             }
                         }

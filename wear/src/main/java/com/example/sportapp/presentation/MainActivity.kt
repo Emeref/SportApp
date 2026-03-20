@@ -82,7 +82,8 @@ class MainActivity : ComponentActivity() {
                 screenBehavior = ScreenBehavior.KEEP_SCREEN_ON,
                 watchStatsWidgets = emptyList(),
                 watchStatsPeriod = ReportingPeriod.WEEK,
-                watchStatsCustomDays = 7
+                watchStatsCustomDays = 7,
+                mapZoomLevel = 15f
             ))
             
             var selectedMapType by remember { mutableStateOf(MapType.NORMAL) }
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
             var showRoute by remember { mutableStateOf(true) }
             var routeColor by remember { mutableStateOf(SettingsManager.Orange) }
             var screenBehavior by remember { mutableStateOf(ScreenBehavior.KEEP_SCREEN_ON) }
+            var mapZoomLevel by remember { mutableFloatStateOf(15f) }
 
             LaunchedEffect(settingsState) {
                 selectedMapType = settingsState.mapType
@@ -101,6 +103,7 @@ class MainActivity : ComponentActivity() {
                 showRoute = settingsState.showRoute
                 routeColor = settingsState.routeColor
                 screenBehavior = settingsState.screenBehavior
+                mapZoomLevel = settingsState.mapZoomLevel
             }
 
             // Reagowanie na zmiany w StateFlow nawigacji
@@ -187,7 +190,8 @@ class MainActivity : ComponentActivity() {
                                     showRoute = it
                                     scope.launch { settingsManager.saveShowRoute(it) }
                                 },
-                                routeColor = routeColor
+                                routeColor = routeColor,
+                                currentZoom = mapZoomLevel
                             )
                         }
                         
@@ -196,6 +200,13 @@ class MainActivity : ComponentActivity() {
                                 selectedMapType = it
                                 scope.launch { settingsManager.saveMapType(it) }
                             } 
+                        }
+
+                        composable("map_zoom_selection") {
+                            MapZoomSelectionScreen(mapZoomLevel) {
+                                mapZoomLevel = it
+                                scope.launch { settingsManager.saveMapZoomLevel(it) }
+                            }
                         }
 
                         composable("auto_center_delay_selection") {
@@ -336,6 +347,7 @@ class MainActivity : ComponentActivity() {
                                 routeColor = routeColor,
                                 screenBehavior = screenBehavior,
                                 isAmbient = isAmbient,
+                                mapZoomLevel = mapZoomLevel,
                                 onEndWorkout = { name, summary ->
                                     currentSummaryData = name to summary
                                     navController.navigate("workout_summary") {

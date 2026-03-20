@@ -48,8 +48,8 @@ class LapManager @Inject constructor() {
         val firstPoint = points.first()
         val lastPoint = points.last()
 
-        val startTime = LocalTime.parse(firstPoint.time, timeFormatter)
-        val endTime = LocalTime.parse(lastPoint.time, timeFormatter)
+        val startTime = try { LocalTime.parse(firstPoint.time, timeFormatter) } catch (e: Exception) { LocalTime.MIN }
+        val endTime = try { LocalTime.parse(lastPoint.time, timeFormatter) } catch (e: Exception) { LocalTime.MIN }
         
         val durationMillis = java.time.Duration.between(startTime, endTime).toMillis()
         
