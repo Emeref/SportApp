@@ -1,8 +1,10 @@
 package com.example.sportapp.data
 
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +18,8 @@ import javax.inject.Singleton
 
 @Singleton
 class WorkoutRepository @Inject constructor(
-    private val workoutDao: WorkoutDao
+    private val workoutDao: WorkoutDao,
+    private val workoutDefinitionDao: WorkoutDefinitionDao
 ) : IWorkoutRepository {
 
     suspend fun insertWorkout(workout: WorkoutEntity): Long = withContext(Dispatchers.IO) {
@@ -265,4 +268,6 @@ class WorkoutRepository @Inject constructor(
             }
         }
     }
+
+    override fun getAllDefinitions(): Flow<List<WorkoutDefinition>> = workoutDefinitionDao.getAllDefinitions()
 }

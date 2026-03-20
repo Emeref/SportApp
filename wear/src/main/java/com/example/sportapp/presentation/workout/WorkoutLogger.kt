@@ -30,6 +30,9 @@ class WorkoutLogger(
     // Historia kroków do obliczania kadencji z ostatnich 20 sekund
     private val stepHistory = mutableListOf<Pair<Long, Int>>()
     private val CADENCE_WINDOW_MS = 20000L
+    
+    // Bufor punktów w RAM dla optymalizacji zapisu
+    private val pointBuffer = mutableListOf<WorkoutPointEntity>()
 
     private fun Double?.round(decimals: Int = 2): Double? {
         if (this == null) return null
@@ -41,6 +44,8 @@ class WorkoutLogger(
     }
 
     fun getAvgBpm(): Int = if (heartRates.isNotEmpty()) heartRates.average().toInt() else 0
+    
+    fun getMaxCalorieMin(): Double = maxCalorieMin
 
     suspend fun logData(
         durationSeconds: Long,
@@ -54,7 +59,7 @@ class WorkoutLogger(
         calorieMin: Double? = null,
         calorieSum: Double? = null,
         pressure: Double? = null
-    ): WorkoutPointEntity = withContext(Dispatchers.IO) {
+    ): WorkoutPointEntity = withContext(Dispatchers.Default) {
         val h = durationSeconds / 3600
         val m = (durationSeconds % 3600) / 60
         val s = durationSeconds % 60
@@ -127,8 +132,24 @@ class WorkoutLogger(
             pressure = if (isRecording(WorkoutSensor.PRESSURE)) pressure.round(2) else null
         )
         
-        workoutDao.insertPoint(point)
+        synchronized(pointBuffer) {
+            pointBuffer.add(point)
+        }
         point
+    }
+
+    /**
+     * Zapisuje zbuforowane punkty do bazy danych.
+     */
+    suspend fun flushPoints() = withContext(Dispatchers.IO) {
+        val pointsToSave = synchronized(pointBuffer) {
+            val list = pointBuffer.toList()
+            pointBuffer.clear()
+            list
+        }
+        if (pointsToSave.isNotEmpty()) {
+            workoutDao.insertPoints(pointsToSave)
+        }
     }
 
     suspend fun getFinalStats(): Map<String, Any?> {

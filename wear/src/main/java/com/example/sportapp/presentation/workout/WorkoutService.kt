@@ -1,8 +1,10 @@
 package com.example.sportapp.presentation.workout
 
 import android.app.*
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -87,7 +89,27 @@ class WorkoutService : Service(), SensorEventListener {
     private val pointsList = mutableListOf<WorkoutPointEntity>()
 
     private var timerJob: Job? = null
+    private var autosaveJob: Job? = null
     private var locationCallback: LocationCallback? = null
+
+    private val batteryReceiver = object : BroadcastReceiver() {
+        private var lastTriggeredLevel = -1
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Intent.ACTION_BATTERY_CHANGED) {
+                val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+                val batteryPct = if (scale > 0) (level * 100 / scale.toFloat()).toInt() else -1
+                
+                if (batteryPct in 1..5 && batteryPct != lastTriggeredLevel) {
+                    lastTriggeredLevel = batteryPct
+                    serviceScope.launch(Dispatchers.IO) {
+                        Log.w("WorkoutService", "Emergency save triggered at $batteryPct% battery")
+                        performSave()
+                    }
+                }
+            }
+        }
+    }
 
     fun getSportDefinition(): WorkoutDefinition? = sportDefinition
 
@@ -108,6 +130,7 @@ class WorkoutService : Service(), SensorEventListener {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         createNotificationChannel()
+        registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -198,6 +221,7 @@ class WorkoutService : Service(), SensorEventListener {
         
         registerSensors()
         startTimer()
+        startAutosave()
         startLocationUpdates()
         updateState(null)
     }
@@ -236,8 +260,9 @@ class WorkoutService : Service(), SensorEventListener {
     }
 
     private fun stopWorkout() {
-        // Natychmiastowe zatrzymanie timera, aby uniknąć kolejnych aktualizacji powiadomienia
+        // Natychmiastowe zatrzymanie timerów
         timerJob?.cancel()
+        autosaveJob?.cancel()
         
         if (status == WorkoutStatus.ACTIVE) {
             totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
@@ -254,9 +279,25 @@ class WorkoutService : Service(), SensorEventListener {
         stopForeground(STOP_FOREGROUND_REMOVE)
         
         serviceScope.launch {
+            // Wykonujemy ostatni zapis (Flush)
+            performSave(true)
+            dataLayerManager.syncActivities()
+            
+            withContext(Dispatchers.Main) {
+                stopSelf()
+            }
+        }
+    }
+
+    private suspend fun performSave(isFinal: Boolean = false) {
+        if (currentWorkoutId == -1L) return
+        
+        withContext(Dispatchers.IO) {
+            // Zapisujemy zbuforowane punkty przed obliczeniem statystyk
+            logger?.flushPoints()
+
             val points = workoutDao.getPointsForWorkout(currentWorkoutId)
             val durationHours = totalSeconds / 3600.0
-            val distanceKm = totalDistance / 1000.0
             val distanceStepsMeters = (currentSteps * (healthData?.stepLength ?: 0).toDouble() / 100.0)
             
             val officialDistanceMeters = if (totalDistance > 0) totalDistance.toDouble() else distanceStepsMeters
@@ -270,10 +311,10 @@ class WorkoutService : Service(), SensorEventListener {
             )
             
             val avgSpeedSteps = if (durationHours > 0) (distanceStepsMeters / 1000.0) / durationHours else 0.0
-            val avgSpeedGps = if (durationHours > 0) distanceKm / durationHours else 0.0
+            val avgSpeedGps = if (durationHours > 0) (totalDistance / 1000.0) / durationHours else 0.0
 
             val workout = workoutDao.getWorkoutById(currentWorkoutId)
-            val finalWorkout = workout?.copy(
+            val updatedWorkout = workout?.copy(
                 durationFormatted = formatTime(totalSeconds),
                 steps = if (isRecording(WorkoutSensor.STEPS)) currentSteps else null,
                 distanceSteps = if (isRecording(WorkoutSensor.DISTANCE_STEPS)) distanceStepsMeters else null,
@@ -285,7 +326,7 @@ class WorkoutService : Service(), SensorEventListener {
                 avgBpm = if (isRecording(WorkoutSensor.HEART_RATE)) sessionStats.avgHr.toDouble() else null,
                 maxBpm = if (isRecording(WorkoutSensor.HEART_RATE)) sessionStats.maxHr else null,
                 totalCalories = if (isRecording(WorkoutSensor.CALORIES_SUM)) totalCaloriesAcc else null,
-                maxCalorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) (points.mapNotNull { it.calorieMin }.maxOrNull() ?: 0.0) else null,
+                maxCalorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) logger?.getMaxCalorieMin() else null,
                 durationSeconds = totalSeconds,
                 avgPace = sessionStats.avgPace,
                 maxSpeed = sessionStats.maxSpeed,
@@ -295,13 +336,9 @@ class WorkoutService : Service(), SensorEventListener {
                 maxCadence = sessionStats.maxCadence
             )
             
-            if (finalWorkout != null) {
-                workoutDao.updateWorkout(finalWorkout)
-                dataLayerManager.syncActivities()
-            }
-            
-            withContext(Dispatchers.Main) {
-                stopSelf()
+            if (updatedWorkout != null) {
+                workoutDao.updateWorkout(updatedWorkout)
+                Log.d("WorkoutService", "Workout session $currentWorkoutId saved (isFinal=$isFinal)")
             }
         }
     }
@@ -371,6 +408,17 @@ class WorkoutService : Service(), SensorEventListener {
                 } else {
                     delay(500)
                     lastUpdateMillis = System.currentTimeMillis()
+                }
+            }
+        }
+    }
+
+    private fun startAutosave() {
+        autosaveJob = serviceScope.launch {
+            while (isActive) {
+                delay(60000) // 60 sekund
+                if (status == WorkoutStatus.ACTIVE) {
+                    performSave()
                 }
             }
         }
@@ -476,6 +524,7 @@ class WorkoutService : Service(), SensorEventListener {
     }
 
     override fun onDestroy() {
+        unregisterReceiver(batteryReceiver)
         serviceScope.cancel()
         wakeLock?.let { if (it.isHeld) it.release() }
         super.onDestroy()
