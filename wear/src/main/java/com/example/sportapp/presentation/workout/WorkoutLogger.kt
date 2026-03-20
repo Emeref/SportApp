@@ -17,13 +17,6 @@ class WorkoutLogger(
     private val healthData: HealthData,
     private val sensorConfigs: List<SensorConfig>
 ) {
-    // Logika przewyższeń
-    private var lastAscentRef: Double? = null
-    private var lastDescentRef: Double? = null
-    private var totalAscent: Double = 0.0
-    private var totalDescent: Double = 0.0
-    private val ELEVATION_THRESHOLD = 2.0 // Próg zmiany wysokości w metrach
-
     private val heartRates = mutableListOf<Float>()
     private var maxCalorieMin: Double = 0.0
 
@@ -92,24 +85,6 @@ class WorkoutLogger(
 
         if (calorieMin != null) {
             maxCalorieMin = max(maxCalorieMin, calorieMin)
-        }
-
-        // Logika przewyższeń
-        if (wysokosc != null) {
-            if (lastAscentRef == null) lastAscentRef = wysokosc
-            if (lastDescentRef == null) lastDescentRef = wysokosc
-
-            if (wysokosc - lastAscentRef!! >= ELEVATION_THRESHOLD) {
-                totalAscent += wysokosc - lastAscentRef!!
-                lastAscentRef = wysokosc
-                lastDescentRef = wysokosc
-            }
-
-            if (lastDescentRef!! - wysokosc >= ELEVATION_THRESHOLD) {
-                totalDescent += lastDescentRef!! - wysokosc
-                lastDescentRef = wysokosc
-                lastAscentRef = wysokosc
-            }
         }
 
         val point = WorkoutPointEntity(
