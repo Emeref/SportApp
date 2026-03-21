@@ -106,9 +106,20 @@ class SessionRepository @Inject constructor(
             pressures.add(point.pressure?.toFloat())
         }
 
+        // Obliczanie średniej kroczącej dla wykresu kalorii na minutę (okno 1 minuty = 60 pkt)
+        val smoothedCaloriesMin = if (caloriesMin.isNotEmpty()) {
+            caloriesMin.indices.map { index ->
+                val start = (index - 59).coerceAtLeast(0)
+                val window = caloriesMin.subList(start, index + 1).filterNotNull()
+                if (window.isEmpty()) null else window.average().toFloat()
+            }
+        } else {
+            caloriesMin
+        }
+
         val chartData = mapOf(
             "bpm" to heartRates,
-            "kalorie_min" to caloriesMin,
+            "kalorie_min" to smoothedCaloriesMin,
             "kalorie_suma" to caloriesSum,
             "kroki_min" to stepsMin,
             "odl_kroki" to distanceSteps,
