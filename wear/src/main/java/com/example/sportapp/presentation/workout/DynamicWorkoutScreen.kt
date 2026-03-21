@@ -103,17 +103,15 @@ fun DynamicWorkoutScreen(
             }
 
             if (shouldShowAmbientUI) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable {
-                            if (!isAmbient) {
-                                forceActiveUI = true
-                            }
+                AmbientWorkoutUI(
+                    session = session,
+                    dataSensors = dataSensors,
+                    onWakeUp = {
+                        if (!isAmbient) {
+                            forceActiveUI = true
                         }
-                ) {
-                    AmbientWorkoutUI(session, dataSensors)
-                }
+                    }
+                )
             } else {
                 ActiveWorkoutUI(
                     session = session,
@@ -132,6 +130,7 @@ private fun ActiveWorkoutUI(
     dataSensors: List<SensorConfig>,
     clockColor: Color?
 ) {
+    // initialPage = 1 (Data), index 0 = Controls (Swipe Right to see controls)
     val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -167,7 +166,7 @@ private fun ActiveWorkoutUI(
                     userScrollEnabled = isScrollEnabled,
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 20.dp)
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 30.dp)
                 ) {
                     item {
                         WorkoutTimerHeader(session.workoutTimerState.formattedTime)
@@ -221,8 +220,40 @@ private fun WorkoutTimerHeader(formattedTime: String) {
     }
 }
 
+@OptIn(ExperimentalWearFoundationApi::class)
 @Composable
-private fun AmbientWorkoutUI(session: WorkoutSessionState, dataSensors: List<SensorConfig>) {
+private fun AmbientWorkoutUI(
+    session: WorkoutSessionState,
+    dataSensors: List<SensorConfig>,
+    onWakeUp: () -> Unit
+) {
+    // Match Active UI: Data at 1, Controls at 0. Swipe Right to see controls.
+    val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        HorizontalPager(state = horizontalPagerState) { hPage ->
+            if (hPage == 0) {
+                WorkoutControls(
+                    status = session.status,
+                    onTogglePause = session.togglePause,
+                    onEnd = session.endWorkout
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable { onWakeUp() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    AmbientDataDisplay(session, dataSensors)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AmbientDataDisplay(session: WorkoutSessionState, dataSensors: List<SensorConfig>) {
     var currentTime by remember { mutableStateOf("") }
     LaunchedEffect(Unit) {
         while (true) {
