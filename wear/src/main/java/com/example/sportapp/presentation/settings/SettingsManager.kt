@@ -10,7 +10,6 @@ import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.google.maps.android.compose.MapType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -30,14 +29,9 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
     private val gson = Gson()
 
     companion object {
-        private val MAP_TYPE_KEY = stringPreferencesKey("map_type")
         private val CLOCK_COLOR_KEY = longPreferencesKey("clock_color")
         private val HEALTH_DATA_KEY = stringPreferencesKey("health_data")
-        private val AUTO_CENTER_DELAY_KEY = intPreferencesKey("auto_center_delay")
-        private val SHOW_ROUTE_KEY = booleanPreferencesKey("show_route")
-        private val ROUTE_COLOR_KEY = longPreferencesKey("route_color")
         private val SCREEN_BEHAVIOR_KEY = stringPreferencesKey("screen_behavior")
-        private val MAP_ZOOM_LEVEL_KEY = floatPreferencesKey("map_zoom_level")
         
         private val WATCH_STATS_WIDGETS_KEY = stringPreferencesKey("watch_stats_widgets")
         private val WATCH_STATS_PERIOD_KEY = stringPreferencesKey("watch_stats_period")
@@ -56,7 +50,6 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             }
         }
         .map { preferences ->
-            val mapType = preferences[MAP_TYPE_KEY]?.let { MapType.valueOf(it) } ?: MapType.NORMAL
             val clockColorValue = preferences[CLOCK_COLOR_KEY]
             val clockColor = if (clockColorValue == -1L) null else clockColorValue?.let { Color(it.toULong()) } ?: Color.Red
             val healthDataJson = preferences[HEALTH_DATA_KEY]
@@ -65,12 +58,7 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             } else {
                 HealthData()
             }
-            val autoCenterDelay = preferences[AUTO_CENTER_DELAY_KEY] ?: 5
-            val showRoute = preferences[SHOW_ROUTE_KEY] ?: true
-            val routeColorValue = preferences[ROUTE_COLOR_KEY] ?: Orange.toArgb().toLong()
-            val routeColor = if (routeColorValue == -1L) Transparent else Color(routeColorValue.toULong())
             val screenBehavior = preferences[SCREEN_BEHAVIOR_KEY]?.let { ScreenBehavior.valueOf(it) } ?: ScreenBehavior.KEEP_SCREEN_ON
-            val mapZoomLevel = preferences[MAP_ZOOM_LEVEL_KEY] ?: 16f
 
             val watchStatsWidgetsJson = preferences[WATCH_STATS_WIDGETS_KEY]
             val watchStatsWidgets = if (watchStatsWidgetsJson != null) {
@@ -87,8 +75,8 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
             val watchStatsCustomDays = preferences[WATCH_STATS_CUSTOM_DAYS_KEY] ?: 7
 
             UserSettings(
-                mapType, clockColor, healthData, autoCenterDelay, showRoute, routeColor, screenBehavior,
-                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays, mapZoomLevel
+                clockColor, healthData, screenBehavior,
+                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays
             )
         }
 
@@ -110,12 +98,6 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         }
     }
 
-    suspend fun saveMapType(type: MapType) {
-        context.dataStore.edit { preferences ->
-            preferences[MAP_TYPE_KEY] = type.name
-        }
-    }
-
     suspend fun saveClockColor(color: Color?) {
         context.dataStore.edit { preferences ->
             preferences[CLOCK_COLOR_KEY] = color?.value?.toLong() ?: -1L
@@ -128,47 +110,18 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         }
     }
 
-    suspend fun saveAutoCenterDelay(delaySeconds: Int) {
-        context.dataStore.edit { preferences ->
-            preferences[AUTO_CENTER_DELAY_KEY] = delaySeconds
-        }
-    }
-
-    suspend fun saveShowRoute(show: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[SHOW_ROUTE_KEY] = show
-        }
-    }
-
-    suspend fun saveRouteColor(color: Color) {
-        context.dataStore.edit { preferences ->
-            preferences[ROUTE_COLOR_KEY] = if (color == Transparent) -1L else color.value.toLong()
-        }
-    }
-
     suspend fun saveScreenBehavior(behavior: ScreenBehavior) {
         context.dataStore.edit { preferences ->
             preferences[SCREEN_BEHAVIOR_KEY] = behavior.name
         }
     }
-
-    suspend fun saveMapZoomLevel(zoomLevel: Float) {
-        context.dataStore.edit { preferences ->
-            preferences[MAP_ZOOM_LEVEL_KEY] = zoomLevel
-        }
-    }
 }
 
 data class UserSettings(
-    val mapType: MapType,
     val clockColor: Color?,
     val healthData: HealthData,
-    val autoCenterDelay: Int,
-    val showRoute: Boolean,
-    val routeColor: Color,
     val screenBehavior: ScreenBehavior,
     val watchStatsWidgets: List<WidgetItem>,
     val watchStatsPeriod: ReportingPeriod,
-    val watchStatsCustomDays: Int,
-    val mapZoomLevel: Float
+    val watchStatsCustomDays: Int
 )
