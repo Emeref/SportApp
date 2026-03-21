@@ -25,7 +25,6 @@ import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.theme.SportAppTheme
 import com.example.sportapp.presentation.workout.DynamicWorkoutScreen
 import com.example.sportapp.presentation.workout.WorkoutSummaryScreen
-import com.google.maps.android.compose.MapType
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -53,13 +52,11 @@ class MainActivity : ComponentActivity() {
     private val ambientObserver = AmbientLifecycleObserver(this, ambientCallback)
     private val _isAmbient = mutableStateOf(false)
     
-    // StateFlow do obsługi nawigacji z Intencji
     private val navigationIntentId = MutableStateFlow<Long?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Flagi pozwalające aplikacji działać nad ekranem blokady
         setShowWhenLocked(true)
         setTurnScreenOn(true)
         
@@ -73,40 +70,24 @@ class MainActivity : ComponentActivity() {
             val isAmbient by _isAmbient
             
             val settingsState by settingsManager.settingsFlow.collectAsState(initial = UserSettings(
-                mapType = MapType.NORMAL,
                 clockColor = Color.Red,
                 healthData = HealthData(),
-                autoCenterDelay = 5,
-                showRoute = true,
-                routeColor = SettingsManager.Orange,
                 screenBehavior = ScreenBehavior.KEEP_SCREEN_ON,
                 watchStatsWidgets = emptyList(),
                 watchStatsPeriod = ReportingPeriod.WEEK,
-                watchStatsCustomDays = 7,
-                mapZoomLevel = 15f
+                watchStatsCustomDays = 7
             ))
             
-            var selectedMapType by remember { mutableStateOf(MapType.NORMAL) }
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
             var healthData by remember { mutableStateOf(HealthData()) }
-            var autoCenterDelay by remember { mutableIntStateOf(5) }
-            var showRoute by remember { mutableStateOf(true) }
-            var routeColor by remember { mutableStateOf(SettingsManager.Orange) }
             var screenBehavior by remember { mutableStateOf(ScreenBehavior.KEEP_SCREEN_ON) }
-            var mapZoomLevel by remember { mutableFloatStateOf(15f) }
 
             LaunchedEffect(settingsState) {
-                selectedMapType = settingsState.mapType
                 selectedClockColor = settingsState.clockColor
                 healthData = settingsState.healthData
-                autoCenterDelay = settingsState.autoCenterDelay
-                showRoute = settingsState.showRoute
-                routeColor = settingsState.routeColor
                 screenBehavior = settingsState.screenBehavior
-                mapZoomLevel = settingsState.mapZoomLevel
             }
 
-            // Reagowanie na zmiany w StateFlow nawigacji
             val targetWorkoutId by navigationIntentId.collectAsState()
             LaunchedEffect(targetWorkoutId) {
                 targetWorkoutId?.let { id ->
@@ -114,11 +95,10 @@ class MainActivity : ComponentActivity() {
                         popUpTo("main_menu") { inclusive = false }
                         launchSingleTop = true
                     }
-                    navigationIntentId.value = null // Reset po obsłużeniu
+                    navigationIntentId.value = null
                 }
             }
             
-            // Permissions
             val permissions = mutableListOf(
                 Manifest.permission.BODY_SENSORS,
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -130,7 +110,7 @@ class MainActivity : ComponentActivity() {
 
             val launcher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions()
-            ) { /* Handle results if needed */ }
+            ) { }
 
             LaunchedEffect(Unit) {
                 launcher.launch(permissions.toTypedArray())
@@ -167,7 +147,6 @@ class MainActivity : ComponentActivity() {
                         composable("settings") { 
                             SettingsScreen(
                                 navController = navController, 
-                                currentMapType = selectedMapType, 
                                 currentClockColor = selectedClockColor,
                                 currentScreenBehavior = screenBehavior
                             ) 
@@ -179,49 +158,6 @@ class MainActivity : ComponentActivity() {
                                 scope.launch { settingsManager.saveScreenBehavior(it) }
                             }
                         }
-
-                        composable("map_settings") {
-                            MapSettingsScreen(
-                                navController = navController,
-                                currentMapType = selectedMapType,
-                                currentAutoCenterDelay = autoCenterDelay,
-                                showRoute = showRoute,
-                                onShowRouteToggle = {
-                                    showRoute = it
-                                    scope.launch { settingsManager.saveShowRoute(it) }
-                                },
-                                routeColor = routeColor,
-                                currentZoom = mapZoomLevel
-                            )
-                        }
-                        
-                        composable("map_type_selection") { 
-                            MapTypeSelectionScreen(selectedMapType) { 
-                                selectedMapType = it
-                                scope.launch { settingsManager.saveMapType(it) }
-                            } 
-                        }
-
-                        composable("map_zoom_selection") {
-                            MapZoomSelectionScreen(mapZoomLevel) {
-                                mapZoomLevel = it
-                                scope.launch { settingsManager.saveMapZoomLevel(it) }
-                            }
-                        }
-
-                        composable("auto_center_delay_selection") {
-                            AutoCenterDelaySelectionScreen(autoCenterDelay) {
-                                autoCenterDelay = it
-                                scope.launch { settingsManager.saveAutoCenterDelay(it) }
-                            }
-                        }
-
-                        composable("route_color_selection") {
-                            RouteColorSelectionScreen(routeColor) {
-                                routeColor = it
-                                scope.launch { settingsManager.saveRouteColor(it) }
-                            }
-                        }
                         
                         composable("clock_color_selection") {
                             ClockColorSelectionScreen(selectedClockColor) { 
@@ -230,7 +166,6 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         
-                        // Dane Zdrowotne
                         composable("health_data") { 
                             HealthDataScreen(
                                 data = healthData,
@@ -316,7 +251,6 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         
-                        // Ekran Podsumowania
                         composable("workout_summary") {
                             currentSummaryData?.let { (title, data) ->
                                 WorkoutSummaryScreen(
@@ -331,7 +265,6 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        // Dynamiczny Trening
                         composable(
                             "dynamic_workout/{definitionId}",
                             arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
@@ -339,15 +272,10 @@ class MainActivity : ComponentActivity() {
                             val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
                             DynamicWorkoutScreen(
                                 definitionId = definitionId,
-                                mapType = selectedMapType,
                                 clockColor = selectedClockColor,
                                 healthData = healthData,
-                                autoCenterDelay = autoCenterDelay,
-                                showRoute = showRoute,
-                                routeColor = routeColor,
                                 screenBehavior = screenBehavior,
                                 isAmbient = isAmbient,
-                                mapZoomLevel = mapZoomLevel,
                                 onEndWorkout = { name, summary ->
                                     currentSummaryData = name to summary
                                     navController.navigate("workout_summary") {

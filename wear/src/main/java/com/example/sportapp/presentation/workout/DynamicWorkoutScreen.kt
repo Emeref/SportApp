@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
-import androidx.wear.compose.foundation.SwipeToDismissValue
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.pager.HorizontalPager
@@ -31,7 +30,6 @@ import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.components.SportDataRow
 import com.example.sportapp.presentation.settings.HealthData
 import com.example.sportapp.presentation.settings.ScreenBehavior
-import com.google.maps.android.compose.MapType
 import kotlinx.coroutines.delay
 import java.util.*
 
@@ -39,32 +37,24 @@ import java.util.*
 @Composable
 fun DynamicWorkoutScreen(
     definitionId: Long,
-    mapType: MapType,
     clockColor: Color?,
     healthData: HealthData,
-    autoCenterDelay: Int,
-    showRoute: Boolean,
-    routeColor: Color,
     screenBehavior: ScreenBehavior,
     isAmbient: Boolean,
-    mapZoomLevel: Float,
     onEndWorkout: (String, List<Pair<String, String>>) -> Unit,
     viewModel: DynamicWorkoutViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Lokalny stan wymuszający pełny UI w trybie Ambient po kliknięciu
     var forceActiveUI by remember { mutableStateOf(false) }
 
-    // Resetuj wymuszenie aktywnego UI, gdy system wejdzie w prawdziwy tryb Ambient
     LaunchedEffect(isAmbient) {
         if (isAmbient) {
             forceActiveUI = false
         }
     }
 
-    // Obsługa FLAG_KEEP_SCREEN_ON
     DisposableEffect(screenBehavior) {
         if (screenBehavior == ScreenBehavior.KEEP_SCREEN_ON) {
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -89,7 +79,6 @@ fun DynamicWorkoutScreen(
 
     val sportDef = definition!!
     val visibleSensors = sportDef.sensors.filter { it.isVisible }
-    val hasMap = visibleSensors.any { it.sensorId == WorkoutSensor.MAP.id }
     val dataSensors = visibleSensors.filter { it.sensorId != WorkoutSensor.MAP.id }
 
     val session = rememberWorkoutSession(
@@ -99,9 +88,6 @@ fun DynamicWorkoutScreen(
         onEndWorkout = { summary -> onEndWorkout(sportDef.name, summary) }
     )
 
-    // BLOKADA GESTU WYJŚCIA (Swipe-to-dismiss)
-    // confirmStateChange = { false } uniemożliwia wyjście gestem przesunięcia w prawo.
-    // Używamy foundation.rememberSwipeToDismissBoxState oraz material.SwipeToDismissBox
     val swipeToDismissState = rememberSwipeToDismissBoxState(
         confirmStateChange = { false }
     )
@@ -110,7 +96,6 @@ fun DynamicWorkoutScreen(
         state = swipeToDismissState
     ) { isBackground ->
         if (!isBackground) {
-            // Decyzja o wyświetleniu trybu uproszczonego
             val shouldShowAmbientUI = if (screenBehavior == ScreenBehavior.KEEP_SCREEN_ON) {
                 false 
             } else {
@@ -133,13 +118,7 @@ fun DynamicWorkoutScreen(
                 ActiveWorkoutUI(
                     session = session,
                     dataSensors = dataSensors,
-                    hasMap = hasMap,
-                    mapType = mapType,
-                    clockColor = clockColor,
-                    autoCenterDelay = autoCenterDelay,
-                    showRoute = showRoute,
-                    routeColor = routeColor,
-                    mapZoomLevel = mapZoomLevel
+                    clockColor = clockColor
                 )
             }
         }
@@ -151,13 +130,7 @@ fun DynamicWorkoutScreen(
 private fun ActiveWorkoutUI(
     session: WorkoutSessionState,
     dataSensors: List<SensorConfig>,
-    hasMap: Boolean,
-    mapType: MapType,
-    clockColor: Color?,
-    autoCenterDelay: Int,
-    showRoute: Boolean,
-    routeColor: Color,
-    mapZoomLevel: Float
+    clockColor: Color?
 ) {
     val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
 
@@ -173,7 +146,7 @@ private fun ActiveWorkoutUI(
                 val listState = rememberScalingLazyListState()
                 val focusRequester = remember { FocusRequester() }
                 
-                val isScrollEnabled = dataSensors.size > 4 || hasMap
+                val isScrollEnabled = dataSensors.size > 4
 
                 ScalingLazyColumn(
                     modifier = Modifier
@@ -197,10 +170,7 @@ private fun ActiveWorkoutUI(
                     contentPadding = PaddingValues(horizontal = 0.dp, vertical = 20.dp)
                 ) {
                     item {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 10.dp, start = 8.dp, end = 8.dp)) {
-                            Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
-                            Text(session.workoutTimerState.formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
-                        }
+                        WorkoutTimerHeader(session.workoutTimerState.formattedTime)
                     }
 
                     if (dataSensors.size <= 3) {
@@ -225,31 +195,6 @@ private fun ActiveWorkoutUI(
                             }
                         }
                     }
-
-                    if (hasMap) {
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("MAPA", style = MaterialTheme.typography.caption2, color = Color.Gray, modifier = Modifier.padding(horizontal = 8.dp))
-                        }
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                            ) {
-                                MapScreen(
-                                    mapType = mapType, 
-                                    focusRequester = focusRequester,
-                                    lastPoint = session.lastPoint,
-                                    allPoints = session.allPoints,
-                                    autoCenterDelay = autoCenterDelay,
-                                    showRoute = showRoute,
-                                    routeColor = routeColor,
-                                    mapZoomLevel = mapZoomLevel
-                                )
-                            }
-                        }
-                    }
                     
                     item { Spacer(modifier = Modifier.height(24.dp)) }
                 }
@@ -265,6 +210,14 @@ private fun ActiveWorkoutUI(
                 TimeText(timeTextStyle = MaterialTheme.typography.caption1.copy(color = clockColor, fontWeight = FontWeight.Bold))
             }
         }
+    }
+}
+
+@Composable
+private fun WorkoutTimerHeader(formattedTime: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 10.dp, start = 8.dp, end = 8.dp)) {
+        Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
+        Text(formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
     }
 }
 

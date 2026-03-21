@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HealthAndSafety
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.runtime.Composable
@@ -20,12 +19,10 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
-import com.google.maps.android.compose.MapType
 
 @Composable
 fun SettingsScreen(
     navController: NavHostController, 
-    currentMapType: MapType, 
     currentClockColor: Color?,
     currentScreenBehavior: ScreenBehavior
 ) {
@@ -43,15 +40,6 @@ fun SettingsScreen(
                 onClick = { navController.navigate("health_data") },
                 icon = { Icon(Icons.Default.HealthAndSafety, contentDescription = "Dane zdrowotne") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
-            )
-        }
-
-        item {
-            Chip(
-                label = { Text("Mapa") },
-                onClick = { navController.navigate("map_settings") },
-                icon = { Icon(Icons.Default.Map, contentDescription = "Mapa") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
 
