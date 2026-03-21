@@ -17,7 +17,7 @@ enum class WorkoutSensor(val id: String, val label: String) {
     TOTAL_ASCENT("totalAscent", "W sumie w górę"),
     TOTAL_DESCENT("totalDescent", "W sumie do dołu"),
     PRESSURE("pressure", "Ciśnienie"),
-    MAP("map", "Mapa")
+    MAP("map", "Dane lokalizacji")
 }
 
 data class SensorConfig(

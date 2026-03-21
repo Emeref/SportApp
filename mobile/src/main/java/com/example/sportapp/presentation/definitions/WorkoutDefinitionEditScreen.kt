@@ -45,9 +45,7 @@ fun WorkoutDefinitionEditScreen(
     var sensors by remember(existingDefinition) {
         val allSensorIds = WorkoutSensor.entries.map { it.id }.toSet()
         val initialSensors = if (existingDefinition != null) {
-            // Filter out sensors that are no longer in the enum
             val filtered = existingDefinition.sensors.filter { it.sensorId in allSensorIds }
-            // Add any new sensors from the enum that might be missing
             val existingIds = filtered.map { it.sensorId }.toSet()
             val missing = WorkoutSensor.entries.filter { it.id !in existingIds }.map {
                 SensorConfig(it.id, isVisible = false, isRecording = false)
@@ -60,6 +58,15 @@ fun WorkoutDefinitionEditScreen(
         }
         mutableStateOf(initialSensors)
     }
+
+    val gpsSensors = listOf(
+        WorkoutSensor.SPEED_GPS.id,
+        WorkoutSensor.DISTANCE_GPS.id,
+        WorkoutSensor.ALTITUDE.id,
+        WorkoutSensor.TOTAL_ASCENT.id,
+        WorkoutSensor.TOTAL_DESCENT.id
+    )
+    val gpsRequired = sensors.any { it.sensorId in gpsSensors && (it.isVisible || it.isRecording) }
 
     var showIconPicker by remember { mutableStateOf(false) }
 
@@ -147,10 +154,21 @@ fun WorkoutDefinitionEditScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 itemsIndexed(sensors) { index, sensorConfig ->
+                    val isMap = sensorConfig.sensorId == WorkoutSensor.MAP.id
                     val sensor = WorkoutSensor.entries.find { it.id == sensorConfig.sensorId }
+                    
+                    val effectiveConfig = if (isMap) {
+                        sensorConfig.copy(
+                            isVisible = false,
+                            isRecording = if (gpsRequired) true else sensorConfig.isRecording
+                        )
+                    } else {
+                        sensorConfig
+                    }
+
                     SensorConfigItem(
                         label = sensor?.label ?: sensorConfig.sensorId,
-                        config = sensorConfig,
+                        config = effectiveConfig,
                         onConfigChange = { newConfig ->
                             val newList = sensors.toMutableList()
                             newList[index] = newConfig
@@ -167,7 +185,9 @@ fun WorkoutDefinitionEditScreen(
                             val item = newList.removeAt(index)
                             newList.add(index + 1, item)
                             sensors = newList
-                        } } else null
+                        } } else null,
+                        enabledVisible = !isMap,
+                        enabledRecording = if (isMap) !gpsRequired else !effectiveConfig.isVisible
                     )
                 }
             }
@@ -185,11 +205,19 @@ fun WorkoutDefinitionEditScreen(
             ) {
                 Button(
                     onClick = {
+                        val finalSensors = sensors.map {
+                            if (it.sensorId == WorkoutSensor.MAP.id) {
+                                it.copy(
+                                    isVisible = false,
+                                    isRecording = if (gpsRequired) true else it.isRecording
+                                )
+                            } else it
+                        }
                         val newDef = WorkoutDefinition(
                             id = definitionId,
                             name = name,
                             iconName = iconName,
-                            sensors = sensors,
+                            sensors = finalSensors,
                             baseType = baseType,
                             isDefault = existingDefinition?.isDefault ?: false,
                             autoLapDistance = autoLapDistance.toDoubleOrNull()
@@ -231,7 +259,9 @@ fun SensorConfigItem(
     config: SensorConfig,
     onConfigChange: (SensorConfig) -> Unit,
     onMoveUp: (() -> Unit)?,
-    onMoveDown: (() -> Unit)?
+    onMoveDown: (() -> Unit)?,
+    enabledVisible: Boolean = true,
+    enabledRecording: Boolean = !config.isVisible
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -246,17 +276,16 @@ fun SensorConfigItem(
             onCheckedChange = { 
                 onConfigChange(config.copy(isVisible = it, isRecording = if (it) true else config.isRecording))
             },
+            enabled = enabledVisible,
             modifier = Modifier.width(72.dp)
         )
         
         Checkbox(
             checked = config.isRecording,
             onCheckedChange = { 
-                if (!config.isVisible) {
-                    onConfigChange(config.copy(isRecording = it))
-                }
+                onConfigChange(config.copy(isRecording = it))
             },
-            enabled = !config.isVisible,
+            enabled = enabledRecording,
             modifier = Modifier.width(52.dp)
         )
 
