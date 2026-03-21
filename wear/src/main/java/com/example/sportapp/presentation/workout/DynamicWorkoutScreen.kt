@@ -166,7 +166,8 @@ private fun ActiveWorkoutUI(
                     userScrollEnabled = isScrollEnabled,
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 30.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 5.dp),
+                    autoCentering = null
                 ) {
                     item {
                         WorkoutTimerHeader(session.workoutTimerState.formattedTime)
@@ -194,8 +195,6 @@ private fun ActiveWorkoutUI(
                             }
                         }
                     }
-                    
-                    item { Spacer(modifier = Modifier.height(24.dp)) }
                 }
 
                 LaunchedEffect(Unit) {
@@ -214,7 +213,7 @@ private fun ActiveWorkoutUI(
 
 @Composable
 private fun WorkoutTimerHeader(formattedTime: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 10.dp, start = 8.dp, end = 8.dp)) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 20.dp, start = 8.dp, end = 8.dp)) {
         Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
         Text(formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
     }

@@ -13,7 +13,7 @@ import androidx.wear.compose.material.Text
 
 @Composable
 fun SportDataRow(label: String, value: String, color: Color, isBold: Boolean = false) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(vertical = 4.dp)) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(vertical = 0.dp)) {
         Text(value, color = color, fontSize = if (isBold) 20.sp else 16.sp, fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium)
         Text(label, color = Color.LightGray, fontSize = 10.sp)
     }
