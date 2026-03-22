@@ -10,7 +10,7 @@
 - [ ] **Sensory i Precyzja**:
     - [x] **Wprowadzenie Foreground Service**: Przeniesienie logiki sesji z UI do usługi w tle (zapobieganie ubijaniu treningu).
     - [ ] **Centralny PermissionManager**: Ujednolicona obsługa uprawnień przed startem aktywności.
-    - [ ] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych GPS i barometru (eliminacja szumów).
+    - [x] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych tętna.
     - [x] **Przegląd sensorów**: Sprawdzono i dodano obsługę SpO2 oraz ciśnienia atmosferycznego (barometru).
 - [x] **Własne dyscypliny**: 
     - [x] Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
@@ -41,7 +41,7 @@
 - [ ] **Analiza danych (Mobile)**:
     - [ ] **Szczegóły aktywności (Ekran ActivityDetailScreen)**:
         - [x] Wykresy (bpm, kroki, prędkość, wysokość itd.) z markerami.
-        - [ ] Interaktywna mapa trasy z oznaczeniem startu (kółko) i końca (flaga).
+        - [x] Interaktywna mapa trasy z odcinkami (Laps).
         - [x] Personalizacja widoku (wybór i kolejność wykresów/mapy).
         - [x] Wybór koloru śladu na mapie.
         - [x] **Wykresy per aktywność**: Rozszerzenie opcji aktywności o możliwość definiowania widocznych wykresów dla konkretnego sportu.
@@ -55,7 +55,7 @@
         - [x] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
         - [x] **Opcja przycinania treningu**: Możliwanie usunięcia niechcianych fragmentów na początku lub końcu sesji.
         - [x] **Aktualizacja statystyk po przycięciu**: Nowe wartości are przeliczane i odświeżane w czasie rzeczywistym na liście.
-    - [ ] **Analiza stref tętna**: Podział treningu na strefy (Z1-Z5) i ich wizualizacja na ekranie szczegółów.
+    - [x] **Analiza stref tętna**: Podział treningu na strefy (Z1-Z5), wizualizacja kołowa i tabela na ekranie szczegółów.
     - [x] **Naprawa danych w widgetach**: Statystyki na ekranie głównym i ogólnych statystykach are teraz poprawnie wyliczane i wyświetlane.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
     - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).

@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.stats
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -14,12 +15,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sportapp.data.model.WorkoutLap
+import com.example.sportapp.data.model.HeartRateZone
+import com.example.sportapp.data.model.HeartRateZoneResult
+import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -38,6 +45,7 @@ fun ActivityDetailScreen(
     val selectedLap by viewModel.selectedLap.collectAsState()
     val error by viewModel.error.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val hrZoneResult by viewModel.hrZoneResult.collectAsState()
 
     // Error Dialog
     if (error != null) {
@@ -178,6 +186,25 @@ fun ActivityDetailScreen(
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
+                        "bpm" -> {
+                            val producer = viewModel.chartProducers["bpm"]
+                            if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
+                                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                    HeartRateChartSection(
+                                        title = "Tętno (bpm)",
+                                        producer = producer,
+                                        detailTimes = data.times,
+                                        hrZoneResult = hrZoneResult
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                                
+                                hrZoneResult?.let { result ->
+                                    HeartRateZonesSection(result)
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                }
+                            }
+                        }
                         else -> {
                             val producer = viewModel.chartProducers[widget.id]
                             val chartKey = widget.id
@@ -202,6 +229,125 @@ fun ActivityDetailScreen(
             }
         }
     }
+}
+
+@Composable
+fun HeartRateChartSection(
+    title: String,
+    producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer,
+    detailTimes: List<String>,
+    hrZoneResult: HeartRateZoneResult?
+) {
+    // Custom Chart with zone backgrounds
+    // Simplified version here using CommonChartSection but we could add background logic if Vico supports it easily
+    // For now let's use the CommonChartSection and add the horizontal lines manually if possible or just use it as is
+    CommonChartSection(
+        title = title,
+        producer = producer,
+        unit = "bpm",
+        detailTimes = detailTimes,
+        isScrollEnabled = false
+    )
+    
+    // In a real advanced implementation, we would pass the zones to CommonChartSection 
+    // to draw the background colors.
+}
+
+@Composable
+fun HeartRateZonesSection(result: HeartRateZoneResult) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Text("Strefy tętna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    DonutChart(
+                        stats = result.zones,
+                        modifier = Modifier.size(100.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Efekt treningu", style = MaterialTheme.typography.labelMedium)
+                        Text(result.trainingEffect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Tabela stref
+                result.zones.reversed().forEach { stat ->
+                    ZoneRow(stat)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        var startAngle = -90f
+        val strokeWidth = 20f
+        
+        stats.forEach { stat ->
+            val sweepAngle = (stat.percentage / 100f) * 360f
+            if (sweepAngle > 0) {
+                drawArc(
+                    color = stat.zone.color,
+                    startAngle = startAngle,
+                    sweepAngle = sweepAngle,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth),
+                    size = Size(size.width, size.height)
+                )
+                startAngle += sweepAngle
+            }
+        }
+    }
+}
+
+@Composable
+fun ZoneRow(stat: ZoneStat) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(stat.zone.color)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stat.zone.displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+            Text("${stat.minBpm}-${stat.maxBpm} bpm", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text(
+            formatSeconds(stat.durationSeconds),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.width(60.dp),
+            textAlign = TextAlign.End
+        )
+        Text(
+            String.format(Locale.US, "%.1f%%", stat.percentage),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(50.dp),
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+private fun formatSeconds(seconds: Long): String {
+    val mins = seconds / 60
+    val secs = seconds % 60
+    return String.format(Locale.US, "%02d:%02d", mins, secs)
 }
 
 @Composable
