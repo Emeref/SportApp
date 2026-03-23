@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.workout
 
+import com.example.sportapp.AppConstants
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.SensorConfig
@@ -22,7 +23,7 @@ class WorkoutLogger(
     private var lastDescentRef: Double? = null
     private var totalAscent: Double = 0.0
     private var totalDescent: Double = 0.0
-    private val ELEVATION_THRESHOLD = 2.0 // Próg zmiany wysokości w metrach
+    private val ELEVATION_THRESHOLD = AppConstants.ELEVATION_THRESHOLD
 
     private val heartRates = mutableListOf<Float>()
     private var maxCalorieMin: Double = 0.0

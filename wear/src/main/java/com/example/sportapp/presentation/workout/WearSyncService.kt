@@ -37,9 +37,9 @@ class WearSyncService : WearableListenerService() {
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         if (messageEvent.path == "/request_sync") {
-            Log.d("WearSyncService", "Sync request received")
+            Log.d("WearSyncService", "Sync request received from mobile")
             scope.launch {
-                dataLayerManager.syncActivities()
+                dataLayerManager.syncAll()
             }
         }
     }

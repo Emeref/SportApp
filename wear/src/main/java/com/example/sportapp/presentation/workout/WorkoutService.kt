@@ -51,6 +51,7 @@ class WorkoutService : Service(), SensorEventListener {
     @Inject lateinit var workoutDao: WorkoutDao
     @Inject lateinit var workoutDefinitionDao: WorkoutDefinitionDao
     @Inject lateinit var dataLayerManager: DataLayerManager
+    @Inject lateinit var altitudeManager: AltitudeManager
 
     private val binder = LocalBinder()
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -79,8 +80,8 @@ class WorkoutService : Service(), SensorEventListener {
     private var speedKmH = 0f
     private var maxSpeedGps = 0.0
     private var maxSpeedSteps = 0.0
-    private var altitude = 0.0
-    private var pressure = 0.0
+    private var altitude: Double? = null
+    private var pressureValue = 0.0
     private var healthData: HealthData? = null
     private var sportDefinition: WorkoutDefinition? = null
     private var fallbackActivityName: String = "Aktywność"
@@ -100,11 +101,13 @@ class WorkoutService : Service(), SensorEventListener {
                 val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
                 val batteryPct = if (scale > 0) (level * 100 / scale.toFloat()).toInt() else -1
                 
+                // Synchronizacja tylko raz dla danego poziomu w zakresie 1-5%
                 if (batteryPct in 1..5 && batteryPct != lastTriggeredLevel) {
                     lastTriggeredLevel = batteryPct
                     serviceScope.launch(Dispatchers.IO) {
-                        Log.w("WorkoutService", "Emergency save triggered at $batteryPct% battery")
+                        Log.w("WorkoutService", "Emergency save and sync triggered at $batteryPct% battery")
                         performSave()
+                        dataLayerManager.syncAll()
                     }
                 }
             }
@@ -199,11 +202,12 @@ class WorkoutService : Service(), SensorEventListener {
         speedKmH = 0f
         maxSpeedGps = 0.0
         maxSpeedSteps = 0.0
-        altitude = 0.0
-        pressure = 0.0
+        altitude = null
+        pressureValue = 0.0
         totalCaloriesAcc = 0.0
         pointsList.clear()
         
+        altitudeManager.reset()
         logger = WorkoutLogger(workoutDao, currentWorkoutId, hData, sportDefinition?.sensors ?: emptyList())
         
         wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(
@@ -248,6 +252,7 @@ class WorkoutService : Service(), SensorEventListener {
     }
 
     private fun togglePause() {
+        val wasActive = status == WorkoutStatus.ACTIVE
         if (status == WorkoutStatus.ACTIVE) {
             status = WorkoutStatus.PAUSED
             totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
@@ -257,6 +262,14 @@ class WorkoutService : Service(), SensorEventListener {
         }
         updateNotification()
         updateState(null)
+
+        // Po zapauzowaniu aktywności
+        if (wasActive && status == WorkoutStatus.PAUSED) {
+            serviceScope.launch {
+                performSave()
+                dataLayerManager.syncAll()
+            }
+        }
     }
 
     private fun stopWorkout() {
@@ -281,7 +294,7 @@ class WorkoutService : Service(), SensorEventListener {
         serviceScope.launch {
             // Wykonujemy ostatni zapis (Flush)
             performSave(true)
-            dataLayerManager.syncActivities()
+            dataLayerManager.syncAll() // Pełna synchronizacja po zakończeniu
             
             withContext(Dispatchers.Main) {
                 stopSelf()
@@ -333,7 +346,8 @@ class WorkoutService : Service(), SensorEventListener {
                 maxAltitude = sessionStats.maxAltitude,
                 avgStepLength = sessionStats.avgStepLength,
                 avgCadence = sessionStats.avgCadence,
-                maxCadence = sessionStats.maxCadence
+                maxCadence = sessionStats.maxCadence,
+                isSynced = false // Reset flagi przy każdym zapisie w trakcie trwania
             )
             
             if (updatedWorkout != null) {
@@ -387,7 +401,7 @@ class WorkoutService : Service(), SensorEventListener {
                         wysokosc = altitude,
                         calorieMin = calorieMinNow,
                         calorieSum = totalCaloriesAcc,
-                        pressure = if (pressure > 0) pressure else null
+                        pressure = if (pressureValue > 0) pressureValue else null
                     )
                     
                     if (lastPoint != null) {
@@ -419,6 +433,7 @@ class WorkoutService : Service(), SensorEventListener {
                 delay(60000) // 60 sekund
                 if (status == WorkoutStatus.ACTIVE) {
                     performSave()
+                    dataLayerManager.syncAll() // Synchronizacja co minutę
                 }
             }
         }
@@ -436,6 +451,11 @@ class WorkoutService : Service(), SensorEventListener {
                     lastLocation?.let { totalDistance += it.distanceTo(location) }
                     lastLocation = location
                     speedKmH = location.speed * 3.6f
+                    
+                    // Kalibracja wysokości GPS dla barometru (tylko raz na start)
+                    if (location.hasAltitude()) {
+                        altitudeManager.setGpsAltitude(location.altitude)
+                    }
                 }
             }
         }
@@ -458,8 +478,9 @@ class WorkoutService : Service(), SensorEventListener {
                     currentSteps = steps - stepCountStart
                 }
                 Sensor.TYPE_PRESSURE -> if (it.values.isNotEmpty()) {
-                    pressure = it.values[0].toDouble()
-                    altitude = SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, it.values[0]).toDouble()
+                    pressureValue = it.values[0].toDouble()
+                    // Używamy AltitudeManager do wyliczenia wysokości z offsetem GPS
+                    altitude = altitudeManager.processPressure(it.values[0])
                 }
             }
         }

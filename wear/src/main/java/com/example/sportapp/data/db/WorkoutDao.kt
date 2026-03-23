@@ -31,4 +31,10 @@ interface WorkoutDao {
     
     @Query("SELECT * FROM workouts WHERE startTime >= :since")
     suspend fun getWorkoutsSince(since: Long): List<WorkoutEntity>
+
+    @Query("SELECT * FROM workouts WHERE isSynced = 0")
+    suspend fun getUnsyncedWorkouts(): List<WorkoutEntity>
+
+    @Query("UPDATE workouts SET isSynced = 1 WHERE id = :id")
+    suspend fun markAsSynced(id: Long)
 }

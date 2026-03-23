@@ -21,6 +21,7 @@ Aplikacja ma być minimalistycznym asystentem sportowym, który gromadzi dane z 
 - **Odległość**: Wszystkie odległości w bazie danych są zapisywane w **metrach**, zaokrąglone do pełnych wartości.
 - **Czas**: Wszystkie czasy aktywności są zapisywane z dokładnością do **sekund**.
 - **Kalorie**: Wszystkie wartości kcal są zapisywane z dokładnością do **1 miejsca po przecinku**.
+- **Zmienne**: Wszystkie zmienne definiowane przez użytkownika trafiają do plików AppConstants.kt. Pliki w wear i mobile mają mieć odpowiednie wartości te same.**
 
 ## Sukces Projektu
 Użytkownik może odbyć 30-minutowy spacer bez wyciągania telefonu z kieszeni, mając pełny wgląd w trasę i wartości wszystkich czujników w trakcie spaceru, a po powrocie dane automatycznie synchronizują się z telefonem, gdzie są gotowe do szczegółowej analizy.
