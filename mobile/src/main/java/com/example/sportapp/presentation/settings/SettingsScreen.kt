@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,6 +34,12 @@ fun SettingsScreen(
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
+
+    val isDark = when (state.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
 
     Scaffold(
         topBar = {
@@ -232,13 +239,13 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo_mrf),
+                        painter = painterResource(id = if (isDark) R.drawable.logo_mrf_dark_mode else R.drawable.logo_mrf),
                         contentDescription = "Logo MRF",
                         modifier = Modifier.height(40.dp).width(80.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Image(
-                        painter = painterResource(id = R.drawable.logo_emeref),
+                        painter = painterResource(id = if (isDark) R.drawable.logo_emeref_dark_mode else R.drawable.logo_emeref),
                         contentDescription = "Logo Emeref",
                         modifier = Modifier.height(40.dp).width(80.dp)
                     )

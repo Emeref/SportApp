@@ -93,10 +93,10 @@
     - [x] Reaktywność UI na zmianę motywu (`collectAsStateWithLifecycle`)
     - [x] Dostosowanie wykresów trendów i szczegółów aktywności (Vico Charts)
     - [x] Dodanie opcji wyboru motywu w `SettingsScreen`
-- [ ] Implementacja Google Maps Dark Mode (MapStyleOptions)
+- [x] Implementacja Google Maps Dark Mode (MapStyleOptions)
 - [ ] Widgety na ekranie głównym (Glance)
 - [ ] Personalizacja jednostek (Metric/Imperial)
-- [ ] Ikonki emeref do dark mode
+- [x] Ikonki partnerów (mrf, emeref) dostosowane do Dark Mode
 
 ## 6. Jakość i Testy
 - [x] **Unit testy**:
