@@ -126,26 +126,27 @@ fun ActivityDetailScreen(
                     when (widget.id) {
                         "map" -> {
                             if (data.route.isNotEmpty()) {
-                                val startPos = data.route.first()
-                                val cameraPositionState = rememberCameraPositionState {
-                                    position = CameraPosition.fromLatLngZoom(startPos, 15f)
-                                }
+                                val cameraPositionState = rememberCameraPositionState()
 
-                                // Update camera when lap is selected
-                                LaunchedEffect(selectedLap) {
-                                    selectedLap?.let { lap ->
-                                        val lapPoints = data.route.subList(
+                                // Update camera when lap is selected or to show whole route by default
+                                LaunchedEffect(selectedLap, data.route) {
+                                    val pointsToShow = if (selectedLap != null) {
+                                        val lap = selectedLap!!
+                                        data.route.subList(
                                             lap.startLocationIndex.coerceIn(data.route.indices),
                                             (lap.endLocationIndex + 1).coerceIn(data.route.indices)
                                         )
-                                        if (lapPoints.isNotEmpty()) {
-                                            val boundsBuilder = LatLngBounds.Builder()
-                                            lapPoints.forEach { boundsBuilder.include(it) }
-                                            val bounds = boundsBuilder.build()
-                                            cameraPositionState.animate(
-                                                CameraUpdateFactory.newLatLngBounds(bounds, 50)
-                                            )
-                                        }
+                                    } else {
+                                        data.route
+                                    }
+
+                                    if (pointsToShow.isNotEmpty()) {
+                                        val boundsBuilder = LatLngBounds.Builder()
+                                        pointsToShow.forEach { boundsBuilder.include(it) }
+                                        val bounds = boundsBuilder.build()
+                                        cameraPositionState.animate(
+                                            CameraUpdateFactory.newLatLngBounds(bounds, 100)
+                                        )
                                     }
                                 }
 
