@@ -127,6 +127,23 @@ class ActivityListViewModel @Inject constructor(
         }
     }
 
+    fun toggleAllVisibleSelection() {
+        val visibleActivities = activities.value
+        if (visibleActivities.isEmpty()) return
+        
+        val visibleIds = visibleActivities.map { it.id }.toSet()
+        val currentlySelected = _selectedIds.value
+        val visibleSelectedIds = currentlySelected.intersect(visibleIds)
+        
+        if (visibleSelectedIds.isNotEmpty()) {
+            // Jeśli cokolwiek z widocznych jest zaznaczone -> odznaczamy wszystko co widoczne
+            _selectedIds.value = currentlySelected - visibleIds
+        } else {
+            // Jeśli nic z widocznych nie jest zaznaczone -> zaznaczamy wszystko co widoczne
+            _selectedIds.value = currentlySelected + visibleIds
+        }
+    }
+
     fun clearSelection() {
         _selectedIds.value = emptySet()
     }

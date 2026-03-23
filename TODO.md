@@ -52,7 +52,7 @@
         - [ ] **Najlepsze tempo na km (Best Split)**: Automatyczne wykrywanie najszybszego odcinka 1km.
         - [ ] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu.
         - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
-        - [ ] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji.
+        - [x] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji (wdrożono wygładzanie).
         - [x] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
         - [x] **Opcja przycinania treningu**: Możliwanie usunięcia niechcianych fragmentów na początku lub końcu sesji.
         - [x] **Aktualizacja statystyk po przycięciu**: Nowe wartości are przeliczane i odświeżane w czasie rzeczywistym na liście.
@@ -102,17 +102,19 @@
 - [x] **Unit testy**:
     - [x] Testy logiki biznesowej (Kalkulatory, Repozytoria, ViewModele).
     - [x] **Testy edycji treningu**: Weryfikacja logiki przycinania i przeliczania statystyk w `ActivityTrimViewModel`.
-- [x] **Testy komponentów UI**:
+- [ ] **Testy komponentów UI**:
     - [x] Weryfikacja wyświetlania wykresów i filtrowania (OverallStats).
     - [ ] **Testy ekranu szczegółów**: Weryfikacja interakcji z wykresami i mapą.
+- [ ] **Testy stabilności**:
+    - [ ] **Sprawdź działanie aplikacji na 'pauzie'**: Weryfikacja poprawnego wstrzymywania i wznawiania zliczania danych (kroki, dystans, czas).
 
 ### Statystyki i Wykresy
 - [x] Wykresy trendów w `OverallStatsScreen` (Vico)
-- [x] Wykresy tętna i strefy w `ActivityDetailScreen`
-- [ ] Porównywanie dwóch aktywności na jednym wykresie
+- [x] Wykresy tętna i strefy in `ActivityDetailScreen`
+- [x] **Porównywanie dwóch aktywności na jednym wykresie** (ActivityCompareScreen)
 - [ ] Eksport danych do CSV/GPX
 
 ## PRIORYTETY
 1. **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
-2. **Optymalizacja i próbkowanie wykresów** - Wdrożenie LTTB dla poprawy wydajności przy dużej liczbie punktów.
+2. **Sprawdź działanie aplikacji na 'pauzie'** - Dokładna weryfikacja zliczania danych (kroki/dystans) podczas wstrzymania treningu.
 3. **Integracja z Google Drive / Health Connect** - Synchronizacja danych z ekosystemem Google.

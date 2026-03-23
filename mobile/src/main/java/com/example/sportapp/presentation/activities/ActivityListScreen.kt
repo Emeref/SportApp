@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,6 +64,17 @@ fun ActivityListScreen(
     val selectedActivities = activities.filter { it.id in selectedIds }
     val canCompare = selectedActivities.size == 2 && 
                    selectedActivities[0].type == selectedActivities[1].type
+
+    // Logika dla głównego checkboxa (Select All)
+    val visibleIds = remember(activities) { activities.map { it.id }.toSet() }
+    val visibleSelectedCount = remember(selectedIds, visibleIds) { selectedIds.count { it in visibleIds } }
+    
+    val triState = when {
+        activities.isEmpty() -> ToggleableState.Off
+        visibleSelectedCount == 0 -> ToggleableState.Off
+        visibleSelectedCount == activities.size -> ToggleableState.On
+        else -> ToggleableState.Indeterminate
+    }
 
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -195,10 +207,14 @@ fun ActivityListScreen(
                             Row(
                                 modifier = Modifier
                                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("", modifier = Modifier.width(48.dp))
+                                TriStateCheckbox(
+                                    state = triState,
+                                    onClick = { viewModel.toggleAllVisibleSelection() },
+                                    modifier = Modifier.width(48.dp)
+                                )
                                 HeaderCell("Typ", 100.dp, SortColumn.TYPE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.TYPE) }
                                 HeaderCell("Data", 150.dp, SortColumn.DATE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DATE) }
                                 HeaderCell("Czas", 100.dp, SortColumn.DURATION, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DURATION) }
