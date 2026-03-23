@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.workout
 
+import com.example.sportapp.AppConstants
 import com.example.sportapp.data.db.WorkoutPointEntity
 import kotlin.math.max
 
@@ -41,7 +42,7 @@ object WorkoutMath {
         var totalAscent = 0.0
         var totalDescent = 0.0
         var lastAltRef: Double? = null
-        val threshold = 2.0 // 2 meters threshold to filter noise
+        val threshold = AppConstants.ELEVATION_THRESHOLD
 
         points.forEach { point ->
             // Max & Avg HR
