@@ -58,14 +58,14 @@
     - [x] **Analiza stref tętna**: Podział treningu na strefy (Z1-Z5), wizualizacja kołowa i tabela na ekranie szczegółów.
     - [x] **Naprawa danych w widgetach**: Statystyki na ekranie głównym i ogólnych statystykach are teraz poprawnie wyliczane i wyświetlane.
     - [x] Filtrowanie statystyk ogólnych (Ekran OverallStatsScreen).
-    - [ ] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList).
+    - [x] **Naprawa filtrów**: Poprawa działania filtrów na liście aktywności (ActivityList) - zaimplementowano reaktywne filtrowanie po typie i dacie.
 - [x] **Ustawienia i Personalizacja (Mobile)**:
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
     - [x] Wybór okresu raportowania (dziś, tydzień, m-c, rok).
     - [x] **Zdalna konfiguracja zegarka**: Możliwość ustawienia pól statystyk i okresu dla zegarka z poziomu aplikacji mobilnej.
     - [x] **Poprawa Layoutu**: Przesunięcie tytułów ekranów opcji w dół (aby nie chowały się za kamerką).
     - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definie aktywności.
-    - [ ] **Odświeżenie UI**: Zmiana wyglądu tabel/list (dodano paski przewijania) oraz wdrożenie sliderów do regulacji parametrów.
+    - [x] **Odświeżenie UI**: Zmiana wyglądu tabel/list (dodano paski przewijania) oraz wdrożenie sliderów do regulacji parametrów.
     - [x] **Branding**: Dodanie oficjalnego logo aplikacji (wewnątrz apki oraz ikony systemowe Adaptive Icons).
     - [ ] **Więcej widgetów**: Dodanie dodatkowych typów widgetów do wyboru w ustawieniach strony głównej.
 
@@ -102,6 +102,6 @@
 - [ ] **Clean Code**: Usunięcie hardkodowanych stringów (trasy nawigacji) do stałych/typów enumeratywnych.
 
 ## PRIORYTETY
-1. **Analiza stref tętna** - Wyliczanie i prezentacja czasu w strefach Z1-Z5 na ekranie szczegółów.
-2. **Interaktywna mapa trasy** - Implementacja mapy w `ActivityDetailScreen` z pełnym śladem GPS i markerami.
-3. **Widget 'Best Split' i Wykres długości kroku** - Zaawansowana analiza statystyk biegowych.
+1. **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
+2. **Optymalizacja i próbkowanie wykresów** - Wdrożenie LTTB dla poprawy wydajności przy dużej liczbie punktów.
+3. **Integracja z Google Drive / Health Connect** - Synchronizacja danych z ekosystemem Google.
