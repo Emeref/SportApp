@@ -9,6 +9,7 @@ enum class HeartRateZone(
     val color: Color,
     val description: String
 ) {
+    Z0("Rozgrzewka", 0.00f, 0.50f, Color(0xFF9E9E9E), "Aktywność o niskiej intensywności"),
     Z1("Bardzo lekki", 0.50f, 0.60f, Color(0xFF4CAF50), "Baza tlenowa / Regeneracja"),
     Z2("Lekki", 0.60f, 0.70f, Color(0xFF8BC34A), "Spalanie tłuszczu"),
     Z3("Umiarkowany", 0.70f, 0.80f, Color(0xFFFFEB3B), "Poprawa wydolności tlenowej"),
@@ -19,7 +20,7 @@ enum class HeartRateZone(
         fun fromBpm(bpm: Int, maxHr: Int): HeartRateZone? {
             val percent = bpm.toFloat() / maxHr
             return values().find { percent >= it.minPercent && percent < it.maxPercent }
-                ?: if (percent >= 1.0f) Z5 else if (percent < 0.5f && percent > 0.3f) Z1 else null
+                ?: if (percent >= 1.0f) Z5 else if (percent < 0.0f) null else Z0
         }
     }
 }
