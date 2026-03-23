@@ -33,5 +33,6 @@ data class MobileSettingsState(
         WidgetItem("steps", "Wszystkie kroki")
     ),
     val watchStatsPeriod: ReportingPeriod = ReportingPeriod.WEEK,
-    val watchStatsCustomDays: Int = 7
+    val watchStatsCustomDays: Int = 7,
+    val healthData: HealthData = HealthData()
 )

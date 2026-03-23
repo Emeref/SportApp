@@ -28,7 +28,8 @@ fun SettingsScreen(
     onCancel: () -> Unit,
     onNavigateToWidgetSelection: () -> Unit,
     onNavigateToWatchWidgetSelection: () -> Unit,
-    onNavigateToDefinitions: () -> Unit
+    onNavigateToDefinitions: () -> Unit,
+    onNavigateToHealthData: () -> Unit
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
@@ -68,6 +69,21 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // 0. Sekcja Profil
+            SettingsSection(title = "Mój Profil") {
+                OutlinedCard(
+                    onClick = onNavigateToHealthData,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Dane zdrowotne i tętno") },
+                        supportingContent = { Text("Wiek, waga, HR Max i strefy") },
+                        leadingContent = { Icon(Icons.Default.Favorite, null) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
+                    )
+                }
+            }
+
             // 1. Sekcja Aktywności
             SettingsSection(title = "Treningi") {
                 OutlinedCard(

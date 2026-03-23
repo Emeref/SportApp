@@ -11,7 +11,10 @@ import com.example.sportapp.data.LapManager
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutLap
+import com.example.sportapp.data.model.HeartRateZoneResult
+import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
@@ -30,6 +33,7 @@ class ActivityDetailViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val workoutDao: WorkoutDao,
     private val lapManager: LapManager,
+    private val mobileSettingsManager: MobileSettingsManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val activityId: Long = savedStateHandle.get<String>("activityId")?.toLongOrNull() ?: -1L
@@ -43,6 +47,9 @@ class ActivityDetailViewModel @Inject constructor(
 
     private val _selectedLap = MutableStateFlow<WorkoutLap?>(null)
     val selectedLap = _selectedLap.asStateFlow()
+
+    private val _hrZoneResult = MutableStateFlow<HeartRateZoneResult?>(null)
+    val hrZoneResult = _hrZoneResult.asStateFlow()
 
     val settings: StateFlow<ActivityDetailSettings> = _sessionData
         .filterNotNull()
@@ -97,10 +104,21 @@ class ActivityDetailViewModel @Inject constructor(
                     _sessionData.value = data
                     updateCharts(data)
                     checkAndGenerateLaps(data)
+                    calculateHeartRateZones(activityId)
                 }
             } catch (e: Exception) {
                 _error.value = "Błąd ładowania danych: ${e.message}"
             }
+        }
+    }
+
+    private fun calculateHeartRateZones(workoutId: Long) {
+        viewModelScope.launch {
+            val points = workoutDao.getPointsForWorkout(workoutId)
+            val settings = mobileSettingsManager.settingsFlow.first()
+            val maxHr = settings.healthData.maxHR
+            
+            _hrZoneResult.value = HeartRateMath.calculateZones(points, maxHr)
         }
     }
 
@@ -128,7 +146,6 @@ class ActivityDetailViewModel @Inject constructor(
             val generatedLaps = lapManager.processLaps(activityId, points, autoLapDist)
             if (generatedLaps.isNotEmpty()) {
                 workoutDao.insertLaps(generatedLaps)
-                // Reload laps from database to get correct IDs
                 _laps.value = workoutDao.getLapsForWorkout(activityId)
             }
         }
@@ -138,9 +155,17 @@ class ActivityDetailViewModel @Inject constructor(
         chartProducers.forEach { (id, producer) ->
             val points = data.charts[id] ?: emptyList()
             if (points.isNotEmpty()) {
-                producer.setEntries(points.mapIndexed { index, value ->
-                    entryOf(index, value ?: 0f)
-                })
+                val entries = if (id == "bpm") {
+                    // Wygładzanie tętna średnią kroczącą z 10 sekund
+                    points.windowed(10, 1, true) { window ->
+                        window.filterNotNull().average().toFloat()
+                    }.mapIndexed { index, value -> entryOf(index, value) }
+                } else {
+                    points.mapIndexed { index, value ->
+                        entryOf(index, value ?: 0f)
+                    }
+                }
+                producer.setEntries(entries)
             }
         }
     }

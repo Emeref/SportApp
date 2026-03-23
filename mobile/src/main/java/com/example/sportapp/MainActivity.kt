@@ -25,9 +25,7 @@ import com.example.sportapp.presentation.definitions.WorkoutDefinitionViewModel
 import com.example.sportapp.presentation.home.HomeScreen
 import com.example.sportapp.presentation.home.HomeViewModel
 import com.example.sportapp.presentation.navigation.Screen
-import com.example.sportapp.presentation.settings.MobileSettingsManager
-import com.example.sportapp.presentation.settings.SettingsScreen
-import com.example.sportapp.presentation.settings.WidgetSelectionScreen
+import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.stats.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -76,7 +74,22 @@ class MainActivity : ComponentActivity() {
                                     onCancel = { navController.popBackStack() },
                                     onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
                                     onNavigateToWatchWidgetSelection = { navController.navigate("watch_widget_selection") },
-                                    onNavigateToDefinitions = { navController.navigate("definitions") }
+                                    onNavigateToDefinitions = { navController.navigate("definitions") },
+                                    onNavigateToHealthData = { navController.navigate("health_data") }
+                                )
+                            }
+                        }
+                        composable("health_data") {
+                            settingsState?.let { state ->
+                                HealthDataScreen(
+                                    initialData = state.healthData,
+                                    onSave = { updatedHealthData ->
+                                        scope.launch {
+                                            settingsManager.saveSettings(state.copy(healthData = updatedHealthData))
+                                            navController.popBackStack()
+                                        }
+                                    },
+                                    onCancel = { navController.popBackStack() }
                                 )
                             }
                         }

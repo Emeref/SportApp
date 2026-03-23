@@ -31,6 +31,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         private val WATCH_WIDGETS_JSON = stringPreferencesKey("watch_widgets_json")
         private val WATCH_PERIOD = stringPreferencesKey("watch_period")
         private val WATCH_CUSTOM_DAYS = intPreferencesKey("watch_custom_days")
+        
+        private val HEALTH_DATA_JSON = stringPreferencesKey("health_data_json")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -60,13 +62,25 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             defaultState.watchStatsWidgets
         }
 
+        val healthDataJson = preferences[HEALTH_DATA_JSON]
+        val healthData = if (healthDataJson != null) {
+            try {
+                gson.fromJson(healthDataJson, HealthData::class.java) ?: defaultState.healthData
+            } catch (e: Exception) {
+                defaultState.healthData
+            }
+        } else {
+            defaultState.healthData
+        }
+
         MobileSettingsState(
             widgets = widgets,
             period = ReportingPeriod.valueOf(preferences[PERIOD] ?: defaultState.period.name),
             customDays = preferences[CUSTOM_DAYS] ?: defaultState.customDays,
             watchStatsWidgets = watchWidgets,
             watchStatsPeriod = ReportingPeriod.valueOf(preferences[WATCH_PERIOD] ?: defaultState.watchStatsPeriod.name),
-            watchStatsCustomDays = preferences[WATCH_CUSTOM_DAYS] ?: defaultState.watchStatsCustomDays
+            watchStatsCustomDays = preferences[WATCH_CUSTOM_DAYS] ?: defaultState.watchStatsCustomDays,
+            healthData = healthData
         )
     }
 
@@ -79,8 +93,11 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[WATCH_WIDGETS_JSON] = gson.toJson(state.watchStatsWidgets)
             preferences[WATCH_PERIOD] = state.watchStatsPeriod.name
             preferences[WATCH_CUSTOM_DAYS] = state.watchStatsCustomDays
+            
+            preferences[HEALTH_DATA_JSON] = gson.toJson(state.healthData)
         }
         syncWatchStatsSettings(state)
+        syncHealthData(state.healthData)
     }
 
     private suspend fun syncWatchStatsSettings(state: MobileSettingsState) {
@@ -95,6 +112,19 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             Log.d("SettingsSync", "Synced watch stats settings")
         } catch (e: Exception) {
             Log.e("SettingsSync", "Failed to sync watch stats settings", e)
+        }
+    }
+
+    private suspend fun syncHealthData(healthData: HealthData) {
+        try {
+            val request = PutDataMapRequest.create("/health_data").apply {
+                dataMap.putString("health_data_json", gson.toJson(healthData))
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }
+            dataClient.putDataItem(request.asPutDataRequest().setUrgent()).await()
+            Log.d("SettingsSync", "Synced health data to wear")
+        } catch (e: Exception) {
+            Log.e("SettingsSync", "Failed to sync health data", e)
         }
     }
 }
