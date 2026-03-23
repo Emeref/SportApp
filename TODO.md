@@ -85,6 +85,18 @@
     - [ ] Dodanie logowania przez konto Google.
     - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań w chmurze (backup/sync).
     - [ ] **Health Connect**: Synchronizacja danych treningowych z Google Health Connect.
+-
+### Ustawienia i Personalizacja (Mobile)
+- [x] Implementacja dynamicznego Dark Mode (Material 3)
+    - [x] Zarządzanie motywem w `MobileSettingsManager` (DataStore)
+    - [x] Definicja palet `lightColorScheme` i `darkColorScheme` (AMOLED-friendly)
+    - [x] Reaktywność UI na zmianę motywu (`collectAsStateWithLifecycle`)
+    - [x] Dostosowanie wykresów trendów i szczegółów aktywności (Vico Charts)
+    - [x] Dodanie opcji wyboru motywu w `SettingsScreen`
+- [x] Implementacja Google Maps Dark Mode (MapStyleOptions)
+- [ ] Widgety na ekranie głównym (Glance)
+- [ ] Personalizacja jednostek (Metric/Imperial)
+- [x] Ikonki partnerów (mrf, emeref) dostosowane do Dark Mode
 
 ## 6. Jakość i Testy
 - [x] **Unit testy**:
@@ -94,13 +106,11 @@
     - [x] Weryfikacja wyświetlania wykresów i filtrowania (OverallStats).
     - [ ] **Testy ekranu szczegółów**: Weryfikacja interakcji z wykresami i mapą.
 
-## 7. Refaktoryzacja i Dobre Praktyki
-- [x] **Wstrzykiwanie Zależności**: Wdrożenie **Hilt** w modułach `mobile` i `wear`.
-- [x] **Migracja na KSP**: Przejście z Kapt na KSP w module `mobile`.
-- [x] **Usunięcie manualnych fabryk ViewModeli**: Pełne przejście na `@HiltViewModel`.
-- [x] **Cleanup**: Usunięcie trybu deweloperskiego oraz nieużywanych mechanizmów obsługi plików CSV (zrealizowane).
-- [ ] **Internacjonalizacja**: Dodanie wsparcia dla wielu języków (tłumaczenia).
-- [ ] **Clean Code**: Usunięcie hardkodowanych stringów (trasy nawigacji) do stałych/typów enumeratywnych.
+### Statystyki i Wykresy
+- [x] Wykresy trendów w `OverallStatsScreen` (Vico)
+- [x] Wykresy tętna i strefy w `ActivityDetailScreen`
+- [ ] Porównywanie dwóch aktywności na jednym wykresie
+- [ ] Eksport danych do CSV/GPX
 
 ## PRIORYTETY
 1. **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.

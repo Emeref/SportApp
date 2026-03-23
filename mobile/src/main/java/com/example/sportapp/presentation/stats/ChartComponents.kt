@@ -3,6 +3,7 @@ package com.example.sportapp.presentation.stats
 import android.graphics.Paint
 import android.graphics.RectF
 import android.text.Layout
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -141,7 +142,7 @@ fun CommonChartSection(
         
         val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
         val formatter = DecimalFormat("#,###.#", symbols)
-        val orangeColor = Color(0xFFFF9800)
+        val primaryColor = MaterialTheme.colorScheme.primary
 
         val totalPoints = detailTimes?.size ?: 0
         val horizontalItemPlacer = remember(totalPoints) {
@@ -153,11 +154,13 @@ fun CommonChartSection(
             )
         }
 
-        val thresholdLineComponent = lineComponent(color = Color.LightGray.copy(alpha = 0.3f), thickness = 1.dp)
+        val thresholdLineComponent = lineComponent(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
         
         val chartDecorations = remember(hrZoneResult, thresholdLineComponent) {
-            if (hrZoneResult == null) emptyList()
-            else {
+            if (hrZoneResult == null) {
+                // Dodaj linię siatki jeśli nie ma stref HR? Vico ma własne, ale tutaj możemy dodać coś ekstra jeśli trzeba.
+                emptyList()
+            } else {
                 val decorations = mutableListOf<Decoration>()
                 hrZoneResult.zones.forEach { stat ->
                     decorations.add(ZoneBackgroundDecoration(stat.minBpm.toFloat(), stat.maxBpm.toFloat(), stat.zone.color.copy(alpha = 0.15f)))
@@ -171,10 +174,10 @@ fun CommonChartSection(
             chart = lineChart(
                 lines = listOf(
                     lineSpec(
-                        lineColor = orangeColor,
+                        lineColor = primaryColor,
                         lineBackgroundShader = DynamicShaders.fromBrush(
                             Brush.verticalGradient(
-                                colors = listOf(orangeColor.copy(alpha = 0.4f), Color.Transparent)
+                                colors = listOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
                             )
                         )
                     )
@@ -210,8 +213,8 @@ fun CommonChartSection(
             ),
             chartScrollSpec = rememberChartScrollSpec(isScrollEnabled = isScrollEnabled),
             horizontalLayout = HorizontalLayout.fullWidth(
-                unscalableStartPadding = 16.dp, // Miejsce dla "0:00"
-                unscalableEndPadding = 24.dp    // Większe miejsce dla dłuższego czasu na końcu
+                unscalableStartPadding = 16.dp, 
+                unscalableEndPadding = 24.dp    
             ),
             modifier = Modifier.fillMaxWidth().height(if (overallRawData != null) 320.dp else 200.dp)
         )
@@ -245,6 +248,7 @@ fun rememberMarkerCustom(
 ): Marker {
     val labelBackgroundColor = MaterialTheme.colorScheme.surface
     val labelTextColor = MaterialTheme.colorScheme.onSurface
+    val primaryColor = MaterialTheme.colorScheme.primary
     
     val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
     val formatter = DecimalFormat("#,###.#", symbols)
@@ -259,16 +263,16 @@ fun rememberMarkerCustom(
         background = shapeComponent(
             shape = MarkerCorneredShape(Corner.FullyRounded),
             color = labelBackgroundColor,
-            strokeColor = Color.Green,
+            strokeColor = primaryColor,
             strokeWidth = 2.dp
         ),
         padding = MutableDimensions(horizontalDp = 12f, verticalDp = 8f),
         textAlignment = Layout.Alignment.ALIGN_CENTER,
         lineCount = lineCount
     )
-    val indicator = shapeComponent(shape = Shapes.pillShape, color = Color.Green)
+    val indicator = shapeComponent(shape = Shapes.pillShape, color = primaryColor)
     val guideline = lineComponent(
-        color = Color.Green.copy(alpha = 0.5f),
+        color = primaryColor.copy(alpha = 0.5f),
         thickness = 2.dp
     )
     return remember(label, indicator, guideline, overallRawData, detailTimes, unit) {

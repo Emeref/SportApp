@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,6 +34,12 @@ fun SettingsScreen(
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
+
+    val isDark = when (state.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
 
     Scaffold(
         topBar = {
@@ -69,6 +76,15 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // 0. Sekcja Wygląd
+            SettingsSection(title = "Wygląd") {
+                Text(text = "Motyw aplikacji", style = MaterialTheme.typography.bodyMedium)
+                ThemeSelectionGrid(
+                    selectedMode = state.themeMode,
+                    onSelect = { state = state.copy(themeMode = it) }
+                )
+            }
+
             // 0. Sekcja Profil
             SettingsSection(title = "Mój Profil") {
                 OutlinedCard(
@@ -199,16 +215,16 @@ fun SettingsScreen(
                 Button(
                     onClick = { onSave(state) },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Zapisz", color = Color.White)
+                    Text("Zapisz", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Zamknij", color = Color.White)
+                    Text("Zamknij", color = MaterialTheme.colorScheme.onError)
                 }
             }
 
@@ -223,13 +239,13 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo_mrf),
+                        painter = painterResource(id = if (isDark) R.drawable.logo_mrf_dark_mode else R.drawable.logo_mrf),
                         contentDescription = "Logo MRF",
                         modifier = Modifier.height(40.dp).width(80.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Image(
-                        painter = painterResource(id = R.drawable.logo_emeref),
+                        painter = painterResource(id = if (isDark) R.drawable.logo_emeref_dark_mode else R.drawable.logo_emeref),
                         contentDescription = "Logo Emeref",
                         modifier = Modifier.height(40.dp).width(80.dp)
                     )
@@ -237,6 +253,37 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
+    }
+}
+
+@Composable
+fun ThemeSelectionGrid(
+    selectedMode: ThemeMode,
+    onSelect: (ThemeMode) -> Unit
+) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        ThemeOptionChip("System", ThemeMode.SYSTEM, selectedMode, onSelect, Modifier.weight(1f))
+        ThemeOptionChip("Jasny", ThemeMode.LIGHT, selectedMode, onSelect, Modifier.weight(1f))
+        ThemeOptionChip("Ciemny", ThemeMode.DARK, selectedMode, onSelect, Modifier.weight(1f))
+    }
+}
+
+@Composable
+fun ThemeOptionChip(
+    label: String,
+    mode: ThemeMode,
+    selectedMode: ThemeMode,
+    onSelect: (ThemeMode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clickable { onSelect(mode) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = mode == selectedMode, onClick = { onSelect(mode) })
+        Text(text = label, style = MaterialTheme.typography.bodySmall)
     }
 }
 

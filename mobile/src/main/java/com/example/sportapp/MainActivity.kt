@@ -5,13 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -27,6 +27,7 @@ import com.example.sportapp.presentation.home.HomeViewModel
 import com.example.sportapp.presentation.navigation.Screen
 import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.stats.*
+import com.example.sportapp.presentation.theme.SportAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,9 +41,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            val settingsState by settingsManager.settingsFlow.collectAsStateWithLifecycle(initialValue = MobileSettingsState())
+            
+            SportAppTheme(themeMode = settingsState.themeMode) {
                 val navController = rememberNavController()
-                val settingsState by settingsManager.settingsFlow.collectAsState(initial = null)
                 val scope = rememberCoroutineScope()
                 val statsViewModel: OverallStatsViewModel = hiltViewModel()
 
@@ -62,36 +64,32 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("settings") {
-                            settingsState?.let { state ->
-                                SettingsScreen(
-                                    initialState = state,
-                                    onSave = { updatedSettings ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(updatedSettings)
-                                            navController.popBackStack()
-                                        }
-                                    },
-                                    onCancel = { navController.popBackStack() },
-                                    onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
-                                    onNavigateToWatchWidgetSelection = { navController.navigate("watch_widget_selection") },
-                                    onNavigateToDefinitions = { navController.navigate("definitions") },
-                                    onNavigateToHealthData = { navController.navigate("health_data") }
-                                )
-                            }
+                            SettingsScreen(
+                                initialState = settingsState,
+                                onSave = { updatedSettings ->
+                                    scope.launch {
+                                        settingsManager.saveSettings(updatedSettings)
+                                        navController.popBackStack()
+                                    }
+                                },
+                                onCancel = { navController.popBackStack() },
+                                onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
+                                onNavigateToWatchWidgetSelection = { navController.navigate("watch_widget_selection") },
+                                onNavigateToDefinitions = { navController.navigate("definitions") },
+                                onNavigateToHealthData = { navController.navigate("health_data") }
+                            )
                         }
                         composable("health_data") {
-                            settingsState?.let { state ->
-                                HealthDataScreen(
-                                    initialData = state.healthData,
-                                    onSave = { updatedHealthData ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(state.copy(healthData = updatedHealthData))
-                                            navController.popBackStack()
-                                        }
-                                    },
-                                    onCancel = { navController.popBackStack() }
-                                )
-                            }
+                            HealthDataScreen(
+                                initialData = settingsState.healthData,
+                                onSave = { updatedHealthData ->
+                                    scope.launch {
+                                        settingsManager.saveSettings(settingsState.copy(healthData = updatedHealthData))
+                                        navController.popBackStack()
+                                    }
+                                },
+                                onCancel = { navController.popBackStack() }
+                            )
                         }
                         composable("definitions") {
                             val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
@@ -111,34 +109,30 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("widget_selection") {
-                            settingsState?.let { state ->
-                                WidgetSelectionScreen(
-                                    widgets = state.widgets,
-                                    title = "Widgety na stronie głównej",
-                                    onSave = { updatedWidgets ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(state.copy(widgets = updatedWidgets))
-                                            navController.popBackStack()
-                                        }
-                                    },
-                                    onCancel = { navController.popBackStack() }
-                                )
-                            }
+                            WidgetSelectionScreen(
+                                widgets = settingsState.widgets,
+                                title = "Widgety na stronie głównej",
+                                onSave = { updatedWidgets ->
+                                    scope.launch {
+                                        settingsManager.saveSettings(settingsState.copy(widgets = updatedWidgets))
+                                        navController.popBackStack()
+                                    }
+                                },
+                                onCancel = { navController.popBackStack() }
+                            )
                         }
                         composable("watch_widget_selection") {
-                            settingsState?.let { state ->
-                                WidgetSelectionScreen(
-                                    widgets = state.watchStatsWidgets,
-                                    title = "Statystyki na zegarku",
-                                    onSave = { updatedWidgets ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(state.copy(watchStatsWidgets = updatedWidgets))
-                                            navController.popBackStack()
-                                        }
-                                    },
-                                    onCancel = { navController.popBackStack() }
-                                )
-                            }
+                            WidgetSelectionScreen(
+                                widgets = settingsState.watchStatsWidgets,
+                                title = "Statystyki na zegarku",
+                                onSave = { updatedWidgets ->
+                                    scope.launch {
+                                        settingsManager.saveSettings(settingsState.copy(watchStatsWidgets = updatedWidgets))
+                                        navController.popBackStack()
+                                    }
+                                },
+                                onCancel = { navController.popBackStack() }
+                            )
                         }
                         composable(Screen.OverallStats.route) {
                             OverallStatsScreen(

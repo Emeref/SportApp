@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.R
 import com.example.sportapp.presentation.home.WidgetFactory
 import com.example.sportapp.presentation.settings.WidgetItem
@@ -31,12 +32,12 @@ fun OverallStatsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToOptions: () -> Unit
 ) {
-    val stats by viewModel.stats.collectAsState()
-    val widgets by viewModel.widgets.collectAsState()
-    val activityTypes by viewModel.activityTypes.collectAsState()
-    val selectedType by viewModel.selectedType.collectAsState()
-    val startDate by viewModel.startDate.collectAsState()
-    val endDate by viewModel.endDate.collectAsState()
+    val stats by viewModel.stats.collectAsStateWithLifecycle()
+    val widgets by viewModel.widgets.collectAsStateWithLifecycle()
+    val activityTypes by viewModel.activityTypes.collectAsStateWithLifecycle()
+    val selectedType by viewModel.selectedType.collectAsStateWithLifecycle()
+    val startDate by viewModel.startDate.collectAsStateWithLifecycle()
+    val endDate by viewModel.endDate.collectAsStateWithLifecycle()
 
     OverallStatsContent(
         stats = stats,
