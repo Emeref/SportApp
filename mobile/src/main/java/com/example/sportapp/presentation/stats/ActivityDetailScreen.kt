@@ -287,7 +287,7 @@ fun HeartRateZonesSection(result: HeartRateZoneResult) {
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text("Efekt treningu", style = MaterialTheme.typography.labelMedium)
+                        Text("Przeważający efekt treningu", style = MaterialTheme.typography.labelMedium)
                         Text(result.trainingEffect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                 }
