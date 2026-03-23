@@ -155,9 +155,17 @@ class ActivityDetailViewModel @Inject constructor(
         chartProducers.forEach { (id, producer) ->
             val points = data.charts[id] ?: emptyList()
             if (points.isNotEmpty()) {
-                producer.setEntries(points.mapIndexed { index, value ->
-                    entryOf(index, value ?: 0f)
-                })
+                val entries = if (id == "bpm") {
+                    // Wygładzanie tętna średnią kroczącą z 10 sekund
+                    points.windowed(10, 1, true) { window ->
+                        window.filterNotNull().average().toFloat()
+                    }.mapIndexed { index, value -> entryOf(index, value) }
+                } else {
+                    points.mapIndexed { index, value ->
+                        entryOf(index, value ?: 0f)
+                    }
+                }
+                producer.setEntries(entries)
             }
         }
     }
