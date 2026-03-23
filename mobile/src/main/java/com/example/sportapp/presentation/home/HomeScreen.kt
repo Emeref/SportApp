@@ -134,7 +134,7 @@ fun HomeScreen(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onNavigateToActivityList, modifier = Modifier.fillMaxWidth()) {
-                Text("Szczegóły konkretnej aktywności")
+                Text("Szczegóły treningu")
             }
 
             Spacer(modifier = Modifier.weight(1f))
