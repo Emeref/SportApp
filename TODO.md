@@ -85,6 +85,18 @@
     - [ ] Dodanie logowania przez konto Google.
     - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań w chmurze (backup/sync).
     - [ ] **Health Connect**: Synchronizacja danych treningowych z Google Health Connect.
+-
+### Ustawienia i Personalizacja (Mobile)
+- [x] Implementacja dynamicznego Dark Mode (Material 3)
+    - [x] Zarządzanie motywem w `MobileSettingsManager` (DataStore)
+    - [x] Definicja palet `lightColorScheme` i `darkColorScheme` (AMOLED-friendly)
+    - [x] Reaktywność UI na zmianę motywu (`collectAsStateWithLifecycle`)
+    - [x] Dostosowanie wykresów trendów i szczegółów aktywności (Vico Charts)
+    - [x] Dodanie opcji wyboru motywu w `SettingsScreen`
+- [ ] Implementacja Google Maps Dark Mode (MapStyleOptions)
+- [ ] Widgety na ekranie głównym (Glance)
+- [ ] Personalizacja jednostek (Metric/Imperial)
+- [ ] Ikonki emeref do dark mode
 
 ## 6. Jakość i Testy
 - [x] **Unit testy**:
