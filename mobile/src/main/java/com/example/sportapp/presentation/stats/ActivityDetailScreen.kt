@@ -1,6 +1,5 @@
 package com.example.sportapp.presentation.stats
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -16,10 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -130,26 +126,27 @@ fun ActivityDetailScreen(
                     when (widget.id) {
                         "map" -> {
                             if (data.route.isNotEmpty()) {
-                                val startPos = data.route.first()
-                                val cameraPositionState = rememberCameraPositionState {
-                                    position = CameraPosition.fromLatLngZoom(startPos, 15f)
-                                }
+                                val cameraPositionState = rememberCameraPositionState()
 
-                                // Update camera when lap is selected
-                                LaunchedEffect(selectedLap) {
-                                    selectedLap?.let { lap ->
-                                        val lapPoints = data.route.subList(
+                                // Update camera when lap is selected or to show whole route by default
+                                LaunchedEffect(selectedLap, data.route) {
+                                    val pointsToShow = if (selectedLap != null) {
+                                        val lap = selectedLap!!
+                                        data.route.subList(
                                             lap.startLocationIndex.coerceIn(data.route.indices),
                                             (lap.endLocationIndex + 1).coerceIn(data.route.indices)
                                         )
-                                        if (lapPoints.isNotEmpty()) {
-                                            val boundsBuilder = LatLngBounds.Builder()
-                                            lapPoints.forEach { boundsBuilder.include(it) }
-                                            val bounds = boundsBuilder.build()
-                                            cameraPositionState.animate(
-                                                CameraUpdateFactory.newLatLngBounds(bounds, 50)
-                                            )
-                                        }
+                                    } else {
+                                        data.route
+                                    }
+
+                                    if (pointsToShow.isNotEmpty()) {
+                                        val boundsBuilder = LatLngBounds.Builder()
+                                        pointsToShow.forEach { boundsBuilder.include(it) }
+                                        val bounds = boundsBuilder.build()
+                                        cameraPositionState.animate(
+                                            CameraUpdateFactory.newLatLngBounds(bounds, 100)
+                                        )
                                     }
                                 }
 
@@ -302,29 +299,6 @@ fun HeartRateZonesSection(result: HeartRateZoneResult) {
                     ZoneRow(stat)
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        var startAngle = -90f
-        val strokeWidth = 20f
-        
-        stats.forEach { stat ->
-            val sweepAngle = (stat.percentage / 100f) * 360f
-            if (sweepAngle > 0) {
-                drawArc(
-                    color = stat.zone.color,
-                    startAngle = startAngle,
-                    sweepAngle = sweepAngle,
-                    useCenter = false,
-                    style = Stroke(width = strokeWidth),
-                    size = Size(size.width, size.height)
-                )
-                startAngle += sweepAngle
             }
         }
     }

@@ -17,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +40,7 @@ fun ActivityListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
     onNavigateToTrim: (String) -> Unit,
+    onNavigateToCompare: (String, String) -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
     val activities by viewModel.activities.collectAsState()
@@ -49,10 +50,10 @@ fun ActivityListScreen(
     val endDate by viewModel.endDate.collectAsState()
     val sortColumn by viewModel.sortColumn.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
+    val selectedIds by viewModel.selectedIds.collectAsState()
     
-    var selectedActivityId by remember { mutableStateOf<String?>(null) }
     var showTypeMenu by remember { mutableStateOf(false) }
-    var activityToDelete by remember { mutableStateOf<ActivityItem?>(null) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
     
     val context = LocalContext.current
     val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
@@ -60,22 +61,36 @@ fun ActivityListScreen(
     val horizontalScrollState = rememberScrollState()
     val lazyListState = rememberLazyListState()
 
-    if (activityToDelete != null) {
+    val selectedActivities = activities.filter { it.id in selectedIds }
+    val canCompare = selectedActivities.size == 2 && 
+                   selectedActivities[0].type == selectedActivities[1].type
+
+    // Logika dla głównego checkboxa (Select All)
+    val visibleIds = remember(activities) { activities.map { it.id }.toSet() }
+    val visibleSelectedCount = remember(selectedIds, visibleIds) { selectedIds.count { it in visibleIds } }
+    
+    val triState = when {
+        activities.isEmpty() -> ToggleableState.Off
+        visibleSelectedCount == 0 -> ToggleableState.Off
+        visibleSelectedCount == activities.size -> ToggleableState.On
+        else -> ToggleableState.Indeterminate
+    }
+
+    if (showDeleteConfirmation) {
         AlertDialog(
-            onDismissRequest = { activityToDelete = null },
-            title = { Text("Usuń aktywność") },
-            text = { Text("Czy na pewno chcesz trwale usunąć tę aktywność z bazy danych?") },
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Usuń aktywności") },
+            text = { Text("Czy na pewno chcesz trwale usunąć zaznaczone aktywności (${selectedIds.size}) z bazy danych?") },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteActivity(activityToDelete!!.id)
-                    selectedActivityId = null
-                    activityToDelete = null
+                    viewModel.deleteSelectedActivities()
+                    showDeleteConfirmation = false
                 }) {
                     Text("Usuń", color = Color.Red)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { activityToDelete = null }) {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
                     Text("Anuluj")
                 }
             }
@@ -192,10 +207,14 @@ fun ActivityListScreen(
                             Row(
                                 modifier = Modifier
                                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("", modifier = Modifier.width(48.dp))
+                                TriStateCheckbox(
+                                    state = triState,
+                                    onClick = { viewModel.toggleAllVisibleSelection() },
+                                    modifier = Modifier.width(48.dp)
+                                )
                                 HeaderCell("Typ", 100.dp, SortColumn.TYPE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.TYPE) }
                                 HeaderCell("Data", 150.dp, SortColumn.DATE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DATE) }
                                 HeaderCell("Czas", 100.dp, SortColumn.DURATION, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DURATION) }
@@ -206,16 +225,17 @@ fun ActivityListScreen(
                             
                             LazyColumn(modifier = Modifier.fillMaxWidth(), state = lazyListState) {
                                 items(activities) { activity ->
+                                    val isSelected = activity.id in selectedIds
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable { selectedActivityId = activity.id }
+                                            .clickable { viewModel.toggleSelection(activity.id) }
                                             .padding(vertical = 8.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        RadioButton(
-                                            selected = selectedActivityId == activity.id,
-                                            onClick = { selectedActivityId = activity.id },
+                                        Checkbox(
+                                            checked = isSelected,
+                                            onCheckedChange = { viewModel.toggleSelection(activity.id) },
                                             modifier = Modifier.width(48.dp)
                                         )
                                         DataCell(activity.type, 100.dp)
@@ -247,38 +267,47 @@ fun ActivityListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (selectedActivityId != null) {
+            if (selectedIds.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
-                        onClick = { onNavigateToDetail(selectedActivityId!!) },
-                        modifier = Modifier.weight(2f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)) // Zielony
-                    ) {
-                        Text("Pokaż szczegóły")
+                    if (selectedIds.size == 1) {
+                        Button(
+                            onClick = { onNavigateToDetail(selectedIds.first()) },
+                            modifier = Modifier.weight(1.5f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                        ) {
+                            Text("Szczegóły", fontSize = 12.sp)
+                        }
+                        Button(
+                            onClick = { onNavigateToTrim(selectedIds.first()) },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Edytuj", fontSize = 12.sp)
+                        }
+                    } else if (selectedIds.size == 2) {
+                        Button(
+                            onClick = { 
+                                val ids = selectedIds.toList()
+                                onNavigateToCompare(ids[0], ids[1])
+                            },
+                            enabled = canCompare,
+                            modifier = Modifier.weight(2.5f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                        ) {
+                            Text("Porównaj", fontSize = 12.sp)
+                        }
                     }
-                    Button(
-                        onClick = { onNavigateToTrim(selectedActivityId!!) },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
 
-                        Text("Edytuj")
-                    }
                     Button(
-                        onClick = { 
-                            activities.find { it.id == selectedActivityId }?.let { 
-                                activityToDelete = it
-                            }
-                        },
+                        onClick = { showDeleteConfirmation = true },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE57373)) // Jasny czerwony
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE57373))
                     ) {
-                        Text("Usuń")
+                        Text("Usuń", fontSize = 12.sp)
                     }
-
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -354,7 +383,7 @@ fun HorizontalScrollbar(
                     .fillMaxWidth(thumbWidthFraction)
                     .fillMaxHeight()
                     .align(Alignment.CenterStart)
-                    .offset(x = (offsetRatio * (1f - thumbWidthFraction) * 300).dp) // Uproszczone, ale daje wizualny efekt
+                    .offset(x = (offsetRatio * (1f - thumbWidthFraction) * 300).dp)
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f), shape = CircleShape)
             )
         }
@@ -387,7 +416,7 @@ fun VerticalScrollbar(
                     modifier = Modifier
                         .fillMaxWidth()
                         .fillMaxHeight(thumbHeightFraction)
-                        .offset(y = (thumbOffsetFraction * 400).dp) // Uproszczone, dostosuj do wysokości kontenera
+                        .offset(y = (thumbOffsetFraction * 400).dp)
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f), shape = CircleShape)
                 )
             }

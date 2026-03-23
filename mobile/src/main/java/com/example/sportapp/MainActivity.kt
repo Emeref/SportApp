@@ -15,6 +15,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.sportapp.presentation.activities.ActivityCompareScreen
+import com.example.sportapp.presentation.activities.ActivityCompareViewModel
 import com.example.sportapp.presentation.activities.ActivityListScreen
 import com.example.sportapp.presentation.activities.ActivityListViewModel
 import com.example.sportapp.presentation.activities.ActivityTrimScreen
@@ -163,6 +165,9 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToTrim = { id ->
                                     navController.navigate(Screen.ActivityTrim.createRoute(id))
                                 },
+                                onNavigateToCompare = { id1, id2 ->
+                                    navController.navigate(Screen.ActivityCompare.createRoute(id1, id2))
+                                },
                                 onNavigateToSettings = { navController.navigate(Screen.ActivityDetailSettingsList.route) }
                             )
                         }
@@ -194,6 +199,13 @@ class MainActivity : ComponentActivity() {
                             val trimViewModel: ActivityTrimViewModel = hiltViewModel()
                             ActivityTrimScreen(
                                 viewModel = trimViewModel,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.ActivityCompare.route) {
+                            val compareViewModel: ActivityCompareViewModel = hiltViewModel()
+                            ActivityCompareScreen(
+                                viewModel = compareViewModel,
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }
