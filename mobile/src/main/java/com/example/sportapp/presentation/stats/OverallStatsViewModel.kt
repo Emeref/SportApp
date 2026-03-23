@@ -34,15 +34,7 @@ class OverallStatsViewModel @Inject constructor(
     private val _selectedType = MutableStateFlow<String?>(null)
     val selectedType = _selectedType.asStateFlow()
 
-    private val _startDate = MutableStateFlow<Date?>(
-        Calendar.getInstance().apply { 
-            add(Calendar.DAY_OF_YEAR, -7)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.time
-    )
+    private val _startDate = MutableStateFlow<Date?>(null)
     val startDate = _startDate.asStateFlow()
 
     private val _endDate = MutableStateFlow<Date?>(null)
