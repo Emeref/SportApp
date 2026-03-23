@@ -238,19 +238,14 @@ fun HeartRateChartSection(
     detailTimes: List<String>,
     hrZoneResult: HeartRateZoneResult?
 ) {
-    // Custom Chart with zone backgrounds
-    // Simplified version here using CommonChartSection but we could add background logic if Vico supports it easily
-    // For now let's use the CommonChartSection and add the horizontal lines manually if possible or just use it as is
     CommonChartSection(
         title = title,
         producer = producer,
         unit = "bpm",
         detailTimes = detailTimes,
-        isScrollEnabled = false
+        isScrollEnabled = false,
+        hrZoneResult = hrZoneResult
     )
-    
-    // In a real advanced implementation, we would pass the zones to CommonChartSection 
-    // to draw the background colors.
 }
 
 @Composable
@@ -331,7 +326,7 @@ fun ZoneRow(stat: ZoneStat) {
         Text(
             formatSeconds(stat.durationSeconds),
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.width(60.dp),
+            modifier = Modifier.width(70.dp),
             textAlign = TextAlign.End
         )
         Text(
@@ -345,9 +340,14 @@ fun ZoneRow(stat: ZoneStat) {
 }
 
 private fun formatSeconds(seconds: Long): String {
-    val mins = seconds / 60
-    val secs = seconds % 60
-    return String.format(Locale.US, "%02d:%02d", mins, secs)
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
+    val s = seconds % 60
+    return if (h > 0) {
+        String.format(Locale.US, "%d:%02d:%02d", h, m, s)
+    } else {
+        String.format(Locale.US, "%02d:%02d", m, s)
+    }
 }
 
 @Composable
@@ -462,9 +462,14 @@ private fun LapCell(text: String, width: androidx.compose.ui.unit.Dp, isHeader: 
 
 private fun formatMillis(millis: Long): String {
     val totalSeconds = millis / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format(Locale.US, "%02d:%02d", minutes, seconds)
+    val h = totalSeconds / 3600
+    val m = (totalSeconds % 3600) / 60
+    val s = totalSeconds % 60
+    return if (h > 0) {
+        String.format(Locale.US, "%d:%02d:%02d", h, m, s)
+    } else {
+        String.format(Locale.US, "%02d:%02d", m, s)
+    }
 }
 
 private fun formatPaceFromSeconds(totalSeconds: Int): String {

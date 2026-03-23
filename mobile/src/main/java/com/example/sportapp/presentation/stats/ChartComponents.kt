@@ -1,7 +1,8 @@
 package com.example.sportapp.presentation.stats
 
+import android.graphics.Paint
+import android.graphics.RectF
 import android.text.Layout
-import android.text.TextUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,9 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sportapp.data.db.WorkoutEntity
+import com.example.sportapp.data.model.HeartRateZoneResult
 import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
@@ -30,8 +33,11 @@ import com.patrykandpatrick.vico.compose.component.shape.shader.fromBrush
 import com.patrykandpatrick.vico.compose.component.shapeComponent
 import com.patrykandpatrick.vico.compose.component.textComponent
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
+import com.patrykandpatrick.vico.core.chart.decoration.Decoration
+import com.patrykandpatrick.vico.core.chart.draw.ChartDrawContext
 import com.patrykandpatrick.vico.core.chart.layout.HorizontalLayout
 import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
+import com.patrykandpatrick.vico.core.component.Component
 import com.patrykandpatrick.vico.core.component.marker.MarkerComponent
 import com.patrykandpatrick.vico.core.component.shape.Shapes
 import com.patrykandpatrick.vico.core.component.shape.cornered.Corner
@@ -48,6 +54,55 @@ import java.util.Locale
 import java.text.SimpleDateFormat
 import kotlin.math.ceil
 
+class ThresholdLineDecoration(
+    private val thresholdValue: Float,
+    private val lineComponent: Component
+) : Decoration {
+    override fun onDrawAboveChart(context: ChartDrawContext, bounds: RectF) {
+        val chartValues = context.chartValuesProvider.getChartValues()
+        val minY = chartValues.minY
+        val maxY = chartValues.maxY
+        val yRange = maxY - minY
+        if (yRange <= 0f) return
+        
+        val relativeY = (thresholdValue - minY) / yRange
+        val drawY = bounds.bottom - (relativeY * bounds.height())
+        
+        if (drawY >= bounds.top && drawY <= bounds.bottom) {
+            lineComponent.draw(context, bounds.left, drawY, bounds.right, drawY)
+        }
+    }
+}
+
+class ZoneBackgroundDecoration(
+    private val minYValue: Float,
+    private val maxYValue: Float,
+    private val zoneColor: Color
+) : Decoration {
+    private val paint = Paint().apply {
+        style = Paint.Style.FILL
+    }
+
+    override fun onDrawBehindChart(context: ChartDrawContext, bounds: RectF) {
+        val chartValues = context.chartValuesProvider.getChartValues()
+        val minY = chartValues.minY
+        val maxY = chartValues.maxY
+        val yRange = maxY - minY
+        if (yRange <= 0f) return
+        
+        val relativeMinY = (minYValue - minY) / yRange
+        val relativeMaxY = (maxYValue - minY) / yRange
+        
+        val top = (bounds.bottom - (relativeMaxY * bounds.height())).coerceAtLeast(bounds.top)
+        val bottom = (bounds.bottom - (relativeMinY * bounds.height())).coerceAtMost(bounds.bottom)
+        
+        if (top < bottom) {
+            paint.color = zoneColor.toArgb()
+            context.canvas.drawRect(bounds.left, top, bounds.right, bottom, paint)
+        }
+    }
+}
+
 @Composable
 fun CommonChartSection(
     title: String,
@@ -55,11 +110,13 @@ fun CommonChartSection(
     unit: String = "",
     overallRawData: List<Any>? = null,
     detailTimes: List<String>? = null,
-    isScrollEnabled: Boolean = false
+    isScrollEnabled: Boolean = false,
+    hrZoneResult: HeartRateZoneResult? = null
 ) {
-    val axisValuesOverrider = remember {
+    val axisValuesOverrider = remember(hrZoneResult) {
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
+                if (hrZoneResult != null) return hrZoneResult.zones.last().maxBpm.toFloat() + 5f
                 val max = model.maxY
                 if (max.isNaN() || max <= 0f) return 8f
                 val ceiling = ceil(max.toDouble()).toInt()
@@ -67,7 +124,10 @@ fun CommonChartSection(
                 val finalMax = if (remainder == 0) ceiling else ceiling + (8 - remainder)
                 return finalMax.toFloat()
             }
-            override fun getMinY(model: ChartEntryModel): Float = 0f
+            override fun getMinY(model: ChartEntryModel): Float {
+                val minDataValue = if (model.minY.isNaN()) 0f else model.minY
+                return (minDataValue - 4f).coerceAtLeast(0f)
+            }
             override fun getMinX(model: ChartEntryModel): Float = model.minX
             override fun getMaxX(model: ChartEntryModel): Float = model.maxX
         }
@@ -93,6 +153,20 @@ fun CommonChartSection(
             )
         }
 
+        val thresholdLineComponent = lineComponent(color = Color.LightGray.copy(alpha = 0.3f), thickness = 1.dp)
+        
+        val chartDecorations = remember(hrZoneResult, thresholdLineComponent) {
+            if (hrZoneResult == null) emptyList()
+            else {
+                val decorations = mutableListOf<Decoration>()
+                hrZoneResult.zones.forEach { stat ->
+                    decorations.add(ZoneBackgroundDecoration(stat.minBpm.toFloat(), stat.maxBpm.toFloat(), stat.zone.color.copy(alpha = 0.15f)))
+                    decorations.add(ThresholdLineDecoration(stat.maxBpm.toFloat(), thresholdLineComponent))
+                }
+                decorations
+            }
+        }
+
         Chart(
             chart = lineChart(
                 lines = listOf(
@@ -106,7 +180,8 @@ fun CommonChartSection(
                     )
                 ),
                 axisValuesOverrider = axisValuesOverrider,
-                spacing = 2.dp 
+                spacing = 2.dp,
+                decorations = chartDecorations
             ),
             chartModelProducer = producer,
             marker = marker,
@@ -122,7 +197,7 @@ fun CommonChartSection(
                     textSize = 8.sp,
                 ).apply { ellipsize = null }, 
                 valueFormatter = { value, _ -> 
-                    if (value.isNaN() || detailTimes == null || detailTimes.isEmpty()) return@rememberBottomAxis ""
+                    if (value.isNaN() || detailTimes.isNullOrEmpty()) return@rememberBottomAxis ""
                     val index = value.toInt()
                     if (index in detailTimes.indices) {
                         formatToRelativeTime(index, detailTimes)
@@ -157,7 +232,7 @@ private fun formatToRelativeTime(index: Int, allTimes: List<String>): String {
             hours > 0 -> String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
             else -> String.format(Locale.US, "%d:%02d", minutes, seconds)
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return "0:00"
     }
 }
@@ -234,7 +309,7 @@ fun rememberMarkerCustom(
                                 val rawDate = data["data"]?.toString() ?: ""
                                 val formattedDate = try {
                                     inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate
-                                } catch (e: Exception) {
+                                } catch (_: Exception) {
                                     rawDate
                                 }
                                 "$name\n$formattedDate\n$value $unit"
