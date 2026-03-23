@@ -129,7 +129,8 @@ fun ActivityCompareScreen(
                                         title = "Tętno (bpm)", 
                                         producer = producer, 
                                         unit = "bpm", 
-                                        times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times
+                                        times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times,
+                                        hrZoneResult = hrZones1
                                     )
                                     if (hrZones1 != null && hrZones2 != null) {
                                         CompareHeartRateZones(hrZones1!!, hrZones2!!)
@@ -281,7 +282,8 @@ fun CompareChart(
     title: String, 
     producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer,
     unit: String,
-    times: List<String>
+    times: List<String>,
+    hrZoneResult: HeartRateZoneResult? = null
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -291,6 +293,7 @@ fun CompareChart(
             unit = unit,
             detailTimes = times,
             isScrollEnabled = false,
+            hrZoneResult = hrZoneResult,
             lineColors = listOf(Color1, Color2)
         )
     }

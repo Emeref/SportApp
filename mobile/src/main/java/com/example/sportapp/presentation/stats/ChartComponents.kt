@@ -6,24 +6,39 @@ import android.text.Layout
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
@@ -171,7 +186,7 @@ fun CommonChartSection(
             } else {
                 val decorations = mutableListOf<Decoration>()
                 hrZoneResult.zones.forEach { stat ->
-                    decorations.add(ZoneBackgroundDecoration(stat.minBpm.toFloat(), stat.maxBpm.toFloat(), stat.zone.color.copy(alpha = 0.15f)))
+                    decorations.add(ZoneBackgroundDecoration(stat.minBpm.toFloat(), stat.maxBpm.toFloat(), stat.zone.color.copy(alpha = 0.5f)))
                     decorations.add(ThresholdLineDecoration(stat.maxBpm.toFloat(), thresholdLineComponent))
                 }
                 decorations
@@ -365,23 +380,116 @@ fun rememberMarkerCustom(
 
 @Composable
 fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        var startAngle = -90f
-        val strokeWidth = 20f
-        
-        stats.forEach { stat ->
-            val sweepAngle = (stat.percentage / 100f) * 360f
-            if (sweepAngle > 0) {
-                drawArc(
-                    color = stat.zone.color,
-                    startAngle = startAngle,
-                    sweepAngle = sweepAngle,
-                    useCenter = false,
-                    style = Stroke(width = strokeWidth),
-                    size = Size(size.width, size.height)
-                )
-                startAngle += sweepAngle
+    var selectedZone by remember { mutableStateOf<ZoneStat?>(null) }
+    val density = LocalDensity.current
+
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
+        Canvas(modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(stats) {
+                detectTapGestures { offset ->
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val x = offset.x - center.x
+                    val y = offset.y - center.y
+                    val radius = size.width / 2f
+                    val distance = Math.sqrt((x * x + y * y).toDouble())
+
+                    // Sprawdzenie czy kliknięto w koło (łatwiejsze klikanie w pełny kształt)
+                    if (distance <= radius) {
+                        var touchAngle = Math.toDegrees(Math.atan2(y.toDouble(), x.toDouble())).toFloat()
+                        if (touchAngle < 0) touchAngle += 360f
+
+                        // Dostosowanie kąta, bo rysujemy od -90 stopni
+                        val adjustedAngle = (touchAngle + 90f) % 360f
+
+                        var currentAngle = 0f
+                        var found = false
+                        stats.forEach { stat ->
+                            val sweepAngle = (stat.percentage / 100f) * 360f
+                            if (adjustedAngle >= currentAngle && adjustedAngle < currentAngle + sweepAngle) {
+                                selectedZone = if (selectedZone == stat) null else stat
+                                found = true
+                            }
+                            currentAngle += sweepAngle
+                        }
+                        if (!found) selectedZone = null
+                    } else {
+                        selectedZone = null
+                    }
+                }
+            }
+        ) {
+            var startAngle = -90f
+            
+            stats.forEach { stat ->
+                val sweepAngle = (stat.percentage / 100f) * 360f
+                if (sweepAngle > 0) {
+                    val isSelected = selectedZone == stat
+                    // Zmiana na wypełniony wykres kołowy (useCenter = true)
+                    drawArc(
+                        color = if (isSelected) stat.zone.color.copy(alpha = 0.8f) else stat.zone.color,
+                        startAngle = startAngle,
+                        sweepAngle = sweepAngle,
+                        useCenter = true,
+                        size = Size(size.width, size.height)
+                    )
+                    
+                    // Biała obwódka dla zaznaczonej strefy
+                    if (isSelected) {
+                        drawArc(
+                            color = Color.White.copy(alpha = 0.5f),
+                            startAngle = startAngle,
+                            sweepAngle = sweepAngle,
+                            useCenter = true,
+                            style = Stroke(width = 4f),
+                            size = Size(size.width, size.height)
+                        )
+                    }
+                    
+                    startAngle += sweepAngle
+                }
             }
         }
+
+        selectedZone?.let { stat ->
+            val yOffset = with(density) { -70.dp.roundToPx() }
+            Popup(
+                alignment = Alignment.TopCenter,
+                offset = IntOffset(0, yOffset),
+                onDismissRequest = { selectedZone = null }
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 6.dp
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = stat.zone.displayName,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = stat.zone.color
+                        )
+                        Text(
+                            text = "${formatDuration(stat.durationSeconds)}: ${stat.zone.description}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun formatDuration(seconds: Long): String {
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
+    val s = seconds % 60
+    return if (h > 0) {
+        String.format(Locale.US, "%d:%02d:%02d", h, m, s)
+    } else {
+        String.format(Locale.US, "%02d:%02d", m, s)
     }
 }
