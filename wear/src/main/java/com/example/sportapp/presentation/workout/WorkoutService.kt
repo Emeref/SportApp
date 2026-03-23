@@ -130,8 +130,18 @@ class WorkoutService : Service(), SensorEventListener {
 
     override fun onCreate() {
         super.onCreate()
-        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        // Tworzymy kontekst z przypisaniem
+        val attributionContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            createAttributionContext("workout_service")
+        } else {
+            this
+        }
+
+        // WAŻNE: Używamy attributionContext zamiast 'this' lub 'getSystemService'
+        sensorManager = attributionContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(attributionContext)
+
         createNotificationChannel()
         registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
     }
