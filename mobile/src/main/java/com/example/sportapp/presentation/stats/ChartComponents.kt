@@ -171,7 +171,7 @@ fun CommonChartSection(
             } else {
                 val decorations = mutableListOf<Decoration>()
                 hrZoneResult.zones.forEach { stat ->
-                    decorations.add(ZoneBackgroundDecoration(stat.minBpm.toFloat(), stat.maxBpm.toFloat(), stat.zone.color.copy(alpha = 0.15f)))
+                    decorations.add(ZoneBackgroundDecoration(stat.minBpm.toFloat(), stat.maxBpm.toFloat(), stat.zone.color.copy(alpha = 0.5f)))
                     decorations.add(ThresholdLineDecoration(stat.maxBpm.toFloat(), thresholdLineComponent))
                 }
                 decorations
