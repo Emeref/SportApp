@@ -27,7 +27,8 @@ data class WorkoutEntity(
     val maxAltitude: Double? = null, // m
     val avgStepLength: Double? = null, // m
     val avgCadence: Double? = null, // kroki/min
-    val maxCadence: Double? = null // kroki/min
+    val maxCadence: Double? = null, // kroki/min
+    val isSynced: Boolean = false
 )
 
 @Entity(tableName = "workout_points")

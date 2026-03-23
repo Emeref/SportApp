@@ -8,14 +8,20 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.settings.WidgetItem
+import com.example.sportapp.presentation.workout.DataLayerManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -25,8 +31,12 @@ enum class ScreenBehavior {
 }
 
 @Singleton
-class SettingsManager @Inject constructor(@ApplicationContext private val context: Context) {
+class SettingsManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val dataLayerManagerProvider: Provider<DataLayerManager>
+) {
     private val gson = Gson()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
         private val CLOCK_COLOR_KEY = longPreferencesKey("clock_color")
@@ -90,30 +100,44 @@ class SettingsManager @Inject constructor(@ApplicationContext private val contex
         WidgetItem("steps", "Wszystkie kroki")
     )
 
+    private fun triggerSync() {
+        scope.launch {
+            try {
+                dataLayerManagerProvider.get().syncAll()
+            } catch (e: Exception) {
+                // Handle potential circular dependency or initialization issues
+            }
+        }
+    }
+
     suspend fun saveWatchStatsSettings(widgets: List<WidgetItem>, period: ReportingPeriod, customDays: Int) {
         context.dataStore.edit { preferences ->
             preferences[WATCH_STATS_WIDGETS_KEY] = gson.toJson(widgets)
             preferences[WATCH_STATS_PERIOD_KEY] = period.name
             preferences[WATCH_STATS_CUSTOM_DAYS_KEY] = customDays
         }
+        triggerSync()
     }
 
     suspend fun saveClockColor(color: Color?) {
         context.dataStore.edit { preferences ->
             preferences[CLOCK_COLOR_KEY] = color?.value?.toLong() ?: -1L
         }
+        triggerSync()
     }
 
     suspend fun saveHealthData(data: HealthData) {
         context.dataStore.edit { preferences ->
             preferences[HEALTH_DATA_KEY] = gson.toJson(data)
         }
+        triggerSync()
     }
 
     suspend fun saveScreenBehavior(behavior: ScreenBehavior) {
         context.dataStore.edit { preferences ->
             preferences[SCREEN_BEHAVIOR_KEY] = behavior.name
         }
+        triggerSync()
     }
 }
 

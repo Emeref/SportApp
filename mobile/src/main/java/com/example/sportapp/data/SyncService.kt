@@ -27,16 +27,24 @@ class SyncService : WearableListenerService() {
     @Inject lateinit var workoutDao: WorkoutDao
     @Inject lateinit var workoutDefinitionDao: WorkoutDefinitionDao
     @Inject lateinit var syncManager: WorkoutDefinitionSyncManager
+    @Inject lateinit var syncStatusManager: SyncStatusManager
     
     private val gson = Gson()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        if (messageEvent.path == "/request_definitions") {
-            Log.d("SyncService", "Request for definitions received from wear")
-            scope.launch {
-                val definitions = workoutDefinitionDao.getAllDefinitionsOnce()
-                syncManager.syncDefinitions(definitions)
+        when (messageEvent.path) {
+            "/request_definitions" -> {
+                Log.d("SyncService", "Request for definitions received from wear")
+                scope.launch {
+                    val definitions = workoutDefinitionDao.getAllDefinitionsOnce()
+                    syncManager.syncDefinitions(definitions)
+                }
+            }
+            "/sync_status" -> {
+                val status = String(messageEvent.data)
+                Log.d("SyncService", "Sync status received: $status")
+                syncStatusManager.setSyncing(status == "STARTED")
             }
         }
     }
@@ -54,6 +62,11 @@ class SyncService : WearableListenerService() {
                     scope.launch {
                         processWorkoutAsset(asset)
                     }
+                } else if (path == "/wear_settings") {
+                     val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
+                     val json = dataMapItem.dataMap.getString("settings_json") ?: return@forEach
+                     Log.d("SyncService", "Received wear settings update")
+                     // Tutaj można by zapisać te ustawienia lokalnie jeśli mobilka ma je wyświetlać
                 }
             }
         }
@@ -66,38 +79,30 @@ class SyncService : WearableListenerService() {
             
             val json = fd.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
             
-            // Używamy bezpieczniejszego mapowania, aby uniknąć problemów z typami liczbowymi GSON (Int vs Double)
             val type = object : TypeToken<Map<String, Any>>() {}.type
             val rawData: Map<String, Any> = gson.fromJson(json, type)
             
             val workoutJson = gson.toJson(rawData["workout"])
             val pointsJson = gson.toJson(rawData["points"])
-            
+
             val workout: WorkoutEntity = gson.fromJson(workoutJson, WorkoutEntity::class.java)
             val points: List<WorkoutPointEntity> = gson.fromJson(pointsJson, object : TypeToken<List<WorkoutPointEntity>>() {}.type)
-            
-            // Bardzo ważne: upewniamy się, że używamy unikalnego klucza (np. startTime + activityName) 
-            // jeśli id z zegarka mogłoby się powtórzyć po reinstalacji, ale tutaj id z zegarka 
-            // traktujemy jako id źródłowe. 
-            // Możemy sprawdzić czy już istnieje taki trening (po startTime)
+
             val existingWorkouts = workoutDao.getWorkoutsSince(workout.startTime - 1000)
             val alreadyExists = existingWorkouts.find { it.startTime == workout.startTime && it.activityName == workout.activityName }
 
             val localId = if (alreadyExists != null) {
-                // Jeśli istnieje, aktualizujemy go
                 val updatedWorkout = workout.copy(id = alreadyExists.id)
                 workoutDao.updateWorkout(updatedWorkout)
                 alreadyExists.id
             } else {
-                // Jeśli nie istnieje, wstawiamy jako nowy (id = 0, aby Room wygenerował nowe lokalne ID)
                 workoutDao.insertWorkout(workout.copy(id = 0))
             }
             
-            // Aktualizujemy punkty o poprawne lokalne workoutId
             val updatedPoints = points.map { it.copy(id = 0, workoutId = localId) }
             workoutDao.deletePointsForWorkout(localId)
             workoutDao.insertPoints(updatedPoints)
-            
+
             Log.d("SyncService", "Successfully synced workout: ${workout.activityName} (ID: $localId) with ${points.size} points")
         } catch (e: Exception) {
             Log.e("SyncService", "Error processing workout asset", e)

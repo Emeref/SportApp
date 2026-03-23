@@ -64,7 +64,7 @@ class OverallStatsViewModel @Inject constructor(
         refreshActivityTypes()
         
         viewModelScope.launch {
-            combine(_selectedType, _startDate, _endDate) { type, start, end ->
+            combine(_selectedType, _startDate, _endDate, repository.getAllWorkouts()) { type, start, end, _ ->
                 repository.getFilteredStats(type, start, end)
             }.collect { statsMap ->
                 @Suppress("UNCHECKED_CAST")
