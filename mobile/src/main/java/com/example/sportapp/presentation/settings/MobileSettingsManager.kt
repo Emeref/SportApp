@@ -35,6 +35,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         private val WATCH_CUSTOM_DAYS = intPreferencesKey("watch_custom_days")
         
         private val HEALTH_DATA_JSON = stringPreferencesKey("health_data_json")
+        private val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -82,7 +83,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             watchStatsWidgets = watchWidgets,
             watchStatsPeriod = ReportingPeriod.valueOf(preferences[WATCH_PERIOD] ?: defaultState.watchStatsPeriod.name),
             watchStatsCustomDays = preferences[WATCH_CUSTOM_DAYS] ?: defaultState.watchStatsCustomDays,
-            healthData = healthData
+            healthData = healthData,
+            themeMode = ThemeMode.valueOf(preferences[THEME_MODE] ?: defaultState.themeMode.name)
         )
     }
 
@@ -97,6 +99,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[WATCH_CUSTOM_DAYS] = state.watchStatsCustomDays
             
             preferences[HEALTH_DATA_JSON] = gson.toJson(state.healthData)
+            preferences[THEME_MODE] = state.themeMode.name
         }
         syncWatchStatsSettings(state)
         syncHealthData(state.healthData)

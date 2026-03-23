@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,18 +20,24 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sportapp.R
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZone
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.presentation.settings.WidgetItem
+import com.example.sportapp.presentation.settings.ThemeMode
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 import java.util.Locale
 
@@ -40,12 +47,19 @@ fun ActivityDetailScreen(
     viewModel: ActivityDetailViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val sessionData by viewModel.sessionData.collectAsState()
-    val laps by viewModel.laps.collectAsState()
-    val selectedLap by viewModel.selectedLap.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val settings by viewModel.settings.collectAsState()
-    val hrZoneResult by viewModel.hrZoneResult.collectAsState()
+    val sessionData by viewModel.sessionData.collectAsStateWithLifecycle()
+    val laps by viewModel.laps.collectAsStateWithLifecycle()
+    val selectedLap by viewModel.selectedLap.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val hrZoneResult by viewModel.hrZoneResult.collectAsStateWithLifecycle()
+    val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
+
+    val isDarkTheme = when (mobileSettings.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
 
     // Error Dialog
     if (error != null) {
@@ -139,6 +153,15 @@ fun ActivityDetailScreen(
                                     }
                                 }
 
+                                val context = LocalContext.current
+                                val mapProperties = remember(isDarkTheme) {
+                                    MapProperties(
+                                        mapStyleOptions = if (isDarkTheme) {
+                                            MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
+                                        } else null
+                                    )
+                                }
+
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -149,6 +172,7 @@ fun ActivityDetailScreen(
                                     GoogleMap(
                                         modifier = Modifier.fillMaxSize(),
                                         cameraPositionState = cameraPositionState,
+                                        properties = mapProperties,
                                         onMapClick = { viewModel.selectLap(null) }
                                     ) {
                                         Polyline(
@@ -165,7 +189,7 @@ fun ActivityDetailScreen(
                                             if (lapPoints.isNotEmpty()) {
                                                 Polyline(
                                                     points = lapPoints,
-                                                    color = Color.Cyan,
+                                                    color = MaterialTheme.colorScheme.tertiary,
                                                     width = 15f,
                                                     zIndex = 1f
                                                 )
@@ -407,17 +431,21 @@ fun LapsTable(
                 ) {
                     laps.forEach { lap ->
                         val isSelected = selectedLap?.lapNumber == lap.lapNumber
+                        val selectionColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        val fastestColor = Color(0xFFC8E6C9).copy(alpha = if (isSystemInDarkTheme()) 0.5f else 1.0f)
+                        val slowestColor = Color(0xFFFFCDD2).copy(alpha = if (isSystemInDarkTheme()) 0.5f else 1.0f)
+
                         val bgColor = when {
-                            isSelected -> Color.Cyan.copy(alpha = 0.3f)
-                            lap.avgPaceSecondsPerKm > 0 && lap.avgPaceSecondsPerKm == fastestPace && laps.size > 1 -> Color(0xFFC8E6C9) // Green
-                            lap.avgPaceSecondsPerKm > 0 && lap.avgPaceSecondsPerKm == slowestPace && laps.size > 1 -> Color(0xFFFFCDD2) // Red
+                            isSelected -> selectionColor
+                            lap.avgPaceSecondsPerKm > 0 && lap.avgPaceSecondsPerKm == fastestPace && laps.size > 1 -> fastestColor
+                            lap.avgPaceSecondsPerKm > 0 && lap.avgPaceSecondsPerKm == slowestPace && laps.size > 1 -> slowestColor
                             else -> Color.Transparent
                         }
 
                         Row {
                             // Fixed "Nr" Cell
                             Box(modifier = Modifier
-                                .background(if (isSelected) Color.Cyan.copy(alpha = 0.3f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+                                .background(if (isSelected) selectionColor else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
                                 .clickable { onLapClick(lap) }
                                 .padding(8.dp)
                             ) {

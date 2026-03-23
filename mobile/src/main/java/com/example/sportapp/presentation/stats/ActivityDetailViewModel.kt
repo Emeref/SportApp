@@ -15,6 +15,7 @@ import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.presentation.settings.MobileSettingsManager
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
@@ -64,6 +65,13 @@ class ActivityDetailViewModel @Inject constructor(
                 visibleWidgets = ActivityDetailSettingsManager.DEFAULT_WIDGETS,
                 trackColor = ActivityDetailSettingsManager.DEFAULT_COLOR
             )
+        )
+
+    val mobileSettings: StateFlow<MobileSettingsState> = mobileSettingsManager.settingsFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = MobileSettingsState()
         )
 
     private val _error = MutableStateFlow<String?>(null)

@@ -4,6 +4,10 @@ enum class ReportingPeriod {
     TODAY, WEEK, MONTH, YEAR, CUSTOM
 }
 
+enum class ThemeMode {
+    SYSTEM, LIGHT, DARK
+}
+
 data class WidgetItem(
     val id: String,
     val label: String,
@@ -34,5 +38,6 @@ data class MobileSettingsState(
     ),
     val watchStatsPeriod: ReportingPeriod = ReportingPeriod.WEEK,
     val watchStatsCustomDays: Int = 7,
-    val healthData: HealthData = HealthData()
+    val healthData: HealthData = HealthData(),
+    val themeMode: ThemeMode = ThemeMode.SYSTEM
 )
