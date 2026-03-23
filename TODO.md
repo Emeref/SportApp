@@ -12,6 +12,7 @@
     - [ ] **Centralny PermissionManager**: Ujednolicona obsługa uprawnień przed startem aktywności.
     - [x] **Filtracja sygnałów**: Implementacja filtrów (np. Moving Average) dla danych tętna.
     - [x] **Przegląd sensorów**: Sprawdzono i dodano obsługę SpO2 oraz ciśnienia atmosferycznego (barometru).
+    - [x] **Hybrydowa kalibracja wysokości**: GPS offset dla barometru w celu stabilizacji wysokości startowej.
 - [x] **Własne dyscypliny**: 
     - [x] Możliwość dodawania własnych rodzajów sportu z wyborem aktywnych czujników, ich widoczności i zapisu.
     - [x] Zarządzanie kolejnością dyscyplin na liście (Mobile & Wear).
