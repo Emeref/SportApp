@@ -11,7 +11,7 @@ import com.example.sportapp.data.model.WorkoutDefinition
         WorkoutPointEntity::class, 
         WorkoutDefinition::class
     ], 
-    version = 12
+    version = 13
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

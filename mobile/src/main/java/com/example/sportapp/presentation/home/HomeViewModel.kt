@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
+import com.example.sportapp.data.SyncStatusManager
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.wearable.Wearable
@@ -19,11 +20,12 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     @ApplicationContext context: Context,
-    private val repository: IWorkoutRepository
+    private val repository: IWorkoutRepository,
+    private val syncStatusManager: SyncStatusManager
 ) : ViewModel() {
     private val settingsManager = MobileSettingsManager(context)
-    private val messageClient = Wearable.getMessageClient(context)
-    private val nodeClient = Wearable.getNodeClient(context)
+    private val messageClient by lazy { Wearable.getMessageClient(context) }
+    private val nodeClient by lazy { Wearable.getNodeClient(context) }
 
     private val _settings = settingsManager.settingsFlow.stateIn(
         scope = viewModelScope,
@@ -32,30 +34,24 @@ class HomeViewModel @Inject constructor(
     )
     val settings = _settings
 
-    private val _stats = MutableStateFlow<Map<String, Any>>(emptyMap())
-    val stats = _stats.asStateFlow()
+    // Zmieniamy na Flow, który obserwuje bazę danych
+    val stats: StateFlow<Map<String, Any>> = combine(_settings, repository.getAllWorkouts()) { currentSettings, _ ->
+        repository.getStatsForPeriod(currentSettings.period, currentSettings.customDays)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
 
-    private val _isSyncing = MutableStateFlow(false)
-    val isSyncing = _isSyncing.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            _settings.collect {
-                refreshStats()
-            }
-        }
-    }
-
-    fun refreshStats() {
-        viewModelScope.launch {
-            val currentSettings = _settings.value
-            _stats.value = repository.getStatsForPeriod(currentSettings.period, currentSettings.customDays)
-        }
-    }
+    val isSyncing = syncStatusManager.isSyncing
 
     fun triggerSync() {
+        if (isSyncing.value) {
+            Log.d("HomeViewModel", "triggerSync: Sync already in progress, ignoring.")
+            return
+        }
+        
         Log.d("HomeViewModel", "triggerSync: Starting sync request...")
-        _isSyncing.value = true
         viewModelScope.launch {
             try {
                 val nodes = nodeClient.connectedNodes.await()
@@ -63,13 +59,11 @@ class HomeViewModel @Inject constructor(
                     nodes.forEach { node ->
                         messageClient.sendMessage(node.id, "/request_sync", byteArrayOf()).await()
                     }
-                    delay(3000)
-                    refreshStats()
+                } else {
+                    Log.w("HomeViewModel", "No connected nodes found for sync")
                 }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "triggerSync: Error", e)
-            } finally {
-                _isSyncing.value = false
             }
         }
     }

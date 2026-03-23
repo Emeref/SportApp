@@ -22,6 +22,8 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class MobileSettingsManager @Inject constructor(@ApplicationContext private val context: Context) {
     private val gson = Gson()
     private val dataClient by lazy { Wearable.getDataClient(context) }
+    private val messageClient by lazy { Wearable.getMessageClient(context) }
+    private val nodeClient by lazy { Wearable.getNodeClient(context) }
 
     companion object {
         private val WIDGETS_JSON = stringPreferencesKey("widgets_json")
@@ -98,6 +100,19 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         }
         syncWatchStatsSettings(state)
         syncHealthData(state.healthData)
+        requestFullSyncFromWatch()
+    }
+
+    private suspend fun requestFullSyncFromWatch() {
+        try {
+            val nodes = nodeClient.connectedNodes.await()
+            nodes.forEach { node ->
+                messageClient.sendMessage(node.id, "/request_sync", byteArrayOf()).await()
+            }
+            Log.d("SettingsSync", "Requested full sync from watch after settings change")
+        } catch (e: Exception) {
+            Log.e("SettingsSync", "Failed to request sync from watch", e)
+        }
     }
 
     private suspend fun syncWatchStatsSettings(state: MobileSettingsState) {

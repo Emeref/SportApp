@@ -101,11 +101,13 @@ class WorkoutService : Service(), SensorEventListener {
                 val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
                 val batteryPct = if (scale > 0) (level * 100 / scale.toFloat()).toInt() else -1
                 
+                // Synchronizacja tylko raz dla danego poziomu w zakresie 1-5%
                 if (batteryPct in 1..5 && batteryPct != lastTriggeredLevel) {
                     lastTriggeredLevel = batteryPct
                     serviceScope.launch(Dispatchers.IO) {
-                        Log.w("WorkoutService", "Emergency save triggered at $batteryPct% battery")
+                        Log.w("WorkoutService", "Emergency save and sync triggered at $batteryPct% battery")
                         performSave()
+                        dataLayerManager.syncAll()
                     }
                 }
             }
@@ -250,6 +252,7 @@ class WorkoutService : Service(), SensorEventListener {
     }
 
     private fun togglePause() {
+        val wasActive = status == WorkoutStatus.ACTIVE
         if (status == WorkoutStatus.ACTIVE) {
             status = WorkoutStatus.PAUSED
             totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
@@ -259,6 +262,14 @@ class WorkoutService : Service(), SensorEventListener {
         }
         updateNotification()
         updateState(null)
+
+        // Po zapauzowaniu aktywności
+        if (wasActive && status == WorkoutStatus.PAUSED) {
+            serviceScope.launch {
+                performSave()
+                dataLayerManager.syncAll()
+            }
+        }
     }
 
     private fun stopWorkout() {
@@ -283,7 +294,7 @@ class WorkoutService : Service(), SensorEventListener {
         serviceScope.launch {
             // Wykonujemy ostatni zapis (Flush)
             performSave(true)
-            dataLayerManager.syncActivities()
+            dataLayerManager.syncAll() // Pełna synchronizacja po zakończeniu
             
             withContext(Dispatchers.Main) {
                 stopSelf()
@@ -335,7 +346,8 @@ class WorkoutService : Service(), SensorEventListener {
                 maxAltitude = sessionStats.maxAltitude,
                 avgStepLength = sessionStats.avgStepLength,
                 avgCadence = sessionStats.avgCadence,
-                maxCadence = sessionStats.maxCadence
+                maxCadence = sessionStats.maxCadence,
+                isSynced = false // Reset flagi przy każdym zapisie w trakcie trwania
             )
             
             if (updatedWorkout != null) {
@@ -421,6 +433,7 @@ class WorkoutService : Service(), SensorEventListener {
                 delay(60000) // 60 sekund
                 if (status == WorkoutStatus.ACTIVE) {
                     performSave()
+                    dataLayerManager.syncAll() // Synchronizacja co minutę
                 }
             }
         }
