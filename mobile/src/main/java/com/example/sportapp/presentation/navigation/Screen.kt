@@ -14,4 +14,7 @@ sealed class Screen(val route: String) {
     object ActivityTrim : Screen("activity_trim/{activityId}") {
         fun createRoute(activityId: String) = "activity_trim/$activityId"
     }
+    object ActivityCompare : Screen("activity_compare/{id1}/{id2}") {
+        fun createRoute(id1: String, id2: String) = "activity_compare/$id1/$id2"
+    }
 }

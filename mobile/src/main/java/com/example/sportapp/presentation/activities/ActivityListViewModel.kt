@@ -41,6 +41,9 @@ class ActivityListViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(SortOrder.DESC)
     val sortOrder = _sortOrder.asStateFlow()
 
+    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedIds = _selectedIds.asStateFlow()
+
     val activities: StateFlow<List<ActivityItem>> = repository.getActivityItemsFlow()
         .combine(_selectedType) { all, type ->
             if (type == null) all else all.filter { it.type == type }
@@ -115,14 +118,31 @@ class ActivityListViewModel @Inject constructor(
         }
     }
 
-    fun deleteActivity(id: String) {
+    fun toggleSelection(id: String) {
+        val current = _selectedIds.value
+        _selectedIds.value = if (current.contains(id)) {
+            current - id
+        } else {
+            current + id
+        }
+    }
+
+    fun clearSelection() {
+        _selectedIds.value = emptySet()
+    }
+
+    fun deleteSelectedActivities() {
         viewModelScope.launch {
-            val workoutId = id.toLongOrNull() ?: return@launch
-            val workout = repository.getWorkoutById(workoutId)
-            if (workout != null) {
-                repository.deleteWorkout(workout)
-                refreshActivityTypes()
+            val idsToDelete = _selectedIds.value
+            idsToDelete.forEach { id ->
+                val workoutId = id.toLongOrNull() ?: return@forEach
+                val workout = repository.getWorkoutById(workoutId)
+                if (workout != null) {
+                    repository.deleteWorkout(workout)
+                }
             }
+            _selectedIds.value = emptySet()
+            refreshActivityTypes()
         }
     }
 }

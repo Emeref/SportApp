@@ -3,6 +3,9 @@ package com.example.sportapp.presentation.stats
 import android.graphics.Paint
 import android.graphics.RectF
 import android.text.Layout
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,13 +17,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.model.HeartRateZoneResult
+import com.example.sportapp.data.model.ZoneStat
 import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
@@ -112,7 +118,8 @@ fun CommonChartSection(
     overallRawData: List<Any>? = null,
     detailTimes: List<String>? = null,
     isScrollEnabled: Boolean = false,
-    hrZoneResult: HeartRateZoneResult? = null
+    hrZoneResult: HeartRateZoneResult? = null,
+    lineColors: List<Color>? = null
 ) {
     val axisValuesOverrider = remember(hrZoneResult) {
         object : AxisValuesOverrider<ChartEntryModel> {
@@ -134,11 +141,13 @@ fun CommonChartSection(
         }
     }
 
-    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit)
+    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors)
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-        Text(text = title, style = MaterialTheme.typography.titleSmall)
-        Spacer(modifier = Modifier.height(8.dp))
+        if (title.isNotEmpty()) {
+            Text(text = title, style = MaterialTheme.typography.titleSmall)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
         
         val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
         val formatter = DecimalFormat("#,###.#", symbols)
@@ -158,7 +167,6 @@ fun CommonChartSection(
         
         val chartDecorations = remember(hrZoneResult, thresholdLineComponent) {
             if (hrZoneResult == null) {
-                // Dodaj linię siatki jeśli nie ma stref HR? Vico ma własne, ale tutaj możemy dodać coś ekstra jeśli trzeba.
                 emptyList()
             } else {
                 val decorations = mutableListOf<Decoration>()
@@ -170,18 +178,29 @@ fun CommonChartSection(
             }
         }
 
-        Chart(
-            chart = lineChart(
-                lines = listOf(
-                    lineSpec(
-                        lineColor = primaryColor,
-                        lineBackgroundShader = DynamicShaders.fromBrush(
-                            Brush.verticalGradient(
-                                colors = listOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
-                            )
+        val lines = if (lineColors != null) {
+            lineColors.map { color ->
+                lineSpec(
+                    lineColor = color,
+                    lineBackgroundShader = null
+                )
+            }
+        } else {
+            listOf(
+                lineSpec(
+                    lineColor = primaryColor,
+                    lineBackgroundShader = DynamicShaders.fromBrush(
+                        Brush.verticalGradient(
+                            colors = listOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
                         )
                     )
-                ),
+                )
+            )
+        }
+
+        Chart(
+            chart = lineChart(
+                lines = lines,
                 axisValuesOverrider = axisValuesOverrider,
                 spacing = 2.dp,
                 decorations = chartDecorations
@@ -244,7 +263,8 @@ private fun formatToRelativeTime(index: Int, allTimes: List<String>): String {
 fun rememberMarkerCustom(
     overallRawData: List<Any>?,
     detailTimes: List<String>?,
-    unit: String
+    unit: String,
+    compareColors: List<Color>? = null
 ): Marker {
     val labelBackgroundColor = MaterialTheme.colorScheme.surface
     val labelTextColor = MaterialTheme.colorScheme.onSurface
@@ -256,7 +276,7 @@ fun rememberMarkerCustom(
     val inputSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
     val isDetail = detailTimes != null
-    val lineCount = if (isDetail) 2 else 3
+    val lineCount = if (compareColors != null) compareColors.size + 1 else if (isDetail) 2 else 3
 
     val label = textComponent(
         color = labelTextColor,
@@ -275,7 +295,7 @@ fun rememberMarkerCustom(
         color = primaryColor.copy(alpha = 0.5f),
         thickness = 2.dp
     )
-    return remember(label, indicator, guideline, overallRawData, detailTimes, unit) {
+    return remember(label, indicator, guideline, overallRawData, detailTimes, unit, compareColors) {
         object : MarkerComponent(label, indicator, guideline) {
             override fun getInsets(
                 context: com.patrykandpatrick.vico.core.context.MeasureContext,
@@ -289,39 +309,78 @@ fun rememberMarkerCustom(
             }
         }.apply {
             labelFormatter = MarkerLabelFormatter { markedEntries, _ ->
-                val entry = markedEntries.firstOrNull() ?: return@MarkerLabelFormatter ""
-                val index = entry.entry.x.toInt()
-                val value = formatter.format(entry.entry.y)
+                if (compareColors != null && markedEntries.size >= 2) {
+                    val sb = SpannableStringBuilder()
+                    markedEntries.forEachIndexed { i, entry ->
+                        val color = compareColors.getOrNull(i) ?: labelTextColor
+                        val start = sb.length
+                        val value = formatter.format(entry.entry.y)
+                        sb.append("$value $unit\n")
+                        sb.setSpan(ForegroundColorSpan(color.toArgb()), start, sb.length, 0)
+                    }
+                    val index = markedEntries.first().entry.x.toInt()
+                    if (detailTimes != null && index in detailTimes.indices) {
+                        sb.append(detailTimes[index])
+                    }
+                    sb
+                } else {
+                    val entry = markedEntries.firstOrNull() ?: return@MarkerLabelFormatter ""
+                    val index = entry.entry.x.toInt()
+                    val value = formatter.format(entry.entry.y)
 
-                if (isDetail && detailTimes != null) {
-                    if (index in detailTimes.indices) {
-                        val time = detailTimes[index]
-                        "$value $unit\n$time"
-                    } else ""
-                } else if (overallRawData != null) {
-                    if (index in overallRawData.indices) {
-                        val data = overallRawData[index]
-                        
-                        when (data) {
-                            is WorkoutEntity -> {
-                                val name = data.activityName
-                                val date = outputSdf.format(java.util.Date(data.startTime))
-                                "$name\n$date\n$value $unit"
-                            }
-                            is Map<*, *> -> {
-                                val name = data["nazwa aktywnosci"]?.toString() ?: "Aktywność"
-                                val rawDate = data["data"]?.toString() ?: ""
-                                val formattedDate = try {
-                                    inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate
-                                } catch (_: Exception) {
-                                    rawDate
+                    if (isDetail && detailTimes != null) {
+                        if (index in detailTimes.indices) {
+                            val time = detailTimes[index]
+                            "$value $unit\n$time"
+                        } else ""
+                    } else if (overallRawData != null) {
+                        if (index in overallRawData.indices) {
+                            val data = overallRawData[index]
+                            
+                            when (data) {
+                                is WorkoutEntity -> {
+                                    val name = data.activityName
+                                    val date = outputSdf.format(java.util.Date(data.startTime))
+                                    "$name\n$date\n$value $unit"
                                 }
-                                "$name\n$formattedDate\n$value $unit"
+                                is Map<*, *> -> {
+                                    val name = data["nazwa aktywnosci"]?.toString() ?: "Aktywność"
+                                    val rawDate = data["data"]?.toString() ?: ""
+                                    val formattedDate = try {
+                                        inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate
+                                    } catch (_: Exception) {
+                                        rawDate
+                                    }
+                                    "$name\n$formattedDate\n$value $unit"
+                                }
+                                else -> "$value $unit"
                             }
-                            else -> "$value $unit"
-                        }
+                        } else ""
                     } else ""
-                } else ""
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        var startAngle = -90f
+        val strokeWidth = 20f
+        
+        stats.forEach { stat ->
+            val sweepAngle = (stat.percentage / 100f) * 360f
+            if (sweepAngle > 0) {
+                drawArc(
+                    color = stat.zone.color,
+                    startAngle = startAngle,
+                    sweepAngle = sweepAngle,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth),
+                    size = Size(size.width, size.height)
+                )
+                startAngle += sweepAngle
             }
         }
     }
