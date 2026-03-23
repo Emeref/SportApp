@@ -1,5 +1,6 @@
 package com.example.sportapp.data
 
+import com.example.sportapp.AppConstants
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.google.android.gms.maps.model.LatLng
@@ -43,6 +44,7 @@ class SessionRepository @Inject constructor(
         var totalDescent = 0.0
         var maxAlt = -10000.0
         var lastAltRef: Double? = null
+        val threshold = AppConstants.ELEVATION_THRESHOLD
 
         points.forEach { point ->
             times.add(point.time)
@@ -95,8 +97,13 @@ class SessionRepository @Inject constructor(
                     lastAltRef = alt
                 } else {
                     val diff = alt - lastAltRef!!
-                    if (diff >= 2.0) { totalAscent += diff; lastAltRef = alt }
-                    else if (diff <= -2.0) { totalDescent += Math.abs(diff); lastAltRef = alt }
+                    if (diff >= threshold) { 
+                        totalAscent += diff
+                        lastAltRef = alt 
+                    } else if (diff <= -threshold) { 
+                        totalDescent += Math.abs(diff)
+                        lastAltRef = alt 
+                    }
                 }
             } ?: altitudes.add(null)
             

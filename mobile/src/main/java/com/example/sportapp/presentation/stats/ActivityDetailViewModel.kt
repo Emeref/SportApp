@@ -155,8 +155,8 @@ class ActivityDetailViewModel @Inject constructor(
         chartProducers.forEach { (id, producer) ->
             val points = data.charts[id] ?: emptyList()
             if (points.isNotEmpty()) {
-                val entries = if (id == "bpm") {
-                    // Wygładzanie tętna średnią kroczącą z 10 sekund
+                val entries = if (id == "bpm" || id == "kroki_min" || id == "wysokosc") {
+                    // Wygładzanie średnią kroczącą z 10 sekund dla wybranych metryk
                     points.windowed(10, 1, true) { window ->
                         window.filterNotNull().average().toFloat()
                     }.mapIndexed { index, value -> entryOf(index, value) }
