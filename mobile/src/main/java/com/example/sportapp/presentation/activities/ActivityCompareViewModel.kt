@@ -116,10 +116,23 @@ class ActivityCompareViewModel @Inject constructor(
             val c2 = data2.charts[id] ?: emptyList()
             
             if (c1.isNotEmpty() || c2.isNotEmpty()) {
-                producer.setEntries(listOf(
-                    c1.mapIndexed { i, v -> entryOf(i, v ?: 0f) },
+                val entries1 = if (id == "bpm" || id == "kroki_min" || id == "wysokosc") {
+                    c1.windowed(10, 1, true) { window ->
+                        window.filterNotNull().average().toFloat()
+                    }.mapIndexed { i, v -> entryOf(i, v) }
+                } else {
+                    c1.mapIndexed { i, v -> entryOf(i, v ?: 0f) }
+                }
+
+                val entries2 = if (id == "bpm" || id == "kroki_min" || id == "wysokosc") {
+                    c2.windowed(10, 1, true) { window ->
+                        window.filterNotNull().average().toFloat()
+                    }.mapIndexed { i, v -> entryOf(i, v) }
+                } else {
                     c2.mapIndexed { i, v -> entryOf(i, v ?: 0f) }
-                ))
+                }
+
+                producer.setEntries(listOf(entries1, entries2))
             }
         }
     }

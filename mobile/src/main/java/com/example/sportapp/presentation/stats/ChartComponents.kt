@@ -140,9 +140,14 @@ fun CommonChartSection(
     val axisValuesOverrider = remember(hrZoneResult, unit) {
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
-                if (hrZoneResult != null) return hrZoneResult.zones.last().maxBpm.toFloat() + 5f
                 val max = model.maxY
-                if (max.isNaN() || max <= 0f) return 8f
+                if (max.isNaN() || max <= 0f) return if (unit == "bpm") 180f else 8f
+                
+                if (unit == "bpm") {
+                    return max + 5f
+                }
+
+                if (hrZoneResult != null) return hrZoneResult.zones.last().maxBpm.toFloat() + 5f
                 
                 if (unit == "hPa") {
                     val c = ceil(max.toDouble()).toFloat()
@@ -160,6 +165,10 @@ fun CommonChartSection(
                 
                 if (unit == "hPa") {
                     return floor(minDataValue.toDouble()).toFloat()
+                }
+
+                if (unit == "bpm") {
+                    return (minDataValue - 5f).coerceAtLeast(0f)
                 }
 
                 return (minDataValue - 4f).coerceAtLeast(0f)
