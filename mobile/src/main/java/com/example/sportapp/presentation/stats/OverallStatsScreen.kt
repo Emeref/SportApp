@@ -193,7 +193,7 @@ fun OverallStatsContent(
 
             // 3. Wykresy
             @Suppress("UNCHECKED_CAST")
-            val rawData = stats["raw_data"] as? List<Map<String, String>>
+            val rawData = stats["raw_data"] as? List<Any>
             if (activeWidgets.isNotEmpty()) {
                 if (!rawData.isNullOrEmpty()) {
                     Text(
@@ -213,6 +213,8 @@ fun OverallStatsContent(
                                     "calories" -> "kcal"
                                     "steps" -> "kroków"
                                     "ascent", "descent" -> "m"
+                                    "maxPressure", "minPressure" -> "hPa"
+                                    "bestPace1km" -> "min/km"
                                     else -> ""
                                 }
                                 val title = when(widget.id) {

@@ -161,6 +161,9 @@ fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
         "ascent" -> StatCard(modifier, "W sumie w górę", "${formatLargeNumber(stats["ascent"])} m")
         "descent" -> StatCard(modifier, "W sumie do dołu", "${formatLargeNumber(stats["descent"])} m")
         "steps" -> StatCard(modifier, "Kroki", formatLargeNumber(stats["steps"]))
+        "maxPressure" -> StatCard(modifier, "Maks. ciśnienie atm.", "${formatDecimal(stats["maxPressure"])} hPa")
+        "minPressure" -> StatCard(modifier, "Min. ciśnienie atm.", "${formatDecimal(stats["minPressure"])} hPa")
+        "bestPace1km" -> StatCard(modifier, "Najlepsze tempo (1km)", formatPace(stats["bestPace1km"] as? Double ?: 0.0))
     }
 }
 
@@ -176,6 +179,22 @@ private fun formatLargeNumber(value: Any?): String {
     }
     val formatter = DecimalFormat("#,###", symbols)
     return formatter.format(num)
+}
+
+private fun formatDecimal(value: Any?): String {
+    val num = when (value) {
+        is Number -> value.toDouble()
+        is String -> value.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+    return String.format(Locale.US, "%.1f", num)
+}
+
+private fun formatPace(pace: Double): String {
+    if (pace <= 0.0) return "0:00"
+    val minutes = pace.toInt()
+    val seconds = ((pace - minutes) * 60).toInt()
+    return String.format(Locale.US, "%d:%02d", minutes, seconds)
 }
 
 private fun formatDistanceUI(meters: Double): String {

@@ -38,7 +38,20 @@ class OverallStatsSettingsManager(private val context: Context) {
             try {
                 val type = object : TypeToken<List<WidgetItem>>() {}.type
                 val decoded: List<WidgetItem>? = gson.fromJson(widgetsJson, type)
-                if (decoded.isNullOrEmpty()) DEFAULT_WIDGETS else decoded
+                
+                if (decoded.isNullOrEmpty()) {
+                    DEFAULT_WIDGETS
+                } else {
+                    // Merging logic to add new default widgets to existing user settings
+                    // or remove ones no longer in DEFAULT_WIDGETS
+                    val currentIds = DEFAULT_WIDGETS.map { it.id }.toSet()
+                    val filtered = decoded.filter { it.id in currentIds }.toMutableList()
+                    val missing = DEFAULT_WIDGETS.filter { def -> filtered.none { it.id == def.id } }
+                    if (missing.isNotEmpty()) {
+                        filtered.addAll(missing)
+                    }
+                    filtered
+                }
             } catch (e: Exception) {
                 DEFAULT_WIDGETS
             }

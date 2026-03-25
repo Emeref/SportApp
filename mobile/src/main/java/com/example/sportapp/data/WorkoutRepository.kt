@@ -199,12 +199,16 @@ class WorkoutRepository @Inject constructor(
         val totalAscent = filtered.sumOf { it.totalAscent ?: 0.0 }
         val totalDescent = filtered.sumOf { it.totalDescent ?: 0.0 }
         val avgBpm = if (filtered.any { it.avgBpm != null }) filtered.mapNotNull { it.avgBpm }.average() else 0.0
+        
+        val maxPressure = if (filtered.any { it.maxPressure != null }) filtered.mapNotNull { it.maxPressure }.maxOrNull() else 0.0
+        val minPressure = if (filtered.any { it.minPressure != null }) filtered.mapNotNull { it.minPressure }.minOrNull() else 0.0
+        val bestPace1km = if (filtered.any { it.bestPace1km != null }) filtered.mapNotNull { it.bestPace1km }.minOrNull() else 0.0
 
         return mapOf(
             "count" to totalWorkouts,
             "totalWorkouts" to totalWorkouts,
             "totalDuration" to totalDuration,
-            "totalDistance" to (totalDistanceGps + totalDistanceSteps), // Suma dla starego klucza jeśli potrzebny
+            "totalDistance" to (totalDistanceGps + totalDistanceSteps),
             "distanceGpsM" to totalDistanceGps,
             "distanceStepsM" to totalDistanceSteps,
             "calories" to totalCalories,
@@ -213,6 +217,9 @@ class WorkoutRepository @Inject constructor(
             "ascent" to totalAscent,
             "descent" to totalDescent,
             "avgBpm" to avgBpm,
+            "maxPressure" to (maxPressure ?: 0.0),
+            "minPressure" to (minPressure ?: 0.0),
+            "bestPace1km" to (bestPace1km ?: 0.0),
             "raw_data" to filtered
         )
     }

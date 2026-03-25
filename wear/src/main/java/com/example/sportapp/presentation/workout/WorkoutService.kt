@@ -357,6 +357,9 @@ class WorkoutService : Service(), SensorEventListener {
                 avgStepLength = sessionStats.avgStepLength,
                 avgCadence = sessionStats.avgCadence,
                 maxCadence = sessionStats.maxCadence,
+                maxPressure = if (isRecording(WorkoutSensor.PRESSURE)) sessionStats.maxPressure else null,
+                minPressure = if (isRecording(WorkoutSensor.PRESSURE)) sessionStats.minPressure else null,
+                bestPace1km = sessionStats.bestPace1km,
                 isSynced = false // Reset flagi przy każdym zapisie w trakcie trwania
             )
             
