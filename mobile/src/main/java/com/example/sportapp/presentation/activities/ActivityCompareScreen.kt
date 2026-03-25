@@ -180,14 +180,14 @@ fun CompareStatsSection(s1: SessionData, s2: SessionData, visibleWidgets: List<W
         "max_altitude" to CompareWidgetConfig("Maks wysokość", s1.maxAltitude, s2.maxAltitude, null),
         "total_ascent" to CompareWidgetConfig("Suma podejść", s1.totalAscent, s2.totalAscent, true),
         "total_descent" to CompareWidgetConfig("Suma zejść", s1.totalDescent, s2.totalDescent, true),
-        "avg_step_length" to CompareWidgetConfig("Śr. długość kroku", s1.avgStepLength, s2.avgStepLength, null),
+        "avg_step_length" to CompareWidgetConfig("Wyliczona długość kroku", s1.avgStepLength, s2.avgStepLength, null),
         "avg_cadence" to CompareWidgetConfig("Śr. kadencja", s1.avgCadence, s2.avgCadence, true),
         "max_cadence" to CompareWidgetConfig("Maks. kadencja", s1.maxCadence, s2.maxCadence, true),
         "total_steps" to CompareWidgetConfig("Liczba kroków", s1.totalSteps.toDouble(), s2.totalSteps.toDouble(), true),
         "total_distance_gps" to CompareWidgetConfig("Dystans (GPS)", s1.totalDistanceGps, s2.totalDistanceGps, true),
         "total_distance_steps" to CompareWidgetConfig("Dystans (kroki)", s1.totalDistanceSteps, s2.totalDistanceSteps, true),
-        "pressure_start" to CompareWidgetConfig("Ciśnienie (start)", s1.pressureStart ?: 0.0, s2.pressureStart ?: 0.0, null),
-        "pressure_end" to CompareWidgetConfig("Ciśnienie (koniec)", s1.pressureEnd ?: 0.0, s2.pressureEnd ?: 0.0, null)
+        "pressure_start" to CompareWidgetConfig("Ciśnienie atm. (start)", s1.pressureStart ?: 0.0, s2.pressureStart ?: 0.0, null),
+        "pressure_end" to CompareWidgetConfig("Ciśnienie atm. (koniec)", s1.pressureEnd ?: 0.0, s2.pressureEnd ?: 0.0, null)
     )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {

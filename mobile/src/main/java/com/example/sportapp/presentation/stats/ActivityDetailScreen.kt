@@ -496,14 +496,14 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidge
         "max_altitude" to ("Maks wysokość" to String.format(Locale.US, "%.0f m n.p.m.", data.maxAltitude)),
         "total_ascent" to ("Suma podejść" to String.format(Locale.US, "+%.0f m", data.totalAscent)),
         "total_descent" to ("Suma zejść" to String.format(Locale.US, "-%.0f m", data.totalDescent)),
-        "avg_step_length" to ("Śr. długość kroku" to String.format(Locale.US, "%.2f m", data.avgStepLength)),
+        "avg_step_length" to ("Wyliczona długość kroku" to String.format(Locale.US, "%.2f m", data.avgStepLength)),
         "avg_cadence" to ("Śr. kadencja" to String.format(Locale.US, "%.0f kr/min", data.avgCadence)),
         "max_cadence" to ("Maks. kadencja" to String.format(Locale.US, "%.0f kr/min", data.maxCadence)),
         "total_steps" to ("Liczba kroków" to "${data.totalSteps}"),
         "total_distance_gps" to ("Dystans (GPS)" to formatDistance(data.totalDistanceGps)),
         "total_distance_steps" to ("Dystans (kroki)" to formatDistance(data.totalDistanceSteps)),
-        "pressure_start" to ("Ciśnienie (start)" to (data.pressureStart?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")),
-        "pressure_end" to ("Ciśnienie (koniec)" to (data.pressureEnd?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa"))
+        "pressure_start" to ("Ciśnienie atm. (start)" to (data.pressureStart?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")),
+        "pressure_end" to ("Ciśnienie atm. (koniec)" to (data.pressureEnd?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa"))
     )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {

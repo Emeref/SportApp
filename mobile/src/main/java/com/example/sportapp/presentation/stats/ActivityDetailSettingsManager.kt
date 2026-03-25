@@ -54,14 +54,14 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("max_altitude", "Maks wysokość"),
             WidgetItem("total_ascent", "Suma podejść"),
             WidgetItem("total_descent", "Suma zejść"),
-            WidgetItem("avg_step_length", "Śr. długość kroku"),
+            WidgetItem("avg_step_length", "Wyliczona długość kroku"),
             WidgetItem("avg_cadence", "Śr. kadencja"),
             WidgetItem("max_cadence", "Maks. kadencja"),
             WidgetItem("total_steps", "Liczba kroków"),
             WidgetItem("total_distance_gps", "Dystans (GPS)"),
             WidgetItem("total_distance_steps", "Dystans (kroki)"),
             WidgetItem("pressure_start", "Ciśnienie atm. (start)"),
-            WidgetItem("pressure_end", "Ciśnienie atm.(koniec)")
+            WidgetItem("pressure_end", "Ciśnienie atm. (koniec)")
         )
         
         val DEFAULT_COLOR = 0xFFFF9800.toInt()
