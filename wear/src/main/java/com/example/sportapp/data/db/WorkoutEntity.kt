@@ -25,9 +25,13 @@ data class WorkoutEntity(
     val avgPace: Double? = null, // min/km
     val maxSpeed: Double? = null, // km/h
     val maxAltitude: Double? = null, // m
+    val minAltitude: Double? = null, // m
     val avgStepLength: Double? = null, // m
     val avgCadence: Double? = null, // kroki/min
     val maxCadence: Double? = null, // kroki/min
+    val maxPressure: Double? = null, // hPa
+    val minPressure: Double? = null, // hPa
+    val bestPace1km: Double? = null, // min/km
     val isSynced: Boolean = false
 )
 

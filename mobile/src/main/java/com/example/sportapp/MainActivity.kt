@@ -146,10 +146,13 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("stats_widget_selection") {
                             val statsWidgets by statsViewModel.widgets.collectAsStateWithLifecycle()
+                            val statsCharts by statsViewModel.charts.collectAsStateWithLifecycle()
                             OverallStatsWidgetScreen(
                                 widgets = statsWidgets,
-                                onSave = { updatedWidgets ->
+                                charts = statsCharts,
+                                onSave = { updatedWidgets, updatedCharts ->
                                     statsViewModel.saveWidgets(updatedWidgets)
+                                    statsViewModel.saveCharts(updatedCharts)
                                     navController.popBackStack()
                                 },
                                 onCancel = { navController.popBackStack() }

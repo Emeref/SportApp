@@ -485,26 +485,28 @@ private fun formatPaceFromSeconds(totalSeconds: Int): String {
 fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidgets: List<WidgetItem>) {
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
     
-    val widgetValues = mapOf(
-        "duration" to ("Czas trwania" to data.duration),
-        "max_bpm" to ("Maksymalne tętno" to "${data.maxBpm} bpm"),
-        "avg_bpm" to ("Średnie tętno" to "${data.avgBpm} bpm"),
-        "total_calories" to ("Spalone kalorie" to "${data.totalCalories} kcal"),
-        "max_calories_min" to ("Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin)),
-        "avg_pace" to ("Średnie tempo" to formatPace(data.avgPace)),
-        "max_speed" to ("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeed)),
-        "max_altitude" to ("Maks wysokość" to String.format(Locale.US, "%.0f m n.p.m.", data.maxAltitude)),
-        "total_ascent" to ("Suma podejść" to String.format(Locale.US, "+%.0f m", data.totalAscent)),
-        "total_descent" to ("Suma zejść" to String.format(Locale.US, "-%.0f m", data.totalDescent)),
-        "avg_step_length" to ("Wyliczona długość kroku" to String.format(Locale.US, "%.2f m", data.avgStepLength)),
-        "avg_cadence" to ("Śr. kadencja" to String.format(Locale.US, "%.0f kr/min", data.avgCadence)),
-        "max_cadence" to ("Maks. kadencja" to String.format(Locale.US, "%.0f kr/min", data.maxCadence)),
-        "total_steps" to ("Liczba kroków" to "${data.totalSteps}"),
-        "total_distance_gps" to ("Dystans (GPS)" to formatDistance(data.totalDistanceGps)),
-        "total_distance_steps" to ("Dystans (kroki)" to formatDistance(data.totalDistanceSteps)),
-        "pressure_start" to ("Ciśnienie atm. (start)" to (data.pressureStart?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")),
-        "pressure_end" to ("Ciśnienie atm. (koniec)" to (data.pressureEnd?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa"))
-    )
+    val widgetValues = mutableMapOf<String, Pair<String, String>>()
+    widgetValues["duration"] = "Czas trwania" to data.duration
+    widgetValues["max_bpm"] = "Maksymalne tętno" to "${data.maxBpm} bpm"
+    widgetValues["avg_bpm"] = "Średnie tętno" to "${data.avgBpm} bpm"
+    widgetValues["total_calories"] = "Spalone kalorie" to "${data.totalCalories} kcal"
+    widgetValues["max_calories_min"] = "Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin)
+    widgetValues["avg_pace"] = "Średnie tempo" to formatPace(data.avgPace)
+    widgetValues["max_speed"] = "Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeed)
+    widgetValues["max_altitude"] = "Maks wysokość" to String.format(Locale.US, "%.0f m n.p.m.", data.maxAltitude)
+    widgetValues["total_ascent"] = "Suma podejść" to String.format(Locale.US, "+%.0f m", data.totalAscent)
+    widgetValues["total_descent"] = "Suma zejść" to String.format(Locale.US, "-%.0f m", data.totalDescent)
+    widgetValues["avg_step_length"] = "Wyliczona długość kroku" to String.format(Locale.US, "%.2f m", data.avgStepLength)
+    widgetValues["avg_cadence"] = "Śr. kadencja" to String.format(Locale.US, "%.0f kr/min", data.avgCadence)
+    widgetValues["max_cadence"] = "Maks. kadencja" to String.format(Locale.US, "%.0f kr/min", data.maxCadence)
+    widgetValues["total_steps"] = "Liczba kroków" to "${data.totalSteps}"
+    widgetValues["total_distance_gps"] = "Dystans (GPS)" to formatDistance(data.totalDistanceGps)
+    widgetValues["total_distance_steps"] = "Dystans (kroki)" to formatDistance(data.totalDistanceSteps)
+    widgetValues["pressure_start"] = "Ciśnienie atm. (start)" to (data.pressureStart?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")
+    widgetValues["pressure_end"] = "Ciśnienie atm. (koniec)" to (data.pressureEnd?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")
+    widgetValues["max_pressure"] = "Maks. ciśnienie" to (data.maxPressure?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")
+    widgetValues["min_pressure"] = "Min. ciśnienie" to (data.minPressure?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")
+    widgetValues["best_pace_1km"] = "Najlepsze tempo (1km)" to formatPace(data.bestPace1km ?: 0.0)
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         val chunks = enabledWidgets.chunked(2)
@@ -527,7 +529,7 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidge
 }
 
 private fun formatPace(paceDecimal: Double): String {
-    if (paceDecimal <= 0 || paceDecimal > 60) return "--:--"
+    if (paceDecimal <= 0 || paceDecimal > 120) return "--:--"
     val minutes = paceDecimal.toInt()
     val seconds = ((paceDecimal - minutes) * 60).toInt()
     return String.format(Locale.US, "%02d:%02d min/km", minutes, seconds)

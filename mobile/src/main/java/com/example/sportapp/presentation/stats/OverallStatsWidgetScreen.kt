@@ -19,23 +19,19 @@ import com.example.sportapp.presentation.settings.WidgetItem
 @Composable
 fun OverallStatsWidgetScreen(
     widgets: List<WidgetItem>,
-    onSave: (List<WidgetItem>) -> Unit,
+    charts: List<WidgetItem>,
+    onSave: (List<WidgetItem>, List<WidgetItem>) -> Unit,
     onCancel: () -> Unit
 ) {
-    var internalWidgets by remember { mutableStateOf(widgets) }
-    
-    LaunchedEffect(widgets) {
-        if (widgets.isNotEmpty() && internalWidgets.isEmpty()) {
-            internalWidgets = widgets
-        }
-    }
+    var internalWidgets by remember(widgets) { mutableStateOf(widgets) }
+    var internalCharts by remember(charts) { mutableStateOf(charts) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Widgety na stronie statystyk",
+                        text = "Ustawienia statystyk ogólnych",
                         modifier = Modifier.padding(top = 16.dp)
                     )
                 },
@@ -56,41 +52,81 @@ fun OverallStatsWidgetScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            if (internalWidgets.isEmpty()) {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Sekcja: Widgety",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(internalWidgets) { index, item ->
-                        OverallStatsWidgetRow(
-                            item = item,
-                            isFirst = index == 0,
-                            isLast = index == internalWidgets.size - 1,
-                            onMoveUp = {
-                                val list = internalWidgets.toMutableList()
-                                val temp = list[index]
-                                list[index] = list[index - 1]
-                                list[index - 1] = temp
-                                internalWidgets = list
-                            },
-                            onMoveDown = {
-                                val list = internalWidgets.toMutableList()
-                                val temp = list[index]
-                                list[index] = list[index + 1]
-                                list[index + 1] = temp
-                                internalWidgets = list
-                            },
-                            onCheckedChange = { isEnabled ->
-                                internalWidgets = internalWidgets.map {
-                                    if (it.id == item.id) it.copy(isEnabled = isEnabled) else it
-                                }
+
+                itemsIndexed(internalWidgets) { index, item ->
+                    OverallStatsWidgetRow(
+                        item = item,
+                        isFirst = index == 0,
+                        isLast = index == internalWidgets.size - 1,
+                        onMoveUp = {
+                            val list = internalWidgets.toMutableList()
+                            val temp = list[index]
+                            list[index] = list[index - 1]
+                            list[index - 1] = temp
+                            internalWidgets = list
+                        },
+                        onMoveDown = {
+                            val list = internalWidgets.toMutableList()
+                            val temp = list[index]
+                            list[index] = list[index + 1]
+                            list[index + 1] = temp
+                            internalWidgets = list
+                        },
+                        onCheckedChange = { isEnabled ->
+                            internalWidgets = internalWidgets.map {
+                                if (it.id == item.id) it.copy(isEnabled = isEnabled) else it
                             }
-                        )
-                    }
+                        }
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Sekcja: Wykresy trendów",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                itemsIndexed(internalCharts) { index, item ->
+                    OverallStatsWidgetRow(
+                        item = item,
+                        isFirst = index == 0,
+                        isLast = index == internalCharts.size - 1,
+                        onMoveUp = {
+                            val list = internalCharts.toMutableList()
+                            val temp = list[index]
+                            list[index] = list[index - 1]
+                            list[index - 1] = temp
+                            internalCharts = list
+                        },
+                        onMoveDown = {
+                            val list = internalCharts.toMutableList()
+                            val temp = list[index]
+                            list[index] = list[index + 1]
+                            list[index + 1] = temp
+                            internalCharts = list
+                        },
+                        onCheckedChange = { isEnabled ->
+                            internalCharts = internalCharts.map {
+                                if (it.id == item.id) it.copy(isEnabled = isEnabled) else it
+                            }
+                        }
+                    )
                 }
             }
 
@@ -101,7 +137,9 @@ fun OverallStatsWidgetScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
-                    onClick = { onSave(internalWidgets) },
+                    onClick = { 
+                        onSave(internalWidgets, internalCharts)
+                    },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {

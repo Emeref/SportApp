@@ -61,7 +61,10 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("total_distance_gps", "Dystans (GPS)"),
             WidgetItem("total_distance_steps", "Dystans (kroki)"),
             WidgetItem("pressure_start", "Ciśnienie atm. (start)"),
-            WidgetItem("pressure_end", "Ciśnienie atm. (koniec)")
+            WidgetItem("pressure_end", "Ciśnienie atm. (koniec)"),
+            WidgetItem("max_pressure", "Maks. ciśnienie atm."),
+            WidgetItem("min_pressure", "Min. ciśnienie atm."),
+            WidgetItem("best_pace_1km", "Najlepsze tempo (1km)")
         )
         
         val DEFAULT_COLOR = 0xFFFF9800.toInt()

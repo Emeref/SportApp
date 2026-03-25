@@ -74,7 +74,19 @@ class SettingsManager @Inject constructor(
             val watchStatsWidgets = if (watchStatsWidgetsJson != null) {
                 try {
                     val type = object : TypeToken<List<WidgetItem>>() {}.type
-                    gson.fromJson<List<WidgetItem>>(watchStatsWidgetsJson, type) ?: defaultWatchStatsWidgets
+                    val decoded: List<WidgetItem>? = gson.fromJson(watchStatsWidgetsJson, type)
+                    if (decoded.isNullOrEmpty()) {
+                        defaultWatchStatsWidgets
+                    } else {
+                        // Merging logic
+                        val currentIds = defaultWatchStatsWidgets.map { it.id }.toSet()
+                        val filtered = decoded.filter { it.id in currentIds }.toMutableList()
+                        val missing = defaultWatchStatsWidgets.filter { def -> filtered.none { it.id == def.id } }
+                        if (missing.isNotEmpty()) {
+                            filtered.addAll(missing)
+                        }
+                        filtered
+                    }
                 } catch (e: Exception) {
                     defaultWatchStatsWidgets
                 }
@@ -97,7 +109,10 @@ class SettingsManager @Inject constructor(
         WidgetItem("distanceSteps", "Dystans (kroki)"),
         WidgetItem("ascent", "Przewyższenia w górę"),
         WidgetItem("descent", "Przewyższenia w dół"),
-        WidgetItem("steps", "Wszystkie kroki")
+        WidgetItem("steps", "Wszystkie kroki"),
+        WidgetItem("maxPressure", "Maks. ciśnienie"),
+        WidgetItem("minPressure", "Min. ciśnienie"),
+        WidgetItem("bestPace1km", "Najlepsze tempo (1km)")
     )
 
     private fun triggerSync() {

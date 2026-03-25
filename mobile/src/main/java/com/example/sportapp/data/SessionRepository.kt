@@ -153,6 +153,9 @@ class SessionRepository @Inject constructor(
 
         val pressureStart = pressures.filterNotNull().firstOrNull()?.toDouble()
         val pressureEnd = pressures.filterNotNull().lastOrNull()?.toDouble()
+        
+        val calcMaxPressure = pressures.filterNotNull().maxOrNull()?.toDouble()
+        val calcMinPressure = pressures.filterNotNull().minOrNull()?.toDouble()
 
         return@withContext SessionData(
             times = times,
@@ -179,7 +182,10 @@ class SessionRepository @Inject constructor(
             avgCadence = workout.avgCadence ?: 0.0,
             maxCadence = workout.maxCadence ?: 0.0,
             pressureStart = pressureStart,
-            pressureEnd = pressureEnd
+            pressureEnd = pressureEnd,
+            maxPressure = workout.maxPressure ?: calcMaxPressure,
+            minPressure = workout.minPressure ?: calcMinPressure,
+            bestPace1km = workout.bestPace1km
         )
     }
 }
@@ -210,5 +216,8 @@ data class SessionData(
     val avgCadence: Double = 0.0,
     val maxCadence: Double = 0.0,
     val pressureStart: Double? = null,
-    val pressureEnd: Double? = null
+    val pressureEnd: Double? = null,
+    val maxPressure: Double? = null,
+    val minPressure: Double? = null,
+    val bestPace1km: Double? = null
 )

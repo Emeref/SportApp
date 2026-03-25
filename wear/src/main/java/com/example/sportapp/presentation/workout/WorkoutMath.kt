@@ -3,6 +3,7 @@ package com.example.sportapp.presentation.workout
 import com.example.sportapp.AppConstants
 import com.example.sportapp.data.db.WorkoutPointEntity
 import kotlin.math.max
+import kotlin.math.min
 
 object WorkoutMath {
 
@@ -16,7 +17,10 @@ object WorkoutMath {
         val maxAltitude: Double = 0.0,
         val avgStepLength: Double = 0.0,
         val avgCadence: Double = 0.0,
-        val maxCadence: Double = 0.0
+        val maxCadence: Double = 0.0,
+        val maxPressure: Double? = null,
+        val minPressure: Double? = null,
+        val bestPace1km: Double? = null
     )
 
     fun calculateSessionStats(
@@ -37,6 +41,9 @@ object WorkoutMath {
         
         var totalCadenceSum = 0.0
         var cadencePointsCount = 0
+
+        var maxPressureValue = -1.0
+        var minPressureValue = 100000.0
 
         // Elevation logic
         var totalAscent = 0.0
@@ -82,6 +89,41 @@ object WorkoutMath {
                 totalCadenceSum += it
                 cadencePointsCount++
             }
+
+            // Pressure
+            point.pressure?.let {
+                if (it > maxPressureValue) maxPressureValue = it
+                if (it < minPressureValue) minPressureValue = it
+            }
+        }
+
+        // Optimized Best 1km Split logic
+        var bestPace1km: Double? = null
+        if (points.size > 10) {
+            var minTimeFor1km = Int.MAX_VALUE
+            val hasGps = points.any { it.distanceGps != null && it.distanceGps!! > 0 }
+            
+            var right = 0
+            for (left in points.indices) {
+                val startDist = if (hasGps) (points[left].distanceGps ?: 0).toDouble() else (points[left].distanceSteps ?: 0).toDouble()
+                
+                while (right < points.size) {
+                    val currentDist = if (hasGps) (points[right].distanceGps ?: 0).toDouble() else (points[right].distanceSteps ?: 0).toDouble()
+                    if (currentDist - startDist >= 1000.0) {
+                        val timeDiff = right - left
+                        if (timeDiff < minTimeFor1km) {
+                            minTimeFor1km = timeDiff
+                        }
+                        break
+                    }
+                    right++
+                }
+                if (right == points.size) break 
+            }
+            
+            if (minTimeFor1km != Int.MAX_VALUE) {
+                bestPace1km = minTimeFor1km / 60.0
+            }
         }
 
         // Pace calculated ONLY based on GPS distance
@@ -109,7 +151,10 @@ object WorkoutMath {
             maxAltitude = if (maxAltitude == -10000.0) 0.0 else maxAltitude,
             avgStepLength = avgStepLength,
             avgCadence = avgCadence,
-            maxCadence = maxCadence
+            maxCadence = maxCadence,
+            maxPressure = if (maxPressureValue == -1.0) null else maxPressureValue,
+            minPressure = if (minPressureValue == 100000.0) null else minPressureValue,
+            bestPace1km = bestPace1km
         )
     }
 }
