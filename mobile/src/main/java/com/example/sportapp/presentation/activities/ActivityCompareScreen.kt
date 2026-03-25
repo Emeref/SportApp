@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,7 +73,14 @@ fun ActivityCompareScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Porównanie aktywności") },
+                title = {
+                    Text(
+                        text = session1?.let { "Porównanie: ${it.activityName}" } ?: "Porównanie aktywności",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
@@ -94,69 +102,86 @@ fun ActivityCompareScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .verticalScroll(rememberScrollState())
             ) {
-                // Header
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Sticky Dates Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .height(24.dp)
+                        .padding(horizontal = 32.dp, vertical = 1.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(s1.activityName, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        s1.activityDate,
+                        color = Color1,
+                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        s2.activityDate,
+                        color = Color2,
+                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // Scrollable Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Text(s1.activityDate, color = Color1, fontWeight = FontWeight.Bold)
-                        Text(s2.activityDate, color = Color2, fontWeight = FontWeight.Bold)
-                    }
-                }
 
-                CompareStatsSection(s1, s2, currentSettings.visibleWidgets)
+                    CompareStatsSection(s1, s2, currentSettings.visibleWidgets)
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                // Wyświetlamy wykresy zgodnie z ustawieniami
-                currentSettings.visibleCharts.filter { it.isEnabled }.forEach { widget ->
-                    when (widget.id) {
-                        "map" -> {
-                            CompareMaps(s1, s2, isDarkTheme)
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                        "bpm" -> {
-                            viewModel.chartProducers["bpm"]?.let { producer ->
-                                if (s1.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true || s2.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true) {
-                                    CompareChart(
-                                        title = "Tętno (bpm)", 
-                                        producer = producer, 
-                                        unit = "bpm", 
-                                        times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times,
-                                        hrZoneResult = hrZones1
-                                    )
-                                    if (hrZones1 != null && hrZones2 != null) {
-                                        CompareHeartRateZones(hrZones1!!, hrZones2!!)
+                    // Wyświetlamy wykresy zgodnie z ustawieniami
+                    currentSettings.visibleCharts.filter { it.isEnabled }.forEach { widget ->
+                        when (widget.id) {
+                            "map" -> {
+                                CompareMaps(s1, s2, isDarkTheme)
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                            "bpm" -> {
+                                viewModel.chartProducers["bpm"]?.let { producer ->
+                                    if (s1.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true || s2.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true) {
+                                        CompareChart(
+                                            title = "Tętno (bpm)", 
+                                            producer = producer, 
+                                            unit = "bpm", 
+                                            times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times,
+                                            hrZoneResult = hrZones1
+                                        )
+                                        if (hrZones1 != null && hrZones2 != null) {
+                                            CompareHeartRateZones(hrZones1!!, hrZones2!!)
+                                        }
+                                        Spacer(modifier = Modifier.height(16.dp))
                                     }
-                                    Spacer(modifier = Modifier.height(16.dp))
                                 }
                             }
-                        }
-                        else -> {
-                            viewModel.chartProducers[widget.id]?.let { producer ->
-                                if (s1.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true || s2.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true) {
-                                    CompareChart(
-                                        title = widget.label,
-                                        producer = producer,
-                                        unit = getUnitForWidget(widget.id),
-                                        times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times
-                                    )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                            else -> {
+                                viewModel.chartProducers[widget.id]?.let { producer ->
+                                    if (s1.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true || s2.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true) {
+                                        CompareChart(
+                                            title = widget.label,
+                                            producer = producer,
+                                            unit = getUnitForWidget(widget.id),
+                                            times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                    }
                                 }
                             }
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(32.dp))
             }
         } else {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
