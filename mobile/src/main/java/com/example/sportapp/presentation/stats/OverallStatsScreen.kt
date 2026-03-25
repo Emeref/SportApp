@@ -34,6 +34,7 @@ fun OverallStatsScreen(
 ) {
     val stats by viewModel.stats.collectAsStateWithLifecycle()
     val widgets by viewModel.widgets.collectAsStateWithLifecycle()
+    val charts by viewModel.charts.collectAsStateWithLifecycle()
     val activityTypes by viewModel.activityTypes.collectAsStateWithLifecycle()
     val selectedType by viewModel.selectedType.collectAsStateWithLifecycle()
     val startDate by viewModel.startDate.collectAsStateWithLifecycle()
@@ -42,6 +43,7 @@ fun OverallStatsScreen(
     OverallStatsContent(
         stats = stats,
         widgets = widgets,
+        charts = charts,
         activityTypes = activityTypes,
         selectedType = selectedType,
         startDate = startDate,
@@ -60,6 +62,7 @@ fun OverallStatsScreen(
 fun OverallStatsContent(
     stats: Map<String, Any>,
     widgets: List<WidgetItem>,
+    charts: List<WidgetItem>,
     activityTypes: List<String>,
     selectedType: String?,
     startDate: Date?,
@@ -192,9 +195,10 @@ fun OverallStatsContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // 3. Wykresy
+            val activeCharts = charts.filter { it.isEnabled }
             @Suppress("UNCHECKED_CAST")
             val rawData = stats["raw_data"] as? List<Any>
-            if (activeWidgets.isNotEmpty()) {
+            if (activeCharts.isNotEmpty()) {
                 if (!rawData.isNullOrEmpty()) {
                     Text(
                         text = "Wykresy trendów",
@@ -202,35 +206,33 @@ fun OverallStatsContent(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                     )
                     
-                    activeWidgets.forEach { widget ->
-                        if (widget.id != "count") {
-                            val producer = chartProducers[widget.id]
-                            if (producer != null) {
-                                val maxVal = getMaxValueForWidget(widget.id)
-                                val unit = when(widget.id) {
-                                    "distanceGps" -> if (maxVal > 6000) "km" else "m"
-                                    "distanceSteps" -> if (maxVal > 6000) "km" else "m"
-                                    "calories" -> "kcal"
-                                    "steps" -> "kroków"
-                                    "ascent", "descent" -> "m"
-                                    "maxPressure", "minPressure" -> "hPa"
-                                    "bestPace1km" -> "min/km"
-                                    else -> ""
-                                }
-                                val title = when(widget.id) {
-                                    "distanceGps" -> if (maxVal > 6000) "Dystans (GPS) w kilometrach" else "Dystans (GPS) w metrach"
-                                    "distanceSteps" -> if (maxVal > 6000) "Dystans (kroki) w kilometrach" else "Dystans (kroki) w metrach"
-                                    "steps" -> "Kroki"
-                                    else -> widget.label
-                                }
-                                CommonChartSection(
-                                    title = title,
-                                    producer = producer,
-                                    unit = unit,
-                                    overallRawData = rawData
-                                )
-                                Spacer(modifier = Modifier.height(24.dp))
+                    activeCharts.forEach { chart ->
+                        val producer = chartProducers[chart.id]
+                        if (producer != null) {
+                            val maxVal = getMaxValueForWidget(chart.id)
+                            val unit = when(chart.id) {
+                                "distanceGps" -> if (maxVal > 6000) "km" else "m"
+                                "distanceSteps" -> if (maxVal > 6000) "km" else "m"
+                                "calories" -> "kcal"
+                                "steps" -> "kroków"
+                                "ascent", "descent" -> "m"
+                                "maxPressure", "minPressure" -> "hPa"
+                                "bestPace1km" -> "min/km"
+                                else -> ""
                             }
+                            val title = when(chart.id) {
+                                "distanceGps" -> if (maxVal > 6000) "Dystans (GPS) w kilometrach" else "Dystans (GPS) w metrach"
+                                "distanceSteps" -> if (maxVal > 6000) "Dystans (kroki) w kilometrach" else "Dystans (kroki) w metrach"
+                                "steps" -> "Kroki"
+                                else -> chart.label
+                            }
+                            CommonChartSection(
+                                title = title,
+                                producer = producer,
+                                unit = unit,
+                                overallRawData = rawData
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
                         }
                     }
                 } else if (stats.containsKey("raw_data")) {

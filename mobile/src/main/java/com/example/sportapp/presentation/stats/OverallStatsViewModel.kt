@@ -28,6 +28,12 @@ class OverallStatsViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
+    val charts = settingsManager.chartsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     private val _activityTypes = MutableStateFlow<List<String>>(emptyList())
     val activityTypes = _activityTypes.asStateFlow()
 
@@ -123,6 +129,12 @@ class OverallStatsViewModel @Inject constructor(
     fun saveWidgets(widgets: List<WidgetItem>) {
         viewModelScope.launch {
             settingsManager.saveWidgets(widgets)
+        }
+    }
+
+    fun saveCharts(charts: List<WidgetItem>) {
+        viewModelScope.launch {
+            settingsManager.saveCharts(charts)
         }
     }
 }

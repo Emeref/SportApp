@@ -20,6 +20,7 @@ class OverallStatsSettingsManager(private val context: Context) {
 
     companion object {
         private val WIDGETS_JSON = stringPreferencesKey("widgets_json")
+        private val CHARTS_JSON = stringPreferencesKey("charts_json")
         
         val DEFAULT_WIDGETS = listOf(
             WidgetItem("count", "Liczba aktywności"),
@@ -38,38 +39,62 @@ class OverallStatsSettingsManager(private val context: Context) {
             WidgetItem("max_avg_cadence", "Najwyższa śr. kadencja"),
             WidgetItem("max_avg_speed", "Najwyższa śr. prędkość")
         )
+
+        val DEFAULT_CHARTS = listOf(
+            WidgetItem("calories", "Spalone kalorie"),
+            WidgetItem("distanceGps", "Dystans (GPS)"),
+            WidgetItem("distanceSteps", "Dystans (kroki)"),
+            WidgetItem("ascent", "Suma podejść"),
+            WidgetItem("descent", "Suma zejść"),
+            WidgetItem("steps", "Kroki"),
+            WidgetItem("maxPressure", "Maks. ciśnienie"),
+            WidgetItem("minPressure", "Min. ciśnienie"),
+            WidgetItem("bestPace1km", "Najlepsze tempo (1km)")
+        )
     }
 
     val widgetsFlow: Flow<List<WidgetItem>> = context.overallStatsDataStore.data.map { preferences ->
         val widgetsJson = preferences[WIDGETS_JSON]
-        if (widgetsJson != null) {
-            try {
-                val type = object : TypeToken<List<WidgetItem>>() {}.type
-                val decoded: List<WidgetItem>? = gson.fromJson(widgetsJson, type)
-                
-                if (decoded.isNullOrEmpty()) {
-                    DEFAULT_WIDGETS
-                } else {
-                    // Merging logic to add new default widgets to existing user settings
-                    val currentIds = DEFAULT_WIDGETS.map { it.id }.toSet()
-                    val filtered = decoded.filter { it.id in currentIds }.toMutableList()
-                    val missing = DEFAULT_WIDGETS.filter { def -> filtered.none { it.id == def.id } }
-                    if (missing.isNotEmpty()) {
-                        filtered.addAll(missing)
-                    }
-                    filtered
+        decodeList(widgetsJson, DEFAULT_WIDGETS)
+    }
+
+    val chartsFlow: Flow<List<WidgetItem>> = context.overallStatsDataStore.data.map { preferences ->
+        val chartsJson = preferences[CHARTS_JSON]
+        decodeList(chartsJson, DEFAULT_CHARTS)
+    }
+
+    private fun decodeList(json: String?, default: List<WidgetItem>): List<WidgetItem> {
+        if (json == null) return default
+        return try {
+            val type = object : TypeToken<List<WidgetItem>>() {}.type
+            val decoded: List<WidgetItem>? = gson.fromJson(json, type)
+            
+            if (decoded.isNullOrEmpty()) {
+                default
+            } else {
+                // Merging logic
+                val currentIds = default.map { it.id }.toSet()
+                val filtered = decoded.filter { it.id in currentIds }.toMutableList()
+                val missing = default.filter { def -> filtered.none { it.id == def.id } }
+                if (missing.isNotEmpty()) {
+                    filtered.addAll(missing)
                 }
-            } catch (e: Exception) {
-                DEFAULT_WIDGETS
+                filtered
             }
-        } else {
-            DEFAULT_WIDGETS
+        } catch (e: Exception) {
+            default
         }
     }
 
     suspend fun saveWidgets(widgets: List<WidgetItem>) {
         context.overallStatsDataStore.edit { preferences ->
             preferences[WIDGETS_JSON] = gson.toJson(widgets)
+        }
+    }
+
+    suspend fun saveCharts(charts: List<WidgetItem>) {
+        context.overallStatsDataStore.edit { preferences ->
+            preferences[CHARTS_JSON] = gson.toJson(charts)
         }
     }
 }
