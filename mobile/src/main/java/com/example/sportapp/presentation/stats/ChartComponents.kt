@@ -75,6 +75,7 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 import java.text.SimpleDateFormat
 import kotlin.math.ceil
+import kotlin.math.floor
 
 class ThresholdLineDecoration(
     private val thresholdValue: Float,
@@ -136,12 +137,19 @@ fun CommonChartSection(
     hrZoneResult: HeartRateZoneResult? = null,
     lineColors: List<Color>? = null
 ) {
-    val axisValuesOverrider = remember(hrZoneResult) {
+    val axisValuesOverrider = remember(hrZoneResult, unit) {
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
                 if (hrZoneResult != null) return hrZoneResult.zones.last().maxBpm.toFloat() + 5f
                 val max = model.maxY
                 if (max.isNaN() || max <= 0f) return 8f
+                
+                if (unit == "hPa") {
+                    val c = ceil(max.toDouble()).toFloat()
+                    val f = floor(model.minY.toDouble()).toFloat()
+                    return if (c == f) c + 1f else c
+                }
+                
                 val ceiling = ceil(max.toDouble()).toInt()
                 val remainder = ceiling % 8
                 val finalMax = if (remainder == 0) ceiling else ceiling + (8 - remainder)
@@ -149,6 +157,11 @@ fun CommonChartSection(
             }
             override fun getMinY(model: ChartEntryModel): Float {
                 val minDataValue = if (model.minY.isNaN()) 0f else model.minY
+                
+                if (unit == "hPa") {
+                    return floor(minDataValue.toDouble()).toFloat()
+                }
+
                 return (minDataValue - 4f).coerceAtLeast(0f)
             }
             override fun getMinX(model: ChartEntryModel): Float = model.minX
@@ -165,7 +178,10 @@ fun CommonChartSection(
         }
         
         val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
-        val formatter = DecimalFormat("#,###.#", symbols)
+        val formatter = remember(unit) {
+            if (unit == "hPa") DecimalFormat("#,###.##", symbols)
+            else DecimalFormat("#,###.#", symbols)
+        }
         val primaryColor = MaterialTheme.colorScheme.primary
 
         val totalPoints = detailTimes?.size ?: 0
@@ -224,7 +240,10 @@ fun CommonChartSection(
             marker = marker,
             startAxis = rememberStartAxis(
                 label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
-                valueFormatter = { value, _ -> formatter.format(value.toLong()) },
+                valueFormatter = { value, _ -> 
+                    if (unit == "hPa") formatter.format(value)
+                    else formatter.format(value.toLong())
+                },
                 itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9),
                 guideline = null
             ),
