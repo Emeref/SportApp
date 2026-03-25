@@ -200,9 +200,19 @@ class WorkoutRepository @Inject constructor(
         val totalDescent = filtered.sumOf { it.totalDescent ?: 0.0 }
         val avgBpm = if (filtered.any { it.avgBpm != null }) filtered.mapNotNull { it.avgBpm }.average() else 0.0
         
-        val maxPressure = if (filtered.any { it.maxPressure != null }) filtered.mapNotNull { it.maxPressure }.maxOrNull() else 0.0
-        val minPressure = if (filtered.any { it.minPressure != null }) filtered.mapNotNull { it.minPressure }.minOrNull() else 0.0
-        val bestPace1km = if (filtered.any { it.bestPace1km != null }) filtered.mapNotNull { it.bestPace1km }.minOrNull() else 0.0
+        // Nowe statystyki "Maksymalne z serii"
+        val maxSpeed = filtered.mapNotNull { it.maxSpeed }.maxOrNull() ?: 0.0
+        val maxAltitude = filtered.mapNotNull { it.maxAltitude }.maxOrNull() ?: 0.0
+        val maxElevationGain = filtered.mapNotNull { it.totalAscent }.maxOrNull() ?: 0.0
+        val maxDistance = filtered.map { (it.distanceGps ?: 0.0) + (it.distanceSteps ?: 0.0) }.maxOrNull() ?: 0.0
+        val maxDuration = filtered.map { it.durationSeconds }.maxOrNull() ?: 0L
+        val maxCalories = filtered.mapNotNull { it.totalCalories }.maxOrNull() ?: 0.0
+        val maxAvgCadence = filtered.mapNotNull { it.avgCadence }.maxOrNull() ?: 0.0
+        
+        val maxAvgSpeed = filtered
+            .filter { it.durationSeconds >= 1800 } // Tylko aktywności > 30 min
+            .map { ((it.distanceGps ?: 0.0) + (it.distanceSteps ?: 0.0)) / (it.durationSeconds / 3600.0) }
+            .maxOrNull() ?: 0.0
 
         return mapOf(
             "count" to totalWorkouts,
@@ -217,9 +227,17 @@ class WorkoutRepository @Inject constructor(
             "ascent" to totalAscent,
             "descent" to totalDescent,
             "avgBpm" to avgBpm,
-            "maxPressure" to (maxPressure ?: 0.0),
-            "minPressure" to (minPressure ?: 0.0),
-            "bestPace1km" to (bestPace1km ?: 0.0),
+            
+            // Nowe klucze dla statystyk rekordowych
+            "max_speed" to maxSpeed,
+            "max_altitude" to maxAltitude,
+            "max_elevation_gain" to maxElevationGain,
+            "max_distance" to maxDistance,
+            "max_duration" to maxDuration,
+            "max_calories" to maxCalories,
+            "max_avg_cadence" to maxAvgCadence,
+            "max_avg_speed" to maxAvgSpeed,
+
             "raw_data" to filtered
         )
     }

@@ -161,9 +161,14 @@ fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
         "ascent" -> StatCard(modifier, "W sumie w górę", "${formatLargeNumber(stats["ascent"])} m")
         "descent" -> StatCard(modifier, "W sumie do dołu", "${formatLargeNumber(stats["descent"])} m")
         "steps" -> StatCard(modifier, "Kroki", formatLargeNumber(stats["steps"]))
-        "maxPressure" -> StatCard(modifier, "Maks. ciśnienie atm.", "${formatDecimal(stats["maxPressure"])} hPa")
-        "minPressure" -> StatCard(modifier, "Min. ciśnienie atm.", "${formatDecimal(stats["minPressure"])} hPa")
-        "bestPace1km" -> StatCard(modifier, "Najlepsze tempo (1km)", formatPace(stats["bestPace1km"] as? Double ?: 0.0))
+        "max_speed" -> StatCard(modifier, "Maks prędkość", String.format(Locale.US, "%.1f km/h", stats["max_speed"] as? Double ?: 0.0))
+        "max_altitude" -> StatCard(modifier, "Maks wysokość", String.format(Locale.US, "%.0f m", stats["max_altitude"] as? Double ?: 0.0))
+        "max_elevation_gain" -> StatCard(modifier, "Najwięcej przewyższeń", String.format(Locale.US, "+%.0f m", stats["max_elevation_gain"] as? Double ?: 0.0))
+        "max_distance" -> StatCard(modifier, "Największy dystans", formatDistanceUI(stats["max_distance"] as? Double ?: 0.0))
+        "max_duration" -> StatCard(modifier, "Najdłuższy czas", formatDuration(stats["max_duration"] as? Long ?: 0L))
+        "max_calories" -> StatCard(modifier, "Najwięcej kalorii", "${formatLargeNumber(stats["max_calories"])} kcal")
+        "max_avg_cadence" -> StatCard(modifier, "Najwyższa śr. kadencja", String.format(Locale.US, "%.0f kr/min", stats["max_avg_cadence"] as? Double ?: 0.0))
+        "max_avg_speed" -> StatCard(modifier, "Najwyższa śr. prędkość", String.format(Locale.US, "%.1f km/h", stats["max_avg_speed"] as? Double ?: 0.0))
     }
 }
 
@@ -181,13 +186,12 @@ private fun formatLargeNumber(value: Any?): String {
     return formatter.format(num)
 }
 
-private fun formatDecimal(value: Any?): String {
-    val num = when (value) {
-        is Number -> value.toDouble()
-        is String -> value.toDoubleOrNull() ?: 0.0
-        else -> 0.0
-    }
-    return String.format(Locale.US, "%.1f", num)
+private fun formatDuration(seconds: Long): String {
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
+    val s = seconds % 60
+    return if (h > 0) String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+    else String.format(Locale.US, "%02d:%02d", m, s)
 }
 
 private fun formatPace(pace: Double): String {
@@ -201,7 +205,7 @@ private fun formatDistanceUI(meters: Double): String {
     return when {
         meters < 1000 -> "${formatLargeNumber(meters)} m"
         meters < 10000 -> String.format(Locale.US, "%.2f km", Math.floor(meters / 10.0) / 100.0)
-        meters < 100000 -> String.format(Locale.US, "%.1f km", Math.floor(meters / 100.0) / 10.0)
+        meters < 100000 -> String.format(Locale.US, "%.1f km", Math.floor(meters / 10.0) / 10.0)
         else -> "${formatLargeNumber(Math.floor(meters / 1000.0))} km"
     }
 }

@@ -28,7 +28,15 @@ class OverallStatsSettingsManager(private val context: Context) {
             WidgetItem("distanceSteps", "Dystans (kroki)"),
             WidgetItem("ascent", "W sumie w górę"),
             WidgetItem("descent", "W sumie do dołu"),
-            WidgetItem("steps", "Wszystkie kroki")
+            WidgetItem("steps", "Wszystkie kroki"),
+            WidgetItem("max_speed", "Maks prędkość"),
+            WidgetItem("max_altitude", "Maks wysokość"),
+            WidgetItem("max_elevation_gain", "Najwięcej przewyższeń"),
+            WidgetItem("max_distance", "Największy dystans"),
+            WidgetItem("max_duration", "Najdłuższy czas"),
+            WidgetItem("max_calories", "Najwięcej kalorii"),
+            WidgetItem("max_avg_cadence", "Najwyższa śr. kadencja"),
+            WidgetItem("max_avg_speed", "Najwyższa śr. prędkość")
         )
     }
 
@@ -43,7 +51,6 @@ class OverallStatsSettingsManager(private val context: Context) {
                     DEFAULT_WIDGETS
                 } else {
                     // Merging logic to add new default widgets to existing user settings
-                    // or remove ones no longer in DEFAULT_WIDGETS
                     val currentIds = DEFAULT_WIDGETS.map { it.id }.toSet()
                     val filtered = decoded.filter { it.id in currentIds }.toMutableList()
                     val missing = DEFAULT_WIDGETS.filter { def -> filtered.none { it.id == def.id } }
