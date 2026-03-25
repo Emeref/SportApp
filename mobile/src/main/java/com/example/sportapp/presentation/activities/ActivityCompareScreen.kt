@@ -18,9 +18,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sportapp.AppConstants
 import com.example.sportapp.R
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.model.HeartRateZoneResult
@@ -71,7 +73,14 @@ fun ActivityCompareScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Porównanie aktywności") },
+                title = {
+                    Text(
+                        text = session1?.let { "Porównanie: ${it.activityName}" } ?: "Porównanie aktywności",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
@@ -93,69 +102,86 @@ fun ActivityCompareScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .verticalScroll(rememberScrollState())
             ) {
-                // Header
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Sticky Dates Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .height(24.dp)
+                        .padding(horizontal = 32.dp, vertical = 1.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(s1.activityName, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        s1.activityDate,
+                        color = Color1,
+                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        s2.activityDate,
+                        color = Color2,
+                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // Scrollable Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Text(s1.activityDate, color = Color1, fontWeight = FontWeight.Bold)
-                        Text(s2.activityDate, color = Color2, fontWeight = FontWeight.Bold)
-                    }
-                }
 
-                CompareStatsSection(s1, s2, currentSettings.visibleWidgets)
+                    CompareStatsSection(s1, s2, currentSettings.visibleWidgets)
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                // Wyświetlamy wykresy zgodnie z ustawieniami
-                currentSettings.visibleCharts.filter { it.isEnabled }.forEach { widget ->
-                    when (widget.id) {
-                        "map" -> {
-                            CompareMaps(s1, s2, isDarkTheme)
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                        "bpm" -> {
-                            viewModel.chartProducers["bpm"]?.let { producer ->
-                                if (s1.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true || s2.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true) {
-                                    CompareChart(
-                                        title = "Tętno (bpm)", 
-                                        producer = producer, 
-                                        unit = "bpm", 
-                                        times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times,
-                                        hrZoneResult = hrZones1
-                                    )
-                                    if (hrZones1 != null && hrZones2 != null) {
-                                        CompareHeartRateZones(hrZones1!!, hrZones2!!)
+                    // Wyświetlamy wykresy zgodnie z ustawieniami
+                    currentSettings.visibleCharts.filter { it.isEnabled }.forEach { widget ->
+                        when (widget.id) {
+                            "map" -> {
+                                CompareMaps(s1, s2, isDarkTheme)
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                            "bpm" -> {
+                                viewModel.chartProducers["bpm"]?.let { producer ->
+                                    if (s1.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true || s2.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true) {
+                                        CompareChart(
+                                            title = "Tętno (bpm)", 
+                                            producer = producer, 
+                                            unit = "bpm", 
+                                            times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times,
+                                            hrZoneResult = hrZones1
+                                        )
+                                        if (hrZones1 != null && hrZones2 != null) {
+                                            CompareHeartRateZones(hrZones1!!, hrZones2!!)
+                                        }
+                                        Spacer(modifier = Modifier.height(16.dp))
                                     }
-                                    Spacer(modifier = Modifier.height(16.dp))
                                 }
                             }
-                        }
-                        else -> {
-                            viewModel.chartProducers[widget.id]?.let { producer ->
-                                if (s1.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true || s2.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true) {
-                                    CompareChart(
-                                        title = widget.label,
-                                        producer = producer,
-                                        unit = getUnitForWidget(widget.id),
-                                        times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times
-                                    )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                            else -> {
+                                viewModel.chartProducers[widget.id]?.let { producer ->
+                                    if (s1.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true || s2.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true) {
+                                        CompareChart(
+                                            title = widget.label,
+                                            producer = producer,
+                                            unit = getUnitForWidget(widget.id),
+                                            times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                    }
                                 }
                             }
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(32.dp))
             }
         } else {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -180,14 +206,14 @@ fun CompareStatsSection(s1: SessionData, s2: SessionData, visibleWidgets: List<W
         "max_altitude" to CompareWidgetConfig("Maks wysokość", s1.maxAltitude, s2.maxAltitude, null),
         "total_ascent" to CompareWidgetConfig("Suma podejść", s1.totalAscent, s2.totalAscent, true),
         "total_descent" to CompareWidgetConfig("Suma zejść", s1.totalDescent, s2.totalDescent, true),
-        "avg_step_length" to CompareWidgetConfig("Śr. długość kroku", s1.avgStepLength, s2.avgStepLength, null),
+        "avg_step_length" to CompareWidgetConfig("Wyliczona długość kroku", s1.avgStepLength, s2.avgStepLength, null),
         "avg_cadence" to CompareWidgetConfig("Śr. kadencja", s1.avgCadence, s2.avgCadence, true),
         "max_cadence" to CompareWidgetConfig("Maks. kadencja", s1.maxCadence, s2.maxCadence, true),
         "total_steps" to CompareWidgetConfig("Liczba kroków", s1.totalSteps.toDouble(), s2.totalSteps.toDouble(), true),
         "total_distance_gps" to CompareWidgetConfig("Dystans (GPS)", s1.totalDistanceGps, s2.totalDistanceGps, true),
         "total_distance_steps" to CompareWidgetConfig("Dystans (kroki)", s1.totalDistanceSteps, s2.totalDistanceSteps, true),
-        "pressure_start" to CompareWidgetConfig("Ciśnienie (start)", s1.pressureStart ?: 0.0, s2.pressureStart ?: 0.0, null),
-        "pressure_end" to CompareWidgetConfig("Ciśnienie (koniec)", s1.pressureEnd ?: 0.0, s2.pressureEnd ?: 0.0, null)
+        "pressure_start" to CompareWidgetConfig("Ciśnienie atm. (start)", s1.pressureStart ?: 0.0, s2.pressureStart ?: 0.0, null),
+        "pressure_end" to CompareWidgetConfig("Ciśnienie atm. (koniec)", s1.pressureEnd ?: 0.0, s2.pressureEnd ?: 0.0, null)
     )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -363,12 +389,9 @@ fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean) {
     val context = LocalContext.current
     val mapStyle = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
     
-    val start1 = s1.route.firstOrNull() ?: LatLng(0.0, 0.0)
-    val start2 = s2.route.firstOrNull() ?: LatLng(0.0, 0.0)
+    val routesAreClose = areRoutesClose(s1.route, s2.route, AppConstants.MAP_COMPARISON_RADIUS_KM)
     
-    val distance = calculateDistance(start1, start2)
-    
-    if (distance < 5000) {
+    if (routesAreClose) {
         // One map
         val boundsBuilder = LatLngBounds.Builder()
         s1.route.forEach { boundsBuilder.include(it) }
@@ -426,6 +449,40 @@ fun MapSmall(route: List<LatLng>, color: Color, style: MapStyleOptions?, modifie
             Polyline(points = route, color = color, width = 6f)
         }
     }
+}
+
+private fun getComparisonPoints(route: List<LatLng>): List<LatLng> {
+    if (route.isEmpty()) return emptyList()
+    if (route.size < 6) return route
+    
+    return listOf(
+        route[0],
+        route[(route.size - 1) * 1 / 5],
+        route[(route.size - 1) * 2 / 5],
+        route[(route.size - 1) * 3 / 5],
+        route[(route.size - 1) * 4 / 5],
+        route.last()
+    )
+}
+
+private fun areRoutesClose(route1: List<LatLng>, route2: List<LatLng>, radiusKm: Double): Boolean {
+    val points1 = getComparisonPoints(route1)
+    val points2 = getComparisonPoints(route2)
+    
+    if (points1.isEmpty() || points2.isEmpty()) return false
+    
+    // Okręgi nachodzą na siebie, jeśli odległość między środkami jest mniejsza lub równa sumie promieni.
+    // Tutaj oba promienie to radiusKm, więc suma to 2 * radiusKm.
+    val maxDistanceMeters = radiusKm * 2 * 1000 
+    
+    for (p1 in points1) {
+        for (p2 in points2) {
+            if (calculateDistance(p1, p2) <= maxDistanceMeters) {
+                return true
+            }
+        }
+    }
+    return false
 }
 
 private fun calculateDistance(p1: LatLng, p2: LatLng): Float {

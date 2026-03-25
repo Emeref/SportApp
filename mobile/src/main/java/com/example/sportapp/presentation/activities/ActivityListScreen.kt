@@ -101,7 +101,7 @@ fun ActivityListScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
                             painter = painterResource(id = R.drawable.logo_apki_biale),
                             contentDescription = null,
@@ -111,12 +111,12 @@ fun ActivityListScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack, modifier = Modifier.padding(top = 16.dp)) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
                     }
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToSettings, modifier = Modifier.padding(top = 16.dp)) {
+                    IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Ustawienia wykresów")
                     }
                 }

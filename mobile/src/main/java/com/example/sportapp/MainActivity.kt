@@ -4,9 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -46,15 +45,17 @@ class MainActivity : ComponentActivity() {
             val settingsState by settingsManager.settingsFlow.collectAsStateWithLifecycle(initialValue = MobileSettingsState())
             
             SportAppTheme(themeMode = settingsState.themeMode) {
-                val navController = rememberNavController()
-                val scope = rememberCoroutineScope()
-                val statsViewModel: OverallStatsViewModel = hiltViewModel()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val navController = rememberNavController()
+                    val scope = rememberCoroutineScope()
+                    val statsViewModel: OverallStatsViewModel = hiltViewModel()
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = Screen.Home.route,
-                        modifier = Modifier.padding(innerPadding)
+                        startDestination = Screen.Home.route
                     ) {
                         composable(Screen.Home.route) {
                             val homeViewModel: HomeViewModel = hiltViewModel()
@@ -144,7 +145,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("stats_widget_selection") {
-                            val statsWidgets by statsViewModel.widgets.collectAsState()
+                            val statsWidgets by statsViewModel.widgets.collectAsStateWithLifecycle()
                             OverallStatsWidgetScreen(
                                 widgets = statsWidgets,
                                 onSave = { updatedWidgets ->
