@@ -46,8 +46,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = { 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 16.dp)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.logo_apki_biale),
@@ -59,8 +58,7 @@ fun SettingsScreen(
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = onCancel,
-                        modifier = Modifier.padding(top = 16.dp)
+                        onClick = onCancel
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
                     }
