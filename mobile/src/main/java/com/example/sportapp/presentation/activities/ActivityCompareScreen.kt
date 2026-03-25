@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sportapp.AppConstants
 import com.example.sportapp.R
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.model.HeartRateZoneResult
@@ -363,12 +364,9 @@ fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean) {
     val context = LocalContext.current
     val mapStyle = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
     
-    val start1 = s1.route.firstOrNull() ?: LatLng(0.0, 0.0)
-    val start2 = s2.route.firstOrNull() ?: LatLng(0.0, 0.0)
+    val routesAreClose = areRoutesClose(s1.route, s2.route, AppConstants.MAP_COMPARISON_RADIUS_KM)
     
-    val distance = calculateDistance(start1, start2)
-    
-    if (distance < 5000) {
+    if (routesAreClose) {
         // One map
         val boundsBuilder = LatLngBounds.Builder()
         s1.route.forEach { boundsBuilder.include(it) }
@@ -426,6 +424,40 @@ fun MapSmall(route: List<LatLng>, color: Color, style: MapStyleOptions?, modifie
             Polyline(points = route, color = color, width = 6f)
         }
     }
+}
+
+private fun getComparisonPoints(route: List<LatLng>): List<LatLng> {
+    if (route.isEmpty()) return emptyList()
+    if (route.size < 6) return route
+    
+    return listOf(
+        route[0],
+        route[(route.size - 1) * 1 / 5],
+        route[(route.size - 1) * 2 / 5],
+        route[(route.size - 1) * 3 / 5],
+        route[(route.size - 1) * 4 / 5],
+        route.last()
+    )
+}
+
+private fun areRoutesClose(route1: List<LatLng>, route2: List<LatLng>, radiusKm: Double): Boolean {
+    val points1 = getComparisonPoints(route1)
+    val points2 = getComparisonPoints(route2)
+    
+    if (points1.isEmpty() || points2.isEmpty()) return false
+    
+    // Okręgi nachodzą na siebie, jeśli odległość między środkami jest mniejsza lub równa sumie promieni.
+    // Tutaj oba promienie to radiusKm, więc suma to 2 * radiusKm.
+    val maxDistanceMeters = radiusKm * 2 * 1000 
+    
+    for (p1 in points1) {
+        for (p2 in points2) {
+            if (calculateDistance(p1, p2) <= maxDistanceMeters) {
+                return true
+            }
+        }
+    }
+    return false
 }
 
 private fun calculateDistance(p1: LatLng, p2: LatLng): Float {
