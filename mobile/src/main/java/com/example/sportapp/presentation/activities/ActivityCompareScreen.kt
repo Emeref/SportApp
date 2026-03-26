@@ -213,7 +213,10 @@ fun CompareStatsSection(s1: SessionData, s2: SessionData, visibleWidgets: List<W
         "total_distance_gps" to CompareWidgetConfig("Dystans (GPS)", s1.totalDistanceGps, s2.totalDistanceGps, true),
         "total_distance_steps" to CompareWidgetConfig("Dystans (kroki)", s1.totalDistanceSteps, s2.totalDistanceSteps, true),
         "pressure_start" to CompareWidgetConfig("Ciśnienie atm. (start)", s1.pressureStart ?: 0.0, s2.pressureStart ?: 0.0, null),
-        "pressure_end" to CompareWidgetConfig("Ciśnienie atm. (koniec)", s1.pressureEnd ?: 0.0, s2.pressureEnd ?: 0.0, null)
+        "pressure_end" to CompareWidgetConfig("Ciśnienie atm. (koniec)", s1.pressureEnd ?: 0.0, s2.pressureEnd ?: 0.0, null),
+        "max_pressure" to CompareWidgetConfig("Maks. ciśnienie atm.", s1.maxPressure ?: 0.0, s2.maxPressure ?: 0.0, null),
+        "min_pressure" to CompareWidgetConfig("Min. ciśnienie atm.", s1.minPressure ?: 0.0, s2.minPressure ?: 0.0, null),
+        "best_pace_1km" to CompareWidgetConfig("Najlepsze tempo (1km)", s1.bestPace1km ?: 0.0, s2.bestPace1km ?: 0.0, false)
     )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -236,6 +239,8 @@ private fun formatValue(id: String, value: Any): String {
         is Number -> value.toDouble()
         else -> return value.toString()
     }
+    if (n == 0.0 && (id == "best_pace_1km" || id == "max_pressure" || id == "min_pressure")) return "--"
+
     return when (id) {
         "duration" -> value.toString()
         "total_calories" -> "${n.toInt()} kcal"
@@ -247,8 +252,9 @@ private fun formatValue(id: String, value: Any): String {
         "avg_cadence", "max_cadence" -> String.format(Locale.US, "%.0f kr/min", n)
         "total_steps" -> "${n.toInt()}"
         "total_distance_gps", "total_distance_steps" -> formatDistance(n)
-        "pressure_start", "pressure_end" -> String.format(Locale.US, "%.1f hPa", n)
+        "pressure_start", "pressure_end", "max_pressure", "min_pressure" -> String.format(Locale.US, "%.1f hPa", n)
         "max_bpm", "avg_bpm" -> "${n.toInt()} bpm"
+        "best_pace_1km" -> formatPace(n)
         else -> value.toString()
     }
 }
@@ -264,7 +270,8 @@ fun <T> CompareStatRow(
     val comparison = if (higherIsBetter != null && v1 is Number && v2 is Number) {
         val n1 = v1.toDouble()
         val n2 = v2.toDouble()
-        if (n1 > n2) (if (higherIsBetter) 1 else -1)
+        if (n1 == 0.0 || n2 == 0.0) 0
+        else if (n1 > n2) (if (higherIsBetter) 1 else -1)
         else if (n1 < n2) (if (higherIsBetter) -1 else 1)
         else 0
     } else 0
