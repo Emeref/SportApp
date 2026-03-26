@@ -109,10 +109,7 @@ class SettingsManager @Inject constructor(
         WidgetItem("distanceSteps", "Dystans (kroki)"),
         WidgetItem("ascent", "Przewyższenia w górę"),
         WidgetItem("descent", "Przewyższenia w dół"),
-        WidgetItem("steps", "Wszystkie kroki"),
-        WidgetItem("maxPressure", "Maks. ciśnienie"),
-        WidgetItem("minPressure", "Min. ciśnienie"),
-        WidgetItem("bestPace1km", "Najlepsze tempo (1km)")
+        WidgetItem("steps", "Wszystkie kroki")
     )
 
     private fun triggerSync() {

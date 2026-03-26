@@ -13,10 +13,7 @@ object SummaryManager {
         val distanceStepsM: Int = 0,
         val ascent: Int = 0,
         val descent: Int = 0,
-        val steps: Int = 0,
-        val maxPressure: Double = 0.0,
-        val minPressure: Double = 0.0,
-        val bestPace1km: Double = 0.0
+        val steps: Int = 0
     )
 
     suspend fun getStatsForPeriod(
@@ -48,10 +45,6 @@ object SummaryManager {
         var ascent = 0.0
         var descent = 0.0
         var steps = 0
-        
-        var maxP = 0.0
-        var minP = 10000.0
-        var bestPace = 10000.0
 
         workouts.forEach { workout ->
             calories += workout.totalCalories ?: 0.0
@@ -60,10 +53,6 @@ object SummaryManager {
             ascent += workout.totalAscent ?: 0.0
             descent += workout.totalDescent ?: 0.0
             steps += workout.steps ?: 0
-            
-            workout.maxPressure?.let { if (it > maxP) maxP = it }
-            workout.minPressure?.let { if (it < minP) minP = it }
-            workout.bestPace1km?.let { if (it > 0 && it < bestPace) bestPace = it }
         }
 
         return WatchStats(
@@ -73,10 +62,7 @@ object SummaryManager {
             distanceStepsM = distanceSteps.toInt(),
             ascent = ascent.toInt(),
             descent = descent.toInt(),
-            steps = steps,
-            maxPressure = maxP,
-            minPressure = if (minP == 10000.0) 0.0 else minP,
-            bestPace1km = if (bestPace == 10000.0) 0.0 else bestPace
+            steps = steps
         )
     }
 }
