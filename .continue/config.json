@@ -1,0 +1,67 @@
+{
+  "models": [
+    {
+      "title": "Ollama - Qwen Coder 30B (Main)",
+      "provider": "ollama",
+      "model": "qwen3-coder:30b"
+    },
+    {
+      "title": "Ollama - DeepSeek R1 8B (Reasoning)",
+      "provider": "ollama",
+      "model": "deepseek-r1:8b"
+    },
+    {
+      "title": "Ollama - Llama 3.1 8B",
+      "provider": "ollama",
+      "model": "llama3.1:8b"
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "Ollama - Qwen Coder 1.5B (Autocomplete)",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:1.5b-base"
+  },
+  "embeddingsProvider": {
+    "provider": "ollama",
+    "model": "nomic-embed-text:latest"
+  },
+  "customCommands": [
+    {
+      "name": "test",
+      "prompt": "{{{ input }}}\n\nNapisz testy jednostkowe dla powyższego kodu, używając JUnit i MockK.",
+      "description": "Generuj testy"
+    }
+  ],
+  "contextProviders": [
+    {
+      "name": "code",
+      "params": {}
+    },
+    {
+      "name": "docs",
+      "params": {}
+    },
+    {
+      "name": "diff",
+      "params": {}
+    },
+    {
+      "name": "terminal",
+      "params": {}
+    }
+  ],
+  "slashCommands": [
+    {
+      "name": "edit",
+      "description": "Edytuj zaznaczony kod"
+    },
+    {
+      "name": "comment",
+      "description": "Dodaj komentarze do kodu"
+    },
+    {
+      "name": "share",
+      "description": "Eksportuj czat"
+    }
+  ]
+}

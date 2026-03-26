@@ -1,0 +1,27 @@
+name: My Local Dev Servers
+version: "0.0.1"
+schema: v1
+
+mcpServers:
+  - name: Kotlin Filesystem
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-filesystem"
+      - "C:\Users\konra\AndroidStudioProjects\SportApp\mobile\src\main\java\com\example\sportapp"
+
+  - name: GitHub Sync
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-github"
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_TOKEN}"
+
+autoApprove:
+  - host: "continue"
+    tools:
+      - "read_file"
+      - "write_file"
+    directories:
+      - "C:\Users\konra\AndroidStudioProjects\SportApp\mobile\src\main\java\com\example\sportapp"
