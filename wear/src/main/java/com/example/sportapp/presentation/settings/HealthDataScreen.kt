@@ -1,20 +1,16 @@
 package com.example.sportapp.presentation.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
+import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
+import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
@@ -103,54 +99,76 @@ fun HealthDataScreen(
     }
 }
 
+@OptIn(ExperimentalWearFoundationApi::class)
 @Composable
 fun NumericInputScreen(
+    label: String,
     value: Int,
     range: IntRange,
+    unit: String = "",
     onValueChange: (Int) -> Unit,
     onDone: () -> Unit
 ) {
-    var textFieldValue by remember {
-        mutableStateOf(
-            TextFieldValue(
-                text = value.toString(),
-                selection = TextRange(value.toString().length)
-            )
-        )
-    }
+    val state = rememberPickerState(
+        initialNumberOfOptions = range.last - range.first + 1,
+        initiallySelectedOption = value - range.first
+    )
     val focusRequester = remember { FocusRequester() }
-
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        BasicTextField(
-            value = textFieldValue,
-            onValueChange = { newValue ->
-                val text = newValue.text
-                if (text.isEmpty() || (text.all { it.isDigit() } && text.length <= 3)) {
-                    textFieldValue = newValue
-                    text.toIntOrNull()?.let { num ->
-                        onValueChange(num.coerceIn(range.first, range.last))
-                    }
-                }
-            },
-            modifier = Modifier
-                .size(1.dp)
-                .focusRequester(focusRequester),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { onDone() }
-            ),
-            textStyle = androidx.compose.ui.text.TextStyle(color = Color.Transparent)
-        )
-    }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.caption1,
+            color = MaterialTheme.colors.secondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 17.dp)
+        )
+        
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Picker(
+                state = state,
+                contentDescription = label,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(110.dp)
+                    .rotaryScrollable(
+                        RotaryScrollableDefaults.behavior(state),
+                        focusRequester
+                    )
+            ) { index ->
+                val currentVal = range.first + index
+                Text(
+                    text = if (unit.isNotEmpty()) "$currentVal $unit" else "$currentVal",
+                    style = MaterialTheme.typography.display2,
+                    color = if (state.selectedOption == index) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface
+                )
+            }
+        }
+
+        Chip(
+            label = { Text("Zapisz", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+            onClick = {
+                onValueChange(range.first + state.selectedOption)
+                onDone()
+            },
+            modifier = Modifier
+                .width(120.dp)
+                .padding(bottom = 12.dp),
+            colors = ChipDefaults.primaryChipColors()
+        )
     }
 }
 
