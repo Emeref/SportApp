@@ -38,3 +38,4 @@ Ponadto chcesz aby aplikacja działała szybko i była dobrze skonfigurowana.
 - Nie usuwaj komentarzy oznaczonych jako // IMPORTANT.
 - Przed dodaniem nowej biblioteki zawsze aktualizuj `libs.versions.toml`.
 - Zanim zmienisz plik, przeanalizuj istniejące zależności.
+- Po zmianach, które zostały skomitowane aktualizuj plik TODO.md
