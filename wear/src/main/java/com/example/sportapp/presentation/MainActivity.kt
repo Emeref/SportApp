@@ -186,8 +186,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_age") {
                             NumericInputScreen(
+                                label = "Wiek",
                                 value = healthData.age,
                                 range = 16..120,
+                                unit = "lat",
                                 onValueChange = { 
                                     healthData = healthData.copy(age = it, maxHR = 220 - it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -197,8 +199,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_weight") {
                             NumericInputScreen(
+                                label = "Waga",
                                 value = healthData.weight,
                                 range = 30..250,
+                                unit = "kg",
                                 onValueChange = { 
                                     healthData = healthData.copy(weight = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -208,8 +212,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_height") {
                             NumericInputScreen(
+                                label = "Wzrost",
                                 value = healthData.height,
                                 range = 100..230,
+                                unit = "cm",
                                 onValueChange = { 
                                     healthData = healthData.copy(height = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -219,8 +225,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_step_length") {
                             NumericInputScreen(
+                                label = "Długość kroku",
                                 value = healthData.stepLength,
                                 range = 30..130,
+                                unit = "cm",
                                 onValueChange = { 
                                     healthData = healthData.copy(stepLength = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -230,8 +238,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_resting_hr") {
                             NumericInputScreen(
+                                label = "Tętno spoczynkowe",
                                 value = healthData.restingHR,
                                 range = 30..200,
+                                unit = "BPM",
                                 onValueChange = { 
                                     healthData = healthData.copy(restingHR = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -241,8 +251,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_max_hr") {
                             NumericInputScreen(
+                                label = "Tętno maksymalne",
                                 value = healthData.maxHR,
                                 range = 100..240,
+                                unit = "BPM",
                                 onValueChange = { 
                                     healthData = healthData.copy(maxHR = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }

@@ -12,7 +12,6 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
 import com.example.sportapp.presentation.settings.ReportingPeriod
-import com.example.sportapp.presentation.settings.UserSettings
 import com.example.sportapp.presentation.workout.SummaryManager
 import java.util.Locale
 
@@ -72,20 +71,10 @@ fun StatCardForWidget(id: String, label: String, stats: SummaryManager.WatchStat
         "ascent" -> "${stats.ascent} m"
         "descent" -> "${stats.descent} m"
         "steps" -> "${stats.steps}"
-        "maxPressure" -> String.format(Locale.US, "%.1f hPa", stats.maxPressure)
-        "minPressure" -> String.format(Locale.US, "%.1f hPa", stats.minPressure)
-        "bestPace1km" -> formatPace(stats.bestPace1km)
         else -> "-"
     }
 
     StatCard(label = label, value = value)
-}
-
-fun formatPace(pace: Double): String {
-    if (pace <= 0.0) return "0:00"
-    val minutes = pace.toInt()
-    val seconds = ((pace - minutes) * 60).toInt()
-    return String.format(Locale.US, "%d:%02d", minutes, seconds)
 }
 
 fun formatDistance(meters: Int): String {

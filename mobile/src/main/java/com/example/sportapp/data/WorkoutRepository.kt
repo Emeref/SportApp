@@ -211,7 +211,11 @@ class WorkoutRepository @Inject constructor(
         
         val maxAvgSpeed = filtered
             .filter { it.durationSeconds >= 1800 } // Tylko aktywności > 30 min
-            .map { ((it.distanceGps ?: 0.0) + (it.distanceSteps ?: 0.0)) / (it.durationSeconds / 3600.0) }
+            .map { 
+                val distanceKm = ((it.distanceGps ?: 0.0) + (it.distanceSteps ?: 0.0)) / 1000.0
+                val durationHours = it.durationSeconds / 3600.0
+                if (durationHours > 0) distanceKm / durationHours else 0.0
+            }
             .maxOrNull() ?: 0.0
 
         return mapOf(
