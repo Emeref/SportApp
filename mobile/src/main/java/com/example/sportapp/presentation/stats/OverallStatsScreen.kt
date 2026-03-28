@@ -39,6 +39,7 @@ fun OverallStatsScreen(
     val selectedType by viewModel.selectedType.collectAsStateWithLifecycle()
     val startDate by viewModel.startDate.collectAsStateWithLifecycle()
     val endDate by viewModel.endDate.collectAsStateWithLifecycle()
+    val chartMaxValues by viewModel.chartMaxValues.collectAsStateWithLifecycle()
 
     OverallStatsContent(
         stats = stats,
@@ -49,7 +50,7 @@ fun OverallStatsScreen(
         startDate = startDate,
         endDate = endDate,
         chartProducers = viewModel.chartProducers,
-        getMaxValueForWidget = { viewModel.getMaxValueForWidget(it) },
+        chartMaxValues = chartMaxValues,
         onTypeSelected = { viewModel.onTypeSelected(it) },
         onDateRangeSelected = { start, end -> viewModel.onDateRangeSelected(start, end) },
         onNavigateBack = onNavigateBack,
@@ -68,7 +69,7 @@ fun OverallStatsContent(
     startDate: Date?,
     endDate: Date?,
     chartProducers: Map<String, ChartEntryModelProducer>,
-    getMaxValueForWidget: (String) -> Double,
+    chartMaxValues: Map<String, Double>,
     onTypeSelected: (String?) -> Unit,
     onDateRangeSelected: (Date?, Date?) -> Unit,
     onNavigateBack: () -> Unit,
@@ -209,7 +210,7 @@ fun OverallStatsContent(
                     activeCharts.forEach { chart ->
                         val producer = chartProducers[chart.id]
                         if (producer != null) {
-                            val maxVal = getMaxValueForWidget(chart.id)
+                            val maxVal = chartMaxValues[chart.id] ?: 0.0
                             val unit = when(chart.id) {
                                 "distanceGps" -> if (maxVal > 6000) "km" else "m"
                                 "distanceSteps" -> if (maxVal > 6000) "km" else "m"
@@ -231,9 +232,9 @@ fun OverallStatsContent(
                                 title = title,
                                 producer = producer,
                                 unit = unit,
-                                overallRawData = rawData,
                                 isScrollEnabled = true,
-                                isZoomEnabled = true
+                                isZoomEnabled = true,
+                                isTimestampX = true
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                         }
