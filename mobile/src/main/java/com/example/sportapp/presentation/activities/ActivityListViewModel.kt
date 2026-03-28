@@ -1,7 +1,6 @@
 package com.example.sportapp.presentation.activities
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
@@ -11,6 +10,7 @@ import com.example.sportapp.data.GpxImporter
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.ZipManager
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.presentation.settings.MobileSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +49,7 @@ sealed class ImportState {
 class ActivityListViewModel @Inject constructor(
     private val repository: IWorkoutRepository,
     private val gpxImporter: GpxImporter,
+    private val settingsManager: MobileSettingsManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -270,14 +271,21 @@ class ActivityListViewModel @Inject constructor(
         viewModelScope.launch {
             _importState.value = ImportState.Loading
             try {
+                val settings = settingsManager.settingsFlow.first()
                 val result = withContext(Dispatchers.IO) {
                     context.contentResolver.openInputStream(uri)?.use { input ->
-                        gpxImporter.importGpx(input, definition)
+                        gpxImporter.importGpx(input, definition, settings.healthData)
                     } ?: throw Exception("Nie można otworzyć pliku")
                 }
 
-                if (result.warnings.isNotEmpty()) {
-                    _importState.value = ImportState.Warning(result.warnings) {
+                val isDuplicate = checkDuplicate(result.workout.startTime, result.workout.durationSeconds)
+                val warnings = result.warnings.toMutableList()
+                if (isDuplicate) {
+                    warnings.add(0, "Wykryto potencjalny duplikat (taka sama data startu i czas trwania).")
+                }
+
+                if (warnings.isNotEmpty()) {
+                    _importState.value = ImportState.Warning(warnings) {
                         saveImportedWorkout(result)
                     }
                 } else {
@@ -289,14 +297,19 @@ class ActivityListViewModel @Inject constructor(
         }
     }
 
+    private suspend fun checkDuplicate(startTime: Long, durationSeconds: Long): Boolean {
+        val workouts = repository.getAllWorkouts().first()
+        return workouts.any { it.startTime == startTime && it.durationSeconds == durationSeconds }
+    }
+
     private fun saveImportedWorkout(result: GpxImporter.ImportResult) {
         viewModelScope.launch {
             try {
-                val workoutId = (repository as com.example.sportapp.data.WorkoutRepository).insertWorkout(result.workout)
+                val workoutId = repository.insertWorkout(result.workout)
                 val points = result.points.map { it.copy(workoutId = workoutId) }
                 repository.insertPoints(points)
                 val laps = result.laps.map { it.copy(workoutId = workoutId) }
-                (repository as com.example.sportapp.data.WorkoutRepository).insertLaps(laps)
+                repository.insertLaps(laps)
                 
                 _importState.value = ImportState.Success("Trening zaimportowany pomyślnie.")
                 refreshActivityTypes()

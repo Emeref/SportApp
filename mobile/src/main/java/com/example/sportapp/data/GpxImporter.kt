@@ -7,6 +7,7 @@ import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.WorkoutSensor
+import com.example.sportapp.presentation.settings.HealthData
 import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
 import java.text.SimpleDateFormat
@@ -32,7 +33,7 @@ class GpxImporter @Inject constructor() {
         val warnings: List<String> = emptyList()
     )
 
-    fun importGpx(inputStream: InputStream, definition: WorkoutDefinition): ImportResult {
+    fun importGpx(inputStream: InputStream, definition: WorkoutDefinition, healthData: HealthData): ImportResult {
         val points = parseGpx(inputStream)
         if (points.isEmpty()) throw Exception("Plik GPX nie zawiera punktów trasy.")
 
@@ -51,6 +52,9 @@ class GpxImporter @Inject constructor() {
         var maxSpeed = 0.0
         var maxAltitude = -Double.MAX_VALUE
         var minAltitude = Double.MAX_VALUE
+        
+        var totalCalories = 0.0
+        var maxCalorieMin = 0.0
 
         val workoutPoints = mutableListOf<WorkoutPointEntity>()
         
@@ -84,6 +88,18 @@ class GpxImporter @Inject constructor() {
             p.hr?.let { bpms.add(it) }
             p.cadence?.let { cadences.add(it.toDouble()) }
 
+            val calorieMin = p.hr?.let { hr -> 
+                calculateHRR(hr.toFloat(), healthData)
+            }
+            
+            if (calorieMin != null) {
+                if (calorieMin > maxCalorieMin) maxCalorieMin = calorieMin
+                if (i > 0) {
+                    val timeDiffSeconds = (p.timestamp - points[i - 1].timestamp) / 1000.0
+                    totalCalories += (calorieMin / 60.0) * timeDiffSeconds
+                }
+            }
+
             val elapsedSeconds = (p.timestamp - startTime) / 1000
             val h = elapsedSeconds / 3600
             val m = (elapsedSeconds % 3600) / 60
@@ -112,8 +128,8 @@ class GpxImporter @Inject constructor() {
                 altitude = p.ele,
                 totalAscent = totalAscent,
                 totalDescent = totalDescent,
-                calorieMin = null,
-                calorieSum = null
+                calorieMin = calorieMin,
+                calorieSum = totalCalories
             ))
         }
 
@@ -122,7 +138,7 @@ class GpxImporter @Inject constructor() {
         val avgCadence = if (cadences.isNotEmpty()) cadences.average() else null
         val maxCadenceValue = if (cadences.isNotEmpty()) cadences.maxOrNull() else null
         
-        val calories = estimateCalories(definition, durationSeconds, avgBpm)
+        val finalCalories = if (totalCalories > 0) totalCalories else estimateCalories(definition, durationSeconds, avgBpm)
 
         val workout = WorkoutEntity(
             activityName = definition.name,
@@ -138,8 +154,8 @@ class GpxImporter @Inject constructor() {
             totalDescent = totalDescent,
             avgBpm = avgBpm,
             maxBpm = maxBpm,
-            totalCalories = calories,
-            maxCalorieMin = null,
+            totalCalories = finalCalories,
+            maxCalorieMin = if (maxCalorieMin > 0) maxCalorieMin else null,
             maxSpeed = maxSpeed,
             maxAltitude = if (maxAltitude == -Double.MAX_VALUE) null else maxAltitude,
             minAltitude = if (minAltitude == Double.MAX_VALUE) null else minAltitude,
@@ -151,6 +167,15 @@ class GpxImporter @Inject constructor() {
         val laps = generateLaps(workoutPoints, definition.autoLapDistance ?: 1000.0)
 
         return ImportResult(workout, workoutPoints, laps, warnings)
+    }
+
+    private fun calculateHRR(hr: Float, data: HealthData): Double {
+        if (hr <= 0 || hr < data.restingHR) return 0.0
+        val reserve = data.maxHR - data.restingHR
+        if (reserve <= 0) return 0.0
+        val intensity = (hr - data.restingHR) / reserve.toDouble()
+        val estimatedVO2 = (intensity * 40.0) + 3.5 
+        return (estimatedVO2 * data.weight / 1000.0) * 5.0
     }
 
     private fun parseGpx(inputStream: InputStream): List<RawPoint> {
@@ -168,8 +193,8 @@ class GpxImporter @Inject constructor() {
             when (eventType) {
                 XmlPullParser.START_TAG -> {
                     if (name == "trkpt") {
-                        val lat = parser.getAttributeValue(null, "lat").toDouble()
-                        val lon = parser.getAttributeValue(null, "lon").toDouble()
+                        val lat = try { parser.getAttributeValue(null, "lat").toDouble() } catch(e: Exception) { 0.0 }
+                        val lon = try { parser.getAttributeValue(null, "lon").toDouble() } catch(e: Exception) { 0.0 }
                         currentPoint = RawPoint(lat, lon, 0, null, null, null)
                     }
                 }
@@ -213,7 +238,7 @@ class GpxImporter @Inject constructor() {
         val hasEle = points.any { it.ele != null }
         val hasCadence = points.any { it.cadence != null }
 
-        val supportedSensors = definition.sensors.filter { it.isRecording }.map { it.sensorId }
+        val supportedSensors = definition.sensors.map { it.sensorId }
         
         if (hasHr && !supportedSensors.contains(WorkoutSensor.HEART_RATE.id)) {
             warnings.add("Plik zawiera dane tętna, ale wybrana aktywność ich nie obsługuje.")
