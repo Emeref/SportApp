@@ -230,7 +230,9 @@ fun OverallStatsContent(
                                 title = title,
                                 producer = producer,
                                 unit = unit,
-                                overallRawData = rawData
+                                overallRawData = rawData,
+                                isScrollEnabled = true,
+                                isZoomEnabled = true
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                         }

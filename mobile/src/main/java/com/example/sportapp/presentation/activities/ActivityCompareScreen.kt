@@ -325,7 +325,8 @@ fun CompareChart(
             producer = producer,
             unit = unit,
             detailTimes = times,
-            isScrollEnabled = false,
+            isScrollEnabled = true,
+            isZoomEnabled = true,
             hrZoneResult = hrZoneResult,
             lineColors = listOf(Color1, Color2)
         )

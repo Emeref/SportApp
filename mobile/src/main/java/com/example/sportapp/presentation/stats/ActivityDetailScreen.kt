@@ -237,7 +237,8 @@ fun ActivityDetailScreen(
                                         producer = producer,
                                         unit = getUnitForWidget(widget.id),
                                         detailTimes = data.times,
-                                        isScrollEnabled = false
+                                        isScrollEnabled = true,
+                                        isZoomEnabled = true
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(24.dp))
@@ -264,7 +265,8 @@ fun HeartRateChartSection(
         producer = producer,
         unit = "bpm",
         detailTimes = detailTimes,
-        isScrollEnabled = false,
+        isScrollEnabled = true,
+        isZoomEnabled = true,
         hrZoneResult = hrZoneResult
     )
 }

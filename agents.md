@@ -39,3 +39,4 @@ Ponadto chcesz aby aplikacja działała szybko i była dobrze skonfigurowana.
 - Przed dodaniem nowej biblioteki zawsze aktualizuj `libs.versions.toml`.
 - Zanim zmienisz plik, przeanalizuj istniejące zależności.
 - Po zmianach, które zostały skomitowane aktualizuj plik TODO.md
+- Wszystkie zmiany w bazie danych musza byc przeprowadzane z wsteczną kompatybilnością.

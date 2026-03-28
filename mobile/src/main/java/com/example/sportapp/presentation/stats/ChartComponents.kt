@@ -7,8 +7,8 @@ import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +57,7 @@ import com.patrykandpatrick.vico.compose.component.textComponent
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
 import com.patrykandpatrick.vico.core.chart.decoration.Decoration
 import com.patrykandpatrick.vico.core.chart.draw.ChartDrawContext
+import com.patrykandpatrick.vico.core.chart.scale.AutoScaleUp
 import com.patrykandpatrick.vico.core.chart.layout.HorizontalLayout
 import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
 import com.patrykandpatrick.vico.core.component.Component
@@ -76,6 +77,8 @@ import java.util.Locale
 import java.text.SimpleDateFormat
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.sqrt
+import kotlin.math.atan2
 
 class ThresholdLineDecoration(
     private val thresholdValue: Float,
@@ -133,7 +136,8 @@ fun CommonChartSection(
     unit: String = "",
     overallRawData: List<Any>? = null,
     detailTimes: List<String>? = null,
-    isScrollEnabled: Boolean = false,
+    isScrollEnabled: Boolean = true,
+    isZoomEnabled: Boolean = true,
     hrZoneResult: HeartRateZoneResult? = null,
     lineColors: List<Color>? = null
 ) {
@@ -180,7 +184,7 @@ fun CommonChartSection(
 
     val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors)
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp)) {
         if (title.isNotEmpty()) {
             Text(text = title, style = MaterialTheme.typography.titleSmall)
             Spacer(modifier = Modifier.height(8.dp))
@@ -193,16 +197,8 @@ fun CommonChartSection(
         }
         val primaryColor = MaterialTheme.colorScheme.primary
 
-        val totalPoints = detailTimes?.size ?: 0
-        val horizontalItemPlacer = remember(totalPoints) {
-            AxisItemPlacer.Horizontal.default(
-                spacing = if (totalPoints > 1) ((totalPoints - 1) / 5).coerceAtLeast(1) else 1,
-                offset = 0,
-                shiftExtremeTicks = true,
-                addExtremeLabelPadding = true
-            )
-        }
-
+        val totalPoints = detailTimes?.size ?: overallRawData?.size ?: 0
+        
         val thresholdLineComponent = lineComponent(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
         
         val chartDecorations = remember(hrZoneResult, thresholdLineComponent) {
@@ -218,68 +214,102 @@ fun CommonChartSection(
             }
         }
 
-        val lines = if (lineColors != null) {
-            lineColors.map { color ->
-                lineSpec(
-                    lineColor = color,
-                    lineBackgroundShader = null
-                )
-            }
-        } else {
-            listOf(
-                lineSpec(
-                    lineColor = primaryColor,
-                    lineBackgroundShader = DynamicShaders.fromBrush(
-                        Brush.verticalGradient(
-                            colors = listOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
-                        )
+        val lines = lineColors?.map { color ->
+            lineSpec(
+                lineColor = color,
+                lineBackgroundShader = null
+            )
+        } ?: listOf(
+            lineSpec(
+                lineColor = primaryColor,
+                lineBackgroundShader = DynamicShaders.fromBrush(
+                    Brush.verticalGradient(
+                        colors = listOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
                     )
                 )
             )
-        }
+        )
 
-        Chart(
-            chart = lineChart(
-                lines = lines,
-                axisValuesOverrider = axisValuesOverrider,
-                spacing = 2.dp,
-                decorations = chartDecorations
-            ),
-            chartModelProducer = producer,
-            marker = marker,
-            startAxis = rememberStartAxis(
-                label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
-                valueFormatter = { value, _ -> 
-                    if (unit == "hPa") formatter.format(value)
-                    else formatter.format(value.toLong())
-                },
-                itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9),
-                guideline = null
-            ),
-            bottomAxis = rememberBottomAxis(
-                label = axisLabelComponent(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textSize = 8.sp,
+        val startPadding = 0.dp
+        val endPadding = 24.dp
+        val chartEndPadding = 50.dp
+
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().height(if (overallRawData != null) 320.dp else 200.dp)) {
+            val chartWidthDp = this.maxWidth - chartEndPadding
+            val totalPointsForSpacing = if (totalPoints > 1) totalPoints else 2
+            
+            // Obliczamy domyślne spacing tak, aby wykres wypełniał ekran (HorizontalLayout.fullWidth)
+            val calculatedSpacing = (chartWidthDp - startPadding - endPadding) / (totalPointsForSpacing - 1).toFloat()
+
+            val horizontalItemPlacer = remember(totalPoints) {
+                AxisItemPlacer.Horizontal.default(
+                    spacing = if (totalPoints > 1) ((totalPoints - 1) / 5).coerceAtLeast(1) else 1,
+                    offset = 0,
+                    shiftExtremeTicks = true,
+                    addExtremeLabelPadding = true
+                )
+            }
+
+            Chart(
+                chart = lineChart(
+                    lines = lines,
+                    axisValuesOverrider = axisValuesOverrider,
+                    spacing = calculatedSpacing,
+                    decorations = chartDecorations
+                ),
+                chartModelProducer = producer,
+                marker = marker,
+                startAxis = rememberStartAxis(
+                    label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
+                    valueFormatter = { value, _ -> 
+                        if (unit == "hPa") formatter.format(value)
+                        else formatter.format(value.toLong())
+                    },
+                    itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9),
+                    guideline = null
+                ),
+                bottomAxis = rememberBottomAxis(
+                    label = axisLabelComponent(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textSize = 8.sp,
                 ).apply { ellipsize = null }, 
                 valueFormatter = { value, _ -> 
-                    if (value.isNaN() || detailTimes.isNullOrEmpty()) return@rememberBottomAxis ""
                     val index = value.toInt()
-                    if (index in detailTimes.indices) {
-                        formatToRelativeTime(index, detailTimes)
-                    } else {
-                        ""
-                    }
+                    if (!detailTimes.isNullOrEmpty()) {
+                        if (index in detailTimes.indices) {
+                            formatToRelativeTime(index, detailTimes)
+                        } else ""
+                    } else if (!overallRawData.isNullOrEmpty()) {
+                        if (index in overallRawData.indices) {
+                            val timestamp = when (val data = overallRawData[index]) {
+                                is WorkoutEntity -> data.startTime
+                                is Map<*, *> -> {
+                                    val rawDate = data["data"]?.toString() ?: ""
+                                    try { 
+                                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(rawDate)?.time 
+                                    } catch (_: Exception) { null }
+                                }
+                                else -> null
+                            }
+                            if (timestamp != null) {
+                                SimpleDateFormat("MM-dd", Locale.US).format(java.util.Date(timestamp))
+                            } else ""
+                        } else ""
+                    } else ""
                 },
                 itemPlacer = horizontalItemPlacer,
                 guideline = null
             ),
-            chartScrollSpec = rememberChartScrollSpec(isScrollEnabled = isScrollEnabled),
+            chartScrollSpec = rememberChartScrollSpec<ChartEntryModel>(isScrollEnabled = isScrollEnabled),
+            isZoomEnabled = isZoomEnabled,
+            autoScaleUp = AutoScaleUp.Full,
             horizontalLayout = HorizontalLayout.fullWidth(
-                unscalableStartPadding = 16.dp, 
-                unscalableEndPadding = 24.dp    
+                unscalableStartPadding = startPadding,
+                unscalableEndPadding = endPadding
             ),
-            modifier = Modifier.fillMaxWidth().height(if (overallRawData != null) 320.dp else 200.dp)
-        )
+            modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
@@ -371,16 +401,14 @@ fun rememberMarkerCustom(
                     val index = entry.entry.x.toInt()
                     val value = formatter.format(entry.entry.y)
 
-                    if (isDetail && detailTimes != null) {
-                        if (index in detailTimes.indices) {
+                    if (isDetail) {
+                        if (detailTimes != null && index in detailTimes.indices) {
                             val time = detailTimes[index]
                             "$value $unit\n$time"
                         } else ""
                     } else if (overallRawData != null) {
                         if (index in overallRawData.indices) {
-                            val data = overallRawData[index]
-                            
-                            when (data) {
+                            when (val data = overallRawData[index]) {
                                 is WorkoutEntity -> {
                                     val name = data.activityName
                                     val date = outputSdf.format(java.util.Date(data.startTime))
@@ -420,11 +448,11 @@ fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
                     val x = offset.x - center.x
                     val y = offset.y - center.y
                     val radius = size.width / 2f
-                    val distance = Math.sqrt((x * x + y * y).toDouble())
+                    val distance = sqrt((x * x + y * y).toDouble())
 
                     // Sprawdzenie czy kliknięto w koło (łatwiejsze klikanie w pełny kształt)
                     if (distance <= radius) {
-                        var touchAngle = Math.toDegrees(Math.atan2(y.toDouble(), x.toDouble())).toFloat()
+                        var touchAngle = Math.toDegrees(atan2(y.toDouble(), x.toDouble())).toFloat()
                         if (touchAngle < 0) touchAngle += 360f
 
                         // Dostosowanie kąta, bo rysujemy od -90 stopni
