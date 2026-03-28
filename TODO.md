@@ -109,12 +109,18 @@
     - [ ] **Sprawdź działanie aplikacji na 'pauzie'**: Weryfikacja poprawnego wstrzymywania i wznawiania zliczania danych (kroki, dystans, czas).
 
 ### Statystyki i Wykresy
-- [x] Wykresy trendów w `OverallStatsScreen` (Vico)
+- [x] Wykresy trendów in `OverallStatsScreen` (Vico)
 - [x] Wykresy tętna i strefy in `ActivityDetailScreen`
 - [x] **Porównywanie dwóch aktywności na jednym wykresie** (ActivityCompareScreen)
-- [ ] Eksport danych do CSV/GPX
+- [x] **Eksport i Import danych (GPX)**:
+    - [x] Eksport aktywności do formatu GPX z danymi HR i kadencji.
+    - [x] Pakowanie wielu plików do ZIP przy eksporcie zbiorczym.
+    - [x] **Import plików GPX**: Pełne przeliczanie statystyk, mapowanie punktów i generowanie okrążeń.
+    - [x] **Walidacja duplikatów**: System wykrywania powtarzających się sesji przy imporcie.
+    - [x] **Personalizacja kalorii**: Wyliczanie spalania na podstawie tętna i profilu zdrowotnego użytkownika (HRR).
 
 ## PRIORYTETY
-1. **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
-2. **Sprawdź działanie aplikacji na 'pauzie'** - Dokładna weryfikacja zliczania danych (kroki/dystans) podczas wstrzymania treningu.
-3. **Integracja z Google Drive / Health Connect** - Synchronizacja danych z ekosystemem Google.
+1. **Najlepsze tempo na km (Best Split)** - PRIORYTET: WYSOKI - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
+2. **Sprawdź działanie aplikacji na 'pauzie'** - PRIORYTET: WYSOKI - Dokładna weryfikacja zliczania danych (kroki/dystans) podczas wstrzymania treningu.
+3. **Integracja z Google Drive / Health Connect** - PRIORYTET: ŚREDNI - Synchronizacja danych z ekosystemem Google.
+4. **Widgety na ekranie głównym (Glance)** - PRIORYTET: NISKI - Dodanie wsparcia dla widgetów systemowych Androida.
