@@ -75,6 +75,7 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
 import java.text.SimpleDateFormat
+import java.util.Date
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.sqrt
@@ -139,7 +140,8 @@ fun CommonChartSection(
     isScrollEnabled: Boolean = true,
     isZoomEnabled: Boolean = true,
     hrZoneResult: HeartRateZoneResult? = null,
-    lineColors: List<Color>? = null
+    lineColors: List<Color>? = null,
+    isTimestampX: Boolean = false
 ) {
     val axisValuesOverrider = remember(hrZoneResult, unit) {
         object : AxisValuesOverrider<ChartEntryModel> {
@@ -182,7 +184,7 @@ fun CommonChartSection(
         }
     }
 
-    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors)
+    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors, isTimestampX)
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp)) {
         if (title.isNotEmpty()) {
@@ -234,20 +236,30 @@ fun CommonChartSection(
         val endPadding = 24.dp
         val chartEndPadding = 50.dp
 
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth().height(if (overallRawData != null) 320.dp else 200.dp)) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().height(if (overallRawData != null || isTimestampX) 320.dp else 200.dp)) {
             val chartWidthDp = this.maxWidth - chartEndPadding
             val totalPointsForSpacing = if (totalPoints > 1) totalPoints else 2
             
-            // Obliczamy domyślne spacing tak, aby wykres wypełniał ekran (HorizontalLayout.fullWidth)
-            val calculatedSpacing = (chartWidthDp - startPadding - endPadding) / (totalPointsForSpacing - 1).toFloat()
+            // Zmniejszamy spacing dla timestampów, aby uniknąć gigantycznych szerokości wykresu
+            val calculatedSpacing = if (isTimestampX) 20.dp else (chartWidthDp - startPadding - endPadding) / (totalPointsForSpacing - 1).toFloat()
 
-            val horizontalItemPlacer = remember(totalPoints) {
-                AxisItemPlacer.Horizontal.default(
-                    spacing = if (totalPoints > 1) ((totalPoints - 1) / 5).coerceAtLeast(1) else 1,
-                    offset = 0,
-                    shiftExtremeTicks = true,
-                    addExtremeLabelPadding = true
-                )
+            val horizontalItemPlacer = remember(totalPoints, isTimestampX) {
+                if (isTimestampX) {
+                    // Wyświetlamy etykietę co 7 dni (tydzień), aby uniknąć renderowania tysięcy tekstów
+                    AxisItemPlacer.Horizontal.default(
+                        spacing = 7,
+                        offset = 0,
+                        shiftExtremeTicks = true,
+                        addExtremeLabelPadding = true
+                    )
+                } else {
+                    AxisItemPlacer.Horizontal.default(
+                        spacing = if (totalPoints > 1) ((totalPoints - 1) / 5).coerceAtLeast(1) else 1,
+                        offset = 0,
+                        shiftExtremeTicks = true,
+                        addExtremeLabelPadding = true
+                    )
+                }
             }
 
             Chart(
@@ -274,28 +286,33 @@ fun CommonChartSection(
                         textSize = 8.sp,
                 ).apply { ellipsize = null }, 
                 valueFormatter = { value, _ -> 
-                    val index = value.toInt()
-                    if (!detailTimes.isNullOrEmpty()) {
-                        if (index in detailTimes.indices) {
-                            formatToRelativeTime(index, detailTimes)
-                        } else ""
-                    } else if (!overallRawData.isNullOrEmpty()) {
-                        if (index in overallRawData.indices) {
-                            val timestamp = when (val data = overallRawData[index]) {
-                                is WorkoutEntity -> data.startTime
-                                is Map<*, *> -> {
-                                    val rawDate = data["data"]?.toString() ?: ""
-                                    try { 
-                                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(rawDate)?.time 
-                                    } catch (_: Exception) { null }
+                    if (isTimestampX) {
+                        val msInDay = 86400000L
+                        SimpleDateFormat("dd.MM", Locale.US).format(Date(value.toLong() * msInDay))
+                    } else {
+                        val index = value.toInt()
+                        if (!detailTimes.isNullOrEmpty()) {
+                            if (index in detailTimes.indices) {
+                                formatToRelativeTime(index, detailTimes)
+                            } else ""
+                        } else if (!overallRawData.isNullOrEmpty()) {
+                            if (index in overallRawData.indices) {
+                                val timestamp = when (val data = overallRawData[index]) {
+                                    is WorkoutEntity -> data.startTime
+                                    is Map<*, *> -> {
+                                        val rawDate = data["data"]?.toString() ?: ""
+                                        try { 
+                                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(rawDate)?.time 
+                                        } catch (_: Exception) { null }
+                                    }
+                                    else -> null
                                 }
-                                else -> null
-                            }
-                            if (timestamp != null) {
-                                SimpleDateFormat("MM-dd", Locale.US).format(java.util.Date(timestamp))
+                                if (timestamp != null) {
+                                    SimpleDateFormat("MM-dd", Locale.US).format(Date(timestamp))
+                                } else ""
                             } else ""
                         } else ""
-                    } else ""
+                    }
                 },
                 itemPlacer = horizontalItemPlacer,
                 guideline = null
@@ -337,7 +354,8 @@ fun rememberMarkerCustom(
     overallRawData: List<Any>?,
     detailTimes: List<String>?,
     unit: String,
-    compareColors: List<Color>? = null
+    compareColors: List<Color>? = null,
+    isTimestampX: Boolean = false
 ): Marker {
     val labelBackgroundColor = MaterialTheme.colorScheme.surface
     val labelTextColor = MaterialTheme.colorScheme.onSurface
@@ -349,7 +367,7 @@ fun rememberMarkerCustom(
     val inputSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
     val isDetail = detailTimes != null
-    val lineCount = if (compareColors != null) compareColors.size + 1 else if (isDetail) 2 else 3
+    val lineCount = if (compareColors != null) compareColors.size + 1 else if (isDetail) 2 else if (isTimestampX) 2 else 3
 
     val label = textComponent(
         color = labelTextColor,
@@ -368,7 +386,7 @@ fun rememberMarkerCustom(
         color = primaryColor.copy(alpha = 0.5f),
         thickness = 2.dp
     )
-    return remember(label, indicator, guideline, overallRawData, detailTimes, unit, compareColors) {
+    return remember(label, indicator, guideline, overallRawData, detailTimes, unit, compareColors, isTimestampX) {
         object : MarkerComponent(label, indicator, guideline) {
             override fun getInsets(
                 context: com.patrykandpatrick.vico.core.context.MeasureContext,
@@ -376,7 +394,7 @@ fun rememberMarkerCustom(
                 horizontalDimensions: com.patrykandpatrick.vico.core.chart.dimensions.HorizontalDimensions
             ) {
                 with(context) {
-                    val height = label.getHeight(context, text = if (isDetail) "100.0 unit\n00:00:00" else "Activity\n2024-01-01\n100.0 unit")
+                    val height = label.getHeight(context, text = if (isDetail || isTimestampX) "100.0 unit\n00:00:00" else "Activity\n2024-01-01\n100.0 unit")
                     outInsets.top = height + (density * 24f)
                 }
             }
@@ -398,20 +416,25 @@ fun rememberMarkerCustom(
                     sb
                 } else {
                     val entry = markedEntries.firstOrNull() ?: return@MarkerLabelFormatter ""
-                    val index = entry.entry.x.toInt()
                     val value = formatter.format(entry.entry.y)
 
-                    if (isDetail) {
+                    if (isTimestampX) {
+                        val msInDay = 86400000L
+                        val date = outputSdf.format(Date(entry.entry.x.toLong() * msInDay))
+                        "$date\n$value $unit"
+                    } else if (isDetail) {
+                        val index = entry.entry.x.toInt()
                         if (detailTimes != null && index in detailTimes.indices) {
                             val time = detailTimes[index]
                             "$value $unit\n$time"
                         } else ""
                     } else if (overallRawData != null) {
+                        val index = entry.entry.x.toInt()
                         if (index in overallRawData.indices) {
                             when (val data = overallRawData[index]) {
                                 is WorkoutEntity -> {
                                     val name = data.activityName
-                                    val date = outputSdf.format(java.util.Date(data.startTime))
+                                    val date = outputSdf.format(Date(data.startTime))
                                     "$name\n$date\n$value $unit"
                                 }
                                 is Map<*, *> -> {

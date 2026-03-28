@@ -6,12 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.presentation.settings.WidgetItem
+import com.patrykandpatrick.vico.core.entry.ChartEntry
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 import javax.inject.Inject
 
@@ -49,6 +52,9 @@ class OverallStatsViewModel @Inject constructor(
     private val _stats = MutableStateFlow<Map<String, Any>>(emptyMap())
     val stats = _stats.asStateFlow()
 
+    private val _chartMaxValues = MutableStateFlow<Map<String, Double>>(emptyMap())
+    val chartMaxValues = _chartMaxValues.asStateFlow()
+
     val chartProducers: Map<String, ChartEntryModelProducer> = mapOf(
         "calories" to ChartEntryModelProducer(),
         "distanceGps" to ChartEntryModelProducer(),
@@ -71,7 +77,12 @@ class OverallStatsViewModel @Inject constructor(
             }.collect { statsMap ->
                 @Suppress("UNCHECKED_CAST")
                 val rawData = statsMap["raw_data"] as? List<WorkoutEntity> ?: emptyList()
-                updateChartData(rawData)
+                
+                // Wykonujemy ciężkie obliczenia na wątku Default
+                withContext(Dispatchers.Default) {
+                    updateChartData(rawData)
+                }
+                
                 _stats.value = statsMap
             }
         }
@@ -83,41 +94,117 @@ class OverallStatsViewModel @Inject constructor(
         }
     }
 
+    private fun getStartOfDay(timestamp: Long): Long {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = timestamp
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        return calendar.timeInMillis
+    }
+
     private fun updateChartData(rawData: List<WorkoutEntity>) {
-        val maxDistGps = rawData.maxOfOrNull { it.distanceGps ?: 0.0 } ?: 0.0
-        val maxDistSteps = rawData.maxOfOrNull { it.distanceSteps ?: 0.0 } ?: 0.0
+        if (rawData.isEmpty()) {
+            chartProducers.values.forEach { it.setEntries(emptyList<ChartEntry>()) }
+            _chartMaxValues.value = emptyMap()
+            return
+        }
 
-        chartProducers["calories"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.totalCalories?.toFloat() ?: 0f) })
+        val groupedByDay = rawData.groupBy { getStartOfDay(it.startTime) }
+        val firstDateRaw = rawData.minOf { it.startTime }
+        val lastDateRaw = rawData.maxOf { it.startTime }
         
-        chartProducers["distanceGps"]?.setEntries(rawData.mapIndexed { index, workout -> 
-            val value = workout.distanceGps?.toFloat() ?: 0f
-            entryOf(index, if (maxDistGps > 6000) value / 1000f else value)
-        })
-        
-        chartProducers["distanceSteps"]?.setEntries(rawData.mapIndexed { index, workout -> 
-            val value = workout.distanceSteps?.toFloat() ?: 0f
-            entryOf(index, if (maxDistSteps > 6000) value / 1000f else value)
-        })
+        val firstDate = getStartOfDay(firstDateRaw)
+        val lastDate = getStartOfDay(lastDateRaw)
 
-        chartProducers["ascent"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.totalAscent?.toFloat() ?: 0f) })
-        chartProducers["descent"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.totalDescent?.toFloat() ?: 0f) })
-        chartProducers["steps"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.steps?.toFloat() ?: 0f) })
-        chartProducers["avg_cadence"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.avgCadence?.toFloat() ?: 0f) })
+        // Zabezpieczenie przed zbyt dużą liczbą dni
+        val maxDays = 365 * 2 
+        val actualFirstDate = maxOf(firstDate, lastDate - (maxDays * 86400000L))
+
+        val dailyStats = mutableListOf<DayStats>()
+        var currentDay = actualFirstDate
+        val calendar = Calendar.getInstance()
         
-        chartProducers["maxPressure"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.maxPressure?.toFloat() ?: 0f) })
-        chartProducers["minPressure"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.minPressure?.toFloat() ?: 0f) })
-        chartProducers["bestPace1km"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.bestPace1km?.toFloat() ?: 0f) })
+        while (currentDay <= lastDate) {
+            val dayWorkouts = groupedByDay[currentDay] ?: emptyList()
+            
+            val totalDistGps = dayWorkouts.sumOf { it.distanceGps ?: 0.0 }
+            val totalDistSteps = dayWorkouts.sumOf { it.distanceSteps ?: 0.0 }
+            val totalCalories = dayWorkouts.sumOf { it.totalCalories ?: 0.0 }
+            val totalSteps = dayWorkouts.sumOf { it.steps ?: 0 }.toDouble()
+            val totalAscent = dayWorkouts.sumOf { it.totalAscent ?: 0.0 }
+            val totalDescent = dayWorkouts.sumOf { it.totalDescent ?: 0.0 }
+            
+            val maxPressure = dayWorkouts.mapNotNull { it.maxPressure }.maxOrNull() ?: 0.0
+            val minPressure = dayWorkouts.mapNotNull { it.minPressure }.minOrNull() ?: 0.0
+            val bestPace = dayWorkouts.mapNotNull { it.bestPace1km }.minOrNull() ?: 0.0
+            
+            val avgCadence = if (dayWorkouts.any { it.avgCadence != null }) {
+                dayWorkouts.mapNotNull { it.avgCadence }.average()
+            } else 0.0
+
+            dailyStats.add(DayStats(currentDay, totalDistGps, totalDistSteps, totalCalories, totalSteps, totalAscent, totalDescent, maxPressure, minPressure, bestPace, avgCadence))
+            
+            calendar.timeInMillis = currentDay
+            calendar.add(Calendar.DAY_OF_YEAR, 1)
+            currentDay = calendar.timeInMillis
+        }
+
+        val maxDailyDistGps = dailyStats.maxOfOrNull { it.distGps } ?: 0.0
+        val maxDailyDistSteps = dailyStats.maxOfOrNull { it.distSteps } ?: 0.0
+        
+        // Zapisujemy maksy, aby UI nie musiał ich liczyć
+        _chartMaxValues.value = mapOf(
+            "distanceGps" to maxDailyDistGps,
+            "distanceSteps" to maxDailyDistSteps,
+            "calories" to (dailyStats.maxOfOrNull { it.calories } ?: 0.0),
+            "steps" to (dailyStats.maxOfOrNull { it.steps } ?: 0.0),
+            "ascent" to (dailyStats.maxOfOrNull { it.ascent } ?: 0.0),
+            "descent" to (dailyStats.maxOfOrNull { it.descent } ?: 0.0),
+            "maxPressure" to (dailyStats.maxOfOrNull { it.maxPressure } ?: 0.0),
+            "minPressure" to (dailyStats.maxOfOrNull { it.minPressure } ?: 0.0),
+            "bestPace1km" to (dailyStats.maxOfOrNull { it.bestPace } ?: 0.0),
+            "avg_cadence" to (dailyStats.maxOfOrNull { it.avgCadence } ?: 0.0)
+        )
+
+        val dayScale = 86400000f
+
+        chartProducers["calories"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.calories.toFloat()) })
+        chartProducers["distanceGps"]?.setEntries(dailyStats.map { 
+            val value = it.distGps.toFloat()
+            entryOf(it.timestamp / dayScale, if (maxDailyDistGps > 6000) value / 1000f else value)
+        })
+        chartProducers["distanceSteps"]?.setEntries(dailyStats.map { 
+            val value = it.distSteps.toFloat()
+            entryOf(it.timestamp / dayScale, if (maxDailyDistSteps > 6000) value / 1000f else value)
+        })
+        chartProducers["ascent"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.ascent.toFloat()) })
+        chartProducers["descent"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.descent.toFloat()) })
+        chartProducers["steps"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.steps.toFloat()) })
+        chartProducers["avg_cadence"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.avgCadence.toFloat()) })
+        chartProducers["maxPressure"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.maxPressure.toFloat()) })
+        chartProducers["minPressure"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.minPressure.toFloat()) })
+        chartProducers["bestPace1km"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.bestPace.toFloat()) })
     }
 
     fun getMaxValueForWidget(id: String): Double {
-        @Suppress("UNCHECKED_CAST")
-        val rawData = _stats.value["raw_data"] as? List<WorkoutEntity> ?: return 0.0
-        return when(id) {
-            "distanceGps" -> rawData.maxOfOrNull { it.distanceGps ?: 0.0 } ?: 0.0
-            "distanceSteps" -> rawData.maxOfOrNull { it.distanceSteps ?: 0.0 } ?: 0.0
-            else -> 0.0
-        }
+        return chartMaxValues.value[id] ?: 0.0
     }
+
+    private data class DayStats(
+        val timestamp: Long,
+        val distGps: Double,
+        val distSteps: Double,
+        val calories: Double,
+        val steps: Double,
+        val ascent: Double,
+        val descent: Double,
+        val maxPressure: Double,
+        val minPressure: Double,
+        val bestPace: Double,
+        val avgCadence: Double
+    )
 
     fun onTypeSelected(type: String?) {
         _selectedType.value = if (type == "Wszystkie") null else type
