@@ -5,6 +5,7 @@ import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +23,7 @@ class WorkoutRepository @Inject constructor(
     private val workoutDefinitionDao: WorkoutDefinitionDao
 ) : IWorkoutRepository {
 
-    suspend fun insertWorkout(workout: WorkoutEntity): Long = withContext(Dispatchers.IO) {
+    override suspend fun insertWorkout(workout: WorkoutEntity): Long = withContext(Dispatchers.IO) {
         workoutDao.insertWorkout(workout)
     }
 
@@ -38,11 +39,16 @@ class WorkoutRepository @Inject constructor(
 
     override suspend fun deleteWorkout(workout: WorkoutEntity) = withContext(Dispatchers.IO) {
         workoutDao.deletePointsForWorkout(workout.id)
+        workoutDao.deleteLapsForWorkout(workout.id)
         workoutDao.deleteWorkout(workout)
     }
 
-    suspend fun insertPoints(points: List<WorkoutPointEntity>) = withContext(Dispatchers.IO) {
+    override suspend fun insertPoints(points: List<WorkoutPointEntity>) = withContext(Dispatchers.IO) {
         workoutDao.insertPoints(points)
+    }
+
+    override suspend fun insertLaps(laps: List<WorkoutLap>) = withContext(Dispatchers.IO) {
+        workoutDao.insertLaps(laps)
     }
 
     override suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity> = withContext(Dispatchers.IO) {
@@ -58,7 +64,6 @@ class WorkoutRepository @Inject constructor(
     }
 
     override suspend fun trimWorkout(workout: WorkoutEntity, startPointId: Long, endPointId: Long) = withContext(Dispatchers.IO) {
-        // 1. Get remaining points to recalculate stats
         val allPoints = workoutDao.getPointsForWorkout(workout.id)
         val points = allPoints.filter { it.id in startPointId..endPointId }
         
@@ -67,7 +72,6 @@ class WorkoutRepository @Inject constructor(
         val firstPoint = points.first()
         val lastPoint = points.last()
 
-        // 2. Recalculate stats for the workout entity
         val totalSteps = (lastPoint.steps ?: 0) - (firstPoint.steps ?: 0)
         val distanceSteps = (lastPoint.distanceSteps ?: 0).toDouble() - (firstPoint.distanceSteps ?: 0).toDouble()
         val distanceGps = (lastPoint.distanceGps ?: 0).toDouble() - (firstPoint.distanceGps ?: 0).toDouble()
@@ -80,7 +84,6 @@ class WorkoutRepository @Inject constructor(
         
         val durationSeconds = points.size.toLong()
 
-        // 3. Recalculate point data to start from 0 at the new start point
         val baseSteps = firstPoint.steps ?: 0
         val baseDistSteps = firstPoint.distanceSteps ?: 0
         val baseDistGps = firstPoint.distanceGps ?: 0
@@ -106,9 +109,8 @@ class WorkoutRepository @Inject constructor(
             )
         }
 
-        // Update workout start time based on the number of trimmed points
         val originalStartIndex = allPoints.indexOfFirst { it.id == startPointId }.coerceAtLeast(0)
-        val newStartTime = workout.startTime + (originalStartIndex * 1000L) // Assuming 1 point per second
+        val newStartTime = workout.startTime + (originalStartIndex * 1000L) 
         
         val updatedWorkout = workout.copy(
             startTime = newStartTime,
@@ -125,7 +127,6 @@ class WorkoutRepository @Inject constructor(
             durationFormatted = formatDuration(durationSeconds)
         )
 
-        // 4. Perform atomic trim
         workoutDao.trimWorkout(updatedWorkout, startPointId, endPointId, updatedPoints)
     }
 
@@ -201,7 +202,6 @@ class WorkoutRepository @Inject constructor(
         val avgBpm = if (filtered.any { it.avgBpm != null }) filtered.mapNotNull { it.avgBpm }.average() else 0.0
         val avgCadence = if (filtered.any { it.avgCadence != null }) filtered.mapNotNull { it.avgCadence }.average() else 0.0
         
-        // Nowe statystyki "Maksymalne z serii"
         val maxSpeed = filtered.mapNotNull { it.maxSpeed }.maxOrNull() ?: 0.0
         val maxAltitude = filtered.mapNotNull { it.maxAltitude }.maxOrNull() ?: 0.0
         val maxElevationGain = filtered.mapNotNull { it.totalAscent }.maxOrNull() ?: 0.0
@@ -211,7 +211,7 @@ class WorkoutRepository @Inject constructor(
         val maxAvgCadence = filtered.mapNotNull { it.avgCadence }.maxOrNull() ?: 0.0
         
         val maxAvgSpeed = filtered
-            .filter { it.durationSeconds >= 1800 } // Tylko aktywności > 30 min
+            .filter { it.durationSeconds >= 1800 } 
             .map { 
                 val distanceKm = ((it.distanceGps ?: 0.0) + (it.distanceSteps ?: 0.0)) / 1000.0
                 val durationHours = it.durationSeconds / 3600.0
@@ -234,7 +234,6 @@ class WorkoutRepository @Inject constructor(
             "avgBpm" to avgBpm,
             "avg_cadence" to avgCadence,
             
-            // Nowe klucze dla statystyk rekordowych
             "max_speed" to maxSpeed,
             "max_altitude" to maxAltitude,
             "max_elevation_gain" to maxElevationGain,

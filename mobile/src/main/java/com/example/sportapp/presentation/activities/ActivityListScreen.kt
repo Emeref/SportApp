@@ -2,6 +2,9 @@ package com.example.sportapp.presentation.activities
 
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.R
+import com.example.sportapp.data.model.WorkoutDefinition
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -44,6 +49,7 @@ fun ActivityListScreen(
 ) {
     val activities by viewModel.activities.collectAsState()
     val activityTypes by viewModel.activityTypes.collectAsState()
+    val definitions by viewModel.definitions.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
     val startDate by viewModel.startDate.collectAsState()
     val endDate by viewModel.endDate.collectAsState()
@@ -51,11 +57,14 @@ fun ActivityListScreen(
     val sortOrder by viewModel.sortOrder.collectAsState()
     val selectedIds by viewModel.selectedIds.collectAsState()
     val exportState by viewModel.exportState.collectAsState()
+    val importState by viewModel.importState.collectAsState()
     
     var showTypeMenu by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showImportTypeDialog by remember { mutableStateOf<Uri?>(null) }
     
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
     val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
 
     val horizontalScrollState = rememberScrollState()
@@ -65,7 +74,6 @@ fun ActivityListScreen(
     val canCompare = selectedActivities.size == 2 && 
                    selectedActivities[0].type == selectedActivities[1].type
 
-    // Logika dla głównego checkboxa (Select All)
     val visibleIds = remember(activities) { activities.map { it.id }.toSet() }
     val visibleSelectedCount = remember(selectedIds, visibleIds) { selectedIds.count { it in visibleIds } }
     
@@ -74,6 +82,98 @@ fun ActivityListScreen(
         visibleSelectedCount == 0 -> ToggleableState.Off
         visibleSelectedCount == activities.size -> ToggleableState.On
         else -> ToggleableState.Indeterminate
+    }
+
+    val gpxLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { showImportTypeDialog = it }
+    }
+
+    // Import Type Selection Dialog
+    if (showImportTypeDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showImportTypeDialog = null },
+            title = { Text("Wybierz typ aktywności") },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("Wybierz typ treningu dla importowanego pliku GPX:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                        items(definitions) { definition ->
+                            ListItem(
+                                headlineContent = { Text(definition.name) },
+                                leadingContent = { 
+                                    Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null)
+                                },
+                                modifier = Modifier.clickable {
+                                    viewModel.importGpx(showImportTypeDialog!!, definition)
+                                    showImportTypeDialog = null
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showImportTypeDialog = null }) {
+                    Text("Anuluj")
+                }
+            }
+        )
+    }
+
+    // Import Success/Error/Warning logic
+    LaunchedEffect(importState) {
+        when (importState) {
+            is ImportState.Success -> {
+                snackbarHostState.showSnackbar((importState as ImportState.Success).message)
+                viewModel.resetImportState()
+            }
+            is ImportState.Error -> {
+                snackbarHostState.showSnackbar((importState as ImportState.Error).message)
+                viewModel.resetImportState()
+            }
+            else -> {}
+        }
+    }
+
+    if (importState is ImportState.Warning) {
+        val state = importState as ImportState.Warning
+        AlertDialog(
+            onDismissRequest = { viewModel.resetImportState() },
+            title = { Text("Ostrzeżenie") },
+            text = {
+                Column {
+                    state.warnings.forEach { Text("• $it") }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Czy mimo to chcesz kontynuować import?")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { state.onConfirm(); viewModel.resetImportState() }) {
+                    Text("Kontynuuj")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.resetImportState() }) {
+                    Text("Anuluj")
+                }
+            }
+        )
+    }
+
+    if (importState is ImportState.Loading) {
+        Dialog(onDismissRequest = {}) {
+            Card {
+                Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Importowanie danych...")
+                }
+            }
+        }
     }
 
     // Handle Export Success
@@ -172,7 +272,11 @@ fun ActivityListScreen(
                     }
                 },
                 actions = {
-                    if (selectedIds.isNotEmpty()) {
+                    if (selectedIds.isEmpty()) {
+                        IconButton(onClick = { gpxLauncher.launch("application/gpx+xml") }) {
+                            Icon(Icons.Default.UploadFile, contentDescription = "Importuj GPX")
+                        }
+                    } else {
                         IconButton(onClick = { viewModel.exportSelected() }) {
                             Icon(Icons.Default.Share, contentDescription = "Eksportuj GPX")
                         }
@@ -182,7 +286,8 @@ fun ActivityListScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -312,14 +417,12 @@ fun ActivityListScreen(
                         }
                     }
                     
-                    // Pasek przewijania pionowego dla listy
                     VerticalScrollbar(
                         lazyListState = lazyListState,
                         modifier = Modifier.padding(start = 2.dp)
                     )
                 }
                 
-                // Pasek przewijania poziomego dla tabeli
                 HorizontalScrollbar(
                     scrollState = horizontalScrollState,
                     modifier = Modifier.padding(top = 4.dp)
