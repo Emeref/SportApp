@@ -1,11 +1,21 @@
 package com.example.sportapp.presentation.activities
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.data.GpxGenerator
 import com.example.sportapp.data.IWorkoutRepository
+import com.example.sportapp.data.ZipManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -18,9 +28,17 @@ enum class SortColumn {
     TYPE, DATE, DURATION, CALORIES, DISTANCE_GPS, DISTANCE_STEPS
 }
 
+sealed class ExportState {
+    object Idle : ExportState()
+    data class Exporting(val progress: Float, val message: String) : ExportState()
+    data class Success(val uri: Uri, val isZip: Boolean) : ExportState()
+    data class Error(val message: String) : ExportState()
+}
+
 @HiltViewModel
 class ActivityListViewModel @Inject constructor(
-    private val repository: IWorkoutRepository
+    private val repository: IWorkoutRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _activityTypes = MutableStateFlow<List<String>>(emptyList())
@@ -43,6 +61,9 @@ class ActivityListViewModel @Inject constructor(
 
     private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedIds = _selectedIds.asStateFlow()
+
+    private val _exportState = MutableStateFlow<ExportState>(ExportState.Idle)
+    val exportState = _exportState.asStateFlow()
 
     val activities: StateFlow<List<ActivityItem>> = repository.getActivityItemsFlow()
         .combine(_selectedType) { all, type ->
@@ -136,10 +157,8 @@ class ActivityListViewModel @Inject constructor(
         val visibleSelectedIds = currentlySelected.intersect(visibleIds)
         
         if (visibleSelectedIds.isNotEmpty()) {
-            // Jeśli cokolwiek z widocznych jest zaznaczone -> odznaczamy wszystko co widoczne
             _selectedIds.value = currentlySelected - visibleIds
         } else {
-            // Jeśli nic z widocznych nie jest zaznaczone -> zaznaczamy wszystko co widoczne
             _selectedIds.value = currentlySelected + visibleIds
         }
     }
@@ -161,5 +180,67 @@ class ActivityListViewModel @Inject constructor(
             _selectedIds.value = emptySet()
             refreshActivityTypes()
         }
+    }
+
+    fun exportSelected() {
+        val ids = _selectedIds.value.toList()
+        if (ids.isEmpty()) return
+
+        viewModelScope.launch {
+            _exportState.value = ExportState.Exporting(0f, "Inicjalizacja eksportu...")
+            
+            try {
+                val gpxGenerator = GpxGenerator()
+                val exportDir = File(context.cacheDir, "exports")
+                if (exportDir.exists()) exportDir.deleteRecursively()
+                exportDir.mkdirs()
+
+                val generatedFiles = mutableListOf<File>()
+                val sdf = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US)
+
+                ids.forEachIndexed { index, idString ->
+                    val id = idString.toLongOrNull() ?: return@forEachIndexed
+                    val workout = repository.getWorkoutById(id) ?: return@forEachIndexed
+                    val points = repository.getPointsForWorkout(id)
+                    
+                    _exportState.value = ExportState.Exporting(
+                        (index.toFloat() / ids.size), 
+                        "Generowanie: ${workout.activityName} (${index + 1}/${ids.size})"
+                    )
+
+                    val gpxContent = gpxGenerator.generateGpx(workout, points)
+                    val fileName = "${workout.activityName}_${sdf.format(Date(workout.startTime))}.gpx"
+                        .replace(" ", "_")
+                        .replace(":", "")
+                    
+                    val file = File(exportDir, fileName)
+                    file.writeText(gpxContent)
+                    generatedFiles.add(file)
+                }
+
+                if (generatedFiles.isEmpty()) {
+                    _exportState.value = ExportState.Error("Nie wygenerowano żadnych plików.")
+                    return@launch
+                }
+
+                if (generatedFiles.size == 1) {
+                    val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", generatedFiles[0])
+                    _exportState.value = ExportState.Success(uri, false)
+                } else {
+                    _exportState.value = ExportState.Exporting(0.9f, "Pakowanie do ZIP...")
+                    val zipFile = File(exportDir, "SportApp_Export_${sdf.format(Date())}.zip")
+                    ZipManager().zipFiles(generatedFiles, zipFile)
+                    val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", zipFile)
+                    _exportState.value = ExportState.Success(uri, true)
+                }
+
+            } catch (e: Exception) {
+                _exportState.value = ExportState.Error("Błąd podczas eksportu: ${e.message}")
+            }
+        }
+    }
+
+    fun resetExportState() {
+        _exportState.value = ExportState.Idle
     }
 }

@@ -215,6 +215,7 @@ fun OverallStatsContent(
                                 "distanceSteps" -> if (maxVal > 6000) "km" else "m"
                                 "calories" -> "kcal"
                                 "steps" -> "kroków"
+                                "avg_cadence" -> "kr/min"
                                 "ascent", "descent" -> "m"
                                 "maxPressure", "minPressure" -> "hPa"
                                 "bestPace1km" -> "min/km"

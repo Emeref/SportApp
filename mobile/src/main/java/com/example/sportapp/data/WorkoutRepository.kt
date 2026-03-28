@@ -199,6 +199,7 @@ class WorkoutRepository @Inject constructor(
         val totalAscent = filtered.sumOf { it.totalAscent ?: 0.0 }
         val totalDescent = filtered.sumOf { it.totalDescent ?: 0.0 }
         val avgBpm = if (filtered.any { it.avgBpm != null }) filtered.mapNotNull { it.avgBpm }.average() else 0.0
+        val avgCadence = if (filtered.any { it.avgCadence != null }) filtered.mapNotNull { it.avgCadence }.average() else 0.0
         
         // Nowe statystyki "Maksymalne z serii"
         val maxSpeed = filtered.mapNotNull { it.maxSpeed }.maxOrNull() ?: 0.0
@@ -231,6 +232,7 @@ class WorkoutRepository @Inject constructor(
             "ascent" to totalAscent,
             "descent" to totalDescent,
             "avgBpm" to avgBpm,
+            "avg_cadence" to avgCadence,
             
             // Nowe klucze dla statystyk rekordowych
             "max_speed" to maxSpeed,

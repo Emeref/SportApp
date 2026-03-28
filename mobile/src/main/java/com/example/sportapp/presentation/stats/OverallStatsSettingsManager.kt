@@ -30,6 +30,7 @@ class OverallStatsSettingsManager(private val context: Context) {
             WidgetItem("ascent", "W sumie w górę"),
             WidgetItem("descent", "W sumie do dołu"),
             WidgetItem("steps", "Wszystkie kroki"),
+            WidgetItem("avg_cadence", "Średnia kadencja"),
             WidgetItem("max_speed", "Maks prędkość"),
             WidgetItem("max_altitude", "Maks wysokość"),
             WidgetItem("max_elevation_gain", "Najwięcej przewyższeń"),
@@ -47,6 +48,7 @@ class OverallStatsSettingsManager(private val context: Context) {
             WidgetItem("ascent", "Suma podejść"),
             WidgetItem("descent", "Suma zejść"),
             WidgetItem("steps", "Kroki"),
+            WidgetItem("avg_cadence", "Średnia kadencja"),
             WidgetItem("maxPressure", "Maks. ciśnienie"),
             WidgetItem("minPressure", "Min. ciśnienie"),
             WidgetItem("bestPace1km", "Najlepsze tempo (1km)")

@@ -161,6 +161,7 @@ fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
         "ascent" -> StatCard(modifier, "W sumie w górę", "${formatLargeNumber(stats["ascent"])} m")
         "descent" -> StatCard(modifier, "W sumie do dołu", "${formatLargeNumber(stats["descent"])} m")
         "steps" -> StatCard(modifier, "Kroki", formatLargeNumber(stats["steps"]))
+        "avg_cadence" -> StatCard(modifier, "Średnia kadencja", String.format(Locale.US, "%.0f kr/min", stats["avg_cadence"] as? Double ?: 0.0))
         "max_speed" -> StatCard(modifier, "Maks prędkość", String.format(Locale.US, "%.1f km/h", stats["max_speed"] as? Double ?: 0.0))
         "max_altitude" -> StatCard(modifier, "Maks wysokość", String.format(Locale.US, "%.0f m", stats["max_altitude"] as? Double ?: 0.0))
         "max_elevation_gain" -> StatCard(modifier, "Najwięcej przewyższeń", String.format(Locale.US, "+%.0f m", stats["max_elevation_gain"] as? Double ?: 0.0))

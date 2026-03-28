@@ -32,7 +32,7 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("map", "Mapa"),
             WidgetItem("bpm", "Tętno (bpm)"),
             WidgetItem("kalorie_min", "Kalorie/min"),
-            WidgetItem("kroki_min", "Kroki/min"),
+            WidgetItem("kroki_min", "Kadencja (kroki/min)"),
             WidgetItem("odl_kroki", "Dystans (kroki)"),
             WidgetItem("predkosc_kroki", "Prędkość (kroki)"),
             WidgetItem("gps_dystans", "Dystans (GPS)"),
