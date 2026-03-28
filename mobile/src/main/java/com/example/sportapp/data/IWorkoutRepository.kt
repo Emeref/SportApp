@@ -3,6 +3,7 @@ package com.example.sportapp.data
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.flow.Flow
@@ -41,4 +42,8 @@ interface IWorkoutRepository {
     fun getActivityItemsFlow(): Flow<List<ActivityItem>>
 
     fun getAllDefinitions(): Flow<List<WorkoutDefinition>>
+
+    suspend fun insertWorkout(workout: WorkoutEntity): Long
+    suspend fun insertPoints(points: List<WorkoutPointEntity>)
+    suspend fun insertLaps(laps: List<WorkoutLap>)
 }

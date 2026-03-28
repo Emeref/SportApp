@@ -1,14 +1,16 @@
 package com.example.sportapp.presentation.activities
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.GpxGenerator
+import com.example.sportapp.data.GpxImporter
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.ZipManager
+import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.presentation.settings.MobileSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -35,14 +37,27 @@ sealed class ExportState {
     data class Error(val message: String) : ExportState()
 }
 
+sealed class ImportState {
+    object Idle : ImportState()
+    object Loading : ImportState()
+    data class Success(val message: String) : ImportState()
+    data class Error(val message: String) : ImportState()
+    data class Warning(val warnings: List<String>, val onConfirm: () -> Unit) : ImportState()
+}
+
 @HiltViewModel
 class ActivityListViewModel @Inject constructor(
     private val repository: IWorkoutRepository,
+    private val gpxImporter: GpxImporter,
+    private val settingsManager: MobileSettingsManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _activityTypes = MutableStateFlow<List<String>>(emptyList())
     val activityTypes = _activityTypes.asStateFlow()
+
+    private val _definitions = MutableStateFlow<List<WorkoutDefinition>>(emptyList())
+    val definitions = _definitions.asStateFlow()
 
     private val _selectedType = MutableStateFlow<String?>(null)
     val selectedType = _selectedType.asStateFlow()
@@ -64,6 +79,9 @@ class ActivityListViewModel @Inject constructor(
 
     private val _exportState = MutableStateFlow<ExportState>(ExportState.Idle)
     val exportState = _exportState.asStateFlow()
+
+    private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
+    val importState = _importState.asStateFlow()
 
     val activities: StateFlow<List<ActivityItem>> = repository.getActivityItemsFlow()
         .combine(_selectedType) { all, type ->
@@ -113,6 +131,11 @@ class ActivityListViewModel @Inject constructor(
 
     init {
         refreshActivityTypes()
+        viewModelScope.launch {
+            repository.getAllDefinitions().collect {
+                _definitions.value = it
+            }
+        }
     }
 
     fun refreshActivityTypes() {
@@ -242,5 +265,61 @@ class ActivityListViewModel @Inject constructor(
 
     fun resetExportState() {
         _exportState.value = ExportState.Idle
+    }
+
+    fun importGpx(uri: Uri, definition: WorkoutDefinition) {
+        viewModelScope.launch {
+            _importState.value = ImportState.Loading
+            try {
+                val settings = settingsManager.settingsFlow.first()
+                val result = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        gpxImporter.importGpx(input, definition, settings.healthData)
+                    } ?: throw Exception("Nie można otworzyć pliku")
+                }
+
+                val isDuplicate = checkDuplicate(result.workout.startTime, result.workout.durationSeconds)
+                val warnings = result.warnings.toMutableList()
+                if (isDuplicate) {
+                    warnings.add(0, "Wykryto potencjalny duplikat (taka sama data startu i czas trwania).")
+                }
+
+                if (warnings.isNotEmpty()) {
+                    _importState.value = ImportState.Warning(warnings) {
+                        saveImportedWorkout(result)
+                    }
+                } else {
+                    saveImportedWorkout(result)
+                }
+            } catch (e: Exception) {
+                _importState.value = ImportState.Error("Błąd importu: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun checkDuplicate(startTime: Long, durationSeconds: Long): Boolean {
+        val workouts = repository.getAllWorkouts().first()
+        return workouts.any { it.startTime == startTime && it.durationSeconds == durationSeconds }
+    }
+
+    private fun saveImportedWorkout(result: GpxImporter.ImportResult) {
+        viewModelScope.launch {
+            try {
+                val workoutId = repository.insertWorkout(result.workout)
+                val points = result.points.map { it.copy(workoutId = workoutId) }
+                repository.insertPoints(points)
+                val laps = result.laps.map { it.copy(workoutId = workoutId) }
+                repository.insertLaps(laps)
+                
+                _importState.value = ImportState.Success("Trening zaimportowany pomyślnie.")
+                refreshActivityTypes()
+            } catch (e: Exception) {
+                _importState.value = ImportState.Error("Błąd zapisu do bazy: ${e.message}")
+            }
+        }
+    }
+
+    fun resetImportState() {
+        _importState.value = ImportState.Idle
     }
 }
