@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.sportapp.core.i18n.AppLanguage
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.gson.Gson
@@ -36,6 +37,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         
         private val HEALTH_DATA_JSON = stringPreferencesKey("health_data_json")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
+        private val APP_LANGUAGE = stringPreferencesKey("app_language")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -84,7 +86,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             watchStatsPeriod = ReportingPeriod.valueOf(preferences[WATCH_PERIOD] ?: defaultState.watchStatsPeriod.name),
             watchStatsCustomDays = preferences[WATCH_CUSTOM_DAYS] ?: defaultState.watchStatsCustomDays,
             healthData = healthData,
-            themeMode = ThemeMode.valueOf(preferences[THEME_MODE] ?: defaultState.themeMode.name)
+            themeMode = ThemeMode.valueOf(preferences[THEME_MODE] ?: defaultState.themeMode.name),
+            appLanguage = AppLanguage.valueOf(preferences[APP_LANGUAGE] ?: defaultState.appLanguage.name)
         )
     }
 
@@ -100,9 +103,11 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             
             preferences[HEALTH_DATA_JSON] = gson.toJson(state.healthData)
             preferences[THEME_MODE] = state.themeMode.name
+            preferences[APP_LANGUAGE] = state.appLanguage.name
         }
         syncWatchStatsSettings(state)
         syncHealthData(state.healthData)
+        syncAppLanguage(state.appLanguage)
         requestFullSyncFromWatch()
     }
 
@@ -143,6 +148,19 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             Log.d("SettingsSync", "Synced health data to wear")
         } catch (e: Exception) {
             Log.e("SettingsSync", "Failed to sync health data", e)
+        }
+    }
+
+    private suspend fun syncAppLanguage(language: AppLanguage) {
+        try {
+            val request = PutDataMapRequest.create("/app_settings").apply {
+                dataMap.putString("app_language", language.name)
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }
+            dataClient.putDataItem(request.asPutDataRequest().setUrgent()).await()
+            Log.d("SettingsSync", "Synced app language to wear: ${language.name}")
+        } catch (e: Exception) {
+            Log.e("SettingsSync", "Failed to sync app language", e)
         }
     }
 }

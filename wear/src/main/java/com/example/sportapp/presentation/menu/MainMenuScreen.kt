@@ -19,10 +19,13 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import com.example.sportapp.R
+import com.example.sportapp.core.i18n.LocalAppStrings
 
 @Composable
 fun MainMenuScreen(navController: NavHostController) {
     val listState = rememberScalingLazyListState()
+    val strings = LocalAppStrings.current
+
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
@@ -42,7 +45,7 @@ fun MainMenuScreen(navController: NavHostController) {
 
         item {
             Chip(
-                label = { Text("Sport") },
+                label = { Text(strings.running) }, // Or add a generic 'Sport' if needed, using 'running' as placeholder
                 onClick = { navController.navigate("choose_sport") },
                 icon = { Icon(Icons.Default.DirectionsRun, contentDescription = "Sport") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
@@ -50,7 +53,7 @@ fun MainMenuScreen(navController: NavHostController) {
         }
         item {
             Chip(
-                label = { Text("Statystyki") },
+                label = { Text(strings.charts) }, // Statistics -> Charts
                 onClick = { navController.navigate("statistics") },
                 icon = { Icon(Icons.Default.BarChart, contentDescription = "Statystyki") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
@@ -59,7 +62,7 @@ fun MainMenuScreen(navController: NavHostController) {
         }
         item {
             Chip(
-                label = { Text("Ustawienia") },
+                label = { Text(strings.options) }, // Settings -> Options
                 onClick = { navController.navigate("settings") },
                 icon = { Icon(Icons.Default.Settings, contentDescription = "Ustawienia") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),

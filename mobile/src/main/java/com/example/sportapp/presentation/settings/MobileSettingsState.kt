@@ -1,5 +1,7 @@
 package com.example.sportapp.presentation.settings
 
+import com.example.sportapp.core.i18n.AppLanguage
+
 enum class ReportingPeriod {
     TODAY, WEEK, MONTH, YEAR, CUSTOM
 }
@@ -47,5 +49,6 @@ data class MobileSettingsState(
     val watchStatsPeriod: ReportingPeriod = ReportingPeriod.WEEK,
     val watchStatsCustomDays: Int = 7,
     val healthData: HealthData = HealthData(),
-    val themeMode: ThemeMode = ThemeMode.SYSTEM
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val appLanguage: AppLanguage = AppLanguage.POLISH
 )

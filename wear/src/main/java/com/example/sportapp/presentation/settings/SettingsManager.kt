@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.sportapp.core.i18n.AppLanguage
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.workout.DataLayerManager
@@ -46,6 +47,7 @@ class SettingsManager @Inject constructor(
         private val WATCH_STATS_WIDGETS_KEY = stringPreferencesKey("watch_stats_widgets")
         private val WATCH_STATS_PERIOD_KEY = stringPreferencesKey("watch_stats_period")
         private val WATCH_STATS_CUSTOM_DAYS_KEY = intPreferencesKey("watch_stats_custom_days")
+        private val APP_LANGUAGE_KEY = stringPreferencesKey("app_language")
         
         val Orange = Color(0xFFFFA500)
         val Transparent = Color.Transparent
@@ -95,10 +97,12 @@ class SettingsManager @Inject constructor(
             }
             val watchStatsPeriod = preferences[WATCH_STATS_PERIOD_KEY]?.let { ReportingPeriod.valueOf(it) } ?: ReportingPeriod.WEEK
             val watchStatsCustomDays = preferences[WATCH_STATS_CUSTOM_DAYS_KEY] ?: 7
+            val appLanguage = preferences[APP_LANGUAGE_KEY]?.let { AppLanguage.valueOf(it) } ?: AppLanguage.POLISH
 
             UserSettings(
                 clockColor, healthData, screenBehavior,
-                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays
+                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays,
+                appLanguage
             )
         }
 
@@ -151,6 +155,13 @@ class SettingsManager @Inject constructor(
         }
         triggerSync()
     }
+
+    suspend fun saveAppLanguage(language: AppLanguage) {
+        context.dataStore.edit { preferences ->
+            preferences[APP_LANGUAGE_KEY] = language.name
+        }
+        triggerSync()
+    }
 }
 
 data class UserSettings(
@@ -159,5 +170,6 @@ data class UserSettings(
     val screenBehavior: ScreenBehavior,
     val watchStatsWidgets: List<WidgetItem>,
     val watchStatsPeriod: ReportingPeriod,
-    val watchStatsCustomDays: Int
+    val watchStatsCustomDays: Int,
+    val appLanguage: AppLanguage = AppLanguage.POLISH
 )

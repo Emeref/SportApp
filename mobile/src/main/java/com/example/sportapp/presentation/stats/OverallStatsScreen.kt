@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.R
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.presentation.home.WidgetFactory
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -78,6 +79,7 @@ fun OverallStatsContent(
     var showTypeMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    val strings = LocalAppStrings.current
 
     Scaffold(
         topBar = {
@@ -89,17 +91,17 @@ fun OverallStatsContent(
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
-                        Text("Statystyki ogólne")
+                        Text(strings.generalStats)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToOptions) {
-                        Icon(Icons.Default.Settings, contentDescription = "Opcje")
+                        Icon(Icons.Default.Settings, contentDescription = strings.options)
                     }
                 }
             )
@@ -121,18 +123,18 @@ fun OverallStatsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Filtry", style = MaterialTheme.typography.titleSmall)
+                    Text(strings.filters, style = MaterialTheme.typography.titleSmall)
                     
                     Box {
                         OutlinedButton(
                             onClick = { showTypeMenu = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(selectedType ?: "Wszystkie typy")
+                            Text(selectedType ?: strings.allTypes)
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
                         DropdownMenu(expanded = showTypeMenu, onDismissRequest = { showTypeMenu = false }) {
-                            DropdownMenuItem(text = { Text("Wszystkie") }, onClick = { onTypeSelected(null); showTypeMenu = false })
+                            DropdownMenuItem(text = { Text(strings.allTypes) }, onClick = { onTypeSelected(null); showTypeMenu = false })
                             activityTypes.forEach { type ->
                                 DropdownMenuItem(text = { Text(type) }, onClick = { onTypeSelected(type); showTypeMenu = false })
                             }
@@ -152,7 +154,7 @@ fun OverallStatsContent(
                         ) {
                             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(startDate?.let { sdf.format(it) } ?: "Od")
+                            Text(startDate?.let { sdf.format(it) } ?: strings.from)
                         }
 
                         OutlinedButton(
@@ -167,7 +169,7 @@ fun OverallStatsContent(
                         ) {
                             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(endDate?.let { sdf.format(it) } ?: "Do")
+                            Text(endDate?.let { sdf.format(it) } ?: strings.to)
                         }
                     }
                 }
@@ -178,7 +180,7 @@ fun OverallStatsContent(
             // 2. Widgety
             val activeWidgets = widgets.filter { it.isEnabled }
             if (activeWidgets.isEmpty()) {
-                Text("Brak aktywnych widgetów. Włącz je w opcjach.")
+                Text(strings.noWidgetsSelected)
             } else {
                 activeWidgets.chunked(2).forEach { rowItems ->
                     if (rowItems.size == 2) {
@@ -202,7 +204,7 @@ fun OverallStatsContent(
             if (activeCharts.isNotEmpty()) {
                 if (!rawData.isNullOrEmpty()) {
                     Text(
-                        text = "Wykresy trendów",
+                        text = strings.charts,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                     )
@@ -215,7 +217,7 @@ fun OverallStatsContent(
                                 "distanceGps" -> if (maxVal > 6000) "km" else "m"
                                 "distanceSteps" -> if (maxVal > 6000) "km" else "m"
                                 "calories" -> "kcal"
-                                "steps" -> "kroków"
+                                "steps" -> strings.steps.lowercase()
                                 "avg_cadence" -> "kr/min"
                                 "ascent", "descent" -> "m"
                                 "maxPressure", "minPressure" -> "hPa"
@@ -223,9 +225,9 @@ fun OverallStatsContent(
                                 else -> ""
                             }
                             val title = when(chart.id) {
-                                "distanceGps" -> if (maxVal > 6000) "Dystans (GPS) w kilometrach" else "Dystans (GPS) w metrach"
-                                "distanceSteps" -> if (maxVal > 6000) "Dystans (kroki) w kilometrach" else "Dystans (kroki) w metrach"
-                                "steps" -> "Kroki"
+                                "distanceGps" -> if (maxVal > 6000) "${strings.distance} (GPS) [km]" else "${strings.distance} (GPS) [m]"
+                                "distanceSteps" -> if (maxVal > 6000) "${strings.distance} (${strings.steps.lowercase()}) [km]" else "${strings.distance} (${strings.steps.lowercase()}) [m]"
+                                "steps" -> strings.steps
                                 else -> chart.label
                             }
                             CommonChartSection(
@@ -241,7 +243,7 @@ fun OverallStatsContent(
                     }
                 } else if (stats.containsKey("raw_data")) {
                     Text(
-                        text = "Brak danych do wyświetlenia wykresów.",
+                        text = strings.noData,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray,
                         modifier = Modifier.padding(vertical = 16.dp)

@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.BuildConfig
 import com.example.sportapp.R
+import com.example.sportapp.core.i18n.AppLanguage
+import com.example.sportapp.core.i18n.LocalAppStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +36,7 @@ fun SettingsScreen(
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
+    val strings = LocalAppStrings.current
 
     val isDark = when (state.themeMode) {
         ThemeMode.LIGHT -> false
@@ -53,14 +56,14 @@ fun SettingsScreen(
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
-                        Text("Ustawienia")
+                        Text(strings.theme) // Reused 'theme' as generic title for now or keep "Ustawienia"
                     }
                 },
                 navigationIcon = {
                     IconButton(
                         onClick = onCancel
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 }
             )
@@ -74,9 +77,17 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Language Section
+            SettingsSection(title = strings.language) {
+                LanguageSelectionGrid(
+                    selectedLanguage = state.appLanguage,
+                    onSelect = { state = state.copy(appLanguage = it) }
+                )
+            }
+
             // 0. Sekcja Wygląd
-            SettingsSection(title = "Wygląd") {
-                Text(text = "Motyw aplikacji", style = MaterialTheme.typography.bodyMedium)
+            SettingsSection(title = strings.theme) {
+                Text(text = strings.theme, style = MaterialTheme.typography.bodyMedium)
                 ThemeSelectionGrid(
                     selectedMode = state.themeMode,
                     onSelect = { state = state.copy(themeMode = it) }
@@ -120,7 +131,7 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
-                        headlineContent = { Text("Widgety na stronie głównej") },
+                        headlineContent = { Text(strings.widgets) },
                         supportingContent = { Text("Wybierz i ustaw kolejność") },
                         leadingContent = { Icon(Icons.Default.Dashboard, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
@@ -215,14 +226,14 @@ fun SettingsScreen(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Zapisz", color = MaterialTheme.colorScheme.onPrimary)
+                    Text(strings.save, color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Zamknij", color = MaterialTheme.colorScheme.onError)
+                    Text(strings.stop, color = MaterialTheme.colorScheme.onError) // Reused stop as close
                 }
             }
 
@@ -255,14 +266,59 @@ fun SettingsScreen(
 }
 
 @Composable
+fun LanguageSelectionGrid(
+    selectedLanguage: AppLanguage,
+    onSelect: (AppLanguage) -> Unit
+) {
+    Column {
+        AppLanguage.values().toList().chunked(2).forEach { chunk ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                chunk.forEach { language ->
+                    LanguageOptionChip(
+                        label = "${language.flag} ${language.label}",
+                        language = language,
+                        selectedLanguage = selectedLanguage,
+                        onSelect = onSelect,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (chunk.size < 2) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LanguageOptionChip(
+    label: String,
+    language: AppLanguage,
+    selectedLanguage: AppLanguage,
+    onSelect: (AppLanguage) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clickable { onSelect(language) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = language == selectedLanguage, onClick = { onSelect(language) })
+        Text(text = label, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
 fun ThemeSelectionGrid(
     selectedMode: ThemeMode,
     onSelect: (ThemeMode) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Row(modifier = Modifier.fillMaxWidth()) {
-        ThemeOptionChip("System", ThemeMode.SYSTEM, selectedMode, onSelect, Modifier.weight(1f))
-        ThemeOptionChip("Jasny", ThemeMode.LIGHT, selectedMode, onSelect, Modifier.weight(1f))
-        ThemeOptionChip("Ciemny", ThemeMode.DARK, selectedMode, onSelect, Modifier.weight(1f))
+        ThemeOptionChip(strings.systemDefault, ThemeMode.SYSTEM, selectedMode, onSelect, Modifier.weight(1f))
+        ThemeOptionChip(strings.light, ThemeMode.LIGHT, selectedMode, onSelect, Modifier.weight(1f))
+        ThemeOptionChip(strings.dark, ThemeMode.DARK, selectedMode, onSelect, Modifier.weight(1f))
     }
 }
 
@@ -290,15 +346,16 @@ fun PeriodSelectionGrid(
     selectedPeriod: ReportingPeriod,
     onSelect: (ReportingPeriod) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Column {
         Row(modifier = Modifier.fillMaxWidth()) {
-            PeriodOptionChip("Dziś", ReportingPeriod.TODAY, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip("Tydzień", ReportingPeriod.WEEK, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip("Miesiąc", ReportingPeriod.MONTH, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(strings.today, ReportingPeriod.TODAY, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(strings.week, ReportingPeriod.WEEK, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(strings.month, ReportingPeriod.MONTH, selectedPeriod, onSelect, Modifier.weight(1f))
         }
         Row(modifier = Modifier.fillMaxWidth()) {
-            PeriodOptionChip("Rok", ReportingPeriod.YEAR, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip("Inne", ReportingPeriod.CUSTOM, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(strings.year, ReportingPeriod.YEAR, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(strings.custom, ReportingPeriod.CUSTOM, selectedPeriod, onSelect, Modifier.weight(1f))
             Spacer(modifier = Modifier.weight(1f))
         }
     }
