@@ -8,7 +8,7 @@ enum class WorkoutSensor(val id: String, val label: String) {
     CALORIES_SUM("calorieSum", "Spalone kalorie"),
     CALORIES_PER_MINUTE("calorieMin", "Kalorie na minutę"),
     STEPS("steps", "Kroki"),
-    STEPS_PER_MINUTE("stepsMin", "Kroki na minutę"),
+    STEPS_PER_MINUTE("stepsMin", "Kadencja (kroki/min)"),
     DISTANCE_STEPS("distanceSteps", "Dystans (kroki)"),
     SPEED_GPS("speedGps", "Prędkość"),
     SPEED_STEPS("speedSteps", "Prędkość (kroki)"),

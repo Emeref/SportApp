@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation.activities
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,10 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +27,7 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.sportapp.R
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,6 +50,7 @@ fun ActivityListScreen(
     val sortColumn by viewModel.sortColumn.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val selectedIds by viewModel.selectedIds.collectAsState()
+    val exportState by viewModel.exportState.collectAsState()
     
     var showTypeMenu by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -76,6 +76,28 @@ fun ActivityListScreen(
         else -> ToggleableState.Indeterminate
     }
 
+    // Handle Export Success
+    LaunchedEffect(exportState) {
+        if (exportState is ExportState.Success) {
+            val state = exportState as ExportState.Success
+            val intent = if (state.isZip) {
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/zip"
+                    putExtra(Intent.EXTRA_STREAM, state.uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            } else {
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/gpx+xml"
+                    putExtra(Intent.EXTRA_STREAM, state.uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            }
+            context.startActivity(Intent.createChooser(intent, "Udostępnij trening(i)"))
+            viewModel.resetExportState()
+        }
+    }
+
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
@@ -92,6 +114,40 @@ fun ActivityListScreen(
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) {
                     Text("Anuluj")
+                }
+            }
+        )
+    }
+
+    // Export Progress Dialog
+    if (exportState is ExportState.Exporting) {
+        val state = exportState as ExportState.Exporting
+        Dialog(onDismissRequest = {}) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(progress = { state.progress })
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(state.message, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+
+    // Export Error Snackback/Dialog
+    if (exportState is ExportState.Error) {
+        AlertDialog(
+            onDismissRequest = { viewModel.resetExportState() },
+            title = { Text("Błąd eksportu") },
+            text = { Text((exportState as ExportState.Error).message) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.resetExportState() }) {
+                    Text("OK")
                 }
             }
         )
@@ -116,6 +172,11 @@ fun ActivityListScreen(
                     }
                 },
                 actions = {
+                    if (selectedIds.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.exportSelected() }) {
+                            Icon(Icons.Default.Share, contentDescription = "Eksportuj GPX")
+                        }
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Ustawienia wykresów")
                     }

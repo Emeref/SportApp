@@ -56,6 +56,7 @@ class OverallStatsViewModel @Inject constructor(
         "ascent" to ChartEntryModelProducer(),
         "descent" to ChartEntryModelProducer(),
         "steps" to ChartEntryModelProducer(),
+        "avg_cadence" to ChartEntryModelProducer(),
         "maxPressure" to ChartEntryModelProducer(),
         "minPressure" to ChartEntryModelProducer(),
         "bestPace1km" to ChartEntryModelProducer()
@@ -101,6 +102,7 @@ class OverallStatsViewModel @Inject constructor(
         chartProducers["ascent"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.totalAscent?.toFloat() ?: 0f) })
         chartProducers["descent"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.totalDescent?.toFloat() ?: 0f) })
         chartProducers["steps"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.steps?.toFloat() ?: 0f) })
+        chartProducers["avg_cadence"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.avgCadence?.toFloat() ?: 0f) })
         
         chartProducers["maxPressure"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.maxPressure?.toFloat() ?: 0f) })
         chartProducers["minPressure"]?.setEntries(rawData.mapIndexed { index, workout -> entryOf(index, workout.minPressure?.toFloat() ?: 0f) })
