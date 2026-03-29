@@ -25,6 +25,8 @@ import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.material.*
+import com.example.sportapp.core.i18n.AppStrings
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.components.SportDataRow
@@ -46,6 +48,7 @@ fun DynamicWorkoutScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+    val strings = LocalAppStrings.current
 
     var forceActiveUI by remember { mutableStateOf(false) }
 
@@ -132,6 +135,7 @@ private fun ActiveWorkoutUI(
 ) {
     // initialPage = 1 (Data), index 0 = Controls (Swipe Right to see controls)
     val horizontalPagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
+    val strings = LocalAppStrings.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(state = horizontalPagerState) { hPage ->
@@ -176,7 +180,7 @@ private fun ActiveWorkoutUI(
                     if (dataSensors.size <= 3) {
                         items(dataSensors.size) { index ->
                             Box(modifier = Modifier.padding(horizontal = 8.dp)) {
-                                DynamicSensorDispatcher(dataSensors[index].sensorId, session, false)
+                                DynamicSensorDispatcher(dataSensors[index].sensorId, session, false, strings)
                             }
                         }
                     } else {
@@ -189,7 +193,7 @@ private fun ActiveWorkoutUI(
                             ) {
                                 rowSensors.forEach { sensor ->
                                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                        DynamicSensorDispatcher(sensor.sensorId, session, false)
+                                        DynamicSensorDispatcher(sensor.sensorId, session, false, strings)
                                     }
                                 }
                             }
@@ -213,8 +217,9 @@ private fun ActiveWorkoutUI(
 
 @Composable
 private fun WorkoutTimerHeader(formattedTime: String) {
+    val strings = LocalAppStrings.current
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 20.dp, start = 8.dp, end = 8.dp)) {
-        Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
+        Text(strings.activeTime.uppercase(), style = MaterialTheme.typography.caption2, color = Color.Gray)
         Text(formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
     }
 }
@@ -253,6 +258,7 @@ private fun AmbientWorkoutUI(
 
 @Composable
 private fun AmbientDataDisplay(session: WorkoutSessionState, dataSensors: List<SensorConfig>) {
+    val strings = LocalAppStrings.current
     var currentTime by remember { mutableStateOf("") }
     LaunchedEffect(Unit) {
         while (true) {
@@ -295,7 +301,7 @@ private fun AmbientDataDisplay(session: WorkoutSessionState, dataSensors: List<S
             ) {
                 firstTwoSensors.forEach { sensor ->
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        DynamicSensorDispatcher(sensor.sensorId, session, true)
+                        DynamicSensorDispatcher(sensor.sensorId, session, true, strings)
                     }
                 }
             }
@@ -307,7 +313,7 @@ private fun AmbientDataDisplay(session: WorkoutSessionState, dataSensors: List<S
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                DynamicSensorDispatcher(dataSensors[2].sensorId, session, true)
+                DynamicSensorDispatcher(dataSensors[2].sensorId, session, true, strings)
             }
         }
     }
@@ -317,10 +323,26 @@ private fun AmbientDataDisplay(session: WorkoutSessionState, dataSensors: List<S
 fun DynamicSensorDispatcher(
     id: String,
     session: WorkoutSessionState,
-    isAmbient: Boolean
+    isAmbient: Boolean,
+    strings: AppStrings
 ) {
-    val sensor = WorkoutSensor.entries.find { it.id == id } ?: return
-    val label = sensor.label
+    val label = when (id) {
+        "bpm" -> strings.heartRate
+        "calorieSum" -> strings.totalCalories
+        "calorieMin" -> strings.caloriesMin
+        "steps" -> strings.steps
+        "stepsMin" -> strings.cadenceSteps
+        "distanceSteps" -> strings.distanceSteps
+        "speedGps" -> strings.speed
+        "speedSteps" -> strings.speedSteps
+        "distanceGps" -> strings.distance
+        "altitude" -> strings.altitude
+        "totalAscent" -> strings.totalAscent
+        "totalDescent" -> strings.totalDescent
+        "pressure" -> strings.pressure
+        else -> id
+    }
+
     val p = session.lastPoint
     val color = if (isAmbient) Color.White else when (id) {
         "bpm" -> Color.Red

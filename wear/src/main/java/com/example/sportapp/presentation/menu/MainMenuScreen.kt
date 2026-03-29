@@ -45,26 +45,26 @@ fun MainMenuScreen(navController: NavHostController) {
 
         item {
             Chip(
-                label = { Text(strings.running) }, // Or add a generic 'Sport' if needed, using 'running' as placeholder
+                label = { Text(strings.start) },
                 onClick = { navController.navigate("choose_sport") },
-                icon = { Icon(Icons.Default.DirectionsRun, contentDescription = "Sport") },
+                icon = { Icon(Icons.Default.DirectionsRun, contentDescription = strings.start) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
         }
         item {
             Chip(
-                label = { Text(strings.charts) }, // Statistics -> Charts
+                label = { Text(strings.charts) },
                 onClick = { navController.navigate("statistics") },
-                icon = { Icon(Icons.Default.BarChart, contentDescription = "Statystyki") },
+                icon = { Icon(Icons.Default.BarChart, contentDescription = strings.charts) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 colors = ChipDefaults.secondaryChipColors()
             )
         }
         item {
             Chip(
-                label = { Text(strings.options) }, // Settings -> Options
+                label = { Text(strings.options) },
                 onClick = { navController.navigate("settings") },
-                icon = { Icon(Icons.Default.Settings, contentDescription = "Ustawienia") },
+                icon = { Icon(Icons.Default.Settings, contentDescription = strings.options) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 colors = ChipDefaults.secondaryChipColors()
             )

@@ -16,6 +16,7 @@ import androidx.wear.compose.foundation.pager.HorizontalPager
 import androidx.wear.compose.foundation.pager.VerticalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.material.*
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.presentation.sensors.WorkoutStatus
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.maps.android.compose.MapType
@@ -44,6 +45,7 @@ fun WorkoutControls(
     onTogglePause: () -> Unit,
     onEnd: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -59,7 +61,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = if (status == WorkoutStatus.PAUSED) Icons.Default.PlayArrow else Icons.Default.Pause,
-                    contentDescription = if (status == WorkoutStatus.PAUSED) "Wznów" else "Pauza",
+                    contentDescription = if (status == WorkoutStatus.PAUSED) strings.resume else strings.pause,
                     tint = Color.Black
                 )
             }
@@ -71,7 +73,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.Stop,
-                    contentDescription = "Zakończ",
+                    contentDescription = strings.stop,
                     tint = Color.White
                 )
             }
@@ -83,7 +85,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Start",
+                    contentDescription = strings.start,
                     tint = Color.Black
                 )
             }

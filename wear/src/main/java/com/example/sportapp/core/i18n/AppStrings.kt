@@ -28,6 +28,8 @@ interface AppStrings {
     val discard: String
     val workoutStart: String
     val activeTime: String
+    val activity: String
+    val time: String
 
     // Settings
     val darkMode: String
@@ -45,6 +47,41 @@ interface AppStrings {
     val watchStats: String
     val integration: String
     val myProfile: String
+    val screen: String
+    val screenBehavior: String
+    val alwaysOn: String
+    val ambientMode: String
+    val autoMode: String
+    val clockColor: String
+    val colorRed: String
+    val colorWhite: String
+    val colorGreen: String
+    val colorYellow: String
+    val colorBlue: String
+    val colorBlack: String
+    val colorNone: String
+    val colorCustom: String
+    val age: String
+    val weight: String
+    val height: String
+    val stepLength: String
+    val restingHeartRate: String
+    val maxHeartRate: String
+    val gender: String
+    val male: String
+    val female: String
+    val selectGender: String
+
+    // Units
+    val yearsUnit: String
+    val kgUnit: String
+    val cmUnit: String
+    val bpmUnit: String
+    val kcalUnit: String
+    val kmhUnit: String
+    val hpaUnit: String
+    val metersUnit: String
+    val kmUnit: String
 
     // Stats
     val today: String
@@ -67,6 +104,10 @@ interface AppStrings {
     val maxCalories: String
     val maxAvgCadence: String
     val maxAvgSpeed: String
+    val last7Days: String
+    val last30Days: String
+    val lastYear: String
+    fun lastXDays(days: Int): String
 
     // Messages
     val noGpsPermission: String
@@ -101,6 +142,40 @@ interface AppStrings {
     val warning: String
     val continueLabel: String
     val chooseActivityType: String
+    val chooseSport: String
+    val configurationError: String
+    val noFieldsSelected: String
+    val summary: String
+    val confirm: String
+    val pressure: String
+    val cadenceSteps: String
+    val distanceSteps: String
+    val speedSteps: String
+    val totalAscent: String
+    val totalDescent: String
+    val caloriesMin: String
+    val locationData: String
+    val noDefinitions: String
+    val distanceGps: String
+    val allSteps: String
+    val helloWorld: String
+    val workoutMonitoring: String
+
+    // Days
+    val mon: String
+    val tue: String
+    val wed: String
+    val thu: String
+    val fri: String
+    val sat: String
+    val sun: String
+    val monday: String
+    val tuesday: String
+    val wednesday: String
+    val thursday: String
+    val friday: String
+    val saturday: String
+    val sunday: String
 }
 
 val LocalAppStrings = staticCompositionLocalOf<AppStrings> {

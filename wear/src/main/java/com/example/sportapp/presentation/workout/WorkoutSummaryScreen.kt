@@ -17,6 +17,7 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.material.*
+import com.example.sportapp.core.i18n.LocalAppStrings
 
 @Composable
 fun WorkoutSummaryScreen(
@@ -25,6 +26,7 @@ fun WorkoutSummaryScreen(
     onConfirm: () -> Unit
 ) {
     val listState = rememberScalingLazyListState()
+    val strings = LocalAppStrings.current
     // Używamy foundation.rememberSwipeToDismissBoxState i blokujemy zmianę stanu, aby wyłączyć gest wyjścia
     val swipeState = rememberSwipeToDismissBoxState(
         confirmStateChange = { it != SwipeToDismissValue.Dismissed }
@@ -52,13 +54,13 @@ fun WorkoutSummaryScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Potwierdź"
+                                contentDescription = strings.confirm
                             )
                         }
                     }
                     item {
                         Text(
-                            text = "PODSUMOWANIE",
+                            text = strings.summary,
                             style = MaterialTheme.typography.caption1,
                             color = Color.Gray,
                             modifier = Modifier.padding(top = 10.dp)
@@ -108,7 +110,7 @@ fun WorkoutSummaryScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Potwierdź"
+                                contentDescription = strings.confirm
                             )
                         }
                     }

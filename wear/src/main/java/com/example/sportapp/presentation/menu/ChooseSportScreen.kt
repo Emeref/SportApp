@@ -20,6 +20,7 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
+import com.example.sportapp.core.i18n.LocalAppStrings
 
 @Composable
 fun ChooseSportScreen(
@@ -28,6 +29,7 @@ fun ChooseSportScreen(
 ) {
     val definitions by viewModel.definitions.collectAsState()
     val listState = rememberScalingLazyListState()
+    val strings = LocalAppStrings.current
 
     if (definitions == null) {
         // Stan ładowania - pokazujemy pusty ekran lub spinner, aby nie migał komunikat o braku danych
@@ -40,14 +42,14 @@ fun ChooseSportScreen(
             state = listState,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item { ListHeader { Text("Wybierz sport") } }
+            item { ListHeader { Text(strings.chooseSport) } }
             
             val currentDefinitions = definitions!!
             
             if (currentDefinitions.isEmpty()) {
                 item {
                     Text(
-                        text = "Brak definicji aktywności. Zdefiniuj je w aplikacji na telefonie.",
+                        text = strings.noData,
                         modifier = Modifier.padding(16.dp),
                         style = androidx.wear.compose.material.MaterialTheme.typography.body2,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center

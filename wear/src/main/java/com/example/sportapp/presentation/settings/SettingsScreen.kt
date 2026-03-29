@@ -36,7 +36,7 @@ fun SettingsScreen(
         state = listState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { ListHeader { Text(strings.theme) } } // Or add a generic 'Settings' string
+        item { ListHeader { Text(strings.theme) } }
         
         item {
             Chip(
@@ -49,44 +49,44 @@ fun SettingsScreen(
 
         item {
             Chip(
-                label = { Text("Dane zdrowotne") }, // Should be strings.healthData if added
+                label = { Text(strings.healthData) },
                 onClick = { navController.navigate("health_data") },
-                icon = { Icon(Icons.Default.HealthAndSafety, contentDescription = "Dane zdrowotne") },
+                icon = { Icon(Icons.Default.HealthAndSafety, contentDescription = strings.healthData) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
         }
 
         item {
             val behaviorLabel = when (currentScreenBehavior) {
-                ScreenBehavior.KEEP_SCREEN_ON -> "Zawsze włączony"
-                ScreenBehavior.AMBIENT -> "Tryb Ambient"
-                ScreenBehavior.SYSTEM -> "Tryb Automatyczny"
+                ScreenBehavior.KEEP_SCREEN_ON -> strings.alwaysOn
+                ScreenBehavior.AMBIENT -> strings.ambientMode
+                ScreenBehavior.SYSTEM -> strings.autoMode
             }
             Chip(
-                label = { Text("Ekran") },
+                label = { Text(strings.screen) },
                 secondaryLabel = { Text(behaviorLabel) },
                 onClick = { navController.navigate("screen_behavior_selection") },
-                icon = { Icon(Icons.Default.Watch, contentDescription = "Ekran") },
+                icon = { Icon(Icons.Default.Watch, contentDescription = strings.screen) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
 
         item {
             val colorLabel = when (currentClockColor) {
-                Color.Red -> "Czerwony"
-                Color.White -> "Biały"
-                Color.Green -> "Zielony"
-                Color.Yellow -> "Żółty"
-                Color.Blue -> "Niebieski"
-                Color.Black -> "Czarny"
-                null -> "Brak"
-                else -> "Niestandardowy"
+                Color.Red -> strings.colorRed
+                Color.White -> strings.colorWhite
+                Color.Green -> strings.colorGreen
+                Color.Yellow -> strings.colorYellow
+                Color.Blue -> strings.colorBlue
+                Color.Black -> strings.colorBlack
+                null -> strings.colorNone
+                else -> strings.colorCustom
             }
             Chip(
-                label = { Text("Kolor zegara") },
+                label = { Text(strings.clockColor) },
                 secondaryLabel = { Text(colorLabel) },
                 onClick = { navController.navigate("clock_color_selection") },
-                icon = { Icon(Icons.Default.Schedule, contentDescription = "Kolor zegara") },
+                icon = { Icon(Icons.Default.Schedule, contentDescription = strings.clockColor) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
         }

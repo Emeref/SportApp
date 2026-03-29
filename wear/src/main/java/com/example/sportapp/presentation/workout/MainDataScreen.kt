@@ -14,6 +14,7 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.presentation.components.SportDataRow
 import com.example.sportapp.presentation.sensors.WorkoutTimerState
 import java.util.*
@@ -30,6 +31,7 @@ fun MainDataScreen(
     configFileName: String = "workout_walking.xml"
 ) {
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val config = remember(configFileName) {
         ActivityConfigParser.parse(context, configFileName)
     }
@@ -63,7 +65,7 @@ fun MainDataScreen(
             }
             item { Spacer(modifier = Modifier.height(4.dp)) }
         } ?: item {
-            Text("Błąd konfiguracji", color = Color.Red)
+            Text(strings.configurationError, color = Color.Red)
         }
     }
 }
@@ -79,18 +81,19 @@ fun SensorDispatcher(
     pressure: Double? = null,
     altitude: Double? = null
 ) {
+    val strings = LocalAppStrings.current
     when (id) {
         "timer" -> {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("CZAS AKTYWNOŚCI", style = MaterialTheme.typography.caption2, color = Color.Gray)
+                Text(strings.activeTime.uppercase(), style = MaterialTheme.typography.caption2, color = Color.Gray)
                 Text(workoutTimerState.formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
             }
         }
-        "steps" -> SportDataRow("Kroki", "$stepCount", Color.Green)
-        "distance" -> SportDataRow("Dystans", String.format(Locale.US, "%.2f km", distanceMeters / 1000f), Color.Cyan)
-        "speed" -> SportDataRow("Prędkość", String.format(Locale.US, "%.1f km/h", speedKmH), Color.Yellow)
-        "heart_rate" -> SportDataRow("Tętno", if (heartRate > 0) "${heartRate.toInt()} BPM" else "-- BPM", Color.Red, true)
-        "pressure" -> SportDataRow("Ciśnienie", if (pressure != null) String.format(Locale.US, "%.1f hPa", pressure) else "-- hPa", Color.LightGray)
-        "altitude" -> SportDataRow("Wysokość", if (altitude != null) "${altitude.toInt()} m" else "-- m", Color.Magenta)
+        "steps" -> SportDataRow(strings.steps, "$stepCount", Color.Green)
+        "distance" -> SportDataRow(strings.distance, String.format(Locale.US, "%.2f km", distanceMeters / 1000f), Color.Cyan)
+        "speed" -> SportDataRow(strings.speed, String.format(Locale.US, "%.1f km/h", speedKmH), Color.Yellow)
+        "heart_rate" -> SportDataRow(strings.heartRate, if (heartRate > 0) "${heartRate.toInt()} ${strings.bpmUnit}" else "-- ${strings.bpmUnit}", Color.Red, true)
+        "pressure" -> SportDataRow(strings.pressure, if (pressure != null) String.format(Locale.US, "%.1f hPa", pressure) else "-- hPa", Color.LightGray)
+        "altitude" -> SportDataRow(strings.altitude, if (altitude != null) "${altitude.toInt()} m" else "-- m", Color.Magenta)
     }
 }

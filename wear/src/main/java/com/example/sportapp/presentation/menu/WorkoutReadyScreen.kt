@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
+import com.example.sportapp.core.i18n.LocalAppStrings
 
 @Composable
 fun WorkoutReadyScreen(
@@ -25,6 +26,7 @@ fun WorkoutReadyScreen(
     viewModel: ChooseSportViewModel = hiltViewModel()
 ) {
     val definitions by viewModel.definitions.collectAsState()
+    val strings = LocalAppStrings.current
 
     if (definitions == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -92,9 +94,9 @@ fun WorkoutReadyScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Start")
+                            Icon(Icons.Default.PlayArrow, contentDescription = strings.start)
                             Spacer(Modifier.width(8.dp))
-                            Text("Start")
+                            Text(strings.start)
                         }
                     }
 
@@ -110,11 +112,11 @@ fun WorkoutReadyScreen(
                             colors = ButtonDefaults.secondaryButtonColors(),
                             modifier = Modifier.size(ButtonDefaults.SmallButtonSize)
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                         }
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Powrót",
+                            text = strings.back,
                             style = MaterialTheme.typography.caption2
                         )
                     }

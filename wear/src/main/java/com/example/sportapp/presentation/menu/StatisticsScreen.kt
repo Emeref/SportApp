@@ -11,6 +11,8 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
+import com.example.sportapp.core.i18n.AppStrings
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.workout.SummaryManager
 import java.util.Locale
@@ -22,6 +24,7 @@ fun StatisticsScreen(
     val stats by viewModel.stats.collectAsState()
     val settings by viewModel.settings.collectAsState(initial = null)
     val listState = rememberScalingLazyListState()
+    val strings = LocalAppStrings.current
 
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -32,7 +35,7 @@ fun StatisticsScreen(
         settings?.let { userSettings ->
             item {
                 Text(
-                    text = getPeriodLabel(userSettings.watchStatsPeriod, userSettings.watchStatsCustomDays),
+                    text = getPeriodLabel(userSettings.watchStatsPeriod, userSettings.watchStatsCustomDays, strings),
                     style = MaterialTheme.typography.caption1,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -42,13 +45,13 @@ fun StatisticsScreen(
             val enabledWidgets = userSettings.watchStatsWidgets.filter { it.isEnabled }
             
             items(enabledWidgets) { widget ->
-                StatCardForWidget(widget.id, widget.label, stats)
+                StatCardForWidget(widget.id, stats)
             }
             
             if (enabledWidgets.isEmpty()) {
                 item {
                     Text(
-                        text = "Brak wybranych pól",
+                        text = strings.noFieldsSelected,
                         style = MaterialTheme.typography.body2,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(16.dp)
@@ -62,14 +65,27 @@ fun StatisticsScreen(
 }
 
 @Composable
-fun StatCardForWidget(id: String, label: String, stats: SummaryManager.WatchStats) {
+fun StatCardForWidget(id: String, stats: SummaryManager.WatchStats) {
+    val strings = LocalAppStrings.current
+    
+    val label = when (id) {
+        "count" -> strings.activityCount
+        "calories" -> strings.totalCalories
+        "distanceGps" -> strings.distanceGps
+        "distanceSteps" -> strings.distanceSteps
+        "ascent" -> strings.ascent
+        "descent" -> strings.descent
+        "steps" -> strings.allSteps
+        else -> id
+    }
+
     val value = when (id) {
         "count" -> "${stats.count}"
-        "calories" -> "${stats.calories} kcal"
-        "distanceGps" -> formatDistance(stats.distanceGpsM)
-        "distanceSteps" -> formatDistance(stats.distanceStepsM)
-        "ascent" -> "${stats.ascent} m"
-        "descent" -> "${stats.descent} m"
+        "calories" -> "${stats.calories} ${strings.kcalUnit}"
+        "distanceGps" -> formatDistance(stats.distanceGpsM, strings)
+        "distanceSteps" -> formatDistance(stats.distanceStepsM, strings)
+        "ascent" -> "${stats.ascent} ${strings.metersUnit}"
+        "descent" -> "${stats.descent} ${strings.metersUnit}"
         "steps" -> "${stats.steps}"
         else -> "-"
     }
@@ -77,20 +93,20 @@ fun StatCardForWidget(id: String, label: String, stats: SummaryManager.WatchStat
     StatCard(label = label, value = value)
 }
 
-fun formatDistance(meters: Int): String {
+fun formatDistance(meters: Int, strings: AppStrings): String {
     return if (meters >= 1000) 
-        String.format(Locale.US, "%.2f km", meters / 1000.0)
+        String.format(Locale.US, "%.2f %s", meters / 1000.0, strings.kmUnit)
     else 
-        "$meters m"
+        "$meters ${strings.metersUnit}"
 }
 
-fun getPeriodLabel(period: ReportingPeriod, customDays: Int): String {
+fun getPeriodLabel(period: ReportingPeriod, customDays: Int, strings: AppStrings): String {
     return when (period) {
-        ReportingPeriod.TODAY -> "Dziś"
-        ReportingPeriod.WEEK -> "Ostatnie 7 dni"
-        ReportingPeriod.MONTH -> "Ostatnie 30 dni"
-        ReportingPeriod.YEAR -> "Ostatni rok"
-        ReportingPeriod.CUSTOM -> "Ostatnie $customDays dni"
+        ReportingPeriod.TODAY -> strings.today
+        ReportingPeriod.WEEK -> strings.last7Days
+        ReportingPeriod.MONTH -> strings.last30Days
+        ReportingPeriod.YEAR -> strings.lastYear
+        ReportingPeriod.CUSTOM -> strings.lastXDays(customDays)
     }
 }
 

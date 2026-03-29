@@ -2,13 +2,12 @@ package com.example.sportapp.presentation.settings
 
 import android.content.Context
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.sportapp.core.i18n.AppLanguage
-import com.example.sportapp.presentation.settings.ReportingPeriod
-import com.example.sportapp.presentation.settings.WidgetItem
+import com.example.sportapp.core.i18n.AppStrings
+import com.example.sportapp.core.i18n.PlStrings
 import com.example.sportapp.presentation.workout.DataLayerManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -72,28 +71,31 @@ class SettingsManager @Inject constructor(
             }
             val screenBehavior = preferences[SCREEN_BEHAVIOR_KEY]?.let { ScreenBehavior.valueOf(it) } ?: ScreenBehavior.KEEP_SCREEN_ON
 
+            // We use PlStrings as a reference for default labels for persistence logic
+            val defaultWidgets = getDefaultWidgets(PlStrings)
+
             val watchStatsWidgetsJson = preferences[WATCH_STATS_WIDGETS_KEY]
             val watchStatsWidgets = if (watchStatsWidgetsJson != null) {
                 try {
                     val type = object : TypeToken<List<WidgetItem>>() {}.type
                     val decoded: List<WidgetItem>? = gson.fromJson(watchStatsWidgetsJson, type)
                     if (decoded.isNullOrEmpty()) {
-                        defaultWatchStatsWidgets
+                        defaultWidgets
                     } else {
                         // Merging logic
-                        val currentIds = defaultWatchStatsWidgets.map { it.id }.toSet()
+                        val currentIds = defaultWidgets.map { it.id }.toSet()
                         val filtered = decoded.filter { it.id in currentIds }.toMutableList()
-                        val missing = defaultWatchStatsWidgets.filter { def -> filtered.none { it.id == def.id } }
+                        val missing = defaultWidgets.filter { def -> filtered.none { it.id == def.id } }
                         if (missing.isNotEmpty()) {
                             filtered.addAll(missing)
                         }
                         filtered
                     }
                 } catch (e: Exception) {
-                    defaultWatchStatsWidgets
+                    defaultWidgets
                 }
             } else {
-                defaultWatchStatsWidgets
+                defaultWidgets
             }
             val watchStatsPeriod = preferences[WATCH_STATS_PERIOD_KEY]?.let { ReportingPeriod.valueOf(it) } ?: ReportingPeriod.WEEK
             val watchStatsCustomDays = preferences[WATCH_STATS_CUSTOM_DAYS_KEY] ?: 7
@@ -106,14 +108,14 @@ class SettingsManager @Inject constructor(
             )
         }
 
-    private val defaultWatchStatsWidgets = listOf(
-        WidgetItem("count", "Liczba aktywności"),
-        WidgetItem("calories", "Spalone kalorie"),
-        WidgetItem("distanceGps", "Dystans (GPS)"),
-        WidgetItem("distanceSteps", "Dystans (kroki)"),
-        WidgetItem("ascent", "Przewyższenia w górę"),
-        WidgetItem("descent", "Przewyższenia w dół"),
-        WidgetItem("steps", "Wszystkie kroki")
+    fun getDefaultWidgets(strings: AppStrings) = listOf(
+        WidgetItem("count", strings.activityCount),
+        WidgetItem("calories", strings.totalCalories),
+        WidgetItem("distanceGps", strings.distanceGps),
+        WidgetItem("distanceSteps", strings.distanceSteps),
+        WidgetItem("ascent", strings.ascent),
+        WidgetItem("descent", strings.descent),
+        WidgetItem("steps", strings.allSteps)
     )
 
     private fun triggerSync() {
