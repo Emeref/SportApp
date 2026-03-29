@@ -91,13 +91,13 @@ fun rememberWorkoutSession(
 
             // Prędkość GPS -> Średnia i Maksymalna
             if (isRec(WorkoutSensor.SPEED_GPS)) {
-                lastPoint.speedGps?.let { summary.add("Średnia prędkość" to String.format(Locale.US, "%.1f km/h", it)) }
+                if (data.avgSpeedGps > 0) summary.add("Średnia prędkość" to String.format(Locale.US, "%.1f km/h", data.avgSpeedGps))
                 if (data.maxSpeedGps > 0) summary.add("Maksymalna prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeedGps))
             }
 
             // Prędkość Kroki -> Średnia i Maksymalna
             if (isRec(WorkoutSensor.SPEED_STEPS)) {
-                lastPoint.speedSteps?.let { summary.add("Średnia prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", it)) }
+                if (data.avgSpeedSteps > 0) summary.add("Średnia prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", data.avgSpeedSteps))
                 if (data.maxSpeedSteps > 0) summary.add("Maksymalna prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps))
             }
 

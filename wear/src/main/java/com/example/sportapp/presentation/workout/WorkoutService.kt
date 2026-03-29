@@ -42,7 +42,9 @@ data class WorkoutData(
     val allPoints: List<WorkoutPointEntity> = emptyList(),
     val maxBpm: Int = 0,
     val maxSpeedGps: Double = 0.0,
-    val maxSpeedSteps: Double = 0.0
+    val maxSpeedSteps: Double = 0.0,
+    val avgSpeedGps: Double = 0.0,
+    val avgSpeedSteps: Double = 0.0
 )
 
 @AndroidEntryPoint
@@ -74,7 +76,7 @@ class WorkoutService : Service(), SensorEventListener {
     private var heartRate = 0f
     private var maxBpm = 0
     private var currentSteps = 0
-    private var stepCountStart = -1
+    private var lastSensorStepCount = -1
     private var totalDistance = 0f
     private var lastLocation: Location? = null
     private var speedKmH = 0f
@@ -205,7 +207,7 @@ class WorkoutService : Service(), SensorEventListener {
         totalSeconds = 0L
         heartRate = 0f
         maxBpm = 0
-        stepCountStart = -1
+        lastSensorStepCount = -1
         currentSteps = 0
         totalDistance = 0f
         lastLocation = null
@@ -269,6 +271,9 @@ class WorkoutService : Service(), SensorEventListener {
         } else if (status == WorkoutStatus.PAUSED) {
             status = WorkoutStatus.ACTIVE
             lastResumeTimeMillis = System.currentTimeMillis()
+            // Resetuj parametry ruchu, aby nie liczyć skoku dystansu/kroków podczas pauzy
+            lastLocation = null
+            lastSensorStepCount = -1
         }
         updateNotification()
         updateState(null)
@@ -486,9 +491,12 @@ class WorkoutService : Service(), SensorEventListener {
             when (it.sensor.type) {
                 Sensor.TYPE_HEART_RATE -> if (it.values.isNotEmpty()) heartRate = it.values[0]
                 Sensor.TYPE_STEP_COUNTER -> if (it.values.isNotEmpty()) {
-                    val steps = it.values[0].toInt()
-                    if (stepCountStart == -1) stepCountStart = steps
-                    currentSteps = steps - stepCountStart
+                    val sensorSteps = it.values[0].toInt()
+                    if (lastSensorStepCount != -1) {
+                        val delta = sensorSteps - lastSensorStepCount
+                        if (delta > 0) currentSteps += delta
+                    }
+                    lastSensorStepCount = sensorSteps
                 }
                 Sensor.TYPE_PRESSURE -> if (it.values.isNotEmpty()) {
                     pressureValue = it.values[0].toDouble()
@@ -502,6 +510,11 @@ class WorkoutService : Service(), SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     private fun updateState(lastPoint: WorkoutPointEntity?) {
+        val hours = totalSeconds / 3600.0
+        val avgGps = if (hours > 0) (totalDistance / 1000.0) / hours else 0.0
+        val distanceStepsMeters = (currentSteps * (healthData?.stepLength ?: 0).toDouble() / 100.0)
+        val avgSteps = if (hours > 0) (distanceStepsMeters / 1000.0) / hours else 0.0
+
         _workoutState.value = WorkoutData(
             status = status,
             totalSeconds = totalSeconds,
@@ -510,7 +523,9 @@ class WorkoutService : Service(), SensorEventListener {
             allPoints = pointsList.toList(),
             maxBpm = maxBpm,
             maxSpeedGps = maxSpeedGps,
-            maxSpeedSteps = maxSpeedSteps
+            maxSpeedSteps = maxSpeedSteps,
+            avgSpeedGps = avgGps,
+            avgSpeedSteps = avgSteps
         )
     }
 
