@@ -2,22 +2,40 @@ package com.example.sportapp.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.sportapp.core.i18n.AppStrings
 
-enum class WorkoutSensor(val id: String, val label: String) {
-    HEART_RATE("bpm", "Tętno"),
-    CALORIES_SUM("calorieSum", "Spalone kalorie"),
-    CALORIES_PER_MINUTE("calorieMin", "Kalorie na minutę"),
-    STEPS("steps", "Kroki"),
-    STEPS_PER_MINUTE("stepsMin", "Kadencja (kroki/min)"),
-    DISTANCE_STEPS("distanceSteps", "Dystans (kroki)"),
-    SPEED_GPS("speedGps", "Prędkość"),
-    SPEED_STEPS("speedSteps", "Prędkość (kroki)"),
-    DISTANCE_GPS("distanceGps", "Dystans"),
-    ALTITUDE("altitude", "Wysokość"),
-    TOTAL_ASCENT("totalAscent", "W sumie w górę"),
-    TOTAL_DESCENT("totalDescent", "W sumie do dołu"),
-    PRESSURE("pressure", "Ciśnienie atm."),
-    MAP("map", "Dane lokalizacji")
+enum class WorkoutSensor(val id: String) {
+    HEART_RATE("bpm"),
+    CALORIES_SUM("calorieSum"),
+    CALORIES_PER_MINUTE("calorieMin"),
+    STEPS("steps"),
+    STEPS_PER_MINUTE("stepsMin"),
+    DISTANCE_STEPS("distanceSteps"),
+    SPEED_GPS("speedGps"),
+    SPEED_STEPS("speedSteps"),
+    DISTANCE_GPS("distanceGps"),
+    ALTITUDE("altitude"),
+    TOTAL_ASCENT("totalAscent"),
+    TOTAL_DESCENT("totalDescent"),
+    PRESSURE("pressure"),
+    MAP("map");
+
+    fun getLabel(strings: AppStrings): String = when (this) {
+        HEART_RATE -> strings.heartRate
+        CALORIES_SUM -> strings.totalCalories
+        CALORIES_PER_MINUTE -> strings.caloriesMin
+        STEPS -> strings.steps
+        STEPS_PER_MINUTE -> strings.cadenceSteps
+        DISTANCE_STEPS -> strings.distanceSteps
+        SPEED_GPS -> strings.speed
+        SPEED_STEPS -> strings.speedSteps
+        DISTANCE_GPS -> strings.distance
+        ALTITUDE -> strings.altitude
+        TOTAL_ASCENT -> strings.totalAscentLabel
+        TOTAL_DESCENT -> strings.totalDescentLabel
+        PRESSURE -> strings.pressure
+        MAP -> strings.locationData
+    }
 }
 
 data class SensorConfig(

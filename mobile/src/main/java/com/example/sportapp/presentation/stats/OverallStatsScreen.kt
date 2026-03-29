@@ -33,9 +33,10 @@ fun OverallStatsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToOptions: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val stats by viewModel.stats.collectAsStateWithLifecycle()
-    val widgets by viewModel.widgets.collectAsStateWithLifecycle()
-    val charts by viewModel.charts.collectAsStateWithLifecycle()
+    val widgets by viewModel.getWidgets(strings).collectAsStateWithLifecycle(initialValue = emptyList())
+    val charts by viewModel.getCharts(strings).collectAsStateWithLifecycle(initialValue = emptyList())
     val activityTypes by viewModel.activityTypes.collectAsStateWithLifecycle()
     val selectedType by viewModel.selectedType.collectAsStateWithLifecycle()
     val startDate by viewModel.startDate.collectAsStateWithLifecycle()
@@ -78,8 +79,9 @@ fun OverallStatsContent(
 ) {
     var showTypeMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
     val strings = LocalAppStrings.current
+    val locale = remember(strings.localeCode) { Locale(strings.localeCode) }
+    val sdf = remember(locale) { SimpleDateFormat("dd.MM.yyyy", locale) }
 
     Scaffold(
         topBar = {
@@ -144,9 +146,12 @@ fun OverallStatsContent(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = {
-                                val cal = Calendar.getInstance()
-                                DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }.time
+                                val cal = Calendar.getInstance(locale)
+                                DatePickerDialog(context, R.style.CustomDatePickerDialog, { _, y, m, d ->
+                                    val date = Calendar.getInstance(locale).apply { 
+                                        set(y, m, d, 0, 0, 0)
+                                        set(Calendar.MILLISECOND, 0)
+                                    }.time
                                     onDateRangeSelected(date, endDate)
                                 }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
                             },
@@ -159,9 +164,12 @@ fun OverallStatsContent(
 
                         OutlinedButton(
                             onClick = {
-                                val cal = Calendar.getInstance()
-                                DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { set(y, m, d, 23, 59, 59) }.time
+                                val cal = Calendar.getInstance(locale)
+                                DatePickerDialog(context, R.style.CustomDatePickerDialog, { _, y, m, d ->
+                                    val date = Calendar.getInstance(locale).apply { 
+                                        set(y, m, d, 23, 59, 59)
+                                        set(Calendar.MILLISECOND, 999)
+                                    }.time
                                     onDateRangeSelected(startDate, date)
                                 }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
                             },
@@ -214,19 +222,19 @@ fun OverallStatsContent(
                         if (producer != null) {
                             val maxVal = chartMaxValues[chart.id] ?: 0.0
                             val unit = when(chart.id) {
-                                "distanceGps" -> if (maxVal > 6000) "km" else "m"
-                                "distanceSteps" -> if (maxVal > 6000) "km" else "m"
-                                "calories" -> "kcal"
+                                "distanceGps" -> if (maxVal > 6000) strings.kmUnit else strings.metersUnit
+                                "distanceSteps" -> if (maxVal > 6000) strings.kmUnit else strings.metersUnit
+                                "calories" -> strings.kcalUnit
                                 "steps" -> strings.steps.lowercase()
-                                "avg_cadence" -> "kr/min"
-                                "ascent", "descent" -> "m"
-                                "maxPressure", "minPressure" -> "hPa"
-                                "bestPace1km" -> "min/km"
+                                "avg_cadence" -> strings.cadenceUnit
+                                "ascent", "descent" -> strings.metersUnit
+                                "maxPressure", "minPressure" -> strings.hpaUnit
+                                "bestPace1km" -> strings.paceUnit
                                 else -> ""
                             }
                             val title = when(chart.id) {
-                                "distanceGps" -> if (maxVal > 6000) "${strings.distance} (GPS) [km]" else "${strings.distance} (GPS) [m]"
-                                "distanceSteps" -> if (maxVal > 6000) "${strings.distance} (${strings.steps.lowercase()}) [km]" else "${strings.distance} (${strings.steps.lowercase()}) [m]"
+                                "distanceGps" -> if (maxVal > 6000) "${strings.distanceGpsLabel} [${strings.kmUnit}]" else "${strings.distanceGpsLabel} [${strings.metersUnit}]"
+                                "distanceSteps" -> if (maxVal > 6000) "${strings.distanceStepsLabel} [${strings.kmUnit}]" else "${strings.distanceStepsLabel} [${strings.metersUnit}]"
                                 "steps" -> strings.steps
                                 else -> chart.label
                             }

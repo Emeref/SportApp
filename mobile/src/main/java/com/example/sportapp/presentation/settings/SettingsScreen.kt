@@ -56,7 +56,7 @@ fun SettingsScreen(
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
-                        Text(strings.theme) // Reused 'theme' as generic title for now or keep "Ustawienia"
+                        Text(strings.options)
                     }
                 },
                 navigationIcon = {
@@ -95,14 +95,14 @@ fun SettingsScreen(
             }
 
             // 0. Sekcja Profil
-            SettingsSection(title = "Mój Profil") {
+            SettingsSection(title = strings.myProfile) {
                 OutlinedCard(
                     onClick = onNavigateToHealthData,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
-                        headlineContent = { Text("Dane zdrowotne i tętno") },
-                        supportingContent = { Text("Wiek, waga, HR Max i strefy") },
+                        headlineContent = { Text(strings.healthData) },
+                        supportingContent = { Text(strings.healthDataSupporting) },
                         leadingContent = { Icon(Icons.Default.Favorite, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
@@ -110,14 +110,14 @@ fun SettingsScreen(
             }
 
             // 1. Sekcja Aktywności
-            SettingsSection(title = "Treningi") {
+            SettingsSection(title = strings.workouts) {
                 OutlinedCard(
                     onClick = onNavigateToDefinitions,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
-                        headlineContent = { Text("Definicja aktywności") },
-                        supportingContent = { Text("Zarządzaj listą i czujnikami sportów") },
+                        headlineContent = { Text(strings.workouts) },
+                        supportingContent = { Text(strings.sensorsManagementSupporting) },
                         leadingContent = { Icon(Icons.Default.SettingsAccessibility, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
@@ -125,14 +125,14 @@ fun SettingsScreen(
             }
 
             // 2. Sekcja Widgety na stronie głównej
-            SettingsSection(title = "Widok ekranu głównego") {
+            SettingsSection(title = strings.mainScreenView) {
                 OutlinedCard(
                     onClick = onNavigateToWidgetSelection,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
                         headlineContent = { Text(strings.widgets) },
-                        supportingContent = { Text("Wybierz i ustaw kolejność") },
+                        supportingContent = { Text(strings.widgetsSelectionSupporting) },
                         leadingContent = { Icon(Icons.Default.Dashboard, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
@@ -140,7 +140,7 @@ fun SettingsScreen(
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                Text(text = "Za jaki okres pokazujemy widgety?", style = MaterialTheme.typography.bodyMedium)
+                Text(text = strings.periodSelection, style = MaterialTheme.typography.bodyMedium)
                 PeriodSelectionGrid(
                     selectedPeriod = state.period,
                     onSelect = { state = state.copy(period = it) }
@@ -155,7 +155,7 @@ fun SettingsScreen(
                                 state = state.copy(customDays = days)
                             }
                         },
-                        label = { Text("Liczba dni") },
+                        label = { Text(strings.numberOfDays) },
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
@@ -165,14 +165,14 @@ fun SettingsScreen(
             }
 
             // 3. Sekcja Statystyki na zegarku
-            SettingsSection(title = "Statystyki na zegarku") {
+            SettingsSection(title = strings.watchStats) {
                 OutlinedCard(
                     onClick = onNavigateToWatchWidgetSelection,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
-                        headlineContent = { Text("Pola statystyk") },
-                        supportingContent = { Text("Wybierz i ustaw kolejność pól na zegarku") },
+                        headlineContent = { Text(strings.watchStatsFields) },
+                        supportingContent = { Text(strings.selectAndOrderFields) },
                         leadingContent = { Icon(Icons.Default.Watch, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
@@ -180,7 +180,7 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(text = "Z jakiego okresu statystyki?", style = MaterialTheme.typography.bodyMedium)
+                Text(text = strings.statsPeriodSelection, style = MaterialTheme.typography.bodyMedium)
                 PeriodSelectionGrid(
                     selectedPeriod = state.watchStatsPeriod,
                     onSelect = { state = state.copy(watchStatsPeriod = it) }
@@ -195,7 +195,7 @@ fun SettingsScreen(
                                 state = state.copy(watchStatsCustomDays = days)
                             }
                         },
-                        label = { Text("Liczba dni") },
+                        label = { Text(strings.numberOfDays) },
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
@@ -205,10 +205,10 @@ fun SettingsScreen(
             }
 
             // 4. Sekcja Integracja
-            SettingsSection(title = "Integracja") {
+            SettingsSection(title = strings.integration) {
                 ListItem(
-                    headlineContent = { Text("Google Drive") },
-                    supportingContent = { Text("Zapisuj historię i podsumowania (Wkrótce)") },
+                    headlineContent = { Text(strings.googleDriveHeadline) },
+                    supportingContent = { Text(strings.googleDriveSupporting) },
                     leadingContent = { Icon(Icons.Default.CloudQueue, null) },
                     trailingContent = { Switch(checked = false, onCheckedChange = null, enabled = false) }
                 )
@@ -233,7 +233,7 @@ fun SettingsScreen(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text(strings.stop, color = MaterialTheme.colorScheme.onError) // Reused stop as close
+                    Text(strings.cancel, color = MaterialTheme.colorScheme.onError)
                 }
             }
 

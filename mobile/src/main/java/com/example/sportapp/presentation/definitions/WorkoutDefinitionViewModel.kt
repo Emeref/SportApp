@@ -3,6 +3,7 @@ package com.example.sportapp.presentation.definitions
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.core.i18n.PlStrings
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
@@ -41,8 +42,12 @@ class WorkoutDefinitionViewModel @Inject constructor(
                 val defaultSensors = WorkoutSensor.entries.map {
                     SensorConfig(it.id, isVisible = true, isRecording = true)
                 }
+                // Using PlStrings as reference for initial system creation. 
+                // In a perfect world we might want to check system locale here or use LocalAppStrings, 
+                // but ViewModel init doesn't have easy access to CompositionLocal.
+                // We use standardActivity from PlStrings as the default name.
                 val defaultDef = WorkoutDefinition(
-                    name = "Standardowa aktywność",
+                    name = PlStrings.standardActivity,
                     iconName = "DirectionsRun",
                     sensors = defaultSensors,
                     baseType = "Other",

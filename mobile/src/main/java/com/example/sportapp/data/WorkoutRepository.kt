@@ -300,4 +300,10 @@ class WorkoutRepository @Inject constructor(
     }
 
     override fun getAllDefinitions(): Flow<List<WorkoutDefinition>> = workoutDefinitionDao.getAllDefinitions()
+
+    override suspend fun insertWorkoutWithPoints(workout: WorkoutEntity, points: List<WorkoutPointEntity>) = withContext(Dispatchers.IO) {
+        val workoutId = workoutDao.insertWorkout(workout)
+        val pointsWithId = points.map { it.copy(workoutId = workoutId) }
+        workoutDao.insertPoints(pointsWithId)
+    }
 }

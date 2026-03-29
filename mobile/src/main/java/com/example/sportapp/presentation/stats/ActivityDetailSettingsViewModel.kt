@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.core.i18n.AppStrings
 import com.example.sportapp.presentation.settings.WidgetItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,12 +22,12 @@ class ActivityDetailSettingsViewModel @Inject constructor(
     private val settingsManager = ActivityDetailSettingsManager(context)
     val typeName: String = savedStateHandle.get<String>("typeName") ?: "Other"
 
-    val settings: StateFlow<ActivityDetailSettings> = settingsManager.getSettingsFlow(typeName).stateIn(
+    fun getSettings(strings: AppStrings): StateFlow<ActivityDetailSettings> = settingsManager.getSettingsFlow(typeName, strings).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ActivityDetailSettings(
-            visibleCharts = ActivityDetailSettingsManager.DEFAULT_CHARTS,
-            visibleWidgets = ActivityDetailSettingsManager.DEFAULT_WIDGETS,
+            visibleCharts = ActivityDetailSettingsManager.getDefaultCharts(strings),
+            visibleWidgets = ActivityDetailSettingsManager.getDefaultWidgets(strings),
             trackColor = ActivityDetailSettingsManager.DEFAULT_COLOR
         )
     )

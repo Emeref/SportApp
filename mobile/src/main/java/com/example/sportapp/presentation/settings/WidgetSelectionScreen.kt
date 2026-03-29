@@ -13,17 +13,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.core.i18n.LocalAppStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WidgetSelectionScreen(
     widgets: List<WidgetItem>,
-    title: String = "Widgety na stronie głównej",
+    title: String,
     onSave: (List<WidgetItem>) -> Unit,
     onCancel: () -> Unit
 ) {
     // Używamy remember(widgets), aby zaktualizować listę, gdy dane zostaną załadowane z DataStore
     var internalWidgets by remember(widgets) { mutableStateOf(widgets) }
+    val strings = LocalAppStrings.current
 
     Scaffold(
         topBar = {
@@ -39,7 +41,7 @@ fun WidgetSelectionScreen(
                         onClick = onCancel,
                         modifier = Modifier.padding(top = 16.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 }
             )
@@ -95,14 +97,14 @@ fun WidgetSelectionScreen(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
-                    Text("Zapisz", color = Color.White)
+                    Text(strings.save, color = Color.White)
                 }
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
                 ) {
-                    Text("Zamknij", color = Color.White)
+                    Text(strings.close, color = Color.White)
                 }
             }
         }
@@ -118,6 +120,7 @@ fun WidgetSelectionRow(
     onMoveDown: () -> Unit,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -138,11 +141,11 @@ fun WidgetSelectionRow(
             )
 
             IconButton(onClick = onMoveUp, enabled = !isFirst) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Przesuń w górę")
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = strings.moveUp)
             }
             
             IconButton(onClick = onMoveDown, enabled = !isLast) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Przesuń w dół")
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = strings.moveDown)
             }
         }
     }

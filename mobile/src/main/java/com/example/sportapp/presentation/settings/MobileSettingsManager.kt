@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.sportapp.core.i18n.AppLanguage
+import com.example.sportapp.core.i18n.PlStrings
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.gson.Gson
@@ -47,24 +48,24 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         val widgets = if (widgetsJson != null) {
             try {
                 val type = object : TypeToken<List<WidgetItem>>() {}.type
-                gson.fromJson<List<WidgetItem>>(widgetsJson, type) ?: defaultState.widgets
+                gson.fromJson<List<WidgetItem>>(widgetsJson, type) ?: MobileSettingsState.getDefaultWidgets(PlStrings)
             } catch (e: Exception) {
-                defaultState.widgets
+                MobileSettingsState.getDefaultWidgets(PlStrings)
             }
         } else {
-            defaultState.widgets
+            MobileSettingsState.getDefaultWidgets(PlStrings)
         }
 
         val watchWidgetsJson = preferences[WATCH_WIDGETS_JSON]
         val watchWidgets = if (watchWidgetsJson != null) {
             try {
                 val type = object : TypeToken<List<WidgetItem>>() {}.type
-                gson.fromJson<List<WidgetItem>>(watchWidgetsJson, type) ?: defaultState.watchStatsWidgets
+                gson.fromJson<List<WidgetItem>>(watchWidgetsJson, type) ?: MobileSettingsState.getDefaultWatchWidgets(PlStrings)
             } catch (e: Exception) {
-                defaultState.watchStatsWidgets
+                MobileSettingsState.getDefaultWatchWidgets(PlStrings)
             }
         } else {
-            defaultState.watchStatsWidgets
+            MobileSettingsState.getDefaultWatchWidgets(PlStrings)
         }
 
         val healthDataJson = preferences[HEALTH_DATA_JSON]

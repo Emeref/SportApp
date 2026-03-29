@@ -67,7 +67,9 @@ fun ActivityListScreen(
     
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    
+    val locale = remember(strings.localeCode) { Locale(strings.localeCode) }
+    val sdf = remember(locale) { SimpleDateFormat("dd.MM.yyyy", locale) }
 
     val horizontalScrollState = rememberScrollState()
     val lazyListState = rememberLazyListState()
@@ -109,7 +111,7 @@ fun ActivityListScreen(
                                     Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null)
                                 },
                                 modifier = Modifier.clickable {
-                                    viewModel.importGpx(showImportTypeDialog!!, definition)
+                                    viewModel.importGpx(showImportTypeDialog!!, definition, strings)
                                     showImportTypeDialog = null
                                 }
                             )
@@ -131,11 +133,10 @@ fun ActivityListScreen(
         when (importState) {
             is ImportState.Success -> {
                 snackbarHostState.showSnackbar((importState as ImportState.Success).message)
-                viewModel.resetImportState()
+                viewModel.refreshActivityTypes() // Added to ensure UI updates after import
             }
             is ImportState.Error -> {
                 snackbarHostState.showSnackbar((importState as ImportState.Error).message)
-                viewModel.resetImportState()
             }
             else -> {}
         }
@@ -144,22 +145,22 @@ fun ActivityListScreen(
     if (importState is ImportState.Warning) {
         val state = importState as ImportState.Warning
         AlertDialog(
-            onDismissRequest = { viewModel.resetImportState() },
+            onDismissRequest = { /* Handle cancellation in VM if needed */ },
             title = { Text(strings.warning) },
             text = {
                 Column {
                     state.warnings.forEach { Text("• $it") }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(strings.continueLabel + "?")
+                    Text("${strings.continueLabel}?")
                 }
             },
             confirmButton = {
-                TextButton(onClick = { state.onConfirm(); viewModel.resetImportState() }) {
+                TextButton(onClick = { state.onConfirm() }) {
                     Text(strings.continueLabel)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.resetImportState() }) {
+                TextButton(onClick = { /* Reset state if needed */ }) {
                     Text(strings.cancel)
                 }
             }
@@ -265,7 +266,7 @@ fun ActivityListScreen(
                             Icon(Icons.Default.UploadFile, contentDescription = strings.importGpx)
                         }
                     } else {
-                        IconButton(onClick = { viewModel.exportSelected() }) {
+                        IconButton(onClick = { viewModel.exportSelected(strings) }) {
                             Icon(Icons.Default.Share, contentDescription = strings.exportGpx)
                         }
                     }
@@ -303,9 +304,9 @@ fun ActivityListScreen(
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
                         DropdownMenu(expanded = showTypeMenu, onDismissRequest = { showTypeMenu = false }) {
-                            DropdownMenuItem(text = { Text(strings.allTypes) }, onClick = { viewModel.onTypeSelected(null); showTypeMenu = false })
+                            DropdownMenuItem(text = { Text(strings.allTypes) }, onClick = { viewModel.onTypeSelected(null, strings.allTypes); showTypeMenu = false })
                             activityTypes.forEach { type ->
-                                DropdownMenuItem(text = { Text(type) }, onClick = { viewModel.onTypeSelected(type); showTypeMenu = false })
+                                DropdownMenuItem(text = { Text(type) }, onClick = { viewModel.onTypeSelected(type, strings.allTypes); showTypeMenu = false })
                             }
                         }
                     }
@@ -313,9 +314,9 @@ fun ActivityListScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = {
-                                val cal = Calendar.getInstance()
-                                DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { 
+                                val cal = Calendar.getInstance(locale)
+                                DatePickerDialog(context, R.style.CustomDatePickerDialog, { _, y, m, d ->
+                                    val date = Calendar.getInstance(locale).apply { 
                                         set(y, m, d, 0, 0, 0)
                                         set(Calendar.MILLISECOND, 0)
                                     }.time
@@ -331,9 +332,9 @@ fun ActivityListScreen(
 
                         OutlinedButton(
                             onClick = {
-                                val cal = Calendar.getInstance()
-                                DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { 
+                                val cal = Calendar.getInstance(locale)
+                                DatePickerDialog(context, R.style.CustomDatePickerDialog, { _, y, m, d ->
+                                    val date = Calendar.getInstance(locale).apply {
                                         set(y, m, d, 23, 59, 59)
                                         set(Calendar.MILLISECOND, 999)
                                     }.time
@@ -369,8 +370,8 @@ fun ActivityListScreen(
                                     onClick = { viewModel.toggleAllVisibleSelection() },
                                     modifier = Modifier.width(48.dp)
                                 )
-                                HeaderCell(strings.theme, 100.dp, SortColumn.TYPE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.TYPE) } // Using 'theme' as 'Type' for now if not defined
-                                HeaderCell(strings.today, 150.dp, SortColumn.DATE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DATE) } // Date
+                                HeaderCell(strings.theme, 100.dp, SortColumn.TYPE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.TYPE) }
+                                HeaderCell(strings.today, 150.dp, SortColumn.DATE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DATE) }
                                 HeaderCell(strings.activeTime, 100.dp, SortColumn.DURATION, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DURATION) }
                                 HeaderCell(strings.calories, 80.dp, SortColumn.CALORIES, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.CALORIES) }
                                 HeaderCell("${strings.distance} (GPS)", 120.dp, SortColumn.DISTANCE_GPS, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DISTANCE_GPS) }

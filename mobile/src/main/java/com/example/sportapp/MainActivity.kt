@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity() {
                             composable("widget_selection") {
                                 WidgetSelectionScreen(
                                     widgets = settingsState.widgets,
-                                    title = "Widgety na stronie głównej",
+                                    title = appStrings.mainScreenView,
                                     onSave = { updatedWidgets ->
                                         scope.launch {
                                             settingsManager.saveSettings(settingsState.copy(widgets = updatedWidgets))
@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
                             composable("watch_widget_selection") {
                                 WidgetSelectionScreen(
                                     widgets = settingsState.watchStatsWidgets,
-                                    title = "Statystyki na zegarku",
+                                    title = appStrings.watchStats,
                                     onSave = { updatedWidgets ->
                                         scope.launch {
                                             settingsManager.saveSettings(settingsState.copy(watchStatsWidgets = updatedWidgets))
@@ -158,8 +158,8 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable("stats_widget_selection") {
-                                val statsWidgets by statsViewModel.widgets.collectAsStateWithLifecycle()
-                                val statsCharts by statsViewModel.charts.collectAsStateWithLifecycle()
+                                val statsWidgets by statsViewModel.getWidgets(appStrings).collectAsStateWithLifecycle(initialValue = emptyList())
+                                val statsCharts by statsViewModel.getCharts(appStrings).collectAsStateWithLifecycle(initialValue = emptyList())
                                 OverallStatsWidgetScreen(
                                     widgets = statsWidgets,
                                     charts = statsCharts,

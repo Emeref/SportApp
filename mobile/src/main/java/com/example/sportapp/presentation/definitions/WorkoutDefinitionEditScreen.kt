@@ -1,27 +1,26 @@
 package com.example.sportapp.presentation.definitions
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.DirectionsBike
-import androidx.compose.material.icons.automirrored.filled.DirectionsRun
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
@@ -35,6 +34,7 @@ fun WorkoutDefinitionEditScreen(
 ) {
     val definitions by viewModel.definitions.collectAsState()
     val existingDefinition = definitions.find { it.id == definitionId }
+    val strings = LocalAppStrings.current
 
     var name by remember(existingDefinition) { mutableStateOf(existingDefinition?.name ?: "") }
     var iconName by remember(existingDefinition) { mutableStateOf(existingDefinition?.iconName ?: "DirectionsRun") }
@@ -73,10 +73,10 @@ fun WorkoutDefinitionEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (definitionId == 0L) "Nowa aktywność" else "Edytuj aktywność") },
+                title = { Text(if (definitionId == 0L) strings.addNewActivity else strings.editActivity) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 }
             )
@@ -95,12 +95,12 @@ fun WorkoutDefinitionEditScreen(
                         name = newValue
                     }
                 },
-                label = { Text("Nazwa aktywności") },
+                label = { Text(strings.activityNameLabel) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = { showIconPicker = true }) {
-                        Icon(getIconForName(iconName), contentDescription = "Wybierz ikonę")
+                        Icon(getIconForName(iconName), contentDescription = strings.chooseIcon)
                     }
                 }
             )
@@ -114,9 +114,8 @@ fun WorkoutDefinitionEditScreen(
                         autoLapDistance = newValue
                     }
                 },
-                label = { Text("Automatyczny odcinek (metry, opcjonalnie)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                label = { Text(strings.autoLapLabel) },
+                modifier = Modifier.fillMaxWidth(), singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -127,12 +126,12 @@ fun WorkoutDefinitionEditScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    "Widget w aktywności",
+                    strings.widgetInActivity,
                     style = MaterialTheme.typography.titleSmall, 
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    "Widoczność", 
+                    strings.visibilityLabel,
                     style = MaterialTheme.typography.bodySmall, 
                     fontSize = 9.sp, 
                     modifier = Modifier.width(72.dp),
@@ -140,7 +139,7 @@ fun WorkoutDefinitionEditScreen(
                     lineHeight = 10.sp
                 )
                 Text(
-                    "Zapis", 
+                    strings.saveLabel, 
                     style = MaterialTheme.typography.bodySmall, 
                     fontSize = 9.sp, 
                     modifier = Modifier.width(52.dp),
@@ -167,7 +166,7 @@ fun WorkoutDefinitionEditScreen(
                     }
 
                     SensorConfigItem(
-                        label = sensor?.label ?: sensorConfig.sensorId,
+                        label = sensor?.getLabel(strings) ?: sensorConfig.sensorId,
                         config = effectiveConfig,
                         onConfigChange = { newConfig ->
                             val newList = sensors.toMutableList()
@@ -194,7 +193,7 @@ fun WorkoutDefinitionEditScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Typ bazowy", style = MaterialTheme.typography.titleMedium)
+            Text(strings.baseType, style = MaterialTheme.typography.titleMedium)
             BaseTypePicker(selectedType = baseType, onTypeSelected = { baseType = it })
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -227,24 +226,24 @@ fun WorkoutDefinitionEditScreen(
                     },
                     modifier = Modifier.weight(1f),
                     enabled = name.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)) // Zielony
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
-                    Text("Zapisz", color = Color.White)
+                    Text(strings.save, color = Color.White)
                 }
                 Button(
                     onClick = onNavigateBack,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)) // Czerwony
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
                 ) {
-                    Text("Zakończ", color = Color.White)
+                    Text(strings.finish, color = Color.White)
                 }
             }
         }
 
         if (showIconPicker) {
             IconPickerSelection(
-                onIconSelected = {
-                    iconName = it
+                onIconSelected = { selectedIcon ->
+                    iconName = selectedIcon
                     showIconPicker = false
                 },
                 onDismiss = { showIconPicker = false }
@@ -263,6 +262,7 @@ fun SensorConfigItem(
     enabledVisible: Boolean = true,
     enabledRecording: Boolean = !config.isVisible
 ) {
+    val strings = LocalAppStrings.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -291,10 +291,10 @@ fun SensorConfigItem(
 
         Row(modifier = Modifier.width(64.dp), horizontalArrangement = Arrangement.End) {
             IconButton(onClick = { onMoveUp?.invoke() }, enabled = onMoveUp != null, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.ArrowUpward, contentDescription = "Góra")
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = strings.moveUp)
             }
             IconButton(onClick = { onMoveDown?.invoke() }, enabled = onMoveDown != null, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.ArrowDownward, contentDescription = "Dół")
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = strings.moveDown)
             }
         }
     }
@@ -302,86 +302,56 @@ fun SensorConfigItem(
 
 @Composable
 fun BaseTypePicker(selectedType: String, onTypeSelected: (String) -> Unit) {
-    val types = mapOf(
-        "Walking" to "Chodzenie",
-        "Running" to "Bieganie",
-        "Cycling" to "Jazda na rowerze",
-        "Hiking" to "Wędrówka",
-        "Other" to "Inne"
+    val types = listOf("Running", "Walking", "Cycling", "Swimming", "Other")
+    val strings = LocalAppStrings.current
+    val labels = mapOf(
+        "Running" to strings.running,
+        "Walking" to strings.walking,
+        "Cycling" to strings.cycling,
+        "Swimming" to strings.swimming,
+        "Other" to strings.custom
     )
-    var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
-        OutlinedCard(
-            onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                types[selectedType] ?: selectedType,
-                modifier = Modifier.padding(16.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        types.forEach { type ->
+            FilterChip(
+                selected = selectedType == type,
+                onClick = { onTypeSelected(type) },
+                label = { Text(labels[type] ?: type) }
             )
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            types.forEach { (key, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = {
-                        onTypeSelected(key)
-                        expanded = false
-                    }
-                )
-            }
         }
     }
 }
 
 @Composable
 fun IconPickerSelection(onIconSelected: (String) -> Unit, onDismiss: () -> Unit) {
-    val icons = mapOf(
-        "DirectionsRun" to (Icons.AutoMirrored.Filled.DirectionsRun to "Bieganie"),
-        "DirectionsWalk" to (Icons.AutoMirrored.Filled.DirectionsWalk to "Chodzenie"),
-        "DirectionsBike" to (Icons.AutoMirrored.Filled.DirectionsBike to "Rower"),
-        "Pool" to (Icons.Default.Pool to "Pływanie"),
-        "Mountain" to (Icons.Default.Terrain to "Góry"),
-        "Fitness" to (Icons.Default.FitnessCenter to "Siłownia"),
-        "SelfImprovement" to (Icons.Default.SelfImprovement to "Joga"),
-        "SportsTennis" to (Icons.Default.SportsTennis to "Tenis"),
-        "Kayaking" to (Icons.Default.Kayaking to "Kajakarstwo"),
-        "Snowboarding" to (Icons.Default.Snowboarding to "Snowboarding"),
-        "Surfing" to (Icons.Default.Surfing to "Surfing"),
-        "IceSkating" to (Icons.Default.IceSkating to "Łyżwiarstwo"),
-        "Golf" to (Icons.Default.GolfCourse to "Golf"),
-        "SportsSoccer" to (Icons.Default.SportsSoccer to "Piłka nożna"),
-        "SportsBasketball" to (Icons.Default.SportsBasketball to "Koszykówka"),
-        "SportsVolleyball" to (Icons.Default.SportsVolleyball to "Siatkówka"),
-        "SportsBaseball" to (Icons.Default.SportsBaseball to "Baseball"),
-        "Sailing" to (Icons.Default.Sailing to "Żeglarstwo"),
-        "Skateboarding" to (Icons.Default.Skateboarding to "Deskorolka"),
-        "Sports" to (Icons.Default.EmojiEvents to "Zawody"),
-        "Timer" to (Icons.Default.Timer to "Stoper")
-    )
-
+    val icons = listOf("DirectionsRun", "DirectionsWalk", "DirectionsBike", "Pool", "FitnessCenter", "SelfImprovement", "Timer")
+    val strings = LocalAppStrings.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Wybierz ikonę") },
+        title = { Text(strings.chooseIcon) },
         text = {
-            LazyColumn {
-                icons.forEach { (name, pair) ->
-                    item {
-                        DropdownMenuItem(
-                            text = { 
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(pair.first, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(pair.second)
-                                }
-                            },
-                            onClick = { onIconSelected(name) }
-                        )
+            LazyColumn(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+                items(icons.chunked(3)) { row ->
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        row.forEach { iconName ->
+                            IconButton(onClick = { onIconSelected(iconName) }) {
+                                Icon(getIconForName(iconName), contentDescription = null, modifier = Modifier.size(32.dp))
+                            }
+                        }
                     }
                 }
             }
         },
-        confirmButton = {}
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(strings.cancel) }
+        }
     )
 }

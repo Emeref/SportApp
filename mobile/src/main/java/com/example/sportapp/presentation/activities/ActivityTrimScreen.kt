@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.presentation.stats.CommonChartSection
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
@@ -31,6 +32,7 @@ fun ActivityTrimScreen(
     val trimRange by viewModel.trimRange.collectAsState()
     val previewStats by viewModel.previewStats.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
+    val strings = LocalAppStrings.current
 
     var showConfirmDialog by remember { mutableStateOf(false) }
 
@@ -48,8 +50,8 @@ fun ActivityTrimScreen(
     if (showConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
-            title = { Text("Potwierdź przycięcie") },
-            text = { Text("Czy na pewno chcesz usunąć dane poza wybranym zakresem? Te dane zostaną trwale usunięte z bazy danych.") },
+            title = { Text(strings.confirmTrimTitle) },
+            text = { Text(strings.confirmTrimMessage) },
             confirmButton = {
                 TextButton(onClick = {
                     showConfirmDialog = false
@@ -57,12 +59,12 @@ fun ActivityTrimScreen(
                         onNavigateBack()
                     }
                 }) {
-                    Text("Przytnij i zapisz", color = Color.Red)
+                    Text(strings.trimAndSave, color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmDialog = false }) {
-                    Text("Anuluj")
+                    Text(strings.cancel)
                 }
             }
         )
@@ -71,10 +73,10 @@ fun ActivityTrimScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edytuj trening (Przycinanie)") },
+                title = { Text(strings.editActivity) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 },
 
@@ -107,7 +109,7 @@ fun ActivityTrimScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Start: ${sdf.format(Date(w.startTime))}",
+                            text = "${strings.from}: ${sdf.format(Date(w.startTime))}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -117,7 +119,7 @@ fun ActivityTrimScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Wykres tętna",
+                    text = strings.heartRateChart,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -126,9 +128,9 @@ fun ActivityTrimScreen(
 
                 Box(modifier = Modifier.height(250.dp)) {
                     CommonChartSection(
-                        title = "Tętno (BPM)",
+                        title = "${strings.heartRate} (${strings.bpmUnit})",
                         producer = hrProducer,
-                        unit = "bpm",
+                        unit = strings.bpmUnit.lowercase(),
                         detailTimes = points.map { it.time },
                         isScrollEnabled = false
                     )
@@ -137,7 +139,7 @@ fun ActivityTrimScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Wybierz zakres treningu",
+                    text = strings.chooseWorkoutRange,
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -155,8 +157,8 @@ fun ActivityTrimScreen(
                 ) {
                     val startIndex = trimRange.start.toInt().coerceIn(points.indices)
                     val endIndex = trimRange.endInclusive.toInt().coerceIn(points.indices)
-                    Text("Start: ${points[startIndex].time}", style = MaterialTheme.typography.labelSmall)
-                    Text("Koniec: ${points[endIndex].time}", style = MaterialTheme.typography.labelSmall)
+                    Text("${strings.start}: ${points[startIndex].time}", style = MaterialTheme.typography.labelSmall)
+                    Text("${strings.stop}: ${points[endIndex].time}", style = MaterialTheme.typography.labelSmall)
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -166,15 +168,15 @@ fun ActivityTrimScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Podgląd nowych statystyk", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(strings.previewNewStats, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         previewStats?.let { stats ->
-                            StatRow("Nowy czas trwania:", stats.duration)
-                            StatRow("Dystans (GPS):", stats.distanceGps)
-                            StatRow("Dystans (Kroki):", stats.distanceSteps)
-                            StatRow("Spalone kalorie:", stats.calories)
-                            StatRow("Średnie tętno:", stats.avgBpm)
+                            StatRow("${strings.newDuration}:", stats.duration)
+                            StatRow("${strings.newDistanceGps}:", stats.distanceGps)
+                            StatRow("${strings.newDistanceSteps}:", stats.distanceSteps)
+                            StatRow("${strings.newCalories}:", stats.calories)
+                            StatRow("${strings.newAvgHr}:", stats.avgBpm)
                         }
                     }
                 }
@@ -186,7 +188,7 @@ fun ActivityTrimScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isSaving
                 ) {
-                    Text("Zatwierdź zmiany")
+                    Text(strings.applyChanges)
                 }
             }
         }

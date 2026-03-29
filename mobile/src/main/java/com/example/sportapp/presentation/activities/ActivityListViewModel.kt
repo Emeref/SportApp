@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.core.i18n.AppStrings
+import com.example.sportapp.core.i18n.PlStrings // Reference for initialization
 import com.example.sportapp.data.GpxGenerator
 import com.example.sportapp.data.GpxImporter
 import com.example.sportapp.data.IWorkoutRepository
@@ -144,8 +146,8 @@ class ActivityListViewModel @Inject constructor(
         }
     }
 
-    fun onTypeSelected(type: String?) {
-        _selectedType.value = if (type == "Wszystkie") null else type
+    fun onTypeSelected(type: String?, allTypesLabel: String) {
+        _selectedType.value = if (type == allTypesLabel) null else type
     }
 
     fun onDateRangeSelected(start: Date?, end: Date?) {
@@ -205,12 +207,12 @@ class ActivityListViewModel @Inject constructor(
         }
     }
 
-    fun exportSelected() {
+    fun exportSelected(strings: AppStrings) {
         val ids = _selectedIds.value.toList()
         if (ids.isEmpty()) return
 
         viewModelScope.launch {
-            _exportState.value = ExportState.Exporting(0f, "Inicjalizacja eksportu...")
+            _exportState.value = ExportState.Exporting(0f, strings.exportInit)
             
             try {
                 val gpxGenerator = GpxGenerator()
@@ -228,7 +230,7 @@ class ActivityListViewModel @Inject constructor(
                     
                     _exportState.value = ExportState.Exporting(
                         (index.toFloat() / ids.size), 
-                        "Generowanie: ${workout.activityName} (${index + 1}/${ids.size})"
+                        strings.exportingActivity(workout.activityName, index + 1, ids.size)
                     )
 
                     val gpxContent = gpxGenerator.generateGpx(workout, points)
@@ -242,7 +244,7 @@ class ActivityListViewModel @Inject constructor(
                 }
 
                 if (generatedFiles.isEmpty()) {
-                    _exportState.value = ExportState.Error("Nie wygenerowano żadnych plików.")
+                    _exportState.value = ExportState.Error(strings.noFilesGenerated)
                     return@launch
                 }
 
@@ -250,7 +252,7 @@ class ActivityListViewModel @Inject constructor(
                     val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", generatedFiles[0])
                     _exportState.value = ExportState.Success(uri, false)
                 } else {
-                    _exportState.value = ExportState.Exporting(0.9f, "Pakowanie do ZIP...")
+                    _exportState.value = ExportState.Exporting(0.9f, strings.packingZip)
                     val zipFile = File(exportDir, "SportApp_Export_${sdf.format(Date())}.zip")
                     ZipManager().zipFiles(generatedFiles, zipFile)
                     val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", zipFile)
@@ -258,7 +260,7 @@ class ActivityListViewModel @Inject constructor(
                 }
 
             } catch (e: Exception) {
-                _exportState.value = ExportState.Error("Błąd podczas eksportu: ${e.message}")
+                _exportState.value = ExportState.Error("${strings.exportError}: ${e.message}")
             }
         }
     }
@@ -267,7 +269,7 @@ class ActivityListViewModel @Inject constructor(
         _exportState.value = ExportState.Idle
     }
 
-    fun importGpx(uri: Uri, definition: WorkoutDefinition) {
+    fun importGpx(uri: Uri, definition: WorkoutDefinition, strings: AppStrings) {
         viewModelScope.launch {
             _importState.value = ImportState.Loading
             try {
@@ -275,24 +277,24 @@ class ActivityListViewModel @Inject constructor(
                 val result = withContext(Dispatchers.IO) {
                     context.contentResolver.openInputStream(uri)?.use { input ->
                         gpxImporter.importGpx(input, definition, settings.healthData)
-                    } ?: throw Exception("Nie można otworzyć pliku")
+                    } ?: throw Exception(strings.cannotOpenFile)
                 }
 
                 val isDuplicate = checkDuplicate(result.workout.startTime, result.workout.durationSeconds)
                 val warnings = result.warnings.toMutableList()
                 if (isDuplicate) {
-                    warnings.add(0, "Wykryto potencjalny duplikat (taka sama data startu i czas trwania).")
+                    warnings.add(0, strings.potentialDuplicate)
                 }
 
                 if (warnings.isNotEmpty()) {
                     _importState.value = ImportState.Warning(warnings) {
-                        saveImportedWorkout(result)
+                        saveImportedWorkout(result, strings)
                     }
                 } else {
-                    saveImportedWorkout(result)
+                    saveImportedWorkout(result, strings)
                 }
             } catch (e: Exception) {
-                _importState.value = ImportState.Error("Błąd importu: ${e.message}")
+                _importState.value = ImportState.Error("${strings.importError}: ${e.message}")
             }
         }
     }
@@ -302,19 +304,14 @@ class ActivityListViewModel @Inject constructor(
         return workouts.any { it.startTime == startTime && it.durationSeconds == durationSeconds }
     }
 
-    private fun saveImportedWorkout(result: GpxImporter.ImportResult) {
+    private fun saveImportedWorkout(result: GpxImporter.ImportResult, strings: AppStrings) {
         viewModelScope.launch {
             try {
-                val workoutId = repository.insertWorkout(result.workout)
-                val points = result.points.map { it.copy(workoutId = workoutId) }
-                repository.insertPoints(points)
-                val laps = result.laps.map { it.copy(workoutId = workoutId) }
-                repository.insertLaps(laps)
-                
-                _importState.value = ImportState.Success("Trening zaimportowany pomyślnie.")
+                repository.insertWorkoutWithPoints(result.workout, result.points)
+                _importState.value = ImportState.Success(strings.importSuccess)
                 refreshActivityTypes()
             } catch (e: Exception) {
-                _importState.value = ImportState.Error("Błąd zapisu do bazy: ${e.message}")
+                _importState.value = ImportState.Error("${strings.saveError}: ${e.message}")
             }
         }
     }

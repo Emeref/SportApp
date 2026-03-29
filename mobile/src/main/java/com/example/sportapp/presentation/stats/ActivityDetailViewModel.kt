@@ -17,6 +17,7 @@ import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.example.sportapp.presentation.settings.WidgetItem
+import com.example.sportapp.core.i18n.AppStrings
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,17 +53,17 @@ class ActivityDetailViewModel @Inject constructor(
     private val _hrZoneResult = MutableStateFlow<HeartRateZoneResult?>(null)
     val hrZoneResult = _hrZoneResult.asStateFlow()
 
-    val settings: StateFlow<ActivityDetailSettings> = _sessionData
+    fun getSettings(strings: AppStrings): StateFlow<ActivityDetailSettings> = _sessionData
         .filterNotNull()
         .flatMapLatest { data -> 
-            settingsManager.getSettingsFlow(data.activityName)
+            settingsManager.getSettingsFlow(data.activityName, strings)
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ActivityDetailSettings(
-                visibleCharts = ActivityDetailSettingsManager.DEFAULT_CHARTS,
-                visibleWidgets = ActivityDetailSettingsManager.DEFAULT_WIDGETS,
+                visibleCharts = ActivityDetailSettingsManager.getDefaultCharts(strings),
+                visibleWidgets = ActivityDetailSettingsManager.getDefaultWidgets(strings),
                 trackColor = ActivityDetailSettingsManager.DEFAULT_COLOR
             )
         )

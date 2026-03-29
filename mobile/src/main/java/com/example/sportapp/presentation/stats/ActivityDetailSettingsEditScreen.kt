@@ -9,9 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.sportapp.presentation.settings.WidgetItem
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.presentation.settings.WidgetSelectionRow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,17 +20,19 @@ fun ActivityDetailSettingsEditScreen(
     viewModel: ActivityDetailSettingsViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val settings by viewModel.settings.collectAsState()
+    val strings = LocalAppStrings.current
+    val settings by viewModel.getSettings(strings).collectAsStateWithLifecycle()
+    
     var internalCharts by remember(settings.visibleCharts) { mutableStateOf(settings.visibleCharts) }
     var internalWidgets by remember(settings.visibleWidgets) { mutableStateOf(settings.visibleWidgets) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ustawienia: ${viewModel.typeName}") },
+                title = { Text("${strings.activitySettings}: ${viewModel.typeName}") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 }
             )
@@ -48,7 +50,7 @@ fun ActivityDetailSettingsEditScreen(
             ) {
                 item {
                     Text(
-                        text = "Sekcja: Widgety",
+                        text = strings.widgetsSectionLabel,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -85,7 +87,7 @@ fun ActivityDetailSettingsEditScreen(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Sekcja: Wykresy",
+                        text = strings.chartsSectionLabel,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -135,14 +137,14 @@ fun ActivityDetailSettingsEditScreen(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
-                    Text("Zapisz", color = Color.White)
+                    Text(strings.save, color = Color.White)
                 }
                 Button(
                     onClick = onNavigateBack,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
                 ) {
-                    Text("Zamknij", color = Color.White)
+                    Text(strings.close, color = Color.White)
                 }
             }
         }

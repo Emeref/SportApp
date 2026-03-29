@@ -3,6 +3,7 @@ package com.example.sportapp.presentation.stats
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.core.i18n.AppStrings
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.presentation.settings.WidgetItem
@@ -25,18 +26,14 @@ class OverallStatsViewModel @Inject constructor(
 ) : ViewModel() {
     private val settingsManager = OverallStatsSettingsManager(context)
 
-    val widgets = settingsManager.widgetsFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    // Expose methods to get localized flows
+    fun getWidgets(strings: AppStrings): Flow<List<WidgetItem>> = settingsManager.getWidgetsFlow(strings)
+    fun getCharts(strings: AppStrings): Flow<List<WidgetItem>> = settingsManager.getChartsFlow(strings)
 
-    val charts = settingsManager.chartsFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
-
+    // We still keep the original state-backed flows for the main screen, 
+    // but the main screen UI can now call getWidgets(strings) directly if it uses LocalAppStrings.
+    // However, OverallStatsScreen currently uses 'widgets' and 'charts' properties.
+    
     private val _activityTypes = MutableStateFlow<List<String>>(emptyList())
     val activityTypes = _activityTypes.asStateFlow()
 
@@ -78,7 +75,6 @@ class OverallStatsViewModel @Inject constructor(
                 @Suppress("UNCHECKED_CAST")
                 val rawData = statsMap["raw_data"] as? List<WorkoutEntity> ?: emptyList()
                 
-                // Wykonujemy ciężkie obliczenia na wątku Default
                 withContext(Dispatchers.Default) {
                     updateChartData(rawData)
                 }
@@ -118,7 +114,6 @@ class OverallStatsViewModel @Inject constructor(
         val firstDate = getStartOfDay(firstDateRaw)
         val lastDate = getStartOfDay(lastDateRaw)
 
-        // Zabezpieczenie przed zbyt dużą liczbą dni
         val maxDays = 365 * 2 
         val actualFirstDate = maxOf(firstDate, lastDate - (maxDays * 86400000L))
 
@@ -154,7 +149,6 @@ class OverallStatsViewModel @Inject constructor(
         val maxDailyDistGps = dailyStats.maxOfOrNull { it.distGps } ?: 0.0
         val maxDailyDistSteps = dailyStats.maxOfOrNull { it.distSteps } ?: 0.0
         
-        // Zapisujemy maksy, aby UI nie musiał ich liczyć
         _chartMaxValues.value = mapOf(
             "distanceGps" to maxDailyDistGps,
             "distanceSteps" to maxDailyDistSteps,
