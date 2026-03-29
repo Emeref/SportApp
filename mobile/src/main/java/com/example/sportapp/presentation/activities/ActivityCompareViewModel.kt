@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation.activities
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,8 +18,10 @@ import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,8 +33,13 @@ class ActivityCompareViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val id1: Long = savedStateHandle.get<String>("id1")?.toLongOrNull() ?: -1L
-    private val id2: Long = savedStateHandle.get<String>("id2")?.toLongOrNull() ?: -1L
+    private val id1: Long = (savedStateHandle.get<String>("id1")?.toLongOrNull())
+        ?: (savedStateHandle.get<Long>("id1"))
+        ?: -1L
+    private val id2: Long = (savedStateHandle.get<String>("id2")?.toLongOrNull())
+        ?: (savedStateHandle.get<Long>("id2"))
+        ?: -1L
+
     private val settingsManager = ActivityDetailSettingsManager(context)
 
     private val _session1 = MutableStateFlow<SessionData?>(null)
@@ -81,45 +89,77 @@ class ActivityCompareViewModel @Inject constructor(
                 return@launch
             }
 
-            val data1 = sessionRepository.getSessionData(id1)
-            val data2 = sessionRepository.getSessionData(id2)
+            try {
+                val data1 = sessionRepository.getSessionData(id1)
+                val data2 = sessionRepository.getSessionData(id2)
 
-            if (data1.error != null) _error.value = data1.error
-            else if (data2.error != null) _error.value = data2.error
-            else {
-                _session1.value = data1
-                _session2.value = data2
-                
-                viewModelScope.launch {
-                    settingsManager.getSettingsFlow(data1.activityName).collect {
-                        _settings.value = it
+                if (data1.error != null) _error.value = data1.error
+                else if (data2.error != null) _error.value = data2.error
+                else {
+                    _session1.value = data1
+                    _session2.value = data2
+                    
+                    viewModelScope.launch {
+                        settingsManager.getSettingsFlow(data1.activityName).collect {
+                            _settings.value = it
+                        }
                     }
+                    
+                    val settings = mobileSettingsManager.settingsFlow.first()
+                    val maxHr = settings.healthData.maxHR
+                    
+                    val points1 = workoutDao.getPointsForWorkout(id1)
+                    val points2 = workoutDao.getPointsForWorkout(id2)
+                    
+                    _hrZones1.value = HeartRateMath.calculateZones(points1, maxHr)
+                    _hrZones2.value = HeartRateMath.calculateZones(points2, maxHr)
+                    
+                    updateCharts(data1, data2)
                 }
-                
-                val settings = mobileSettingsManager.settingsFlow.first()
-                val maxHr = settings.healthData.maxHR
-                
-                val points1 = workoutDao.getPointsForWorkout(id1)
-                val points2 = workoutDao.getPointsForWorkout(id2)
-                
-                _hrZones1.value = HeartRateMath.calculateZones(points1, maxHr)
-                _hrZones2.value = HeartRateMath.calculateZones(points2, maxHr)
-                
-                updateCharts(data1, data2)
+            } catch (e: Exception) {
+                _error.value = "Błąd: ${e.message}"
+                Log.e("ActivityCompare", "Exception in loadSessions", e)
             }
         }
     }
 
     private fun updateCharts(data1: SessionData, data2: SessionData) {
-        chartProducers.forEach { (id, producer) ->
-            val c1 = data1.charts[id] ?: emptyList()
-            val c2 = data2.charts[id] ?: emptyList()
-            
-            if (c1.isNotEmpty() || c2.isNotEmpty()) {
-                producer.setEntries(listOf(
-                    c1.mapIndexed { i, v -> entryOf(i, v ?: 0f) },
-                    c2.mapIndexed { i, v -> entryOf(i, v ?: 0f) }
-                ))
+        viewModelScope.launch(Dispatchers.Default) {
+            chartProducers.forEach { (id, producer) ->
+                try {
+                    val c1 = data1.charts[id] ?: emptyList()
+                    val c2 = data2.charts[id] ?: emptyList()
+                    
+                    if (c1.isNotEmpty() || c2.isNotEmpty()) {
+                        fun mapPoints(points: List<Float?>): List<com.patrykandpatrick.vico.core.entry.ChartEntry> {
+                            return if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure")) {
+                                points.windowed(10, 1, true) { window: List<Float?> ->
+                                    val valid = window.filterNotNull()
+                                    if (valid.isEmpty()) null else valid.average().toFloat()
+                                }.mapIndexedNotNull { index, value ->
+                                    if (value == null || value.isNaN()) null else entryOf(index, value)
+                                }
+                            } else {
+                                points.mapIndexedNotNull { index, value ->
+                                    if (value == null || value.isNaN()) null else entryOf(index, value)
+                                }
+                            }
+                        }
+
+                        val entries1 = mapPoints(c1)
+                        val entries2 = mapPoints(c2)
+
+                        withContext(Dispatchers.Main) {
+                            producer.setEntries(listOf(entries1, entries2))
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            producer.setEntries(emptyList<List<com.patrykandpatrick.vico.core.entry.ChartEntry>>())
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("ActivityCompare", "Error updating chart $id", e)
+                }
             }
         }
     }

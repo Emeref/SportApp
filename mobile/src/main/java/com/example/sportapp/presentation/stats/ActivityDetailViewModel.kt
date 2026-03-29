@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation.stats
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
@@ -21,9 +22,11 @@ import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -37,7 +40,10 @@ class ActivityDetailViewModel @Inject constructor(
     private val mobileSettingsManager: MobileSettingsManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val activityId: Long = savedStateHandle.get<String>("activityId")?.toLongOrNull() ?: -1L
+    private val activityId: Long = (savedStateHandle.get<String>("activityId")?.toLongOrNull())
+        ?: (savedStateHandle.get<Long>("activityId"))
+        ?: -1L
+
     private val settingsManager = ActivityDetailSettingsManager(context)
 
     private val _sessionData = MutableStateFlow<SessionData?>(null)
@@ -120,6 +126,7 @@ class ActivityDetailViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _error.value = "Błąd ładowania danych: ${e.message}"
+                Log.e("ActivityDetail", "Exception loading data", e)
             }
         }
     }
@@ -170,20 +177,36 @@ class ActivityDetailViewModel @Inject constructor(
     }
 
     private fun updateCharts(data: SessionData) {
-        chartProducers.forEach { (id, producer) ->
-            val points = data.charts[id] ?: emptyList()
-            if (points.isNotEmpty()) {
-                val entries = if (id == "bpm" || id == "kroki_min" || id == "wysokosc") {
-                    // Wygładzanie średnią kroczącą z 10 sekund dla wybranych metryk
-                    points.windowed(10, 1, true) { window ->
-                        window.filterNotNull().average().toFloat()
-                    }.mapIndexed { index, value -> entryOf(index, value) }
-                } else {
-                    points.mapIndexed { index, value ->
-                        entryOf(index, value ?: 0f)
-                    }
+        viewModelScope.launch(Dispatchers.Default) {
+            val chartEntries = mutableMapOf<String, List<com.patrykandpatrick.vico.core.entry.ChartEntry>>()
+            
+            chartProducers.forEach { (id, _) ->
+                try {
+                    val points = data.charts[id] ?: emptyList()
+                    val entries = if (points.isNotEmpty()) {
+                        if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure")) {
+                            points.windowed(10, 1, true) { window: List<Float?> ->
+                                val valid = window.filterNotNull()
+                                if (valid.isEmpty()) null else valid.average().toFloat()
+                            }.mapIndexedNotNull { index, value ->
+                                if (value == null || value.isNaN()) null else entryOf(index, value)
+                            }
+                        } else {
+                            points.mapIndexedNotNull { index, value ->
+                                if (value == null || value.isNaN()) null else entryOf(index, value)
+                            }
+                        }
+                    } else emptyList()
+                    chartEntries[id] = entries
+                } catch (e: Exception) {
+                    Log.e("ActivityDetail", "Error preparing chart $id", e)
                 }
-                producer.setEntries(entries)
+            }
+
+            withContext(Dispatchers.Main) {
+                chartEntries.forEach { (id, entries) ->
+                    chartProducers[id]?.setEntries(entries)
+                }
             }
         }
     }
