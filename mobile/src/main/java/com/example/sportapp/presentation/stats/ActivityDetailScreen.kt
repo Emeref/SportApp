@@ -50,6 +50,7 @@ fun ActivityDetailScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val hrZoneResult by viewModel.hrZoneResult.collectAsStateWithLifecycle()
     val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
+    val autoLapDistance by viewModel.autoLapDistance.collectAsStateWithLifecycle()
 
     val isDarkTheme = when (mobileSettings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -200,7 +201,8 @@ fun ActivityDetailScreen(
                                     LapsTable(
                                         laps = laps,
                                         selectedLap = selectedLap,
-                                        onLapClick = { viewModel.selectLap(it) }
+                                        onLapClick = { viewModel.selectLap(it) },
+                                        autoLapDistance = autoLapDistance
                                     )
                                 }
 
@@ -354,7 +356,8 @@ private fun formatSeconds(seconds: Long): String {
 fun LapsTable(
     laps: List<WorkoutLap>,
     selectedLap: WorkoutLap?,
-    onLapClick: (WorkoutLap) -> Unit
+    onLapClick: (WorkoutLap) -> Unit,
+    autoLapDistance: Double? = null
 ) {
     val validLapsForPace = laps.filter { it.avgPaceSecondsPerKm > 0 }
     val fastestPace = validLapsForPace.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
@@ -363,8 +366,14 @@ fun LapsTable(
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberScrollState()
 
+    val title = if (autoLapDistance != null && autoLapDistance > 0) {
+        "Odcinki: ${formatDistance(autoLapDistance)}"
+    } else {
+        "Odcinki"
+    }
+
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text("Odcinki", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         
         Box(modifier = Modifier

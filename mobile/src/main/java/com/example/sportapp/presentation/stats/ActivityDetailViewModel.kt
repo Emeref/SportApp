@@ -52,6 +52,9 @@ class ActivityDetailViewModel @Inject constructor(
     private val _hrZoneResult = MutableStateFlow<HeartRateZoneResult?>(null)
     val hrZoneResult = _hrZoneResult.asStateFlow()
 
+    private val _autoLapDistance = MutableStateFlow<Double?>(null)
+    val autoLapDistance = _autoLapDistance.asStateFlow()
+
     val settings: StateFlow<ActivityDetailSettings> = _sessionData
         .filterNotNull()
         .flatMapLatest { data -> 
@@ -113,6 +116,7 @@ class ActivityDetailViewModel @Inject constructor(
                     updateCharts(data)
                     checkAndGenerateLaps(data)
                     calculateHeartRateZones(activityId)
+                    loadAutoLapDistance(data.activityName)
                 }
             } catch (e: Exception) {
                 _error.value = "Błąd ładowania danych: ${e.message}"
@@ -136,6 +140,12 @@ class ActivityDetailViewModel @Inject constructor(
                 _laps.value = workoutDao.getLapsForWorkout(activityId)
             }
         }
+    }
+
+    private suspend fun loadAutoLapDistance(activityName: String) {
+        val definitions = repository.getAllDefinitions().first()
+        val definition = definitions.find { it.name == activityName }
+        _autoLapDistance.value = definition?.autoLapDistance
     }
 
     private suspend fun checkAndGenerateLaps(data: SessionData) {

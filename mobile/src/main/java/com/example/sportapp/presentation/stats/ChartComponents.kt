@@ -190,7 +190,6 @@ fun CommonChartSection(
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp)) {
         if (title.isNotEmpty()) {
             Text(text = title, style = MaterialTheme.typography.titleSmall)
-            Spacer(modifier = Modifier.height(8.dp))
         }
         
         val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
@@ -401,7 +400,7 @@ fun rememberMarkerCustom(
             ) {
                 with(context) {
                     val height = label.getHeight(context, text = if (isDetail || isTimestampX) "100.0 unit\n00:00:00" else "Activity\n2024-01-01\n100.0 unit")
-                    outInsets.top = height + (density * 24f)
+                    outInsets.top = height + (density * 4f)
                 }
             }
         }.apply {
