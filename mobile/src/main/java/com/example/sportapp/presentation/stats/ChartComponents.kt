@@ -148,7 +148,7 @@ fun CommonChartSection(
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
                 val max = model.maxY
-                if (max.isNaN() || max <= 0f) return if (unit == "bpm") 180f else 8f
+                if (max.isNaN() || max <= 0f) return if (unit == "bpm") 180f else if (unit == "hPa") 1025f else 8f
                 
                 if (unit == "bpm") {
                     return max + 5f
@@ -157,28 +157,29 @@ fun CommonChartSection(
                 if (hrZoneResult != null) return hrZoneResult.zones.last().maxBpm.toFloat() + 5f
                 
                 if (unit == "hPa") {
+                    val currentMin = if (model.minY.isNaN()) max - 2f else model.minY
+                    val f = floor(currentMin.toDouble()).toFloat()
                     val c = ceil(max.toDouble()).toFloat()
-                    val f = floor(model.minY.toDouble()).toFloat()
-                    return if (c == f) c + 1f else c
+                    return if (c <= f) f + 2f else c + 1f
                 }
                 
                 val ceiling = ceil(max.toDouble()).toInt()
                 val remainder = ceiling % 8
                 val finalMax = if (remainder == 0) ceiling else ceiling + (8 - remainder)
-                return finalMax.toFloat()
+                return finalMax.toFloat().coerceAtLeast(1f)
             }
             override fun getMinY(model: ChartEntryModel): Float {
                 val minDataValue = if (model.minY.isNaN()) 0f else model.minY
                 
                 if (unit == "hPa") {
-                    return floor(minDataValue.toDouble()).toFloat()
+                    return floor(minDataValue.toDouble()).toFloat() - 1f
                 }
 
                 if (unit == "bpm") {
                     return (minDataValue - 5f).coerceAtLeast(0f)
                 }
 
-                return (minDataValue - 4f).coerceAtLeast(0f)
+                return (minDataValue - 2f).coerceAtLeast(0f)
             }
             override fun getMinX(model: ChartEntryModel): Float = model.minX
             override fun getMaxX(model: ChartEntryModel): Float = model.maxX
@@ -242,13 +243,10 @@ fun CommonChartSection(
             val chartWidthDp = this.maxWidth - chartEndPadding
             val totalPointsForSpacing = if (totalPoints > 1) totalPoints else 2
             
-            // Zmniejszamy spacing dla timestampów, aby uniknąć gigantycznych szerokości wykresu
             val calculatedSpacing = if (isTimestampX) 20.dp else (chartWidthDp - startPadding - endPadding) / (totalPointsForSpacing - 1).toFloat()
 
             val horizontalItemPlacer = remember(totalPoints, isTimestampX) {
                 if (isTimestampX) {
-                    // Dla timestampów (dni) używamy spacingu 1, aby pozwolić Vico na optymalne upchnięcie etykiet.
-                    // shiftExtremeTicks i addExtremeLabelPadding pomogą wyświetlić ostatnią datę.
                     AxisItemPlacer.Horizontal.default(
                         spacing = 1,
                         offset = 0,
@@ -277,7 +275,7 @@ fun CommonChartSection(
                 startAxis = rememberStartAxis(
                     label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
                     valueFormatter = { value, _ -> 
-                        if (unit == "hPa") formatter.format(value)
+                        if (unit == "hPa" || unit == "km/h" || unit == "kcal") formatter.format(value)
                         else formatter.format(value.toLong())
                     },
                     itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9),
@@ -291,7 +289,6 @@ fun CommonChartSection(
                 valueFormatter = { value, _ -> 
                     if (isTimestampX) {
                         val msInDay = 86400000L
-                        // Używamy roundToLong zamiast toLong, aby uniknąć błędów zaokrągleń Float (np. 19809.99 -> 19809)
                         val timestamp = value.toDouble().roundToLong() * msInDay
                         timestampSdf.format(Date(timestamp))
                     } else {
@@ -478,14 +475,10 @@ fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
                     val radius = size.width / 2f
                     val distance = sqrt((x * x + y * y).toDouble())
 
-                    // Sprawdzenie czy kliknięto w koło (łatwiejsze klikanie w pełny kształt)
                     if (distance <= radius) {
                         var touchAngle = Math.toDegrees(atan2(y.toDouble(), x.toDouble())).toFloat()
                         if (touchAngle < 0) touchAngle += 360f
-
-                        // Dostosowanie kąta, bo rysujemy od -90 stopni
                         val adjustedAngle = (touchAngle + 90f) % 360f
-
                         var currentAngle = 0f
                         var found = false
                         stats.forEach { stat ->
@@ -504,12 +497,10 @@ fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
             }
         ) {
             var startAngle = -90f
-            
             stats.forEach { stat ->
                 val sweepAngle = (stat.percentage / 100f) * 360f
                 if (sweepAngle > 0) {
                     val isSelected = selectedZone == stat
-                    // Zmiana na wypełniony wykres kołowy (useCenter = true)
                     drawArc(
                         color = if (isSelected) stat.zone.color.copy(alpha = 0.8f) else stat.zone.color,
                         startAngle = startAngle,
@@ -517,8 +508,6 @@ fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
                         useCenter = true,
                         size = Size(size.width, size.height)
                     )
-                    
-                    // Biała obwódka dla zaznaczonej strefy
                     if (isSelected) {
                         drawArc(
                             color = Color.White.copy(alpha = 0.5f),
@@ -529,7 +518,6 @@ fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
                             size = Size(size.width, size.height)
                         )
                     }
-                    
                     startAngle += sweepAngle
                 }
             }

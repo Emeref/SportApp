@@ -173,14 +173,17 @@ class ActivityDetailViewModel @Inject constructor(
         chartProducers.forEach { (id, producer) ->
             val points = data.charts[id] ?: emptyList()
             if (points.isNotEmpty()) {
-                val entries = if (id == "bpm" || id == "kroki_min" || id == "wysokosc") {
+                val entries = if (id == "bpm" || id == "kroki_min" || id == "wysokosc" || id == "predkosc" || id == "predkosc_kroki" || id == "pressure") {
                     // Wygładzanie średnią kroczącą z 10 sekund dla wybranych metryk
                     points.windowed(10, 1, true) { window ->
-                        window.filterNotNull().average().toFloat()
-                    }.mapIndexed { index, value -> entryOf(index, value) }
+                        val valid = window.filterNotNull()
+                        if (valid.isEmpty()) null else valid.average().toFloat()
+                    }.mapIndexedNotNull { index, value ->
+                        if (value == null || value.isNaN()) null else entryOf(index, value)
+                    }
                 } else {
-                    points.mapIndexed { index, value ->
-                        entryOf(index, value ?: 0f)
+                    points.mapIndexedNotNull { index, value ->
+                        if (value == null || value.isNaN()) null else entryOf(index, value)
                     }
                 }
                 producer.setEntries(entries)
