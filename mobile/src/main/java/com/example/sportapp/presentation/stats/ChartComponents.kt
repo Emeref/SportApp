@@ -80,6 +80,7 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.sqrt
 import kotlin.math.atan2
+import kotlin.math.roundToLong
 
 class ThresholdLineDecoration(
     private val thresholdValue: Float,
@@ -236,6 +237,8 @@ fun CommonChartSection(
         val endPadding = 24.dp
         val chartEndPadding = 50.dp
 
+        val timestampSdf = remember { SimpleDateFormat("dd.MM", Locale.getDefault()) }
+
         BoxWithConstraints(modifier = Modifier.fillMaxWidth().height(if (overallRawData != null || isTimestampX) 320.dp else 200.dp)) {
             val chartWidthDp = this.maxWidth - chartEndPadding
             val totalPointsForSpacing = if (totalPoints > 1) totalPoints else 2
@@ -245,9 +248,10 @@ fun CommonChartSection(
 
             val horizontalItemPlacer = remember(totalPoints, isTimestampX) {
                 if (isTimestampX) {
-                    // Wyświetlamy etykietę co 7 dni (tydzień), aby uniknąć renderowania tysięcy tekstów
+                    // Dla timestampów (dni) używamy spacingu 1, aby pozwolić Vico na optymalne upchnięcie etykiet.
+                    // shiftExtremeTicks i addExtremeLabelPadding pomogą wyświetlić ostatnią datę.
                     AxisItemPlacer.Horizontal.default(
-                        spacing = 7,
+                        spacing = 1,
                         offset = 0,
                         shiftExtremeTicks = true,
                         addExtremeLabelPadding = true
@@ -288,7 +292,9 @@ fun CommonChartSection(
                 valueFormatter = { value, _ -> 
                     if (isTimestampX) {
                         val msInDay = 86400000L
-                        SimpleDateFormat("dd.MM", Locale.US).format(Date(value.toLong() * msInDay))
+                        // Używamy roundToLong zamiast toLong, aby uniknąć błędów zaokrągleń Float (np. 19809.99 -> 19809)
+                        val timestamp = value.toDouble().roundToLong() * msInDay
+                        timestampSdf.format(Date(timestamp))
                     } else {
                         val index = value.toInt()
                         if (!detailTimes.isNullOrEmpty()) {
@@ -420,7 +426,7 @@ fun rememberMarkerCustom(
 
                     if (isTimestampX) {
                         val msInDay = 86400000L
-                        val date = outputSdf.format(Date(entry.entry.x.toLong() * msInDay))
+                        val date = outputSdf.format(Date(entry.entry.x.toDouble().roundToLong() * msInDay))
                         "$date\n$value $unit"
                     } else if (isDetail) {
                         val index = entry.entry.x.toInt()
