@@ -46,4 +46,5 @@ interface IWorkoutRepository {
     suspend fun insertWorkout(workout: WorkoutEntity): Long
     suspend fun insertPoints(points: List<WorkoutPointEntity>)
     suspend fun insertLaps(laps: List<WorkoutLap>)
+    suspend fun insertWorkoutWithPoints(workout: WorkoutEntity, points: List<WorkoutPointEntity>)
 }

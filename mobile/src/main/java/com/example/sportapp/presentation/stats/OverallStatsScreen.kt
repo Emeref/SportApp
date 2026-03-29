@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.R
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.presentation.home.WidgetFactory
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -32,9 +33,10 @@ fun OverallStatsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToOptions: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val stats by viewModel.stats.collectAsStateWithLifecycle()
-    val widgets by viewModel.widgets.collectAsStateWithLifecycle()
-    val charts by viewModel.charts.collectAsStateWithLifecycle()
+    val widgets by viewModel.getWidgets(strings).collectAsStateWithLifecycle(initialValue = emptyList())
+    val charts by viewModel.getCharts(strings).collectAsStateWithLifecycle(initialValue = emptyList())
     val activityTypes by viewModel.activityTypes.collectAsStateWithLifecycle()
     val selectedType by viewModel.selectedType.collectAsStateWithLifecycle()
     val startDate by viewModel.startDate.collectAsStateWithLifecycle()
@@ -77,7 +79,9 @@ fun OverallStatsContent(
 ) {
     var showTypeMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    val strings = LocalAppStrings.current
+    val locale = remember(strings.localeCode) { Locale(strings.localeCode) }
+    val sdf = remember(locale) { SimpleDateFormat("dd.MM.yyyy", locale) }
 
     Scaffold(
         topBar = {
@@ -89,17 +93,17 @@ fun OverallStatsContent(
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
-                        Text("Statystyki ogólne")
+                        Text(strings.generalStats)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToOptions) {
-                        Icon(Icons.Default.Settings, contentDescription = "Opcje")
+                        Icon(Icons.Default.Settings, contentDescription = strings.options)
                     }
                 }
             )
@@ -121,18 +125,18 @@ fun OverallStatsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Filtry", style = MaterialTheme.typography.titleSmall)
+                    Text(strings.filters, style = MaterialTheme.typography.titleSmall)
                     
                     Box {
                         OutlinedButton(
                             onClick = { showTypeMenu = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(selectedType ?: "Wszystkie typy")
+                            Text(selectedType ?: strings.allTypes)
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
                         DropdownMenu(expanded = showTypeMenu, onDismissRequest = { showTypeMenu = false }) {
-                            DropdownMenuItem(text = { Text("Wszystkie") }, onClick = { onTypeSelected(null); showTypeMenu = false })
+                            DropdownMenuItem(text = { Text(strings.allTypes) }, onClick = { onTypeSelected(null); showTypeMenu = false })
                             activityTypes.forEach { type ->
                                 DropdownMenuItem(text = { Text(type) }, onClick = { onTypeSelected(type); showTypeMenu = false })
                             }
@@ -142,9 +146,12 @@ fun OverallStatsContent(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = {
-                                val cal = Calendar.getInstance()
-                                DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }.time
+                                val cal = Calendar.getInstance(locale)
+                                DatePickerDialog(context, R.style.CustomDatePickerDialog, { _, y, m, d ->
+                                    val date = Calendar.getInstance(locale).apply { 
+                                        set(y, m, d, 0, 0, 0)
+                                        set(Calendar.MILLISECOND, 0)
+                                    }.time
                                     onDateRangeSelected(date, endDate)
                                 }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
                             },
@@ -152,14 +159,17 @@ fun OverallStatsContent(
                         ) {
                             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(startDate?.let { sdf.format(it) } ?: "Od")
+                            Text(startDate?.let { sdf.format(it) } ?: strings.from)
                         }
 
                         OutlinedButton(
                             onClick = {
-                                val cal = Calendar.getInstance()
-                                DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { set(y, m, d, 23, 59, 59) }.time
+                                val cal = Calendar.getInstance(locale)
+                                DatePickerDialog(context, R.style.CustomDatePickerDialog, { _, y, m, d ->
+                                    val date = Calendar.getInstance(locale).apply { 
+                                        set(y, m, d, 23, 59, 59)
+                                        set(Calendar.MILLISECOND, 999)
+                                    }.time
                                     onDateRangeSelected(startDate, date)
                                 }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
                             },
@@ -167,7 +177,7 @@ fun OverallStatsContent(
                         ) {
                             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(endDate?.let { sdf.format(it) } ?: "Do")
+                            Text(endDate?.let { sdf.format(it) } ?: strings.to)
                         }
                     }
                 }
@@ -178,7 +188,7 @@ fun OverallStatsContent(
             // 2. Widgety
             val activeWidgets = widgets.filter { it.isEnabled }
             if (activeWidgets.isEmpty()) {
-                Text("Brak aktywnych widgetów. Włącz je w opcjach.")
+                Text(strings.noWidgetsSelected)
             } else {
                 activeWidgets.chunked(2).forEach { rowItems ->
                     if (rowItems.size == 2) {
@@ -202,7 +212,7 @@ fun OverallStatsContent(
             if (activeCharts.isNotEmpty()) {
                 if (!rawData.isNullOrEmpty()) {
                     Text(
-                        text = "Wykresy trendów",
+                        text = strings.charts,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                     )
@@ -212,20 +222,20 @@ fun OverallStatsContent(
                         if (producer != null) {
                             val maxVal = chartMaxValues[chart.id] ?: 0.0
                             val unit = when(chart.id) {
-                                "distanceGps" -> if (maxVal > 6000) "km" else "m"
-                                "distanceSteps" -> if (maxVal > 6000) "km" else "m"
-                                "calories" -> "kcal"
-                                "steps" -> "kroków"
-                                "avg_cadence" -> "kr/min"
-                                "ascent", "descent" -> "m"
-                                "maxPressure", "minPressure" -> "hPa"
-                                "bestPace1km" -> "min/km"
+                                "distanceGps" -> if (maxVal > 6000) strings.kmUnit else strings.metersUnit
+                                "distanceSteps" -> if (maxVal > 6000) strings.kmUnit else strings.metersUnit
+                                "calories" -> strings.kcalUnit
+                                "steps" -> strings.steps.lowercase()
+                                "avg_cadence" -> strings.cadenceUnit
+                                "ascent", "descent" -> strings.metersUnit
+                                "maxPressure", "minPressure" -> strings.hpaUnit
+                                "bestPace1km" -> strings.paceUnit
                                 else -> ""
                             }
                             val title = when(chart.id) {
-                                "distanceGps" -> if (maxVal > 6000) "Dystans (GPS) w kilometrach" else "Dystans (GPS) w metrach"
-                                "distanceSteps" -> if (maxVal > 6000) "Dystans (kroki) w kilometrach" else "Dystans (kroki) w metrach"
-                                "steps" -> "Kroki"
+                                "distanceGps" -> if (maxVal > 6000) "${strings.distanceGpsLabel} [${strings.kmUnit}]" else "${strings.distanceGpsLabel} [${strings.metersUnit}]"
+                                "distanceSteps" -> if (maxVal > 6000) "${strings.distanceStepsLabel} [${strings.kmUnit}]" else "${strings.distanceStepsLabel} [${strings.metersUnit}]"
+                                "steps" -> strings.steps
                                 else -> chart.label
                             }
                             CommonChartSection(
@@ -241,7 +251,7 @@ fun OverallStatsContent(
                     }
                 } else if (stats.containsKey("raw_data")) {
                     Text(
-                        text = "Brak danych do wyświetlenia wykresów.",
+                        text = strings.noData,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray,
                         modifier = Modifier.padding(vertical = 16.dp)

@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.R
+import com.example.sportapp.core.i18n.AppStrings
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZone
 import com.example.sportapp.data.model.HeartRateZoneResult
@@ -47,7 +49,8 @@ fun ActivityDetailScreen(
     val laps by viewModel.laps.collectAsStateWithLifecycle()
     val selectedLap by viewModel.selectedLap.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
-    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val strings = LocalAppStrings.current
+    val settings by viewModel.getSettings(strings).collectAsStateWithLifecycle()
     val hrZoneResult by viewModel.hrZoneResult.collectAsStateWithLifecycle()
     val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
 
@@ -61,14 +64,14 @@ fun ActivityDetailScreen(
     if (error != null) {
         AlertDialog(
             onDismissRequest = { },
-            title = { Text("Błąd danych") },
-            text = { Text(error ?: "Wystąpił nieoczekiwany błąd podczas odczytu pliku.") },
+            title = { Text(strings.dataError) },
+            text = { Text(error ?: strings.noData) },
             confirmButton = {
                 Button(onClick = {
                     viewModel.clearError()
                     onNavigateBack()
                 }) {
-                    Text("OK")
+                    Text(strings.ok)
                 }
             }
         )
@@ -77,10 +80,10 @@ fun ActivityDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Szczegóły aktywności") },
+                title = { Text(strings.activityDetails) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 }
             )
@@ -117,131 +120,141 @@ fun ActivityDetailScreen(
                 }
 
                 // Widgety z podsumowaniem (Grid) uzależnione od ustawień
-                SummaryWidgetsGrid(data, settings.visibleWidgets)
+                SummaryWidgetsGrid(data, settings.visibleWidgets, strings)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Wyświetlamy wykresy w kolejności zdefiniowanej w ustawieniach i tylko te zaznaczone
-                settings.visibleCharts.filter { it.isEnabled }.forEach { widget ->
-                    when (widget.id) {
-                        "map" -> {
-                            if (data.route.isNotEmpty()) {
-                                val cameraPositionState = rememberCameraPositionState()
+                for (widget in settings.visibleCharts.filter { it.isEnabled }) {
+                    key(widget.id) {
+                        when (widget.id) {
+                            "map" -> {
+                                if (data.route.isNotEmpty()) {
+                                    val cameraPositionState = rememberCameraPositionState()
 
-                                // Update camera when lap is selected or to show whole route by default
-                                LaunchedEffect(selectedLap, data.route) {
-                                    val pointsToShow = if (selectedLap != null) {
-                                        val lap = selectedLap!!
-                                        data.route.subList(
-                                            lap.startLocationIndex.coerceIn(data.route.indices),
-                                            (lap.endLocationIndex + 1).coerceIn(data.route.indices)
-                                        )
-                                    } else {
-                                        data.route
-                                    }
-
-                                    if (pointsToShow.isNotEmpty()) {
-                                        val boundsBuilder = LatLngBounds.Builder()
-                                        pointsToShow.forEach { boundsBuilder.include(it) }
-                                        val bounds = boundsBuilder.build()
-                                        cameraPositionState.animate(
-                                            CameraUpdateFactory.newLatLngBounds(bounds, 100)
-                                        )
-                                    }
-                                }
-
-                                val context = LocalContext.current
-                                val mapProperties = remember(isDarkTheme) {
-                                    MapProperties(
-                                        mapStyleOptions = if (isDarkTheme) {
-                                            MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
-                                        } else null
-                                    )
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(250.dp)
-                                        .padding(horizontal = 16.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                ) {
-                                    GoogleMap(
-                                        modifier = Modifier.fillMaxSize(),
-                                        cameraPositionState = cameraPositionState,
-                                        properties = mapProperties,
-                                        onMapClick = { viewModel.selectLap(null) }
-                                    ) {
-                                        Polyline(
-                                            points = data.route,
-                                            color = Color(settings.trackColor),
-                                            width = 10f
-                                        )
-                                        
-                                        selectedLap?.let { lap ->
-                                            val lapPoints = data.route.subList(
+                                    // Update camera when lap is selected or to show whole route by default
+                                    LaunchedEffect(selectedLap, data.route) {
+                                        val pointsToShow = if (selectedLap != null) {
+                                            val lap = selectedLap!!
+                                            data.route.subList(
                                                 lap.startLocationIndex.coerceIn(data.route.indices),
                                                 (lap.endLocationIndex + 1).coerceIn(data.route.indices)
                                             )
-                                            if (lapPoints.isNotEmpty()) {
-                                                Polyline(
-                                                    points = lapPoints,
-                                                    color = MaterialTheme.colorScheme.tertiary,
-                                                    width = 15f,
-                                                    zIndex = 1f
+                                        } else {
+                                            data.route
+                                        }
+
+                                        if (pointsToShow.isNotEmpty()) {
+                                            val boundsBuilder = LatLngBounds.Builder()
+                                            pointsToShow.forEach { boundsBuilder.include(it) }
+                                            val bounds = try {
+                                                boundsBuilder.build()
+                                            } catch (e: Exception) {
+                                                null
+                                            }
+                                            if (bounds != null) {
+                                                cameraPositionState.animate(
+                                                    CameraUpdateFactory.newLatLngBounds(bounds, 100)
                                                 )
                                             }
                                         }
                                     }
-                                }
 
-                                if (laps.isNotEmpty()) {
+                                    val context = LocalContext.current
+                                    val mapProperties = remember(isDarkTheme) {
+                                        MapProperties(
+                                            mapStyleOptions = if (isDarkTheme) {
+                                                MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
+                                            } else null
+                                        )
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(250.dp)
+                                            .padding(horizontal = 16.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                    ) {
+                                        GoogleMap(
+                                            modifier = Modifier.fillMaxSize(),
+                                            cameraPositionState = cameraPositionState,
+                                            properties = mapProperties,
+                                            onMapClick = { viewModel.selectLap(null) }
+                                        ) {
+                                            Polyline(
+                                                points = data.route,
+                                                color = Color(settings.trackColor),
+                                                width = 10f
+                                            )
+
+                                            selectedLap?.let { lap ->
+                                                val lapPoints = data.route.subList(
+                                                    lap.startLocationIndex.coerceIn(data.route.indices),
+                                                    (lap.endLocationIndex + 1).coerceIn(data.route.indices)
+                                                )
+                                                if (lapPoints.isNotEmpty()) {
+                                                    Polyline(
+                                                        points = lapPoints,
+                                                        color = MaterialTheme.colorScheme.tertiary,
+                                                        width = 15f,
+                                                        zIndex = 1f
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (laps.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        LapsTable(
+                                            laps = laps,
+                                            selectedLap = selectedLap,
+                                            onLapClick = { viewModel.selectLap(it) },
+                                            strings = strings
+                                        )
+                                    }
+
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    LapsTable(
-                                        laps = laps,
-                                        selectedLap = selectedLap,
-                                        onLapClick = { viewModel.selectLap(it) }
-                                    )
                                 }
-
-                                Spacer(modifier = Modifier.height(16.dp))
                             }
-                        }
-                        "bpm" -> {
-                            val producer = viewModel.chartProducers["bpm"]
-                            if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
-                                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    HeartRateChartSection(
-                                        title = "Tętno (bpm)",
-                                        producer = producer,
-                                        detailTimes = data.times,
-                                        hrZoneResult = hrZoneResult
-                                    )
+                            "bpm" -> {
+                                val producer = viewModel.chartProducers["bpm"]
+                                if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
+                                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                        HeartRateChartSection(
+                                            title = "${strings.heartRate} (${strings.bpmUnit.lowercase()})",
+                                            producer = producer,
+                                            detailTimes = data.times,
+                                            hrZoneResult = hrZoneResult,
+                                            strings = strings
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    hrZoneResult?.let { result ->
+                                        HeartRateZonesSection(result, strings)
+                                        Spacer(modifier = Modifier.height(24.dp))
+                                    }
                                 }
-                                Spacer(modifier = Modifier.height(24.dp))
-                                
-                                hrZoneResult?.let { result ->
-                                    HeartRateZonesSection(result)
+                            }
+                            else -> {
+                                val producer = viewModel.chartProducers[widget.id]
+                                val chartKey = widget.id
+
+                                if (producer != null && (data.charts[chartKey]?.filterNotNull()?.isNotEmpty() == true)) {
+                                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                        CommonChartSection(
+                                            title = widget.label,
+                                            producer = producer,
+                                            unit = getUnitForWidget(widget.id, strings),
+                                            detailTimes = data.times,
+                                            isScrollEnabled = true,
+                                            isZoomEnabled = true
+                                        )
+                                    }
                                     Spacer(modifier = Modifier.height(24.dp))
                                 }
-                            }
-                        }
-                        else -> {
-                            val producer = viewModel.chartProducers[widget.id]
-                            val chartKey = widget.id
-                            
-                            if (producer != null && (data.charts[chartKey]?.filterNotNull()?.isNotEmpty() == true)) {
-                                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    CommonChartSection(
-                                        title = widget.label,
-                                        producer = producer,
-                                        unit = getUnitForWidget(widget.id),
-                                        detailTimes = data.times,
-                                        isScrollEnabled = true,
-                                        isZoomEnabled = true
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(24.dp))
                             }
                         }
                     }
@@ -258,12 +271,13 @@ fun HeartRateChartSection(
     title: String,
     producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer,
     detailTimes: List<String>,
-    hrZoneResult: HeartRateZoneResult?
+    hrZoneResult: HeartRateZoneResult?,
+    strings: AppStrings
 ) {
     CommonChartSection(
         title = title,
         producer = producer,
-        unit = "bpm",
+        unit = strings.bpmUnit.lowercase(),
         detailTimes = detailTimes,
         isScrollEnabled = true,
         isZoomEnabled = true,
@@ -272,9 +286,9 @@ fun HeartRateChartSection(
 }
 
 @Composable
-fun HeartRateZonesSection(result: HeartRateZoneResult) {
+fun HeartRateZonesSection(result: HeartRateZoneResult, strings: AppStrings) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text("Strefy tętna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(strings.heartRateZones, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         
         Card(
@@ -285,12 +299,13 @@ fun HeartRateZonesSection(result: HeartRateZoneResult) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     DonutChart(
                         stats = result.zones,
+                        strings = strings,
                         modifier = Modifier.size(100.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text("Przeważający efekt treningu", style = MaterialTheme.typography.labelMedium)
-                        Text(result.trainingEffect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text(strings.predominantEffect, style = MaterialTheme.typography.labelMedium)
+                        Text(result.trainingEffect(strings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 
@@ -298,7 +313,7 @@ fun HeartRateZonesSection(result: HeartRateZoneResult) {
                 
                 // Tabela stref
                 result.zones.reversed().forEach { stat ->
-                    ZoneRow(stat)
+                    ZoneRow(stat, strings)
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
@@ -307,7 +322,7 @@ fun HeartRateZonesSection(result: HeartRateZoneResult) {
 }
 
 @Composable
-fun ZoneRow(stat: ZoneStat) {
+fun ZoneRow(stat: ZoneStat, strings: AppStrings) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -320,11 +335,11 @@ fun ZoneRow(stat: ZoneStat) {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(stat.zone.displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-            Text("${stat.minBpm}-${stat.maxBpm} bpm", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stat.zone.getName(strings), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+            Text("${stat.minBpm}-${stat.maxBpm} ${strings.bpmUnit.lowercase()}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(
-            formatSeconds(stat.durationSeconds),
+            formatDuration(stat.durationSeconds),
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.width(70.dp),
             textAlign = TextAlign.End
@@ -339,10 +354,10 @@ fun ZoneRow(stat: ZoneStat) {
     }
 }
 
-private fun formatSeconds(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
+private fun formatDuration(totalSeconds: Long): String {
+    val h = totalSeconds / 3600
+    val m = (totalSeconds % 3600) / 60
+    val s = totalSeconds % 60
     return if (h > 0) {
         String.format(Locale.US, "%d:%02d:%02d", h, m, s)
     } else {
@@ -354,7 +369,8 @@ private fun formatSeconds(seconds: Long): String {
 fun LapsTable(
     laps: List<WorkoutLap>,
     selectedLap: WorkoutLap?,
-    onLapClick: (WorkoutLap) -> Unit
+    onLapClick: (WorkoutLap) -> Unit,
+    strings: AppStrings
 ) {
     val validLapsForPace = laps.filter { it.avgPaceSecondsPerKm > 0 }
     val fastestPace = validLapsForPace.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
@@ -364,7 +380,7 @@ fun LapsTable(
     val verticalScrollState = rememberScrollState()
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text("Odcinki", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(strings.laps, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         
         Box(modifier = Modifier
@@ -379,7 +395,7 @@ fun LapsTable(
                         .background(MaterialTheme.colorScheme.primaryContainer)
                         .padding(8.dp)
                     ) {
-                        LapCell("Nr", width = 40.dp, isHeader = true)
+                        LapCell(strings.numberShortLabel, width = 40.dp, isHeader = true)
                     }
                     
                     // Scrollable Headers
@@ -388,13 +404,13 @@ fun LapsTable(
                             .background(MaterialTheme.colorScheme.primaryContainer)
                             .padding(8.dp)
                         ) {
-                            LapCell("Czas", width = 80.dp, isHeader = true)
-                            LapCell("Śr. Tempo", width = 90.dp, isHeader = true)
-                            LapCell("Śr. Prędkość", width = 100.dp, isHeader = true)
-                            LapCell("Max Prędkość", width = 100.dp, isHeader = true)
-                            LapCell("Śr. HR", width = 70.dp, isHeader = true)
-                            LapCell("Max HR", width = 70.dp, isHeader = true)
-                            LapCell("Góra/Dół", width = 100.dp, isHeader = true)
+                            LapCell(strings.time, width = 80.dp, isHeader = true)
+                            LapCell(strings.avgPaceLabel, width = 90.dp, isHeader = true)
+                            LapCell(strings.avgSpeed, width = 100.dp, isHeader = true)
+                            LapCell(strings.maxSpeed, width = 100.dp, isHeader = true)
+                            LapCell(strings.avgHeartRateLabel, width = 70.dp, isHeader = true)
+                            LapCell(strings.maxHeartRateLabel, width = 70.dp, isHeader = true)
+                            LapCell(strings.upDownShortLabel, width = 100.dp, isHeader = true)
                         }
                     }
                 }
@@ -435,10 +451,10 @@ fun LapsTable(
                                     .background(bgColor)
                                     .padding(8.dp)
                                 ) {
-                                    LapCell(formatMillis(lap.durationMillis), width = 80.dp)
-                                    LapCell(formatPaceFromSeconds(lap.avgPaceSecondsPerKm), width = 90.dp)
-                                    LapCell(String.format(Locale.US, "%.1f km/h", lap.avgSpeed), width = 100.dp)
-                                    LapCell(String.format(Locale.US, "%.1f km/h", lap.maxSpeed), width = 100.dp)
+                                    LapCell(formatDuration(lap.durationMillis / 1000), width = 80.dp)
+                                    LapCell(formatPaceFromSeconds(lap.avgPaceSecondsPerKm, strings), width = 90.dp)
+                                    LapCell(String.format(Locale.US, "%.1f %s", lap.avgSpeed, strings.kmhUnit), width = 100.dp)
+                                    LapCell(String.format(Locale.US, "%.1f %s", lap.maxSpeed, strings.kmhUnit), width = 100.dp)
                                     LapCell("${lap.avgHeartRate}", width = 70.dp)
                                     LapCell("${lap.maxHeartRate}", width = 70.dp)
                                     LapCell(String.format(Locale.US, "+%.0f/-%.0f", lap.totalAscent, lap.totalDescent), width = 100.dp)
@@ -464,51 +480,39 @@ private fun LapCell(text: String, width: androidx.compose.ui.unit.Dp, isHeader: 
     )
 }
 
-private fun formatMillis(millis: Long): String {
-    val totalSeconds = millis / 1000
-    val h = totalSeconds / 3600
-    val m = (totalSeconds % 3600) / 60
-    val s = totalSeconds % 60
-    return if (h > 0) {
-        String.format(Locale.US, "%d:%02d:%02d", h, m, s)
-    } else {
-        String.format(Locale.US, "%02d:%02d", m, s)
-    }
-}
-
-private fun formatPaceFromSeconds(totalSeconds: Int): String {
+private fun formatPaceFromSeconds(totalSeconds: Int, strings: AppStrings): String {
     if (totalSeconds <= 0) return "--:--"
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
-    return String.format(Locale.US, "%02d:%02d/km", minutes, seconds)
+    return String.format(Locale.US, "%02d:%02d/%s", minutes, seconds, strings.kmUnit)
 }
 
 @Composable
-fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidgets: List<WidgetItem>) {
+fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidgets: List<WidgetItem>, strings: AppStrings) {
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
     
     val widgetValues = mutableMapOf<String, Pair<String, String>>()
-    widgetValues["duration"] = "Czas trwania" to data.duration
-    widgetValues["max_bpm"] = "Maksymalne tętno" to "${data.maxBpm} bpm"
-    widgetValues["avg_bpm"] = "Średnie tętno" to "${data.avgBpm} bpm"
-    widgetValues["total_calories"] = "Spalone kalorie" to "${data.totalCalories} kcal"
-    widgetValues["max_calories_min"] = "Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin)
-    widgetValues["avg_pace"] = "Średnie tempo" to formatPace(data.avgPace)
-    widgetValues["max_speed"] = "Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeed)
-    widgetValues["max_altitude"] = "Maks wysokość" to String.format(Locale.US, "%.0f m n.p.m.", data.maxAltitude)
-    widgetValues["total_ascent"] = "Suma podejść" to String.format(Locale.US, "+%.0f m", data.totalAscent)
-    widgetValues["total_descent"] = "Suma zejść" to String.format(Locale.US, "-%.0f m", data.totalDescent)
-    widgetValues["avg_step_length"] = "Wyliczona długość kroku" to String.format(Locale.US, "%.2f m", data.avgStepLength)
-    widgetValues["avg_cadence"] = "Śr. kadencja" to String.format(Locale.US, "%.0f kr/min", data.avgCadence)
-    widgetValues["max_cadence"] = "Maks. kadencja" to String.format(Locale.US, "%.0f kr/min", data.maxCadence)
-    widgetValues["total_steps"] = "Liczba kroków" to "${data.totalSteps}"
-    widgetValues["total_distance_gps"] = "Dystans (GPS)" to formatDistance(data.totalDistanceGps)
-    widgetValues["total_distance_steps"] = "Dystans (kroki)" to formatDistance(data.totalDistanceSteps)
-    widgetValues["pressure_start"] = "Ciśnienie atm. (start)" to (data.pressureStart?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")
-    widgetValues["pressure_end"] = "Ciśnienie atm. (koniec)" to (data.pressureEnd?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")
-    widgetValues["max_pressure"] = "Maks. ciśnienie" to (data.maxPressure?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")
-    widgetValues["min_pressure"] = "Min. ciśnienie" to (data.minPressure?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")
-    widgetValues["best_pace_1km"] = "Najlepsze tempo (1km)" to formatPace(data.bestPace1km ?: 0.0)
+    widgetValues["duration"] = strings.durationLabel to data.duration
+    widgetValues["max_bpm"] = strings.maxHeartRateLabel to "${data.maxBpm} ${strings.bpmUnit.lowercase()}"
+    widgetValues["avg_bpm"] = strings.avgHeartRateLabel to "${data.avgBpm} ${strings.bpmUnit.lowercase()}"
+    widgetValues["total_calories"] = strings.totalCaloriesLabel to "${data.totalCalories} ${strings.kcalUnit}"
+    widgetValues["max_calories_min"] = strings.maxCaloriesBurnLabel to String.format(Locale.US, "%.2f %s", data.maxCaloriesMin, strings.kcalPerMinUnit)
+    widgetValues["avg_pace"] = strings.avgPaceLabel to formatPace(data.avgPace, strings)
+    widgetValues["max_speed"] = strings.maxSpeedLabel to String.format(Locale.US, "%.1f %s", data.maxSpeed, strings.kmhUnit)
+    widgetValues["max_altitude"] = strings.maxAltitudeLabel to String.format(Locale.US, "%.0f %s", data.maxAltitude, strings.metersUnit)
+    widgetValues["total_ascent"] = strings.totalAscentLabel to String.format(Locale.US, "+%.0f %s", data.totalAscent, strings.metersUnit)
+    widgetValues["total_descent"] = strings.totalDescentLabel to String.format(Locale.US, "-%.0f %s", data.totalDescent, strings.metersUnit)
+    widgetValues["avg_step_length"] = strings.avgStepLengthLabel to String.format(Locale.US, "%.2f %s", data.avgStepLength, strings.metersUnit)
+    widgetValues["avg_cadence"] = strings.avgCadenceLabel to String.format(Locale.US, "%.0f %s", data.avgCadence, strings.cadenceUnit)
+    widgetValues["max_cadence"] = strings.maxCadenceLabel to String.format(Locale.US, "%.0f %s", data.maxCadence, strings.cadenceUnit)
+    widgetValues["total_steps"] = strings.totalStepsLabel to "${data.totalSteps}"
+    widgetValues["total_distance_gps"] = "${strings.distance} (GPS)" to formatDistance(data.totalDistanceGps, strings)
+    widgetValues["total_distance_steps"] = "${strings.distance} (${strings.steps.lowercase()})" to formatDistance(data.totalDistanceSteps, strings)
+    widgetValues["pressure_start"] = strings.pressureStartLabel to (data.pressureStart?.let { String.format(Locale.US, "%.1f %s", it, strings.hpaUnit) } ?: "-- ${strings.hpaUnit}")
+    widgetValues["pressure_end"] = strings.pressureEndLabel to (data.pressureEnd?.let { String.format(Locale.US, "%.1f %s", it, strings.hpaUnit) } ?: "-- ${strings.hpaUnit}")
+    widgetValues["max_pressure"] = strings.maxPressureLabel to (data.maxPressure?.let { String.format(Locale.US, "%.1f %s", it, strings.hpaUnit) } ?: "-- ${strings.hpaUnit}")
+    widgetValues["min_pressure"] = strings.minPressureLabel to (data.minPressure?.let { String.format(Locale.US, "%.1f %s", it, strings.hpaUnit) } ?: "-- ${strings.hpaUnit}")
+    widgetValues["best_pace_1km"] = strings.bestPace1kmLabel to formatPace(data.bestPace1km ?: 0.0, strings)
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         val chunks = enabledWidgets.chunked(2)
@@ -530,18 +534,18 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidge
     }
 }
 
-private fun formatPace(paceDecimal: Double): String {
+private fun formatPace(paceDecimal: Double, strings: AppStrings): String {
     if (paceDecimal <= 0 || paceDecimal > 120) return "--:--"
     val minutes = paceDecimal.toInt()
     val seconds = ((paceDecimal - minutes) * 60).toInt()
-    return String.format(Locale.US, "%02d:%02d min/km", minutes, seconds)
+    return String.format(Locale.US, "%02d:%02d %s", minutes, seconds, strings.paceUnit)
 }
 
-private fun formatDistance(distanceMeters: Double): String {
+private fun formatDistance(distanceMeters: Double, strings: AppStrings): String {
     return if (distanceMeters >= 1000) {
-        String.format(Locale.US, "%.2f km", distanceMeters / 1000.0)
+        String.format(Locale.US, "%.2f %s", distanceMeters / 1000.0, strings.kmUnit)
     } else {
-        String.format(Locale.US, "%.0f m", distanceMeters)
+        String.format(Locale.US, "%.0f %s", distanceMeters, strings.metersUnit)
     }
 }
 
@@ -561,15 +565,15 @@ fun SummaryItem(label: String, value: String, modifier: Modifier = Modifier) {
     }
 }
 
-private fun getUnitForWidget(id: String): String {
+private fun getUnitForWidget(id: String, strings: AppStrings): String {
     return when(id) {
-        "bpm", "srednie_bpm" -> "bpm"
-        "kalorie_min", "kalorie_suma" -> "kcal"
-        "kroki_min" -> "kroków/min"
-        "odl_kroki", "gps_dystans" -> "m"
-        "predkosc", "predkosc_kroki" -> "km/h"
-        "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"
-        "pressure" -> "hPa"
+        "bpm", "srednie_bpm" -> strings.bpmUnit.lowercase()
+        "kalorie_min", "kalorie_suma" -> strings.kcalUnit
+        "kroki_min" -> strings.cadenceUnit
+        "odl_kroki", "gps_dystans" -> strings.metersUnit
+        "predkosc", "predkosc_kroki" -> strings.kmhUnit
+        "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> strings.metersUnit
+        "pressure" -> strings.hpaUnit
         else -> ""
     }
 }

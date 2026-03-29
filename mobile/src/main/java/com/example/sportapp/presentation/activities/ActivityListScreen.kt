@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.R
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.data.model.WorkoutDefinition
 import java.text.SimpleDateFormat
 import java.util.*
@@ -59,13 +60,16 @@ fun ActivityListScreen(
     val exportState by viewModel.exportState.collectAsState()
     val importState by viewModel.importState.collectAsState()
     
+    val strings = LocalAppStrings.current
     var showTypeMenu by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showImportTypeDialog by remember { mutableStateOf<Uri?>(null) }
     
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    
+    val locale = remember(strings.localeCode) { Locale(strings.localeCode) }
+    val sdf = remember(locale) { SimpleDateFormat("dd.MM.yyyy", locale) }
 
     val horizontalScrollState = rememberScrollState()
     val lazyListState = rememberLazyListState()
@@ -94,10 +98,10 @@ fun ActivityListScreen(
     if (showImportTypeDialog != null) {
         AlertDialog(
             onDismissRequest = { showImportTypeDialog = null },
-            title = { Text("Wybierz typ aktywności") },
+            title = { Text(strings.chooseActivityType) },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text("Wybierz typ treningu dla importowanego pliku GPX:")
+                    Text(strings.chooseActivityType)
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                         items(definitions) { definition ->
@@ -107,7 +111,7 @@ fun ActivityListScreen(
                                     Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null)
                                 },
                                 modifier = Modifier.clickable {
-                                    viewModel.importGpx(showImportTypeDialog!!, definition)
+                                    viewModel.importGpx(showImportTypeDialog!!, definition, strings)
                                     showImportTypeDialog = null
                                 }
                             )
@@ -118,7 +122,7 @@ fun ActivityListScreen(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showImportTypeDialog = null }) {
-                    Text("Anuluj")
+                    Text(strings.cancel)
                 }
             }
         )
@@ -129,11 +133,10 @@ fun ActivityListScreen(
         when (importState) {
             is ImportState.Success -> {
                 snackbarHostState.showSnackbar((importState as ImportState.Success).message)
-                viewModel.resetImportState()
+                viewModel.refreshActivityTypes() // Added to ensure UI updates after import
             }
             is ImportState.Error -> {
                 snackbarHostState.showSnackbar((importState as ImportState.Error).message)
-                viewModel.resetImportState()
             }
             else -> {}
         }
@@ -142,23 +145,23 @@ fun ActivityListScreen(
     if (importState is ImportState.Warning) {
         val state = importState as ImportState.Warning
         AlertDialog(
-            onDismissRequest = { viewModel.resetImportState() },
-            title = { Text("Ostrzeżenie") },
+            onDismissRequest = { /* Handle cancellation in VM if needed */ },
+            title = { Text(strings.warning) },
             text = {
                 Column {
                     state.warnings.forEach { Text("• $it") }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Czy mimo to chcesz kontynuować import?")
+                    Text("${strings.continueLabel}?")
                 }
             },
             confirmButton = {
-                TextButton(onClick = { state.onConfirm(); viewModel.resetImportState() }) {
-                    Text("Kontynuuj")
+                TextButton(onClick = { state.onConfirm() }) {
+                    Text(strings.continueLabel)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.resetImportState() }) {
-                    Text("Anuluj")
+                TextButton(onClick = { /* Reset state if needed */ }) {
+                    Text(strings.cancel)
                 }
             }
         )
@@ -170,7 +173,7 @@ fun ActivityListScreen(
                 Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator()
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Importowanie danych...")
+                    Text(strings.importingData)
                 }
             }
         }
@@ -193,7 +196,7 @@ fun ActivityListScreen(
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }
-            context.startActivity(Intent.createChooser(intent, "Udostępnij trening(i)"))
+            context.startActivity(Intent.createChooser(intent, strings.exportGpx))
             viewModel.resetExportState()
         }
     }
@@ -201,19 +204,19 @@ fun ActivityListScreen(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Usuń aktywności") },
-            text = { Text("Czy na pewno chcesz trwale usunąć zaznaczone aktywności (${selectedIds.size}) z bazy danych?") },
+            title = { Text(strings.delete) },
+            text = { Text(strings.confirmDelete) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteSelectedActivities()
                     showDeleteConfirmation = false
                 }) {
-                    Text("Usuń", color = Color.Red)
+                    Text(strings.delete, color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text("Anuluj")
+                    Text(strings.cancel)
                 }
             }
         )
@@ -239,20 +242,6 @@ fun ActivityListScreen(
         }
     }
 
-    // Export Error Snackback/Dialog
-    if (exportState is ExportState.Error) {
-        AlertDialog(
-            onDismissRequest = { viewModel.resetExportState() },
-            title = { Text("Błąd eksportu") },
-            text = { Text((exportState as ExportState.Error).message) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.resetExportState() }) {
-                    Text("OK")
-                }
-            }
-        )
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -263,26 +252,26 @@ fun ActivityListScreen(
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
-                        Text("Lista aktywności")
+                        Text(strings.activityList)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 },
                 actions = {
                     if (selectedIds.isEmpty()) {
                         IconButton(onClick = { gpxLauncher.launch("application/gpx+xml") }) {
-                            Icon(Icons.Default.UploadFile, contentDescription = "Importuj GPX")
+                            Icon(Icons.Default.UploadFile, contentDescription = strings.importGpx)
                         }
                     } else {
-                        IconButton(onClick = { viewModel.exportSelected() }) {
-                            Icon(Icons.Default.Share, contentDescription = "Eksportuj GPX")
+                        IconButton(onClick = { viewModel.exportSelected(strings) }) {
+                            Icon(Icons.Default.Share, contentDescription = strings.exportGpx)
                         }
                     }
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Ustawienia wykresów")
+                        Icon(Icons.Default.Settings, contentDescription = strings.options)
                     }
                 }
             )
@@ -304,20 +293,20 @@ fun ActivityListScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Filtry", style = MaterialTheme.typography.titleSmall)
+                    Text(strings.filters, style = MaterialTheme.typography.titleSmall)
                     
                     Box {
                         OutlinedButton(
                             onClick = { showTypeMenu = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(selectedType ?: "Wszystkie typy")
+                            Text(selectedType ?: strings.allTypes)
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
                         DropdownMenu(expanded = showTypeMenu, onDismissRequest = { showTypeMenu = false }) {
-                            DropdownMenuItem(text = { Text("Wszystkie") }, onClick = { viewModel.onTypeSelected(null); showTypeMenu = false })
+                            DropdownMenuItem(text = { Text(strings.allTypes) }, onClick = { viewModel.onTypeSelected(null, strings.allTypes); showTypeMenu = false })
                             activityTypes.forEach { type ->
-                                DropdownMenuItem(text = { Text(type) }, onClick = { viewModel.onTypeSelected(type); showTypeMenu = false })
+                                DropdownMenuItem(text = { Text(type) }, onClick = { viewModel.onTypeSelected(type, strings.allTypes); showTypeMenu = false })
                             }
                         }
                     }
@@ -325,9 +314,9 @@ fun ActivityListScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = {
-                                val cal = Calendar.getInstance()
-                                DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { 
+                                val cal = Calendar.getInstance(locale)
+                                DatePickerDialog(context, R.style.CustomDatePickerDialog, { _, y, m, d ->
+                                    val date = Calendar.getInstance(locale).apply { 
                                         set(y, m, d, 0, 0, 0)
                                         set(Calendar.MILLISECOND, 0)
                                     }.time
@@ -338,14 +327,14 @@ fun ActivityListScreen(
                         ) {
                             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(startDate?.let { sdf.format(it) } ?: "Od")
+                            Text(startDate?.let { sdf.format(it) } ?: strings.from)
                         }
 
                         OutlinedButton(
                             onClick = {
-                                val cal = Calendar.getInstance()
-                                DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { 
+                                val cal = Calendar.getInstance(locale)
+                                DatePickerDialog(context, R.style.CustomDatePickerDialog, { _, y, m, d ->
+                                    val date = Calendar.getInstance(locale).apply {
                                         set(y, m, d, 23, 59, 59)
                                         set(Calendar.MILLISECOND, 999)
                                     }.time
@@ -356,7 +345,7 @@ fun ActivityListScreen(
                         ) {
                             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(endDate?.let { sdf.format(it) } ?: "Do")
+                            Text(endDate?.let { sdf.format(it) } ?: strings.to)
                         }
                     }
                 }
@@ -381,12 +370,12 @@ fun ActivityListScreen(
                                     onClick = { viewModel.toggleAllVisibleSelection() },
                                     modifier = Modifier.width(48.dp)
                                 )
-                                HeaderCell("Typ", 100.dp, SortColumn.TYPE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.TYPE) }
-                                HeaderCell("Data", 150.dp, SortColumn.DATE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DATE) }
-                                HeaderCell("Czas", 100.dp, SortColumn.DURATION, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DURATION) }
-                                HeaderCell("Kalorie", 80.dp, SortColumn.CALORIES, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.CALORIES) }
-                                HeaderCell("Dystans (GPS)", 120.dp, SortColumn.DISTANCE_GPS, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DISTANCE_GPS) }
-                                HeaderCell("Dystans (Kroki)", 120.dp, SortColumn.DISTANCE_STEPS, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DISTANCE_STEPS) }
+                                HeaderCell(strings.theme, 100.dp, SortColumn.TYPE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.TYPE) }
+                                HeaderCell(strings.today, 150.dp, SortColumn.DATE, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DATE) }
+                                HeaderCell(strings.activeTime, 100.dp, SortColumn.DURATION, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DURATION) }
+                                HeaderCell(strings.calories, 80.dp, SortColumn.CALORIES, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.CALORIES) }
+                                HeaderCell("${strings.distance} (GPS)", 120.dp, SortColumn.DISTANCE_GPS, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DISTANCE_GPS) }
+                                HeaderCell("${strings.distance} (${strings.steps})", 120.dp, SortColumn.DISTANCE_STEPS, sortColumn, sortOrder) { viewModel.onSortChanged(SortColumn.DISTANCE_STEPS) }
                             }
                             
                             LazyColumn(modifier = Modifier.fillMaxWidth(), state = lazyListState) {
@@ -442,14 +431,14 @@ fun ActivityListScreen(
                             modifier = Modifier.weight(1.5f),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                         ) {
-                            Text("Szczegóły", fontSize = 12.sp)
+                            Text(strings.details, fontSize = 12.sp)
                         }
                         Button(
                             onClick = { onNavigateToTrim(selectedIds.first()) },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("Edytuj", fontSize = 12.sp)
+                            Text(strings.edit, fontSize = 12.sp)
                         }
                     } else if (selectedIds.size == 2) {
                         Button(
@@ -461,7 +450,7 @@ fun ActivityListScreen(
                             modifier = Modifier.weight(2.5f),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
                         ) {
-                            Text("Porównaj", fontSize = 12.sp)
+                            Text(strings.compare, fontSize = 12.sp)
                         }
                     }
 
@@ -470,7 +459,7 @@ fun ActivityListScreen(
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE57373))
                     ) {
-                        Text("Usuń", fontSize = 12.sp)
+                        Text(strings.delete, fontSize = 12.sp)
                     }
                 }
             }

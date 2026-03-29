@@ -1,6 +1,7 @@
 package com.example.sportapp.presentation.workout
 
 import android.util.Log
+import com.example.sportapp.core.i18n.AppLanguage
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.presentation.settings.ReportingPeriod
@@ -79,6 +80,19 @@ class WearSyncService : WearableListenerService() {
                                 Log.d("WearSyncService", "Successfully synced watch stats settings from mobile")
                             } catch (e: Exception) {
                                 Log.e("WearSyncService", "Failed to process watch stats settings", e)
+                            }
+                        }
+                    }
+                    "/app_settings" -> {
+                        val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
+                        val languageName = dataMapItem.dataMap.getString("app_language") ?: return@forEach
+                        scope.launch {
+                            try {
+                                val language = AppLanguage.valueOf(languageName)
+                                settingsManager.saveAppLanguage(language)
+                                Log.d("WearSyncService", "Successfully synced app language: $languageName")
+                            } catch (e: Exception) {
+                                Log.e("WearSyncService", "Failed to process app language sync", e)
                             }
                         }
                     }

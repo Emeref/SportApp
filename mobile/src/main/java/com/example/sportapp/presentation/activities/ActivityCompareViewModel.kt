@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.core.i18n.AppStrings
+import com.example.sportapp.core.i18n.PlStrings
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
@@ -90,8 +92,10 @@ class ActivityCompareViewModel @Inject constructor(
                 _session1.value = data1
                 _session2.value = data2
                 
+                // Obserwujemy ustawienia używając domyślnych stringów PL do inicjalizacji kluczy, 
+                // ale UI i tak używa LocalAppStrings do wyświetlania.
                 viewModelScope.launch {
-                    settingsManager.getSettingsFlow(data1.activityName).collect {
+                    settingsManager.getSettingsFlow(data1.activityName, PlStrings).collect {
                         _settings.value = it
                     }
                 }

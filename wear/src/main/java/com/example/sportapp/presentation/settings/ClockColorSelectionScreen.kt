@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,26 +15,31 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.RadioButton
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
+import com.example.sportapp.core.i18n.LocalAppStrings
 
 @Composable
 fun ClockColorSelectionScreen(selectedColor: Color?, onColorSelected: (Color?) -> Unit) {
     val listState = rememberScalingLazyListState()
-    val colors = listOf(
-        Color.Red to "Czerwony",
-        Color.White to "Biały",
-        Color.Green to "Zielony",
-        Color.Yellow to "Żółty",
-        Color.Blue to "Niebieski",
-        Color.Black to "Czarny",
-        null to "Brak"
-    )
+    val strings = LocalAppStrings.current
+    
+    val colors = remember(strings) {
+        listOf(
+            Color.Red to strings.colorRed,
+            Color.White to strings.colorWhite,
+            Color.Green to strings.colorGreen,
+            Color.Yellow to strings.colorYellow,
+            Color.Blue to strings.colorBlue,
+            Color.Black to strings.colorBlack,
+            null to strings.colorNone
+        )
+    }
 
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { ListHeader { Text("Kolor zegara") } }
+        item { ListHeader { Text(strings.clockColor) } }
         colors.forEach { (color, label) ->
             item {
                 ToggleChip(

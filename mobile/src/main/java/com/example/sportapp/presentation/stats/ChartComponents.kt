@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
+import com.example.sportapp.core.i18n.AppStrings
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
@@ -141,6 +142,7 @@ fun CommonChartSection(
     isZoomEnabled: Boolean = true,
     hrZoneResult: HeartRateZoneResult? = null,
     lineColors: List<Color>? = null,
+    customColors: List<Color>? = null,
     isTimestampX: Boolean = false
 ) {
     val axisValuesOverrider = remember(hrZoneResult, unit) {
@@ -184,7 +186,7 @@ fun CommonChartSection(
         }
     }
 
-    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors, isTimestampX)
+    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors ?: customColors, isTimestampX)
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp)) {
         if (title.isNotEmpty()) {
@@ -216,7 +218,8 @@ fun CommonChartSection(
             }
         }
 
-        val lines = lineColors?.map { color ->
+        val effectiveLineColors = lineColors ?: customColors
+        val lines = effectiveLineColors?.map { color ->
             lineSpec(
                 lineColor = color,
                 lineBackgroundShader = null
@@ -458,7 +461,7 @@ fun rememberMarkerCustom(
 }
 
 @Composable
-fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
+fun DonutChart(stats: List<ZoneStat>, strings: AppStrings, modifier: Modifier = Modifier) {
     var selectedZone by remember { mutableStateOf<ZoneStat?>(null) }
     val density = LocalDensity.current
 
@@ -545,13 +548,13 @@ fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
                         Text(
-                            text = stat.zone.displayName,
+                            text = stat.zone.getName(strings),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = stat.zone.color
                         )
                         Text(
-                            text = "${formatDuration(stat.durationSeconds)}: ${stat.zone.description}",
+                            text = "${formatDuration(stat.durationSeconds)}: ${stat.zone.getDescription(strings)}",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
                         )

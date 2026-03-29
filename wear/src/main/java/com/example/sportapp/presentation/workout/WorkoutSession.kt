@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
@@ -24,6 +25,7 @@ fun rememberWorkoutSession(
     onEndWorkout: (List<Pair<String, String>>) -> Unit
 ): WorkoutSessionState {
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val gson = remember { Gson() }
     var service by remember { mutableStateOf<WorkoutService?>(null) }
     var workoutData by remember { mutableStateOf(WorkoutData(status = WorkoutStatus.IDLE)) }
@@ -79,50 +81,50 @@ fun rememberWorkoutSession(
             return sensors.find { it.sensorId == sensor.id }?.isRecording == true
         }
 
-        summary.add("Czas trwania" to data.formattedTime)
+        summary.add(strings.maxDuration to data.formattedTime)
         
         if (lastPoint != null) {
             // Tętno -> Średnie i Maksymalne
             if (isRec(WorkoutSensor.HEART_RATE)) {
                 val avgBpm = service?.getAvgBpm() ?: 0
-                if (avgBpm > 0) summary.add("Średnie tętno" to "$avgBpm BPM")
-                if (data.maxBpm > 0) summary.add("Maksymalne tętno" to "${data.maxBpm} BPM")
+                if (avgBpm > 0) summary.add(strings.heartRateZones to "$avgBpm ${strings.bpmUnit}")
+                if (data.maxBpm > 0) summary.add(strings.maxHeartRate to "${data.maxBpm} ${strings.bpmUnit}")
             }
 
             // Prędkość GPS -> Średnia i Maksymalna
             if (isRec(WorkoutSensor.SPEED_GPS)) {
-                lastPoint.speedGps?.let { summary.add("Średnia prędkość" to String.format(Locale.US, "%.1f km/h", it)) }
-                if (data.maxSpeedGps > 0) summary.add("Maksymalna prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeedGps))
+                lastPoint.speedGps?.let { summary.add(strings.avgSpeed to String.format(Locale.US, "%.1f %s", it, strings.kmhUnit)) }
+                if (data.maxSpeedGps > 0) summary.add(strings.maxSpeed to String.format(Locale.US, "%.1f %s", data.maxSpeedGps, strings.kmhUnit))
             }
 
             // Prędkość Kroki -> Średnia i Maksymalna
             if (isRec(WorkoutSensor.SPEED_STEPS)) {
-                lastPoint.speedSteps?.let { summary.add("Średnia prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", it)) }
-                if (data.maxSpeedSteps > 0) summary.add("Maksymalna prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", data.maxSpeedSteps))
+                lastPoint.speedSteps?.let { summary.add(strings.avgSpeed to String.format(Locale.US, "%.1f %s", it, strings.kmhUnit)) }
+                if (data.maxSpeedSteps > 0) summary.add(strings.maxSpeed to String.format(Locale.US, "%.1f %s", data.maxSpeedSteps, strings.kmhUnit))
             }
 
             // Dystanse i Kroki
             if (isRec(WorkoutSensor.DISTANCE_GPS)) {
-                lastPoint.distanceGps?.let { summary.add("Dystans" to String.format(Locale.US, "%.2f km", it / 1000.0)) }
+                lastPoint.distanceGps?.let { summary.add(strings.distance to String.format(Locale.US, "%.2f %s", it / 1000.0, strings.kmUnit)) }
             }
             if (isRec(WorkoutSensor.DISTANCE_STEPS)) {
-                lastPoint.distanceSteps?.let { summary.add("Dystans (kroki)" to "$it m") }
+                lastPoint.distanceSteps?.let { summary.add(strings.distanceSteps to "$it ${strings.metersUnit}") }
             }
             if (isRec(WorkoutSensor.STEPS)) {
-                lastPoint.steps?.let { summary.add("Kroki" to "$it") }
+                lastPoint.steps?.let { summary.add(strings.steps to "$it") }
             }
 
             // Przewyższenia
             if (isRec(WorkoutSensor.TOTAL_ASCENT)) {
-                lastPoint.totalAscent?.let { if (it > 0) summary.add("W sumie w górę" to String.format(Locale.US, "%.0f m", it)) }
+                lastPoint.totalAscent?.let { if (it > 0) summary.add(strings.totalAscent to String.format(Locale.US, "%.0f %s", it, strings.metersUnit)) }
             }
             if (isRec(WorkoutSensor.TOTAL_DESCENT)) {
-                lastPoint.totalDescent?.let { if (it > 0) summary.add("W sumie do dołu" to String.format(Locale.US, "%.0f m", it)) }
+                lastPoint.totalDescent?.let { if (it > 0) summary.add(strings.totalDescent to String.format(Locale.US, "%.0f %s", it, strings.metersUnit)) }
             }
 
             // Kalorie
             if (isRec(WorkoutSensor.CALORIES_SUM)) {
-                lastPoint.calorieSum?.let { summary.add("Kalorie" to String.format(Locale.US, "%.0f kcal", it)) }
+                lastPoint.calorieSum?.let { summary.add(strings.calories to String.format(Locale.US, "%.0f %s", it, strings.kcalUnit)) }
             }
         }
         

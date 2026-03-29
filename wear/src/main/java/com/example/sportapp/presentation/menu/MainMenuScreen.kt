@@ -19,10 +19,13 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import com.example.sportapp.R
+import com.example.sportapp.core.i18n.LocalAppStrings
 
 @Composable
 fun MainMenuScreen(navController: NavHostController) {
     val listState = rememberScalingLazyListState()
+    val strings = LocalAppStrings.current
+
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
@@ -42,26 +45,26 @@ fun MainMenuScreen(navController: NavHostController) {
 
         item {
             Chip(
-                label = { Text("Sport") },
+                label = { Text(strings.start) },
                 onClick = { navController.navigate("choose_sport") },
-                icon = { Icon(Icons.Default.DirectionsRun, contentDescription = "Sport") },
+                icon = { Icon(Icons.Default.DirectionsRun, contentDescription = strings.start) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
         }
         item {
             Chip(
-                label = { Text("Statystyki") },
+                label = { Text(strings.charts) },
                 onClick = { navController.navigate("statistics") },
-                icon = { Icon(Icons.Default.BarChart, contentDescription = "Statystyki") },
+                icon = { Icon(Icons.Default.BarChart, contentDescription = strings.charts) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 colors = ChipDefaults.secondaryChipColors()
             )
         }
         item {
             Chip(
-                label = { Text("Ustawienia") },
+                label = { Text(strings.options) },
                 onClick = { navController.navigate("settings") },
-                icon = { Icon(Icons.Default.Settings, contentDescription = "Ustawienia") },
+                icon = { Icon(Icons.Default.Settings, contentDescription = strings.options) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 colors = ChipDefaults.secondaryChipColors()
             )

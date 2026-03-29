@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.stats
 
+import com.example.sportapp.core.i18n.AppStrings
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.HeartRateZone
 import com.example.sportapp.data.model.HeartRateZoneResult
@@ -9,7 +10,7 @@ object HeartRateMath {
 
     fun calculateZones(points: List<WorkoutPointEntity>, maxHr: Int): HeartRateZoneResult {
         if (points.isEmpty() || maxHr <= 0) {
-            return HeartRateZoneResult(emptyList(), "Brak danych tętna", null)
+            return HeartRateZoneResult(emptyList(), { strings: AppStrings -> strings.noHrData }, null)
         }
 
         // 1. Filtracja Moving Average (3 punkty)
@@ -18,7 +19,7 @@ object HeartRateMath {
         }
 
         if (filteredBpm.isEmpty()) {
-            return HeartRateZoneResult(emptyList(), "Zbyt mało danych", null)
+            return HeartRateZoneResult(emptyList(), { strings: AppStrings -> strings.tooLittleData }, null)
         }
 
         // 2. Grupowanie w strefy
@@ -33,7 +34,7 @@ object HeartRateMath {
 
         val totalPoints = zoneCounts.values.sum().toFloat()
         if (totalPoints == 0f) {
-            return HeartRateZoneResult(emptyList(), "Tętno poniżej stref", null)
+            return HeartRateZoneResult(emptyList(), { strings: AppStrings -> strings.hrBelowZones }, null)
         }
 
         // 3. Przygotowanie wyników
@@ -49,14 +50,14 @@ object HeartRateMath {
         }
 
         val dominantZone = zoneStats.maxByOrNull { it.durationSeconds }?.zone
-        val effect = when (dominantZone) {
-            HeartRateZone.Z0 -> "Niska intensywność / Rozgrzewka"
-            HeartRateZone.Z1 -> "Baza tlenowa i regeneracja"
-            HeartRateZone.Z2 -> "Efektywne spalanie tłuszczu"
-            HeartRateZone.Z3 -> "Poprawa wydolności tlenowej"
-            HeartRateZone.Z4 -> "Zwiększenie progu mleczanowego"
-            HeartRateZone.Z5 -> "Trening beztlenowy i VO2 Max"
-            null -> "Brak dominującej strefy"
+        val effect: (AppStrings) -> String = when (dominantZone) {
+            HeartRateZone.Z0 -> { strings: AppStrings -> strings.effectWarmup }
+            HeartRateZone.Z1 -> { strings: AppStrings -> strings.effectRecovery }
+            HeartRateZone.Z2 -> { strings: AppStrings -> strings.effectFatBurn }
+            HeartRateZone.Z3 -> { strings: AppStrings -> strings.effectAerobic }
+            HeartRateZone.Z4 -> { strings: AppStrings -> strings.effectLactate }
+            HeartRateZone.Z5 -> { strings: AppStrings -> strings.effectAnaerobic }
+            null -> { strings: AppStrings -> strings.effectNone }
         }
 
         return HeartRateZoneResult(zoneStats, effect, dominantZone)

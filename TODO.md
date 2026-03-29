@@ -28,7 +28,7 @@
     - [x] **Asynchroniczny zapis (IO)**: Przeniesienie operacji dyskowych w `WorkoutLogger` na `Dispatchers.IO`.
     - [x] **Migracja na bazę danych (Room)**: Wdrożenie bazy danych Room (`AppDatabase`, `WorkoutDao`) dla efektywnego zarządzania danymi sesji.
     - [x] **Refaktoring Tętna**: Usunięcie kolumny `avgBpm` z tabeli `workouts` i zastąpienie jej dynamicznym obliczaniem średniej z `workout_points`.
-    - [x] **Zarządzanie aktywnościami**: Dodanie opcji trwałego usuwania aktywności z historii.
+    - [x] **Zarządzanie aktywnościami**: Dodanie opcji trwalego usuwania aktywności z historii.
     - [x] **Zaokrąglanie danych**: Upewnienie się, że wszystkie pola liczbowe w tabeli `workouts` mają zaokrąglenie do 2 miejsc po przecinku.
 - [x] **Globalne Stałe**: Dodano plik `AppConstants.kt` ze zmiennymi, gdzie are definie z całej aplikacji (np. czułość kółka).
 - [x] **Logowanie treningów**: Rejestracja parametrów co sekundę do bazy danych (metry, zaokrąglone) zgodnie z flagami zapisu.
@@ -64,6 +64,11 @@
     - [x] Konfiguracja widgetów na ekranie głównym (wybór, kolejność).
     - [x] Wybór okresu raportowania (dziś, tydzień, m-c, rok).
     - [x] **Zdalna konfiguracja zegarka**: Możliwość ustawienia pól statystyk i okresu dla zegarka z poziomu aplikacji mobilnej.
+    - [x] **Dynamiczny system zmiany języka**:
+        - [x] Implementacja `AppStrings` i `CompositionLocal` dla dynamicznych tłumaczeń bez restartu Activity.
+        - [x] Obsługa 7 języków (PL, EN, ES, PT, DE, FR, IT).
+        - [x] Synchronizacja języka z Mobile na Wear OS.
+        - [x] Ekran wyboru języka z flagami w ustawieniach.
     - [x] **Poprawa Layoutu**: Przesunięcie tytułów ekranów opcji w dół (aby nie chowały się za kamerką).
     - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definie aktywności.
     - [x] **Odświeżenie UI**: Zmiana wyglądu tabel/list (dodano paski przewijania) oraz wdrożenie sliderów do regulacji parametrów.

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.R
+import com.example.sportapp.core.i18n.LocalAppStrings
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -35,21 +36,19 @@ fun HomeScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val settings by viewModel.settings.collectAsState()
     var showSecretPopup by remember { mutableStateOf(false) }
+    val strings = LocalAppStrings.current
 
     val activeWidgets = settings.widgets.filter { it.isEnabled }
 
     val title = if (activeWidgets.isEmpty()) {
-        "Nie masz wybranego żadnego widgeta"
+        strings.noWidgetsSelected
     } else {
         when (settings.period) {
-            ReportingPeriod.TODAY -> "Wyniki z dzisiaj:"
-            ReportingPeriod.WEEK -> "Wyniki z tego tygodnia:"
-            ReportingPeriod.MONTH -> {
-                val monthName = Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.LONG, Locale("pl"))
-                "Wyniki z $monthName:"
-            }
-            ReportingPeriod.YEAR -> "Wyniki z tego roku:"
-            ReportingPeriod.CUSTOM -> if (settings.customDays == 1) "Wyniki z ostatniego dnia:" else "Wyniki z ostatnich ${settings.customDays} dni:"
+            ReportingPeriod.TODAY -> strings.resultsFromToday
+            ReportingPeriod.WEEK -> strings.resultsFromWeek
+            ReportingPeriod.MONTH -> strings.resultsFromMonth
+            ReportingPeriod.YEAR -> strings.resultsFromYear
+            ReportingPeriod.CUSTOM -> strings.resultsFromLastDays(settings.customDays)
         }
     }
 
@@ -59,7 +58,7 @@ fun HomeScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         IconButton(onClick = { showSecretPopup = false }) {
-                            Icon(Icons.Default.Close, contentDescription = "Zamknij")
+                            Icon(Icons.Default.Close, contentDescription = strings.stop)
                         }
                     }
                     Text("Super, że klikasz, ale tu nic nie ma", style = MaterialTheme.typography.bodyLarge)
@@ -88,13 +87,13 @@ fun HomeScreen(
                         }
                     } else {
                         IconButton(onClick = { viewModel.triggerSync() }) {
-                            Icon(Icons.Default.Sync, contentDescription = "Synchronizuj")
+                            Icon(Icons.Default.Sync, contentDescription = strings.sync)
                         }
                     }
                 },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, contentDescription = "Opcje")
+                        Icon(Icons.Default.Settings, contentDescription = strings.options)
                     }
                 }
             )
@@ -130,11 +129,11 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = onNavigateToStats, modifier = Modifier.fillMaxWidth()) {
-                Text("Statystyki ogólne")
+                Text(strings.generalStats)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onNavigateToActivityList, modifier = Modifier.fillMaxWidth()) {
-                Text("Szczegóły treningu")
+                Text(strings.workoutDetails)
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -153,23 +152,24 @@ fun HomeScreen(
 
 @Composable
 fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
+    val strings = LocalAppStrings.current
     when (id) {
-        "count" -> StatCard(modifier, "Liczba aktywności", formatLargeNumber(stats["count"]))
-        "calories" -> StatCard(modifier, "Spalone kalorie", "${formatLargeNumber(stats["calories"])} kcal")
-        "distanceGps" -> StatCard(modifier, "Dystans (GPS)", formatDistanceUI(stats["distanceGpsM"] as? Double ?: 0.0))
-        "distanceSteps" -> StatCard(modifier, "Dystans (kroki)", formatDistanceUI(stats["distanceStepsM"] as? Double ?: 0.0))
-        "ascent" -> StatCard(modifier, "W sumie w górę", "${formatLargeNumber(stats["ascent"])} m")
-        "descent" -> StatCard(modifier, "W sumie do dołu", "${formatLargeNumber(stats["descent"])} m")
-        "steps" -> StatCard(modifier, "Kroki", formatLargeNumber(stats["steps"]))
-        "avg_cadence" -> StatCard(modifier, "Średnia kadencja", String.format(Locale.US, "%.0f kr/min", stats["avg_cadence"] as? Double ?: 0.0))
-        "max_speed" -> StatCard(modifier, "Maks prędkość", String.format(Locale.US, "%.1f km/h", stats["max_speed"] as? Double ?: 0.0))
-        "max_altitude" -> StatCard(modifier, "Maks wysokość", String.format(Locale.US, "%.0f m", stats["max_altitude"] as? Double ?: 0.0))
-        "max_elevation_gain" -> StatCard(modifier, "Najwięcej przewyższeń", String.format(Locale.US, "+%.0f m", stats["max_elevation_gain"] as? Double ?: 0.0))
-        "max_distance" -> StatCard(modifier, "Największy dystans", formatDistanceUI(stats["max_distance"] as? Double ?: 0.0))
-        "max_duration" -> StatCard(modifier, "Najdłuższy czas", formatDuration(stats["max_duration"] as? Long ?: 0L))
-        "max_calories" -> StatCard(modifier, "Najwięcej kalorii", "${formatLargeNumber(stats["max_calories"])} kcal")
-        "max_avg_cadence" -> StatCard(modifier, "Najwyższa śr. kadencja", String.format(Locale.US, "%.0f kr/min", stats["max_avg_cadence"] as? Double ?: 0.0))
-        "max_avg_speed" -> StatCard(modifier, "Najwyższa śr. prędkość", String.format(Locale.US, "%.1f km/h", stats["max_avg_speed"] as? Double ?: 0.0))
+        "count" -> StatCard(modifier, strings.activityCount, formatLargeNumber(stats["count"]))
+        "calories" -> StatCard(modifier, strings.totalCalories, "${formatLargeNumber(stats["calories"])} kcal")
+        "distanceGps" -> StatCard(modifier, "${strings.distance} (GPS)", formatDistanceUI(stats["distanceGpsM"] as? Double ?: 0.0))
+        "distanceSteps" -> StatCard(modifier, "${strings.distance} (${strings.steps.lowercase()})", formatDistanceUI(stats["distanceStepsM"] as? Double ?: 0.0))
+        "ascent" -> StatCard(modifier, strings.ascent, "${formatLargeNumber(stats["ascent"])} m")
+        "descent" -> StatCard(modifier, strings.descent, "${formatLargeNumber(stats["descent"])} m")
+        "steps" -> StatCard(modifier, strings.steps, formatLargeNumber(stats["steps"]))
+        "avg_cadence" -> StatCard(modifier, strings.avgCadence, String.format(Locale.US, "%.0f kr/min", stats["avg_cadence"] as? Double ?: 0.0))
+        "max_speed" -> StatCard(modifier, strings.maxSpeed, String.format(Locale.US, "%.1f km/h", stats["max_speed"] as? Double ?: 0.0))
+        "max_altitude" -> StatCard(modifier, strings.maxAltitude, String.format(Locale.US, "%.0f m", stats["max_altitude"] as? Double ?: 0.0))
+        "max_elevation_gain" -> StatCard(modifier, strings.maxElevationGain, String.format(Locale.US, "+%.0f m", stats["max_elevation_gain"] as? Double ?: 0.0))
+        "max_distance" -> StatCard(modifier, strings.maxDistance, formatDistanceUI(stats["max_distance"] as? Double ?: 0.0))
+        "max_duration" -> StatCard(modifier, strings.maxDuration, formatDuration(stats["max_duration"] as? Long ?: 0L))
+        "max_calories" -> StatCard(modifier, strings.maxCalories, "${formatLargeNumber(stats["max_calories"])} kcal")
+        "max_avg_cadence" -> StatCard(modifier, strings.maxAvgCadence, String.format(Locale.US, "%.0f kr/min", stats["max_avg_cadence"] as? Double ?: 0.0))
+        "max_avg_speed" -> StatCard(modifier, strings.maxAvgSpeed, String.format(Locale.US, "%.1f km/h", stats["max_avg_speed"] as? Double ?: 0.0))
     }
 }
 
@@ -193,13 +193,6 @@ private fun formatDuration(seconds: Long): String {
     val s = seconds % 60
     return if (h > 0) String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
     else String.format(Locale.US, "%02d:%02d", m, s)
-}
-
-private fun formatPace(pace: Double): String {
-    if (pace <= 0.0) return "0:00"
-    val minutes = pace.toInt()
-    val seconds = ((pace - minutes) * 60).toInt()
-    return String.format(Locale.US, "%d:%02d", minutes, seconds)
 }
 
 private fun formatDistanceUI(meters: Double): String {

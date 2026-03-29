@@ -6,13 +6,13 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.sportapp.core.i18n.AppStrings
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// Używamy innej nazwy pliku, aby ustawienia były odizolowane
 private val Context.overallStatsDataStore: DataStore<Preferences> by preferencesDataStore(name = "overall_stats_settings")
 
 class OverallStatsSettingsManager(private val context: Context) {
@@ -22,61 +22,64 @@ class OverallStatsSettingsManager(private val context: Context) {
         private val WIDGETS_JSON = stringPreferencesKey("widgets_json")
         private val CHARTS_JSON = stringPreferencesKey("charts_json")
         
-        val DEFAULT_WIDGETS = listOf(
-            WidgetItem("count", "Liczba aktywności"),
-            WidgetItem("calories", "Spalone kalorie"),
-            WidgetItem("distanceGps", "Dystans (GPS)"),
-            WidgetItem("distanceSteps", "Dystans (kroki)"),
-            WidgetItem("ascent", "W sumie w górę"),
-            WidgetItem("descent", "W sumie do dołu"),
-            WidgetItem("steps", "Wszystkie kroki"),
-            WidgetItem("avg_cadence", "Średnia kadencja"),
-            WidgetItem("max_speed", "Maks prędkość"),
-            WidgetItem("max_altitude", "Maks wysokość"),
-            WidgetItem("max_elevation_gain", "Najwięcej przewyższeń"),
-            WidgetItem("max_distance", "Największy dystans"),
-            WidgetItem("max_duration", "Najdłuższy czas"),
-            WidgetItem("max_calories", "Najwięcej kalorii"),
-            WidgetItem("max_avg_cadence", "Najwyższa śr. kadencja"),
-            WidgetItem("max_avg_speed", "Najwyższa śr. prędkość")
+        fun getDefaultWidgets(strings: AppStrings) = listOf(
+            WidgetItem("count", strings.activityCount),
+            WidgetItem("calories", strings.totalCalories),
+            WidgetItem("distanceGps", strings.distanceGpsLabel),
+            WidgetItem("distanceSteps", strings.distanceStepsLabel),
+            WidgetItem("ascent", strings.totalAscentLabel),
+            WidgetItem("descent", strings.totalDescentLabel),
+            WidgetItem("steps", strings.allSteps),
+            WidgetItem("avg_cadence", strings.avgCadence),
+            WidgetItem("max_speed", strings.maxSpeed),
+            WidgetItem("max_altitude", strings.maxAltitude),
+            WidgetItem("max_elevation_gain", strings.maxElevationGain),
+            WidgetItem("max_distance", strings.maxDistance),
+            WidgetItem("max_duration", strings.maxDuration),
+            WidgetItem("max_calories", strings.maxCalories),
+            WidgetItem("max_avg_cadence", strings.maxAvgAvgCadence),
+            WidgetItem("max_avg_speed", strings.maxAvgSpeed)
         )
 
-        val DEFAULT_CHARTS = listOf(
-            WidgetItem("calories", "Spalone kalorie"),
-            WidgetItem("distanceGps", "Dystans (GPS)"),
-            WidgetItem("distanceSteps", "Dystans (kroki)"),
-            WidgetItem("ascent", "Suma podejść"),
-            WidgetItem("descent", "Suma zejść"),
-            WidgetItem("steps", "Kroki"),
-            WidgetItem("avg_cadence", "Średnia kadencja"),
-            WidgetItem("maxPressure", "Maks. ciśnienie"),
-            WidgetItem("minPressure", "Min. ciśnienie"),
-            WidgetItem("bestPace1km", "Najlepsze tempo (1km)")
+        fun getDefaultCharts(strings: AppStrings) = listOf(
+            WidgetItem("calories", strings.totalCalories),
+            WidgetItem("distanceGps", strings.distanceGpsLabel),
+            WidgetItem("distanceSteps", strings.distanceStepsLabel),
+            WidgetItem("ascent", strings.totalAscentLabel),
+            WidgetItem("descent", strings.totalDescentLabel),
+            WidgetItem("steps", strings.steps),
+            WidgetItem("avg_cadence", strings.avgCadence),
+            WidgetItem("maxPressure", strings.maxPressureLabel),
+            WidgetItem("minPressure", strings.minPressureLabel),
+            WidgetItem("bestPace1km", strings.bestPace1kmLabel)
         )
     }
 
-    val widgetsFlow: Flow<List<WidgetItem>> = context.overallStatsDataStore.data.map { preferences ->
+    fun getWidgetsFlow(strings: AppStrings): Flow<List<WidgetItem>> = context.overallStatsDataStore.data.map { preferences ->
         val widgetsJson = preferences[WIDGETS_JSON]
-        decodeList(widgetsJson, DEFAULT_WIDGETS)
+        decodeList(widgetsJson, getDefaultWidgets(strings))
     }
 
-    val chartsFlow: Flow<List<WidgetItem>> = context.overallStatsDataStore.data.map { preferences ->
+    fun getChartsFlow(strings: AppStrings): Flow<List<WidgetItem>> = context.overallStatsDataStore.data.map { preferences ->
         val chartsJson = preferences[CHARTS_JSON]
-        decodeList(chartsJson, DEFAULT_CHARTS)
+        decodeList(chartsJson, getDefaultCharts(strings))
     }
 
     private fun decodeList(json: String?, default: List<WidgetItem>): List<WidgetItem> {
         if (json == null) return default
         return try {
             val type = object : TypeToken<List<WidgetItem>>() {}.type
-            val decoded: List<WidgetItem>? = gson.fromJson(json, type)
+            val decoded: List<WidgetItem> = gson.fromJson(json, type) ?: return default
             
-            if (decoded.isNullOrEmpty()) {
+            if (decoded.isEmpty()) {
                 default
             } else {
-                // Merging logic
-                val currentIds = default.map { it.id }.toSet()
-                val filtered = decoded.filter { it.id in currentIds }.toMutableList()
+                // Re-map labels from the current locale for existing IDs
+                val currentIdsMap = default.associate { it.id to it.label }
+                val filtered = decoded.filter { it.id in currentIdsMap.keys }.map {
+                    it.copy(label = currentIdsMap[it.id] ?: it.label)
+                }.toMutableList()
+
                 val missing = default.filter { def -> filtered.none { it.id == def.id } }
                 if (missing.isNotEmpty()) {
                     filtered.addAll(missing)
