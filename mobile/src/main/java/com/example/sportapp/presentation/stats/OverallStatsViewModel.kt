@@ -73,14 +73,15 @@ class OverallStatsViewModel @Inject constructor(
         
         viewModelScope.launch {
             combine(_selectedType, _startDate, _endDate, repository.getAllWorkouts()) { type, start, end, _ ->
-                repository.getFilteredStats(type, start, end)
-            }.collect { statsMap ->
+                val statsMap = repository.getFilteredStats(type, start, end)
+                Triple(statsMap, start, end)
+            }.collect { (statsMap, start, end) ->
                 @Suppress("UNCHECKED_CAST")
                 val rawData = statsMap["raw_data"] as? List<WorkoutEntity> ?: emptyList()
                 
                 // Wykonujemy ciężkie obliczenia na wątku Default
                 withContext(Dispatchers.Default) {
-                    updateChartData(rawData)
+                    updateChartData(rawData, start, end)
                 }
                 
                 _stats.value = statsMap
@@ -104,19 +105,26 @@ class OverallStatsViewModel @Inject constructor(
         return calendar.timeInMillis
     }
 
-    private fun updateChartData(rawData: List<WorkoutEntity>) {
-        if (rawData.isEmpty()) {
+    private fun updateChartData(rawData: List<WorkoutEntity>, filterStart: Date?, filterEnd: Date?) {
+        if (rawData.isEmpty() && filterStart == null && filterEnd == null) {
             chartProducers.values.forEach { it.setEntries(emptyList<ChartEntry>()) }
             _chartMaxValues.value = emptyMap()
             return
         }
 
         val groupedByDay = rawData.groupBy { getStartOfDay(it.startTime) }
-        val firstDateRaw = rawData.minOf { it.startTime }
-        val lastDateRaw = rawData.maxOf { it.startTime }
         
-        val firstDate = getStartOfDay(firstDateRaw)
-        val lastDate = getStartOfDay(lastDateRaw)
+        val firstDate = when {
+            filterStart != null -> getStartOfDay(filterStart.time)
+            rawData.isNotEmpty() -> getStartOfDay(rawData.minOf { it.startTime })
+            else -> getStartOfDay(System.currentTimeMillis())
+        }
+        
+        val lastDate = when {
+            filterEnd != null -> getStartOfDay(filterEnd.time)
+            rawData.isNotEmpty() -> getStartOfDay(rawData.maxOf { it.startTime })
+            else -> firstDate
+        }
 
         // Zabezpieczenie przed zbyt dużą liczbą dni
         val maxDays = 365 * 2 
