@@ -102,17 +102,14 @@ class ActivityDetailViewModel @Inject constructor(
     )
 
     init {
-        Log.d("ActivityDetail", "Initializing ViewModel for activityId: $activityId")
         loadSessionData()
         loadLaps()
     }
 
     private fun loadSessionData() {
         viewModelScope.launch {
-            Log.d("ActivityDetail", "Loading data for id: $activityId")
             if (activityId == -1L) {
                 _error.value = "Nieprawidłowe ID aktywności."
-                Log.e("ActivityDetail", "Invalid activityId: -1")
                 return@launch
             }
 
@@ -120,7 +117,6 @@ class ActivityDetailViewModel @Inject constructor(
                 val data = sessionRepository.getSessionData(activityId)
                 if (data.error != null) {
                     _error.value = data.error
-                    Log.e("ActivityDetail", "Session data error: ${data.error}")
                 } else {
                     _sessionData.value = data
                     updateCharts(data)
@@ -211,8 +207,6 @@ class ActivityDetailViewModel @Inject constructor(
                 chartEntries.forEach { (id, entries) ->
                     chartProducers[id]?.setEntries(entries)
                 }
-                val active = chartEntries.filter { it.value.isNotEmpty() }.keys
-                Log.i("ActivityDetail", "Charts updated for ${data.activityName}. Active: ${active.joinToString()}")
             }
         }
     }
