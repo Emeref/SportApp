@@ -206,7 +206,7 @@ private fun formatDistanceUI(meters: Double): String {
     return when {
         meters < 1000 -> "${formatLargeNumber(meters)} m"
         meters < 10000 -> String.format(Locale.US, "%.2f km", Math.floor(meters / 10.0) / 100.0)
-        meters < 100000 -> String.format(Locale.US, "%.1f km", Math.floor(meters / 10.0) / 10.0)
+        meters < 100000 -> String.format(Locale.US, "%.1f km", Math.floor(meters / 100.0) / 10.0)
         else -> "${formatLargeNumber(Math.floor(meters / 1000.0))} km"
     }
 }
