@@ -87,7 +87,6 @@ class ActivityCompareViewModel @Inject constructor(
         viewModelScope.launch {
             if (id1 == -1L || id2 == -1L) {
                 _error.value = "Nieprawidłowe ID aktywności"
-                Log.e("ChartDebug", "Invalid IDs in CompareViewModel: $id1, $id2")
                 return@launch
             }
 
@@ -98,25 +97,28 @@ class ActivityCompareViewModel @Inject constructor(
                 if (data1.error != null) _error.value = data1.error
                 else if (data2.error != null) _error.value = data2.error
                 else {
+                    // 1. Najpierw ustawiamy dane sesji, co odpali UI
                     _session1.value = data1
                     _session2.value = data2
                     
+                    // 2. Natychmiast odpalamy aktualizację wykresów (nie czekając na inne Flow)
+                    updateCharts(data1, data2)
+                    
+                    // 3. Resztę robimy w tle
                     viewModelScope.launch {
                         settingsManager.getSettingsFlow(data1.activityName).collect {
                             _settings.value = it
                         }
                     }
                     
-                    val settings = mobileSettingsManager.settingsFlow.first()
-                    val maxHr = settings.healthData.maxHR
-                    
-                    val points1 = workoutDao.getPointsForWorkout(id1)
-                    val points2 = workoutDao.getPointsForWorkout(id2)
-                    
-                    _hrZones1.value = HeartRateMath.calculateZones(points1, maxHr)
-                    _hrZones2.value = HeartRateMath.calculateZones(points2, maxHr)
-                    
-                    updateCharts(data1, data2)
+                    viewModelScope.launch {
+                        val mSettings = mobileSettingsManager.settingsFlow.first()
+                        val maxHr = mSettings.healthData.maxHR
+                        val points1 = workoutDao.getPointsForWorkout(id1)
+                        val points2 = workoutDao.getPointsForWorkout(id2)
+                        _hrZones1.value = HeartRateMath.calculateZones(points1, maxHr)
+                        _hrZones2.value = HeartRateMath.calculateZones(points2, maxHr)
+                    }
                 }
             } catch (e: Exception) {
                 _error.value = "Błąd: ${e.message}"
@@ -127,46 +129,41 @@ class ActivityCompareViewModel @Inject constructor(
 
     private fun updateCharts(data1: SessionData, data2: SessionData) {
         viewModelScope.launch(Dispatchers.Default) {
-            val logSummary = StringBuilder("Compare ChartUpdate summary:")
-            chartProducers.forEach { (id, producer) ->
+            Log.d("ChartDebug", "updateCharts: Rozpoczęto przygotowanie serii")
+            val results = mutableMapOf<String, List<List<com.patrykandpatrick.vico.core.entry.ChartEntry>>>()
+            
+            chartProducers.forEach { (id, _) ->
                 try {
                     val c1 = data1.charts[id] ?: emptyList()
                     val c2 = data2.charts[id] ?: emptyList()
                     
                     if (c1.isNotEmpty() || c2.isNotEmpty()) {
-                        // Funkcja pomocnicza do mapowania z opcjonalnym windowingiem
                         fun mapPoints(points: List<Float?>): List<com.patrykandpatrick.vico.core.entry.ChartEntry> {
-                            return if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure")) {
-                                points.windowed(10, 1, true) { window: List<Float?> ->
+                            val base = if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure")) {
+                                points.windowed(10, 1, true) { window ->
                                     val valid = window.filterNotNull()
                                     if (valid.isEmpty()) null else valid.average().toFloat()
-                                }.mapIndexedNotNull { index, value ->
-                                    if (value == null || value.isNaN()) null else entryOf(index, value)
                                 }
-                            } else {
-                                points.mapIndexedNotNull { index, value ->
-                                    if (value == null || value.isNaN()) null else entryOf(index, value)
-                                }
+                            } else points
+
+                            return base.mapIndexedNotNull { index, value ->
+                                if (value == null || value.isNaN()) null else entryOf(index, value)
                             }
                         }
-
-                        val entries1 = mapPoints(c1)
-                        val entries2 = mapPoints(c2)
-
-                        withContext(Dispatchers.Main) {
-                            producer.setEntries(listOf(entries1, entries2))
-                        }
-                        logSummary.append("\n  - $id: series1=${entries1.size}, series2=${entries2.size}")
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            producer.setEntries(emptyList<List<com.patrykandpatrick.vico.core.entry.ChartEntry>>())
-                        }
+                        results[id] = listOf(mapPoints(c1), mapPoints(c2))
                     }
                 } catch (e: Exception) {
-                    logSummary.append("\n  - $id: ERROR ${e.message}")
+                    Log.e("ChartDebug", "Błąd mapowania dla $id", e)
                 }
             }
-            Log.d("ChartDebug", logSummary.toString())
+
+            withContext(Dispatchers.Main) {
+                results.forEach { (id, seriesList) ->
+                    val producer = chartProducers[id]
+                    producer?.setEntries(seriesList)
+                    Log.d("ChartDebug", "Producer $id: ustawiono ${seriesList.sumOf { it.size }} punktów")
+                }
+            }
         }
     }
 }

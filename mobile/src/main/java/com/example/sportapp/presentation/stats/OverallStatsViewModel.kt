@@ -79,7 +79,6 @@ class OverallStatsViewModel @Inject constructor(
                 @Suppress("UNCHECKED_CAST")
                 val rawData = statsMap["raw_data"] as? List<WorkoutEntity> ?: emptyList()
                 
-                // Wykonujemy ciężkie obliczenia na wątku Default
                 withContext(Dispatchers.Default) {
                     updateChartData(rawData, start, end)
                 }
@@ -126,7 +125,6 @@ class OverallStatsViewModel @Inject constructor(
             else -> firstDate
         }
 
-        // Zabezpieczenie przed zbyt dużą liczbą dni
         val maxDays = 365 * 2 
         val actualFirstDate = maxOf(firstDate, lastDate - (maxDays * 86400000L))
 
@@ -162,7 +160,6 @@ class OverallStatsViewModel @Inject constructor(
         val maxDailyDistGps = dailyStats.maxOfOrNull { it.distGps } ?: 0.0
         val maxDailyDistSteps = dailyStats.maxOfOrNull { it.distSteps } ?: 0.0
         
-        // Zapisujemy maksy, aby UI nie musiał ich liczyć
         _chartMaxValues.value = mapOf(
             "distanceGps" to maxDailyDistGps,
             "distanceSteps" to maxDailyDistSteps,
@@ -176,24 +173,26 @@ class OverallStatsViewModel @Inject constructor(
             "avg_cadence" to (dailyStats.maxOfOrNull { it.avgCadence } ?: 0.0)
         )
 
-        val dayScale = 86400000f
+        val dayScale = 86400000L
+        // POPRAWKA: Używamy liczb całkowitych dla osi X (dni od epoki)
+        fun safeX(ts: Long): Float = (ts / dayScale).toFloat()
 
-        chartProducers["calories"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.calories.toFloat()) })
+        chartProducers["calories"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.calories.toFloat()) })
         chartProducers["distanceGps"]?.setEntries(dailyStats.map { 
             val value = it.distGps.toFloat()
-            entryOf(it.timestamp / dayScale, if (maxDailyDistGps > 6000) value / 1000f else value)
+            entryOf(safeX(it.timestamp), if (maxDailyDistGps > 6000) value / 1000f else value)
         })
         chartProducers["distanceSteps"]?.setEntries(dailyStats.map { 
             val value = it.distSteps.toFloat()
-            entryOf(it.timestamp / dayScale, if (maxDailyDistSteps > 6000) value / 1000f else value)
+            entryOf(safeX(it.timestamp), if (maxDailyDistSteps > 6000) value / 1000f else value)
         })
-        chartProducers["ascent"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.ascent.toFloat()) })
-        chartProducers["descent"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.descent.toFloat()) })
-        chartProducers["steps"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.steps.toFloat()) })
-        chartProducers["avg_cadence"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.avgCadence.toFloat()) })
-        chartProducers["maxPressure"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.maxPressure.toFloat()) })
-        chartProducers["minPressure"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.minPressure.toFloat()) })
-        chartProducers["bestPace1km"]?.setEntries(dailyStats.map { entryOf(it.timestamp / dayScale, it.bestPace.toFloat()) })
+        chartProducers["ascent"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.ascent.toFloat()) })
+        chartProducers["descent"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.descent.toFloat()) })
+        chartProducers["steps"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.steps.toFloat()) })
+        chartProducers["avg_cadence"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.avgCadence.toFloat()) })
+        chartProducers["maxPressure"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.maxPressure.toFloat()) })
+        chartProducers["minPressure"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.minPressure.toFloat()) })
+        chartProducers["bestPace1km"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.bestPace.toFloat()) })
     }
 
     fun getMaxValueForWidget(id: String): Double {
