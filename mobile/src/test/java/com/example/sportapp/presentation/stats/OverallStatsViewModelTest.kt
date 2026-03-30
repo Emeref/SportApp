@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.stats
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import app.cash.turbine.test
 import com.example.sportapp.data.FakeWorkoutRepository
 import com.example.sportapp.data.db.WorkoutEntity
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +23,7 @@ class OverallStatsViewModelTest {
 
     private lateinit var viewModel: OverallStatsViewModel
     private lateinit var fakeRepository: FakeWorkoutRepository
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var context: Context
 
     @Before
@@ -51,7 +52,6 @@ class OverallStatsViewModelTest {
         )
         
         fakeRepository.workouts.value = listOf(workout1, workout2)
-        viewModel = OverallStatsViewModel(context, fakeRepository)
     }
 
     @After
@@ -61,25 +61,41 @@ class OverallStatsViewModelTest {
 
     @Test
     fun `overall stats contains raw data for all time`() = runTest {
-        advanceUntilIdle()
+        viewModel = OverallStatsViewModel(context, fakeRepository)
         
-        val stats = viewModel.stats.value
-        @Suppress("UNCHECKED_CAST")
-        val rawData = stats["raw_data"] as List<WorkoutEntity>
-        assertEquals(2, rawData.size)
+        viewModel.stats.test {
+            // Wait for non-empty stats (initial emission might be emptyMap)
+            var stats = awaitItem()
+            while (stats.isEmpty()) {
+                stats = awaitItem()
+            }
+            
+            @Suppress("UNCHECKED_CAST")
+            val rawData = stats["raw_data"] as? List<WorkoutEntity>
+            assertEquals(2, rawData?.size ?: 0)
+        }
     }
 
     @Test
     fun `filtering by activity name updates stats`() = runTest {
-        advanceUntilIdle()
+        viewModel = OverallStatsViewModel(context, fakeRepository)
         
-        viewModel.onTypeSelected("Bieganie")
-        advanceUntilIdle()
-        
-        val stats = viewModel.stats.value
-        @Suppress("UNCHECKED_CAST")
-        val rawData = stats["raw_data"] as List<WorkoutEntity>
-        assertEquals(1, rawData.size)
-        assertEquals("Bieganie", rawData.first().activityName)
+        viewModel.stats.test {
+            // Wait for initial data
+            var stats = awaitItem()
+            while (stats.isEmpty()) {
+                stats = awaitItem()
+            }
+            
+            // When filtering
+            viewModel.onTypeSelected("Bieganie")
+            
+            // Then we expect a new emission with filtered data
+            stats = awaitItem()
+            @Suppress("UNCHECKED_CAST")
+            val rawData = stats["raw_data"] as? List<WorkoutEntity>
+            assertEquals(1, rawData?.size ?: 0)
+            assertEquals("Bieganie", rawData?.first()?.activityName)
+        }
     }
 }
