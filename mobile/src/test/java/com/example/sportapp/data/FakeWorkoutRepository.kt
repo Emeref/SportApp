@@ -2,6 +2,8 @@ package com.example.sportapp.data
 
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +15,8 @@ import java.util.*
 class FakeWorkoutRepository : IWorkoutRepository {
     var workouts = MutableStateFlow<List<WorkoutEntity>>(emptyList())
     var points = mutableMapOf<Long, List<WorkoutPointEntity>>()
+    var definitions = MutableStateFlow<List<WorkoutDefinition>>(emptyList())
+    var laps = mutableMapOf<Long, List<WorkoutLap>>()
 
     override fun getAllWorkouts(): Flow<List<WorkoutEntity>> = workouts
 
@@ -106,5 +110,26 @@ class FakeWorkoutRepository : IWorkoutRepository {
 
     override fun getActivityItemsFlow(): Flow<List<ActivityItem>> = flow {
         emit(getActivityItems())
+    }
+
+    override fun getAllDefinitions(): Flow<List<WorkoutDefinition>> = definitions
+
+    override suspend fun insertWorkout(workout: WorkoutEntity): Long {
+        val id = (workouts.value.maxOfOrNull { it.id } ?: 0L) + 1L
+        val newWorkout = workout.copy(id = id)
+        workouts.value = workouts.value + newWorkout
+        return id
+    }
+
+    override suspend fun insertPoints(points: List<WorkoutPointEntity>) {
+        if (points.isEmpty()) return
+        val workoutId = points.first().workoutId
+        this.points[workoutId] = (this.points[workoutId] ?: emptyList()) + points
+    }
+
+    override suspend fun insertLaps(laps: List<WorkoutLap>) {
+        if (laps.isEmpty()) return
+        val workoutId = laps.first().workoutId
+        this.laps[workoutId] = (this.laps[workoutId] ?: emptyList()) + laps
     }
 }

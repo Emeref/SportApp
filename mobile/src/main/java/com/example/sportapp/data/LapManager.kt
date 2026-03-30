@@ -11,7 +11,7 @@ import javax.inject.Singleton
 class LapManager @Inject constructor() {
 
     fun processLaps(workoutId: Long, points: List<WorkoutPointEntity>, autoLapDistance: Double): List<WorkoutLap> {
-        if (points.isEmpty() || autoLapDistance <= 0) return emptyList()
+        if (points.size < 2 || autoLapDistance <= 0) return emptyList()
 
         val laps = mutableListOf<WorkoutLap>()
         var currentLapStartIdx = 0
@@ -23,13 +23,19 @@ class LapManager @Inject constructor() {
         points.forEachIndexed { index, point ->
             val currentDistance = point.distanceGps?.toDouble() ?: point.distanceSteps?.toDouble() ?: 0.0
             
-            if (currentDistance >= nextLapThreshold || index == points.size - 1) {
+            val isLastPoint = index == points.size - 1
+            if (currentDistance >= nextLapThreshold || isLastPoint) {
                 val lapPoints = points.subList(currentLapStartIdx, index + 1)
-                if (lapPoints.isNotEmpty()) {
+                
+                if (lapPoints.size >= 2) {
                     laps.add(calculateLapStats(workoutId, lapNumber, currentLapStartIdx, index, lapPoints, timeFormatter))
                     lapNumber++
-                    nextLapThreshold += autoLapDistance
-                    currentLapStartIdx = index + 1
+                    
+                    // Update threshold to handle jumps
+                    while (nextLapThreshold <= currentDistance) {
+                        nextLapThreshold += autoLapDistance
+                    }
+                    currentLapStartIdx = index
                 }
             }
         }

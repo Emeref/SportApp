@@ -5,12 +5,12 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.example.sportapp.data.db.AppDatabase
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,6 +23,7 @@ class WorkoutRepositoryTest {
 
     private lateinit var db: AppDatabase
     private lateinit var workoutDao: WorkoutDao
+    private lateinit var workoutDefinitionDao: WorkoutDefinitionDao
     private lateinit var repository: WorkoutRepository
 
     @Before
@@ -32,7 +33,8 @@ class WorkoutRepositoryTest {
             .allowMainThreadQueries()
             .build()
         workoutDao = db.workoutDao()
-        repository = WorkoutRepository(workoutDao)
+        workoutDefinitionDao = db.workoutDefinitionDao()
+        repository = WorkoutRepository(workoutDao, workoutDefinitionDao)
     }
 
     @After
