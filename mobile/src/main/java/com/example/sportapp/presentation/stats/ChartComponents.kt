@@ -66,6 +66,7 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.TimeZone
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.sqrt
@@ -187,7 +188,11 @@ fun CommonChartSection(
     }
 
     val totalPoints = detailTimes?.size ?: overallRawData?.size ?: 0
-    val timestampSdf = remember { SimpleDateFormat("dd.MM", Locale.getDefault()) }
+    val timestampSdf = remember(isTimestampX) { 
+        SimpleDateFormat("dd.MM", Locale.getDefault()).apply {
+            if (isTimestampX) timeZone = TimeZone.getTimeZone("UTC")
+        }
+    }
     val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
     val formatter = remember(unit) {
         if (unit == "hPa") DecimalFormat("#,###.##", symbols)
@@ -302,7 +307,11 @@ fun rememberMarkerCustom(
     
     val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
     val formatter = DecimalFormat("#,###.#", symbols)
-    val outputSdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    val outputSdf = remember(isTimestampX) { 
+        SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+            if (isTimestampX) timeZone = TimeZone.getTimeZone("UTC")
+        }
+    }
     val inputSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
     val isDetail = detailTimes != null

@@ -174,8 +174,12 @@ class OverallStatsViewModel @Inject constructor(
         )
 
         val dayScale = 86400000L
-        // POPRAWKA: Używamy liczb całkowitych dla osi X (dni od epoki)
-        fun safeX(ts: Long): Float = (ts / dayScale).toFloat()
+        // POPRAWKA: Używamy liczb całkowitych dla osi X (dni od epoki) z uwzględnieniem offsetu lokalnego,
+        // aby 00:00:00 czasu lokalnego trafiało dokładnie na początek dnia w UTC przy przeliczaniu w drugą stronę.
+        fun safeX(ts: Long): Float {
+            val offset = TimeZone.getDefault().getOffset(ts)
+            return ((ts + offset) / dayScale).toFloat()
+        }
 
         chartProducers["calories"]?.setEntries(dailyStats.map { entryOf(safeX(it.timestamp), it.calories.toFloat()) })
         chartProducers["distanceGps"]?.setEntries(dailyStats.map { 
