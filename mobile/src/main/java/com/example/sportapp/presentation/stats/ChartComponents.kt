@@ -153,7 +153,7 @@ fun CommonChartSection(
                 val minDataValue = if (model.minY.isNaN()) 0f else model.minY
                 if (unit == "hPa") return floor(minDataValue.toDouble()).toFloat() - 1f
                 if (unit == "bpm") return (minDataValue - 5f).coerceAtLeast(0f)
-                return (minDataValue - 2f).coerceAtLeast(0f)
+                return 0f
             }
             override fun getMinX(model: ChartEntryModel): Float = if (totalPoints == 1) model.minX - 0.5f else model.minX
             override fun getMaxX(model: ChartEntryModel): Float = if (totalPoints == 1) model.maxX + 0.5f else model.maxX
