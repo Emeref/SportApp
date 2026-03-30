@@ -52,6 +52,7 @@ import com.patrykandpatrick.vico.core.chart.layout.HorizontalLayout
 import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
 import com.patrykandpatrick.vico.core.component.Component
 import com.patrykandpatrick.vico.core.component.marker.MarkerComponent
+import com.patrykandpatrick.vico.core.component.shape.ShapeComponent
 import com.patrykandpatrick.vico.core.component.shape.Shapes
 import com.patrykandpatrick.vico.core.component.shape.cornered.Corner
 import com.patrykandpatrick.vico.core.component.shape.cornered.MarkerCorneredShape
@@ -133,7 +134,8 @@ fun CommonChartSection(
     lineColors: List<Color>? = null,
     isTimestampX: Boolean = false
 ) {
-    val axisValuesOverrider = remember(hrZoneResult, unit) {
+    val totalPoints = detailTimes?.size ?: overallRawData?.size ?: 0
+    val axisValuesOverrider = remember(hrZoneResult, unit, totalPoints) {
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
                 val max = if (model.maxY.isNaN()) 0f else model.maxY
@@ -151,23 +153,30 @@ fun CommonChartSection(
                 val minDataValue = if (model.minY.isNaN()) 0f else model.minY
                 if (unit == "hPa") return floor(minDataValue.toDouble()).toFloat() - 1f
                 if (unit == "bpm") return (minDataValue - 5f).coerceAtLeast(0f)
-                return (minDataValue - 2f).coerceAtLeast(0f)
+                return 0f
             }
-            override fun getMinX(model: ChartEntryModel): Float = model.minX
-            override fun getMaxX(model: ChartEntryModel): Float = model.maxX
+            override fun getMinX(model: ChartEntryModel): Float = if (totalPoints == 1) model.minX - 0.5f else model.minX
+            override fun getMaxX(model: ChartEntryModel): Float = if (totalPoints == 1) model.maxX + 0.5f else model.maxX
         }
     }
 
     val primaryColor = MaterialTheme.colorScheme.primary
-    val lines = remember(lineColors, primaryColor) {
+    val lines = remember(lineColors, primaryColor, totalPoints) {
         lineColors?.map { color ->
-            lineSpec(lineColor = color, lineBackgroundShader = null)
+            lineSpec(
+                lineColor = color,
+                lineBackgroundShader = null,
+                point = if (totalPoints == 1) ShapeComponent(shape = Shapes.pillShape, color = color.toArgb()) else null,
+                pointSize = if (totalPoints == 1) 4.dp else 0.dp
+            )
         } ?: listOf(
             lineSpec(
                 lineColor = primaryColor,
                 lineBackgroundShader = DynamicShaders.fromBrush(
                     Brush.verticalGradient(colors = listOf(primaryColor.copy(alpha = 0.4f), Color.Transparent))
-                )
+                ),
+                point = if (totalPoints == 1) ShapeComponent(shape = Shapes.pillShape, color = primaryColor.toArgb()) else null,
+                pointSize = if (totalPoints == 1) 4.dp else 0.dp
             )
         )
     }
@@ -187,7 +196,6 @@ fun CommonChartSection(
         }
     }
 
-    val totalPoints = detailTimes?.size ?: overallRawData?.size ?: 0
     val timestampSdf = remember(isTimestampX) { 
         SimpleDateFormat("dd.MM", Locale.getDefault()).apply {
             if (isTimestampX) timeZone = TimeZone.getTimeZone("UTC")
@@ -271,7 +279,10 @@ fun CommonChartSection(
                 chartScrollSpec = rememberChartScrollSpec<ChartEntryModel>(isScrollEnabled = isScrollEnabled),
                 isZoomEnabled = isZoomEnabled,
                 autoScaleUp = AutoScaleUp.Full,
-                horizontalLayout = HorizontalLayout.fullWidth(unscalableStartPadding = 0.dp, unscalableEndPadding = 24.dp),
+                horizontalLayout = HorizontalLayout.fullWidth(
+                    unscalableStartPadding = if (totalPoints == 1) 16.dp else 0.dp,
+                    unscalableEndPadding = 24.dp
+                ),
                 modifier = Modifier.fillMaxSize()
             )
         }

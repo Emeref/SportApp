@@ -232,6 +232,7 @@ fun OverallStatsContent(
                                 title = title,
                                 producer = producer,
                                 unit = unit,
+                                overallRawData = rawData,
                                 isScrollEnabled = true,
                                 isZoomEnabled = true,
                                 isTimestampX = true
