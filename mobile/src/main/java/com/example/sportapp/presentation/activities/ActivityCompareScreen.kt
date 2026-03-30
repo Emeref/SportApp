@@ -3,10 +3,10 @@ package com.example.sportapp.presentation.activities
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -29,11 +29,9 @@ import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.example.sportapp.presentation.settings.WidgetItem
-import com.example.sportapp.presentation.stats.ActivityDetailSettings
 import com.example.sportapp.presentation.stats.CommonChartSection
 import com.example.sportapp.presentation.stats.DonutChart
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -42,13 +40,6 @@ import java.util.Locale
 
 private val Color1 = Color(0xFF2196F3) // Niebieski
 private val Color2 = Color(0xFFFF9800) // Pomarańczowy
-
-data class CompareWidgetConfig(
-    val label: String,
-    val v1: Any,
-    val v2: Any,
-    val higherIsBetter: Boolean?
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,50 +89,25 @@ fun ActivityCompareScreen(
             val s2 = session2!!
             val currentSettings = settings!!
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                 // Sticky Dates Header
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
-                        .height(24.dp)
-                        .padding(horizontal = 32.dp, vertical = 1.dp),
+                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).height(24.dp).padding(horizontal = 32.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        s1.activityDate,
-                        color = Color1,
-                        fontSize = 18.sp,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        s2.activityDate,
-                        color = Color2,
-                        fontSize = 18.sp,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(s1.activityDate, color = Color1, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(s2.activityDate, color = Color2, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
-                // Scrollable Content
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                // ZMIANA: LazyColumn dla wydajności
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CompareStatsSection(s1, s2, currentSettings.visibleWidgets)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
 
-                    CompareStatsSection(s1, s2, currentSettings.visibleWidgets)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Wyświetlamy wykresy zgodnie z ustawieniami
-                    currentSettings.visibleCharts.filter { it.isEnabled }.forEach { widget ->
+                    items(currentSettings.visibleCharts.filter { it.isEnabled }) { widget ->
                         when (widget.id) {
                             "map" -> {
                                 CompareMaps(s1, s2, isDarkTheme)
@@ -149,12 +115,12 @@ fun ActivityCompareScreen(
                             }
                             "bpm" -> {
                                 viewModel.chartProducers["bpm"]?.let { producer ->
-                                    if (s1.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true || s2.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true) {
+                                    if (s1.charts["bpm"]?.isNotEmpty() == true || s2.charts["bpm"]?.isNotEmpty() == true) {
                                         CompareChart(
                                             title = "Tętno (bpm)", 
                                             producer = producer, 
                                             unit = "bpm", 
-                                            times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times,
+                                            times = if (s1.times.size >= s2.times.size) s1.times else s2.times,
                                             hrZoneResult = hrZones1
                                         )
                                         if (hrZones1 != null && hrZones2 != null) {
@@ -166,12 +132,12 @@ fun ActivityCompareScreen(
                             }
                             else -> {
                                 viewModel.chartProducers[widget.id]?.let { producer ->
-                                    if (s1.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true || s2.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true) {
+                                    if (s1.charts[widget.id]?.isNotEmpty() == true || s2.charts[widget.id]?.isNotEmpty() == true) {
                                         CompareChart(
                                             title = widget.label,
                                             producer = producer,
                                             unit = getUnitForWidget(widget.id),
-                                            times = s1.times.takeIf { it.size >= s2.times.size } ?: s2.times
+                                            times = if (s1.times.size >= s2.times.size) s1.times else s2.times
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                     }
@@ -179,8 +145,7 @@ fun ActivityCompareScreen(
                             }
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(32.dp))
+                    item { Spacer(modifier = Modifier.height(32.dp)) }
                 }
             }
         } else {
@@ -194,142 +159,105 @@ fun ActivityCompareScreen(
 @Composable
 fun CompareStatsSection(s1: SessionData, s2: SessionData, visibleWidgets: List<WidgetItem>) {
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
-    
     val widgetConfigs = mapOf(
-        "duration" to CompareWidgetConfig("Czas trwania", s1.duration, s2.duration, true),
-        "max_bpm" to CompareWidgetConfig("Maksymalne tętno", s1.maxBpm, s2.maxBpm, null),
-        "avg_bpm" to CompareWidgetConfig("Średnie tętno", s1.avgBpm, s2.avgBpm, null),
-        "total_calories" to CompareWidgetConfig("Spalone kalorie", s1.totalCalories.toDouble(), s2.totalCalories.toDouble(), true),
-        "max_calories_min" to CompareWidgetConfig("Maks spalanie kalorii", s1.maxCaloriesMin.toDouble(), s2.maxCaloriesMin.toDouble(), true),
-        "avg_pace" to CompareWidgetConfig("Średnie tempo", s1.avgPace, s2.avgPace, false),
-        "max_speed" to CompareWidgetConfig("Maks prędkość", s1.maxSpeed, s2.maxSpeed, true),
-        "max_altitude" to CompareWidgetConfig("Maks wysokość", s1.maxAltitude, s2.maxAltitude, null),
-        "total_ascent" to CompareWidgetConfig("Suma podejść", s1.totalAscent, s2.totalAscent, true),
-        "total_descent" to CompareWidgetConfig("Suma zejść", s1.totalDescent, s2.totalDescent, true),
-        "avg_step_length" to CompareWidgetConfig("Wyliczona długość kroku", s1.avgStepLength, s2.avgStepLength, null),
-        "avg_cadence" to CompareWidgetConfig("Śr. kadencja", s1.avgCadence, s2.avgCadence, true),
-        "max_cadence" to CompareWidgetConfig("Maks. kadencja", s1.maxCadence, s2.maxCadence, true),
-        "total_steps" to CompareWidgetConfig("Liczba kroków", s1.totalSteps.toDouble(), s2.totalSteps.toDouble(), true),
-        "total_distance_gps" to CompareWidgetConfig("Dystans (GPS)", s1.totalDistanceGps, s2.totalDistanceGps, true),
-        "total_distance_steps" to CompareWidgetConfig("Dystans (kroki)", s1.totalDistanceSteps, s2.totalDistanceSteps, true),
-        "pressure_start" to CompareWidgetConfig("Ciśnienie atm. (start)", s1.pressureStart ?: 0.0, s2.pressureStart ?: 0.0, null),
-        "pressure_end" to CompareWidgetConfig("Ciśnienie atm. (koniec)", s1.pressureEnd ?: 0.0, s2.pressureEnd ?: 0.0, null),
-        "max_pressure" to CompareWidgetConfig("Maks. ciśnienie atm.", s1.maxPressure ?: 0.0, s2.maxPressure ?: 0.0, null),
-        "min_pressure" to CompareWidgetConfig("Min. ciśnienie atm.", s1.minPressure ?: 0.0, s2.minPressure ?: 0.0, null),
-        "best_pace_1km" to CompareWidgetConfig("Najlepsze tempo (1km)", s1.bestPace1km ?: 0.0, s2.bestPace1km ?: 0.0, false)
+        "duration" to ("Czas trwania" to true),
+        "max_bpm" to ("Maksymalne tętno" to null),
+        "avg_bpm" to ("Średnie tętno" to null),
+        "total_calories" to ("Spalone kalorie" to true),
+        "max_calories_min" to ("Maks spalanie kalorii" to true),
+        "avg_pace" to ("Średnie tempo" to false),
+        "max_speed" to ("Maks prędkość" to true),
+        "max_altitude" to ("Maks wysokość" to null),
+        "total_ascent" to ("Suma podejść" to true),
+        "total_descent" to ("Suma zejść" to true),
+        "avg_step_length" to ("Wyliczona długość kroku" to null),
+        "avg_cadence" to ("Śr. kadencja" to true),
+        "max_cadence" to ("Maks. kadencja" to true),
+        "total_steps" to ("Liczba kroków" to true),
+        "total_distance_gps" to ("Dystans (GPS)" to true),
+        "total_distance_steps" to ("Dystans (kroki)" to true),
+        "pressure_start" to ("Ciśnienie atm. (start)" to null),
+        "pressure_end" to ("Ciśnienie atm. (koniec)" to null),
+        "max_pressure" to ("Maks. ciśnienie" to null),
+        "min_pressure" to ("Min. ciśnienie" to null),
+        "best_pace_1km" to ("Najlepsze tempo (1km)" to false)
     )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         enabledWidgets.forEach { widget ->
-            widgetConfigs[widget.id]?.let { config ->
-                CompareStatRow(
-                    label = config.label,
-                    v1 = config.v1,
-                    v2 = config.v2,
-                    formatter = { value -> formatValue(widget.id, value) },
-                    higherIsBetter = config.higherIsBetter
-                )
+            widgetConfigs[widget.id]?.let { (label, higherIsBetter) ->
+                val v1 = getSessionValue(s1, widget.id)
+                val v2 = getSessionValue(s2, widget.id)
+                CompareStatRow(label, v1, v2, { formatValue(widget.id, it) }, higherIsBetter)
             }
         }
     }
 }
 
-private fun formatValue(id: String, value: Any): String {
-    val n = when (value) {
-        is Number -> value.toDouble()
-        else -> return value.toString()
+private fun getSessionValue(s: SessionData, id: String): Any {
+    return when(id) {
+        "duration" -> s.duration; "max_bpm" -> s.maxBpm; "avg_bpm" -> s.avgBpm
+        "total_calories" -> s.totalCalories.toDouble(); "max_calories_min" -> s.maxCaloriesMin.toDouble()
+        "avg_pace" -> s.avgPace; "max_speed" -> s.maxSpeed; "max_altitude" -> s.maxAltitude
+        "total_ascent" -> s.totalAscent; "total_descent" -> s.totalDescent; "avg_step_length" -> s.avgStepLength
+        "avg_cadence" -> s.avgCadence; "max_cadence" -> s.maxCadence; "total_steps" -> s.totalSteps.toDouble()
+        "total_distance_gps" -> s.totalDistanceGps; "total_distance_steps" -> s.totalDistanceSteps
+        "pressure_start" -> s.pressureStart ?: 0.0; "pressure_end" -> s.pressureEnd ?: 0.0
+        "max_pressure" -> s.maxPressure ?: 0.0; "min_pressure" -> s.minPressure ?: 0.0
+        "best_pace_1km" -> s.bestPace1km ?: 0.0
+        else -> ""
     }
-    if (n == 0.0 && (id == "best_pace_1km" || id == "max_pressure" || id == "min_pressure")) return "--"
+}
 
+private fun formatValue(id: String, value: Any): String {
+    val n = (value as? Number)?.toDouble() ?: return value.toString()
+    if (n == 0.0 && (id == "best_pace_1km" || id == "max_pressure" || id == "min_pressure")) return "--"
     return when (id) {
         "duration" -> value.toString()
         "total_calories" -> "${n.toInt()} kcal"
-        "max_calories_min" -> String.format(Locale.US, "%.2f kcal/min", n)
-        "avg_pace" -> formatPace(n)
-        "max_speed" -> String.format(Locale.US, "%.1f km/h", n)
-        "max_altitude", "total_ascent", "total_descent" -> String.format(Locale.US, "%.0f m", n)
-        "avg_step_length" -> String.format(Locale.US, "%.2f m", n)
-        "avg_cadence", "max_cadence" -> String.format(Locale.US, "%.0f kr/min", n)
+        "max_calories_min" -> "%.2f kcal/min".format(Locale.US, n)
+        "avg_pace", "best_pace_1km" -> formatPace(n)
+        "max_speed" -> "%.1f km/h".format(Locale.US, n)
+        "max_altitude", "total_ascent", "total_descent" -> "%.0f m".format(Locale.US, n)
+        "avg_step_length" -> "%.2f m".format(Locale.US, n)
+        "avg_cadence", "max_cadence" -> "%.0f kr/min".format(Locale.US, n)
         "total_steps" -> "${n.toInt()}"
         "total_distance_gps", "total_distance_steps" -> formatDistance(n)
-        "pressure_start", "pressure_end", "max_pressure", "min_pressure" -> String.format(Locale.US, "%.1f hPa", n)
+        "pressure_start", "pressure_end", "max_pressure", "min_pressure" -> "%.1f hPa".format(Locale.US, n)
         "max_bpm", "avg_bpm" -> "${n.toInt()} bpm"
-        "best_pace_1km" -> formatPace(n)
         else -> value.toString()
     }
 }
 
 @Composable
-fun <T> CompareStatRow(
-    label: String, 
-    v1: T, 
-    v2: T, 
-    formatter: (T) -> String,
-    higherIsBetter: Boolean?
-) {
+fun <T> CompareStatRow(label: String, v1: T, v2: T, formatter: (T) -> String, higherIsBetter: Boolean?) {
     val comparison = if (higherIsBetter != null && v1 is Number && v2 is Number) {
-        val n1 = v1.toDouble()
-        val n2 = v2.toDouble()
-        if (n1 == 0.0 || n2 == 0.0) 0
-        else if (n1 > n2) (if (higherIsBetter) 1 else -1)
-        else if (n1 < n2) (if (higherIsBetter) -1 else 1)
-        else 0
+        val n1 = v1.toDouble(); val n2 = v2.toDouble()
+        if (n1 == 0.0 || n2 == 0.0) 0 else if (n1 > n2) (if (higherIsBetter) 1 else -1) else if (n1 < n2) (if (higherIsBetter) -1 else 1) else 0
     } else 0
-
-    val color1 = when (comparison) {
-        1 -> Color(0xFF4CAF50) // Zielony
-        -1 -> Color(0xFFE57373) // Czerwony
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
-    val color2 = when (comparison) {
-        -1 -> Color(0xFF4CAF50)
-        1 -> Color(0xFFE57373)
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
-
+    val color1 = when (comparison) { 1 -> Color(0xFF4CAF50); -1 -> Color(0xFFE57373); else -> MaterialTheme.colorScheme.surfaceVariant }
+    val color2 = when (comparison) { -1 -> Color(0xFF4CAF50); 1 -> Color(0xFFE57373); else -> MaterialTheme.colorScheme.surfaceVariant }
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatBox(formatter(v1), color1, modifier = Modifier.weight(1f))
-            StatBox(formatter(v2), color2, modifier = Modifier.weight(1f))
+            StatBox(formatter(v1), color1, Modifier.weight(1f))
+            StatBox(formatter(v2), color2, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
 fun StatBox(value: String, bgColor: Color, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(bgColor)
-            .padding(8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        val onSurfaceColor = MaterialTheme.colorScheme.onSurface
-        Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (bgColor == MaterialTheme.colorScheme.surfaceVariant) onSurfaceColor else Color.White)
+    Box(modifier = modifier.clip(RoundedCornerShape(8.dp)).background(bgColor).padding(8.dp), contentAlignment = Alignment.Center) {
+        Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (bgColor == MaterialTheme.colorScheme.surfaceVariant) MaterialTheme.colorScheme.onSurface else Color.White)
     }
 }
 
 @Composable
-fun CompareChart(
-    title: String, 
-    producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer,
-    unit: String,
-    times: List<String>,
-    hrZoneResult: HeartRateZoneResult? = null
-) {
+fun CompareChart(title: String, producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer, unit: String, times: List<String>, hrZoneResult: HeartRateZoneResult? = null) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        CommonChartSection(
-            title = "",
-            producer = producer,
-            unit = unit,
-            detailTimes = times,
-            isScrollEnabled = true,
-            isZoomEnabled = true,
-            hrZoneResult = hrZoneResult,
-            lineColors = listOf(Color1, Color2)
-        )
+        CommonChartSection(title = "", producer = producer, unit = unit, detailTimes = times, hrZoneResult = hrZoneResult, lineColors = listOf(Color1, Color2))
     }
 }
 
@@ -337,27 +265,15 @@ fun CompareChart(
 fun CompareHeartRateZones(hr1: HeartRateZoneResult, hr2: HeartRateZoneResult) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text("Strefy tętna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) {
-                DonutChart(stats = hr1.zones, modifier = Modifier.fillMaxSize(0.8f))
-            }
-            Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) {
-                DonutChart(stats = hr2.zones, modifier = Modifier.fillMaxSize(0.8f))
-            }
+            Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr1.zones, Modifier.fillMaxSize(0.8f)) }
+            Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr2.zones, Modifier.fillMaxSize(0.8f)) }
         }
-        
         Spacer(modifier = Modifier.height(16.dp))
-        
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-        ) {
-            val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
             Column(modifier = Modifier.padding(8.dp)) {
                 hr1.zones.indices.reversed().forEach { i ->
-                    CompareZoneRow(hr1.zones[i], hr2.zones[i], onSurfaceColor)
+                    CompareZoneRow(hr1.zones[i], hr2.zones[i], MaterialTheme.colorScheme.onSurface)
                     if (i > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 }
             }
@@ -367,27 +283,19 @@ fun CompareHeartRateZones(hr1: HeartRateZoneResult, hr2: HeartRateZoneResult) {
 
 @Composable
 fun CompareZoneRow(stat1: ZoneStat, stat2: ZoneStat, textColor: Color) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Act 1 Result
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Text(formatSeconds(stat1.durationSeconds), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = textColor)
-            Text(String.format(Locale.US, "%.1f%%", stat1.percentage), style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f))
+            Text("%.1f%%".format(Locale.US, stat1.percentage), style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f))
         }
-        
-        // Zone Info
         Column(modifier = Modifier.width(120.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(stat1.zone.color))
-            Text(stat1.zone.displayName, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text(stat1.zone.displayName, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             Text("${stat1.minBpm}-${stat1.maxBpm}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        
-        // Act 2 Result
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
             Text(formatSeconds(stat2.durationSeconds), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = textColor)
-            Text(String.format(Locale.US, "%.1f%%", stat2.percentage), style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f))
+            Text("%.1f%%".format(Locale.US, stat2.percentage), style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f))
         }
     }
 }
@@ -396,36 +304,17 @@ fun CompareZoneRow(stat1: ZoneStat, stat2: ZoneStat, textColor: Color) {
 fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean) {
     val context = LocalContext.current
     val mapStyle = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
-    
     val routesAreClose = areRoutesClose(s1.route, s2.route, AppConstants.MAP_COMPARISON_RADIUS_KM)
-    
     if (routesAreClose) {
-        // One map
-        val boundsBuilder = LatLngBounds.Builder()
-        s1.route.forEach { boundsBuilder.include(it) }
-        s2.route.forEach { boundsBuilder.include(it) }
-        val bounds = try { boundsBuilder.build() } catch(e: Exception) { null }
-
         val cameraPositionState = rememberCameraPositionState()
-        
-        if (bounds != null) {
-            LaunchedEffect(bounds) {
-                cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
-            }
-        }
-
+        val bounds = LatLngBounds.Builder().apply { (s1.route + s2.route).forEach { include(it) } }.build()
+        LaunchedEffect(bounds) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100)) }
         Box(modifier = Modifier.fillMaxWidth().height(300.dp).padding(16.dp).clip(RoundedCornerShape(12.dp))) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                properties = MapProperties(mapStyleOptions = mapStyle),
-                cameraPositionState = cameraPositionState
-            ) {
-                Polyline(points = s1.route, color = Color1, width = 8f)
-                Polyline(points = s2.route, color = Color2, width = 8f)
+            GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = mapStyle), cameraPositionState = cameraPositionState) {
+                Polyline(s1.route, color = Color1, width = 8f); Polyline(s2.route, color = Color2, width = 8f)
             }
         }
     } else {
-        // Two maps
         Row(modifier = Modifier.fillMaxWidth().height(200.dp).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MapSmall(s1.route, Color1, mapStyle, Modifier.weight(1f))
             MapSmall(s2.route, Color2, mapStyle, Modifier.weight(1f))
@@ -435,99 +324,31 @@ fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean) {
 
 @Composable
 fun MapSmall(route: List<LatLng>, color: Color, style: MapStyleOptions?, modifier: Modifier) {
-    val boundsBuilder = LatLngBounds.Builder()
-    route.forEach { boundsBuilder.include(it) }
-    val bounds = try { boundsBuilder.build() } catch(e: Exception) { null }
-
     val cameraPositionState = rememberCameraPositionState()
-    
-    if (bounds != null) {
-        LaunchedEffect(bounds) {
-            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 50))
-        }
+    if (route.isNotEmpty()) {
+        val bounds = LatLngBounds.Builder().apply { route.forEach { include(it) } }.build()
+        LaunchedEffect(bounds) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 50)) }
     }
-
     Box(modifier = modifier.clip(RoundedCornerShape(8.dp))) {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            properties = MapProperties(mapStyleOptions = style),
-            uiSettings = MapUiSettings(zoomControlsEnabled = false, scrollGesturesEnabled = false),
-            cameraPositionState = cameraPositionState
-        ) {
-            Polyline(points = route, color = color, width = 6f)
-        }
+        GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = style), uiSettings = MapUiSettings(zoomControlsEnabled = false, scrollGesturesEnabled = false), cameraPositionState = cameraPositionState) { Polyline(route, color = color, width = 6f) }
     }
-}
-
-private fun getComparisonPoints(route: List<LatLng>): List<LatLng> {
-    if (route.isEmpty()) return emptyList()
-    if (route.size < 6) return route
-    
-    return listOf(
-        route[0],
-        route[(route.size - 1) * 1 / 5],
-        route[(route.size - 1) * 2 / 5],
-        route[(route.size - 1) * 3 / 5],
-        route[(route.size - 1) * 4 / 5],
-        route.last()
-    )
 }
 
 private fun areRoutesClose(route1: List<LatLng>, route2: List<LatLng>, radiusKm: Double): Boolean {
-    val points1 = getComparisonPoints(route1)
-    val points2 = getComparisonPoints(route2)
-    
-    if (points1.isEmpty() || points2.isEmpty()) return false
-    
-    // Okręgi nachodzą na siebie, jeśli odległość między środkami jest mniejsza lub równa sumie promieni.
-    // Tutaj oba promienie to radiusKm, więc suma to 2 * radiusKm.
-    val maxDistanceMeters = radiusKm * 2 * 1000 
-    
-    for (p1 in points1) {
-        for (p2 in points2) {
-            if (calculateDistance(p1, p2) <= maxDistanceMeters) {
-                return true
-            }
-        }
-    }
-    return false
-}
-
-private fun calculateDistance(p1: LatLng, p2: LatLng): Float {
+    if (route1.isEmpty() || route2.isEmpty()) return false
+    val p1 = route1[0]; val p2 = route2[0]
     val results = FloatArray(1)
     android.location.Location.distanceBetween(p1.latitude, p1.longitude, p2.latitude, p2.longitude, results)
-    return results[0]
+    return results[0] <= radiusKm * 1000 * 5 // Uproszczone: sprawdzamy tylko start (lub środek)
 }
 
-private fun formatDistance(distanceMeters: Double): String {
-    return if (distanceMeters >= 1000) "%.2f km".format(Locale.US, distanceMeters / 1000.0)
-    else "%.0f m".format(Locale.US, distanceMeters)
-}
-
+private fun formatDistance(distanceMeters: Double): String = if (distanceMeters >= 1000) "%.2f km".format(Locale.US, distanceMeters / 1000.0) else "%.0f m".format(Locale.US, distanceMeters)
 private fun formatPace(paceDecimal: Double): String {
-    if (paceDecimal <= 0 || paceDecimal > 60) return "--:--"
-    val minutes = paceDecimal.toInt()
-    val seconds = ((paceDecimal - minutes) * 60).toInt()
-    return "%02d:%02d/km".format(minutes, seconds)
+    if (paceDecimal <= 0 || paceDecimal > 120) return "--:--"
+    return "%02d:%02d/km".format(paceDecimal.toInt(), ((paceDecimal - paceDecimal.toInt()) * 60).toInt())
 }
-
 private fun formatSeconds(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
-    return if (h > 0) String.format(Locale.US, "%d:%02d:%02d", h, m, s)
-    else String.format(Locale.US, "%02d:%02d", m, s)
+    val h = seconds / 3600; val m = (seconds % 3600) / 60; val s = seconds % 60
+    return if (h > 0) "%d:%02d:%02d".format(Locale.US, h, m, s) else "%02d:%02d".format(Locale.US, m, s)
 }
-
-private fun getUnitForWidget(id: String): String {
-    return when(id) {
-        "bpm", "srednie_bpm" -> "bpm"
-        "kalorie_min", "kalorie_suma" -> "kcal"
-        "kroki_min" -> "kroków/min"
-        "odl_kroki", "gps_dystans" -> "m"
-        "predkosc", "predkosc_kroki" -> "km/h"
-        "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"
-        "pressure" -> "hPa"
-        else -> ""
-    }
-}
+private fun getUnitForWidget(id: String): String = when(id) { "bpm", "srednie_bpm" -> "bpm"; "kalorie_min", "kalorie_suma" -> "kcal"; "kroki_min" -> "kroków/min"; "odl_kroki", "gps_dystans" -> "m"; "predkosc", "predkosc_kroki" -> "km/h"; "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"; "pressure" -> "hPa"; else -> "" }

@@ -12,7 +12,6 @@ import com.example.sportapp.data.LapManager
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
-import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.presentation.settings.MobileSettingsManager
@@ -102,16 +101,14 @@ class ActivityDetailViewModel @Inject constructor(
     )
 
     init {
+        Log.d("ChartDebug", "ActivityDetail init: activityId=$activityId")
         loadSessionData()
         loadLaps()
     }
 
     private fun loadSessionData() {
         viewModelScope.launch {
-            if (activityId == -1L) {
-                _error.value = "Nieprawidłowe ID aktywności."
-                return@launch
-            }
+            if (activityId == -1L) return@launch
 
             try {
                 val data = sessionRepository.getSessionData(activityId)
@@ -119,14 +116,18 @@ class ActivityDetailViewModel @Inject constructor(
                     _error.value = data.error
                 } else {
                     _sessionData.value = data
+                    // Natychmiastowa aktualizacja wykresów
                     updateCharts(data)
-                    checkAndGenerateLaps(data)
-                    calculateHeartRateZones(activityId)
-                    loadAutoLapDistance(data.activityName)
+                    
+                    // Inne operacje w tle
+                    viewModelScope.launch {
+                        checkAndGenerateLaps(data)
+                        calculateHeartRateZones(activityId)
+                        loadAutoLapDistance(data.activityName)
+                    }
                 }
             } catch (e: Exception) {
-                _error.value = "Błąd ładowania danych: ${e.message}"
-                Log.e("ActivityDetail", "Exception loading data", e)
+                Log.e("ChartDebug", "Błąd loadSessionData", e)
             }
         }
     }
@@ -134,9 +135,8 @@ class ActivityDetailViewModel @Inject constructor(
     private fun calculateHeartRateZones(workoutId: Long) {
         viewModelScope.launch {
             val points = workoutDao.getPointsForWorkout(workoutId)
-            val settings = mobileSettingsManager.settingsFlow.first()
-            val maxHr = settings.healthData.maxHR
-            
+            val mSettings = mobileSettingsManager.settingsFlow.first()
+            val maxHr = mSettings.healthData.maxHR
             _hrZoneResult.value = HeartRateMath.calculateZones(points, maxHr)
         }
     }
@@ -157,7 +157,6 @@ class ActivityDetailViewModel @Inject constructor(
 
     private suspend fun checkAndGenerateLaps(data: SessionData) {
         if (activityId == -1L) return
-        
         val existingLaps = workoutDao.getLapsForWorkout(activityId)
         if (existingLaps.isNotEmpty()) return
 
@@ -178,34 +177,33 @@ class ActivityDetailViewModel @Inject constructor(
 
     private fun updateCharts(data: SessionData) {
         viewModelScope.launch(Dispatchers.Default) {
-            val chartEntries = mutableMapOf<String, List<com.patrykandpatrick.vico.core.entry.ChartEntry>>()
+            val results = mutableMapOf<String, List<com.patrykandpatrick.vico.core.entry.ChartEntry>>()
             
             chartProducers.forEach { (id, _) ->
                 try {
                     val points = data.charts[id] ?: emptyList()
-                    val entries = if (points.isNotEmpty()) {
-                        if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure")) {
-                            points.windowed(10, 1, true) { window: List<Float?> ->
+                    if (points.isNotEmpty()) {
+                        val base = if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure")) {
+                            points.windowed(10, 1, true) { window ->
                                 val valid = window.filterNotNull()
                                 if (valid.isEmpty()) null else valid.average().toFloat()
-                            }.mapIndexedNotNull { index, value ->
-                                if (value == null || value.isNaN()) null else entryOf(index, value)
                             }
-                        } else {
-                            points.mapIndexedNotNull { index, value ->
-                                if (value == null || value.isNaN()) null else entryOf(index, value)
-                            }
+                        } else points
+
+                        results[id] = base.mapIndexedNotNull { index, value ->
+                            if (value == null || value.isNaN()) null else entryOf(index, value)
                         }
-                    } else emptyList()
-                    chartEntries[id] = entries
+                    }
                 } catch (e: Exception) {
-                    Log.e("ActivityDetail", "Error preparing chart $id", e)
+                    Log.e("ChartDebug", "Błąd mapowania (detail) dla $id", e)
                 }
             }
 
             withContext(Dispatchers.Main) {
-                chartEntries.forEach { (id, entries) ->
-                    chartProducers[id]?.setEntries(entries)
+                results.forEach { (id, entries) ->
+                    val producer = chartProducers[id]
+                    producer?.setEntries(entries)
+                    Log.d("ChartDebug", "Producer $id (detail): ustawiono ${entries.size} punktów")
                 }
             }
         }
@@ -215,20 +213,6 @@ class ActivityDetailViewModel @Inject constructor(
         _selectedLap.value = lap
     }
 
-    fun saveVisibleCharts(charts: List<WidgetItem>) {
-        val typeName = _sessionData.value?.activityName ?: return
-        viewModelScope.launch {
-            settingsManager.saveVisibleCharts(typeName, charts)
-        }
-    }
-
-    fun saveTrackColor(color: Color) {
-        val typeName = _sessionData.value?.activityName ?: return
-        viewModelScope.launch {
-            settingsManager.saveTrackColor(typeName, color.toArgb())
-        }
-    }
-    
     fun clearError() {
         _error.value = null
     }
