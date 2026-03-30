@@ -79,6 +79,7 @@ class ActivityCompareViewModel @Inject constructor(
     )
 
     init {
+        Log.d("ChartDebug", "CompareViewModel init: id1=$id1, id2=$id2")
         loadSessions()
     }
 
@@ -86,6 +87,7 @@ class ActivityCompareViewModel @Inject constructor(
         viewModelScope.launch {
             if (id1 == -1L || id2 == -1L) {
                 _error.value = "Nieprawidłowe ID aktywności"
+                Log.e("ChartDebug", "Invalid IDs in CompareViewModel: $id1, $id2")
                 return@launch
             }
 
@@ -118,19 +120,21 @@ class ActivityCompareViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _error.value = "Błąd: ${e.message}"
-                Log.e("ActivityCompare", "Exception in loadSessions", e)
+                Log.e("ChartDebug", "Exception in loadSessions", e)
             }
         }
     }
 
     private fun updateCharts(data1: SessionData, data2: SessionData) {
         viewModelScope.launch(Dispatchers.Default) {
+            val logSummary = StringBuilder("Compare ChartUpdate summary:")
             chartProducers.forEach { (id, producer) ->
                 try {
                     val c1 = data1.charts[id] ?: emptyList()
                     val c2 = data2.charts[id] ?: emptyList()
                     
                     if (c1.isNotEmpty() || c2.isNotEmpty()) {
+                        // Funkcja pomocnicza do mapowania z opcjonalnym windowingiem
                         fun mapPoints(points: List<Float?>): List<com.patrykandpatrick.vico.core.entry.ChartEntry> {
                             return if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure")) {
                                 points.windowed(10, 1, true) { window: List<Float?> ->
@@ -152,15 +156,17 @@ class ActivityCompareViewModel @Inject constructor(
                         withContext(Dispatchers.Main) {
                             producer.setEntries(listOf(entries1, entries2))
                         }
+                        logSummary.append("\n  - $id: series1=${entries1.size}, series2=${entries2.size}")
                     } else {
                         withContext(Dispatchers.Main) {
                             producer.setEntries(emptyList<List<com.patrykandpatrick.vico.core.entry.ChartEntry>>())
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e("ActivityCompare", "Error updating chart $id", e)
+                    logSummary.append("\n  - $id: ERROR ${e.message}")
                 }
             }
+            Log.d("ChartDebug", logSummary.toString())
         }
     }
 }
