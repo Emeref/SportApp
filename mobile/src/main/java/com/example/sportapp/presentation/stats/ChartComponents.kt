@@ -147,12 +147,18 @@ fun CommonChartSection(
                     val c = ceil(max.toDouble()).toFloat()
                     return if (c <= floor(currentMin.toDouble()).toFloat()) c + 2f else c + 1f
                 }
+                if (unit == "m" && title.contains("Wysokość", ignoreCase = true)) {
+                    return floor(max.toDouble() + 1.0).toFloat()
+                }
                 return (ceil(max.toDouble() / 8.0) * 8.0).toFloat().coerceAtLeast(1f)
             }
             override fun getMinY(model: ChartEntryModel): Float {
                 val minDataValue = if (model.minY.isNaN()) 0f else model.minY
                 if (unit == "hPa") return floor(minDataValue.toDouble()).toFloat() - 1f
                 if (unit == "bpm") return (minDataValue - 5f).coerceAtLeast(0f)
+                if (unit == "m" && title.contains("Wysokość", ignoreCase = true)) {
+                    return floor(minDataValue.toDouble() - 0.001).toFloat().coerceAtLeast(0f)
+                }
                 return 0f
             }
             override fun getMinX(model: ChartEntryModel): Float = if (totalPoints == 1) model.minX - 0.5f else model.minX
