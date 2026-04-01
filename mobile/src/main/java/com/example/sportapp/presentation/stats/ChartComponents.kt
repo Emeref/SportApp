@@ -62,6 +62,7 @@ import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.marker.Marker
 import com.patrykandpatrick.vico.core.marker.MarkerLabelFormatter
+import com.patrykandpatrick.vico.core.marker.MarkerVisibilityChangeListener
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -132,7 +133,8 @@ fun CommonChartSection(
     isZoomEnabled: Boolean = true,
     hrZoneResult: HeartRateZoneResult? = null,
     lineColors: List<Color>? = null,
-    isTimestampX: Boolean = false
+    isTimestampX: Boolean = false,
+    onMarkerShown: ((Int?) -> Unit)? = null
 ) {
     val totalPoints = detailTimes?.size ?: overallRawData?.size ?: 0
     val axisValuesOverrider = remember(hrZoneResult, unit, totalPoints) {
@@ -215,6 +217,17 @@ fun CommonChartSection(
 
     val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors, isTimestampX)
 
+    val markerVisibilityChangeListener = remember(onMarkerShown) {
+        object : MarkerVisibilityChangeListener {
+            override fun onMarkerShown(marker: Marker, markerEntryModels: List<Marker.EntryModel>) {
+                onMarkerShown?.invoke(markerEntryModels.firstOrNull()?.entry?.x?.toInt())
+            }
+            override fun onMarkerHidden(marker: Marker) {
+                onMarkerShown?.invoke(null)
+            }
+        }
+    }
+
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp)) {
         if (title.isNotEmpty()) {
             Text(text = title, style = MaterialTheme.typography.titleSmall)
@@ -249,6 +262,7 @@ fun CommonChartSection(
                 ),
                 chartModelProducer = producer,
                 marker = marker,
+                markerVisibilityChangeListener = markerVisibilityChangeListener,
                 startAxis = rememberStartAxis(
                     label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
                     valueFormatter = { value, _ -> 

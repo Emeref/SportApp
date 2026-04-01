@@ -33,6 +33,7 @@ import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
@@ -54,6 +55,7 @@ fun ActivityDetailScreen(
     val autoLapDistance by viewModel.autoLapDistance.collectAsStateWithLifecycle()
 
     var isIntervalsExpanded by remember { mutableStateOf(false) }
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -105,7 +107,7 @@ fun ActivityDetailScreen(
                     when (widget.id) {
                         "map" -> {
                             if (data.route.isNotEmpty()) {
-                                MapSection(data, settings, isDarkTheme, selectedLap)
+                                MapSection(data, settings, isDarkTheme, selectedLap, selectedIndex)
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
                             if (laps.isNotEmpty()) {
@@ -123,7 +125,7 @@ fun ActivityDetailScreen(
                             val producer = viewModel.chartProducers["bpm"]
                             if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
                                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    HeartRateChartSection("Tętno (bpm)", producer, data.times, hrZoneResult)
+                                    HeartRateChartSection("Tętno (bpm)", producer, data.times, hrZoneResult) { selectedIndex = it }
                                 }
                                 hrZoneResult?.let { result ->
                                     Spacer(modifier = Modifier.height(24.dp))
@@ -136,7 +138,13 @@ fun ActivityDetailScreen(
                             val producer = viewModel.chartProducers[widget.id]
                             if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
                                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    CommonChartSection(widget.label, producer, getUnitForWidget(widget.id), detailTimes = data.times)
+                                    CommonChartSection(
+                                        title = widget.label, 
+                                        producer = producer, 
+                                        unit = getUnitForWidget(widget.id), 
+                                        detailTimes = data.times,
+                                        onMarkerShown = { selectedIndex = it }
+                                    )
                                 }
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
@@ -154,7 +162,8 @@ fun MapSection(
     data: com.example.sportapp.data.SessionData,
     settings: ActivityDetailSettings,
     isDarkTheme: Boolean,
-    selectedLap: WorkoutLap?
+    selectedLap: WorkoutLap?,
+    selectedIndex: Int? = null
 ) {
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
@@ -182,6 +191,16 @@ fun MapSection(
             selectedLap?.let { lap ->
                 val lapPoints = data.route.subList(lap.startLocationIndex.coerceIn(data.route.indices), (lap.endLocationIndex + 1).coerceIn(data.route.indices))
                 if (lapPoints.isNotEmpty()) Polyline(points = lapPoints, color = MaterialTheme.colorScheme.tertiary, width = 15f, zIndex = 1f)
+            }
+            if (selectedIndex != null && selectedIndex in data.route.indices) {
+                Circle(
+                    center = data.route[selectedIndex],
+                    radius = 10.0,
+                    fillColor = Color.White.copy(alpha = 0.7f),
+                    strokeColor = Color.Black,
+                    strokeWidth = 2f,
+                    zIndex = 9f
+                )
             }
         }
     }
@@ -253,9 +272,17 @@ fun HeartRateChartSection(
     title: String,
     producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer,
     detailTimes: List<String>,
-    hrZoneResult: HeartRateZoneResult?
+    hrZoneResult: HeartRateZoneResult?,
+    onMarkerShown: (Int?) -> Unit
 ) {
-    CommonChartSection(title = title, producer = producer, unit = "bpm", detailTimes = detailTimes, hrZoneResult = hrZoneResult)
+    CommonChartSection(
+        title = title, 
+        producer = producer, 
+        unit = "bpm", 
+        detailTimes = detailTimes, 
+        hrZoneResult = hrZoneResult,
+        onMarkerShown = onMarkerShown
+    )
 }
 
 @Composable
