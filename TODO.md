@@ -119,6 +119,41 @@
     - [x] **Walidacja duplikatów**: System wykrywania powtarzających się sesji przy imporcie.
     - [x] **Personalizacja kalorii**: Wyliczanie spalania na podstawie tętna i profilu zdrowotnego użytkownika (HRR).
 
+
+### Aktywność na komórce
+Co ma się dziać:
+- Na ekranie głownym jest znak plus
+- klikniecie go przenosi na ekran 'Start' z lista dostepnych aktywnosci
+- Odpalenie sportu bedzie pokazywać widgety (te same które sa juz zdefiniowane dla aktywnosci i pokazywane przy odpalaniu aktywnosci z poziomu wear)
+- Jeśli jest na aktywnosci dostepna 'Mapa' to mapa ma się odpalać jako podstawowy ekran.
+- pod mapa wyswietlac sie beda dwa pierwsze widgety, pozostałe widgety (jeśli jakies sa) to beda wyswietlac sie na kolejnej stronie
+- Przy krawedzi ekranu mamy przycisk hamburger menu, ktory wysuwac bedzie boczne menu gdzie mozemy 'zakonczyc trening', 'zapauzowac trening', 'ustawic ekran komorki na niegasnacy'. 'ustawic ekran na przechodzacy w mode ambientu, gdzie pokazuja sie tylko szesc pierwszych widgetow
+- Jesli aplikacja jest odpalona z komorki to chhce aby tetno bylo pobierane z zegarka,
+- Wszystkie pozostale dane byly pobierane z komórki (chyba ze komorka nie ma takiego czujnika, wtedy z zegarka)
+- Chce aby trasa na mapie pokazywała trase przebyta w ciagu ostatnich 60 sekund (60 rekordow z bazy)
+- chce aby wszystko zapisywalo sie w bazie na komorce i synchronizowalo pozniej z zegarkiem
+- chce aby na zegarku pokazywalo sie info, jakby zaczal sie trening i wskazywaly sie wszystkie zbierane dane.
+- chce aby dalo sie wystartowac na komorce bez podpietego zegarka (i aby taka aktywnosc sie dobrze zapisala, tylko w takim wypadku bez czujnikow ktore sa tylko w zegarku)
+- Dodatkowo chcę aby dało się wybrać na mapie cel, który bedzie zaznaczony na mapie na komorce razem z trasa do przebycia.
+- [ ] po wybtraniu aktywnosci powinien odpalic sie ekran z mapa i widgetami, ale nie wystartowac aktywnosci.
+  - Na tym ekranie powinny byc przeniesione przyciski: na poczatku widoczny zielony 'start' jak sie go kliknie to wyswietla sie duzy 'stop' na srodku i mniejsze 'pauza' i 'zablokuj' po bokacz
+  - Przyciski powinny byc widoczne na dole jesli jest mapa to miedzy mapa a widgetami, jesli sa same widgety to pod widgetami
+  - Przycisk stop przenosi na ekran podsumowania aktywnosci z wynikami stworzonymi na logice takiej samej jak mamy na zegarku w podsumowaniu tam
+  - Przycisk 'zablokuj' blokuje dotyk na ekranie, aby nie kliknelo sie przypadkiem
+  - po kliknieciu 'zablokuj' pojawia sie przycisk 'odblokuj' w jego miejscu, pozostale przyciski sa wyszarzone
+  - klikniecie 'odblokuj' odblokowuje pozostale przyciski i aplikacje
+  - Podczas zablokowania ciagle widac zmiany na mapie i w widgetach
+- [ ] Ekran mapy sie ma generowac tylko tam gdzie mapa wystepuje, a nie w kazdym
+- [ ]  przycisk '+/-' na mapie pozwala przyblizac i oddalac, nie ma automatycznego powrotu. Zostawiamy zblizenie wybrane przez uzytkownika
+- [ ] Jak sie przesunie mape w jakikolwiek sposob to pojawia sie przycisk aktualizacji lokalizacji na lokalna
+- [ ] Po kliknieciu w aktualizacje lokalizacji wracamy do wyswietlania obecnej lokalizacji i wracamy do automatycznego odswiezanai lokalizacji aby zawsze byc w centrum mapy (do momentu fizycznego przesuniecia oczywiscie)
+- [ ] Jak wejdziemy w tryb ambient to wyswietlamy w tym trybie do momentu odznaczenia w opcjach
+- [ ] tryb ambient ma w opcjach miec checkbox pokazujacy czy jest wlaczony czy nie
+- [ ] dane ze sportu maja sie zapisywac w bazie
+- [ ] upewnic sie ze puls jest sczytywany
+- [ ] wybór celu na mapie z pokazywaniem czasu dojazdu
+
+
 ## PRIORYTETY
 1. **Najlepsze tempo na km (Best Split)** - PRIORYTET: WYSOKI - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
 2. **Sprawdź działanie aplikacji na 'pauzie'** - PRIORYTET: WYSOKI - Dokładna weryfikacja zliczania danych (kroki/dystans) podczas wstrzymania treningu.
