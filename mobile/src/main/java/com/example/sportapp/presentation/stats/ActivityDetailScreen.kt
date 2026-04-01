@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.stats
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -12,6 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.R
 import com.example.sportapp.data.model.WorkoutLap
@@ -50,6 +52,8 @@ fun ActivityDetailScreen(
     val hrZoneResult by viewModel.hrZoneResult.collectAsStateWithLifecycle()
     val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
     val autoLapDistance by viewModel.autoLapDistance.collectAsStateWithLifecycle()
+
+    var isIntervalsExpanded by remember { mutableStateOf(false) }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -101,8 +105,18 @@ fun ActivityDetailScreen(
                     when (widget.id) {
                         "map" -> {
                             if (data.route.isNotEmpty()) {
-                                MapSection(data, settings, isDarkTheme, selectedLap, laps, autoLapDistance, viewModel::selectLap)
+                                MapSection(data, settings, isDarkTheme, selectedLap)
                                 Spacer(modifier = Modifier.height(16.dp))
+                            }
+                            if (laps.isNotEmpty()) {
+                                ExpandableLapsSection(
+                                    laps = laps,
+                                    selectedLap = selectedLap,
+                                    onLapClick = { viewModel.selectLap(it) },
+                                    autoLapDistance = autoLapDistance,
+                                    isExpanded = isIntervalsExpanded,
+                                    onToggleExpanded = { isIntervalsExpanded = !isIntervalsExpanded }
+                                )
                             }
                         }
                         "bpm" -> {
@@ -140,10 +154,7 @@ fun MapSection(
     data: com.example.sportapp.data.SessionData,
     settings: ActivityDetailSettings,
     isDarkTheme: Boolean,
-    selectedLap: WorkoutLap?,
-    laps: List<WorkoutLap>,
-    autoLapDistance: Double?,
-    onLapSelect: (WorkoutLap?) -> Unit
+    selectedLap: WorkoutLap?
 ) {
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
@@ -165,7 +176,7 @@ fun MapSection(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
-            onMapClick = { onLapSelect(null) }
+            onMapClick = { /* Opcjonalnie reset zaznaczenia lapu można przenieść wyżej */ }
         ) {
             Polyline(points = data.route, color = Color(settings.trackColor), width = 10f)
             selectedLap?.let { lap ->
@@ -174,10 +185,66 @@ fun MapSection(
             }
         }
     }
+}
 
-    if (laps.isNotEmpty()) {
+@Composable
+fun ExpandableLapsSection(
+    laps: List<WorkoutLap>,
+    selectedLap: WorkoutLap?,
+    onLapClick: (WorkoutLap) -> Unit,
+    autoLapDistance: Double?,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit
+) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onToggleExpanded() },
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = if (autoLapDistance != null && autoLapDistance > 0) "Odcinki (${formatDistance(autoLapDistance)})" else "Odcinki",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                if (!isExpanded) {
+                    Text(
+                        text = "Liczba odcinków: ${laps.size}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+                LapsTable(laps, selectedLap, onLapClick, autoLapDistance)
+            }
+        }
+        
         Spacer(modifier = Modifier.height(16.dp))
-        LapsTable(laps, selectedLap, onLapSelect, autoLapDistance)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -246,9 +313,7 @@ fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (Wor
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberScrollState()
 
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(if (autoLapDistance != null && autoLapDistance > 0) "Odcinki: ${formatDistance(autoLapDistance)}" else "Odcinki", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
+    Column {
         Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
             Column {
                 Row {
