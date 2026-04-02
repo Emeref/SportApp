@@ -128,7 +128,7 @@ fun ActivityCompareScreen(
                                             hrZoneResult = hrZones1,
                                             onMarkerShown = { selectedIndex = it }
                                         )
-                                        if (hrZones1 != null && hrZones2 != null) {
+                                        if (hrZones1 != null && hrZones2 != null && hrZones1!!.zones.isNotEmpty() && hrZones2!!.zones.isNotEmpty()) {
                                             CompareHeartRateZones(hrZones1!!, hrZones2!!)
                                         }
                                         Spacer(modifier = Modifier.height(16.dp))
@@ -284,6 +284,9 @@ fun CompareChart(
 
 @Composable
 fun CompareHeartRateZones(hr1: HeartRateZoneResult, hr2: HeartRateZoneResult) {
+    // Safety check: if either is empty or they don't match in size, don't attempt to draw comparison rows
+    if (hr1.zones.isEmpty() || hr2.zones.isEmpty() || hr1.zones.size != hr2.zones.size) return
+
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text("Strefy tętna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
