@@ -69,7 +69,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          keep_files: true # Zachowuje poprzednie raporty w folderze /reports/
+          keep_files: true #  Zachowuje poprzednie raporty w folderze /reports/
 
       - name: Add Link to Job Summary
         if: always()
