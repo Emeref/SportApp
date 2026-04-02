@@ -6,12 +6,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Minimalne uprawnienia zgodnie z zasadą "Least Privilege"
 permissions:
-  contents: write # Potrzebne do zapisu raportu na gałęzi gh-pages
-  pages: write       # Potrzebne do hostowania strony
-  id-token: write    # Potrzebne do uwierzytelnienia w GitHub Pages
-  checks: write      # (Opcjonalnie) jeśli dodasz raporty w zakładce Checks
-  pull-requests: write # Jeśli chcesz, aby bot dodawał komentarz w PR
+  contents: write      # Wymagane do zapisu na gałęzi gh-pages przez peaceiris/actions-gh-pages
+  pages: write         # Wymagane do zarządzania konfiguracją GitHub Pages
+  id-token: write      # Wymagane do uwierzytelnienia OIDC
 
 jobs:
   test:
@@ -36,14 +35,33 @@ jobs:
       - name: Prepare Reports for Deployment
         if: always()
         run: |
-          # Tworzymy strukturę folderów: reports/<run_id>
+          # Czyścimy i tworzymy strukturę folderów
           mkdir -p public/reports/${{ github.run_id }}
-          # Kopiujemy wygenerowany raport HTML (upewnij się, że ścieżka jest poprawna)
-          if [ -d "mobile/build/reports/tests/testDebugUnitTest" ]; then
-            cp -r mobile/build/reports/tests/testDebugUnitTest/* public/reports/${{ github.run_id }}/
+          
+          # Ścieżka do raportu Gradle (poprawiona na standardową dla Androida)
+          REPORT_SRC="mobile/build/reports/tests/testDebugUnitTest"
+          
+          if [ -d "$REPORT_SRC" ]; then
+            cp -r $REPORT_SRC/* public/reports/${{ github.run_id }}/
+            echo "✅ Raport skopiowany do public/reports/${{ github.run_id }}"
+          else
+            echo "⚠️ Nie znaleziono raportu w $REPORT_SRC"
+            exit 1
           fi
-          # Tworzymy prosty index.html w katalogu głównym public (opcjonalne, ułatwia nawigację)
-          echo "<html><body><h1>Test Reports History</h1><p>Latest: <a href='./reports/${{ github.run_id }}/index.html'>Run ${{ github.run_id }}</a></p></body></html>" > public/index.html
+
+          # Tworzymy index.html ułatwiający nawigację do ostatniego raportu
+          cat <<EOF > public/index.html
+          <html>
+            <body style="font-family: sans-serif; padding: 20px;">
+              <h1>SportApp - Test Reports History</h1>
+              <p>Ostatni przebieg: <strong>${{ github.run_id }}</strong></p>
+              <a href="./reports/${{ github.run_id }}/index.html" 
+                 style="padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+                 Otwórz najnowszy raport
+              </a>
+            </body>
+          </html>
+          EOF
 
       - name: Deploy to GitHub Pages
         if: always()
@@ -51,11 +69,18 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          keep_files: true # WAŻNE: to zapobiega usuwaniu starych raportów
+          keep_files: true # Zachowuje poprzednie raporty w folderze /reports/
 
       - name: Add Link to Job Summary
         if: always()
         run: |
-          REPORT_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/${{ github.run_id }}/index.html"
-          echo "### ✅ Unit Test Report" >> $GITHUB_STEP_SUMMARY
-          echo "Raport z testów jest dostępny tutaj: [Otwórz raport]($REPORT_URL)" >> $GITHUB_STEP_SUMMARY
+          # Dynamiczne budowanie URL niezależnie od nazwy repozytorium
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d '/' -f 2)
+          USER_NAME="${{ github.repository_owner }}"
+          REPORT_URL="https://${USER_NAME}.github.io/${REPO_NAME}/reports/${{ github.run_id }}/index.html"
+          
+          echo "### ✅ Unit Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "Raport HTML został opublikowany i jest dostępny tutaj:" >> $GITHUB_STEP_SUMMARY
+          echo "[🚀 Otwórz interaktywny raport]($REPORT_URL)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> _Uwaga: Jeśli to Twój pierwszy deploy, strona może pojawić się z kilkuminutowym opóźnieniem._" >> $GITHUB_STEP_SUMMARY
