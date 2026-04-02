@@ -1,6 +1,8 @@
 package com.example.sportapp.presentation.activities
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +11,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,11 +36,13 @@ import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.stats.CommonChartSection
 import com.example.sportapp.presentation.stats.DonutChart
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 import java.util.Locale
+import kotlin.math.pow
 
 private val Color1 = Color(0xFF2196F3) // Niebieski
 private val Color2 = Color(0xFFFF9800) // Pomarańczowy
@@ -54,6 +60,9 @@ fun ActivityCompareScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
+
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    var isHrZonesExpanded by remember { mutableStateOf(false) }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -110,7 +119,7 @@ fun ActivityCompareScreen(
                     items(currentSettings.visibleCharts.filter { it.isEnabled }) { widget ->
                         when (widget.id) {
                             "map" -> {
-                                CompareMaps(s1, s2, isDarkTheme)
+                                CompareMaps(s1, s2, isDarkTheme, selectedIndex)
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
                             "bpm" -> {
@@ -121,10 +130,16 @@ fun ActivityCompareScreen(
                                             producer = producer, 
                                             unit = "bpm", 
                                             times = if (s1.times.size >= s2.times.size) s1.times else s2.times,
-                                            hrZoneResult = hrZones1
+                                            hrZoneResult = hrZones1,
+                                            onMarkerShown = { selectedIndex = it }
                                         )
-                                        if (hrZones1 != null && hrZones2 != null) {
-                                            CompareHeartRateZones(hrZones1!!, hrZones2!!)
+                                        if (hrZones1 != null && hrZones2 != null && hrZones1!!.zones.isNotEmpty() && hrZones2!!.zones.isNotEmpty()) {
+                                            CompareHeartRateZones(
+                                                hr1 = hrZones1!!, 
+                                                hr2 = hrZones2!!,
+                                                isExpanded = isHrZonesExpanded,
+                                                onToggleExpanded = { isHrZonesExpanded = !isHrZonesExpanded }
+                                            )
                                         }
                                         Spacer(modifier = Modifier.height(16.dp))
                                     }
@@ -137,7 +152,8 @@ fun ActivityCompareScreen(
                                             title = widget.label,
                                             producer = producer,
                                             unit = getUnitForWidget(widget.id),
-                                            times = if (s1.times.size >= s2.times.size) s1.times else s2.times
+                                            times = if (s1.times.size >= s2.times.size) s1.times else s2.times,
+                                            onMarkerShown = { selectedIndex = it }
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                     }
@@ -254,30 +270,91 @@ fun StatBox(value: String, bgColor: Color, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun CompareChart(title: String, producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer, unit: String, times: List<String>, hrZoneResult: HeartRateZoneResult? = null) {
+fun CompareChart(
+    title: String, 
+    producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer, 
+    unit: String, 
+    times: List<String>, 
+    hrZoneResult: HeartRateZoneResult? = null,
+    onMarkerShown: (Int?) -> Unit
+) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        CommonChartSection(title = "", producer = producer, unit = unit, detailTimes = times, hrZoneResult = hrZoneResult, lineColors = listOf(Color1, Color2))
+        CommonChartSection(
+            title = "", 
+            producer = producer, 
+            unit = unit, 
+            detailTimes = times, 
+            hrZoneResult = hrZoneResult, 
+            lineColors = listOf(Color1, Color2),
+            onMarkerShown = onMarkerShown
+        )
     }
 }
 
 @Composable
-fun CompareHeartRateZones(hr1: HeartRateZoneResult, hr2: HeartRateZoneResult) {
+fun CompareHeartRateZones(
+    hr1: HeartRateZoneResult,
+    hr2: HeartRateZoneResult,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit
+) {
+    // Safety check: if either is empty or they don't match in size, don't attempt to draw comparison rows
+    if (hr1.zones.isEmpty() || hr2.zones.isEmpty() || hr1.zones.size != hr2.zones.size) return
+
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Text("Strefy tętna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr1.zones, Modifier.fillMaxSize(0.8f)) }
-            Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr2.zones, Modifier.fillMaxSize(0.8f)) }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
-            Column(modifier = Modifier.padding(8.dp)) {
-                hr1.zones.indices.reversed().forEach { i ->
-                    CompareZoneRow(hr1.zones[i], hr2.zones[i], MaterialTheme.colorScheme.onSurface)
-                    if (i > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onToggleExpanded() },
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Strefy tętna",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr1.zones, Modifier.fillMaxSize(0.8f)) }
+                    Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr2.zones, Modifier.fillMaxSize(0.8f)) }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        hr1.zones.indices.reversed().forEach { i ->
+                            CompareZoneRow(hr1.zones[i], hr2.zones[i], MaterialTheme.colorScheme.onSurface)
+                            if (i > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        }
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -301,36 +378,81 @@ fun CompareZoneRow(stat1: ZoneStat, stat2: ZoneStat, textColor: Color) {
 }
 
 @Composable
-fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean) {
+fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean, selectedIndex: Int? = null) {
     val context = LocalContext.current
     val mapStyle = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
     val routesAreClose = areRoutesClose(s1.route, s2.route, AppConstants.MAP_COMPARISON_RADIUS_KM)
     if (routesAreClose) {
         val cameraPositionState = rememberCameraPositionState()
-        val bounds = LatLngBounds.Builder().apply { (s1.route + s2.route).forEach { include(it) } }.build()
+        val bounds = remember(s1.route, s2.route) {
+            LatLngBounds.Builder().apply { (s1.route + s2.route).forEach { include(it) } }.build()
+        }
         LaunchedEffect(bounds) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100)) }
+        
+        LaunchedEffect(selectedIndex) {
+            if (selectedIndex != null) {
+                val points = mutableListOf<LatLng>()
+                if (selectedIndex in s1.route.indices) points.add(s1.route[selectedIndex])
+                if (selectedIndex in s2.route.indices) points.add(s2.route[selectedIndex])
+                if (points.isNotEmpty()) {
+                    if (points.size == 1) {
+                        cameraPositionState.animate(CameraUpdateFactory.newLatLng(points[0]))
+                    } else {
+                        val pointBounds = LatLngBounds.Builder().apply { points.forEach { include(it) } }.build()
+                        // Jeśli punkty są blisko siebie, centrujemy między nimi, ale nie zmieniamy zoomu zbyt drastycznie
+                        cameraPositionState.animate(CameraUpdateFactory.newLatLng(pointBounds.center))
+                    }
+                }
+            }
+        }
+
         Box(modifier = Modifier.fillMaxWidth().height(300.dp).padding(16.dp).clip(RoundedCornerShape(12.dp))) {
             GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = mapStyle), cameraPositionState = cameraPositionState) {
                 Polyline(s1.route, color = Color1, width = 8f); Polyline(s2.route, color = Color2, width = 8f)
+                
+                if (selectedIndex != null) {
+                    val zoom = cameraPositionState.position.zoom
+                    val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
+                    if (selectedIndex in s1.route.indices) {
+                        Circle(center = s1.route[selectedIndex], radius = adaptiveRadius, fillColor = Color.White.copy(alpha = 0.7f), strokeColor = Color1, strokeWidth = 2f, zIndex = 10f)
+                    }
+                    if (selectedIndex in s2.route.indices) {
+                        Circle(center = s2.route[selectedIndex], radius = adaptiveRadius, fillColor = Color.White.copy(alpha = 0.7f), strokeColor = Color2, strokeWidth = 2f, zIndex = 11f)
+                    }
+                }
             }
         }
     } else {
         Row(modifier = Modifier.fillMaxWidth().height(200.dp).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MapSmall(s1.route, Color1, mapStyle, Modifier.weight(1f))
-            MapSmall(s2.route, Color2, mapStyle, Modifier.weight(1f))
+            MapSmall(s1.route, Color1, mapStyle, Modifier.weight(1f), selectedIndex)
+            MapSmall(s2.route, Color2, mapStyle, Modifier.weight(1f), selectedIndex)
         }
     }
 }
 
 @Composable
-fun MapSmall(route: List<LatLng>, color: Color, style: MapStyleOptions?, modifier: Modifier) {
+fun MapSmall(route: List<LatLng>, color: Color, style: MapStyleOptions?, modifier: Modifier, selectedIndex: Int? = null) {
     val cameraPositionState = rememberCameraPositionState()
     if (route.isNotEmpty()) {
-        val bounds = LatLngBounds.Builder().apply { route.forEach { include(it) } }.build()
+        val bounds = remember(route) { LatLngBounds.Builder().apply { route.forEach { include(it) } }.build() }
         LaunchedEffect(bounds) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 50)) }
     }
+
+    LaunchedEffect(selectedIndex) {
+        if (selectedIndex != null && selectedIndex in route.indices) {
+            cameraPositionState.animate(CameraUpdateFactory.newLatLng(route[selectedIndex]))
+        }
+    }
+
     Box(modifier = modifier.clip(RoundedCornerShape(8.dp))) {
-        GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = style), uiSettings = MapUiSettings(zoomControlsEnabled = false, scrollGesturesEnabled = false), cameraPositionState = cameraPositionState) { Polyline(route, color = color, width = 6f) }
+        GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = style), uiSettings = MapUiSettings(zoomControlsEnabled = false, scrollGesturesEnabled = false), cameraPositionState = cameraPositionState) { 
+            Polyline(route, color = color, width = 6f) 
+            if (selectedIndex != null && selectedIndex in route.indices) {
+                val zoom = cameraPositionState.position.zoom
+                val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
+                Circle(center = route[selectedIndex], radius = adaptiveRadius, fillColor = Color.White.copy(alpha = 0.7f), strokeColor = color, strokeWidth = 2f, zIndex = 10f)
+            }
+        }
     }
 }
 

@@ -57,11 +57,13 @@ import com.patrykandpatrick.vico.core.component.shape.Shapes
 import com.patrykandpatrick.vico.core.component.shape.cornered.Corner
 import com.patrykandpatrick.vico.core.component.shape.cornered.MarkerCorneredShape
 import com.patrykandpatrick.vico.core.component.shape.shader.DynamicShaders
+import com.patrykandpatrick.vico.core.context.DrawContext
 import com.patrykandpatrick.vico.core.dimensions.MutableDimensions
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.marker.Marker
 import com.patrykandpatrick.vico.core.marker.MarkerLabelFormatter
+import com.patrykandpatrick.vico.core.marker.MarkerVisibilityChangeListener
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -132,7 +134,8 @@ fun CommonChartSection(
     isZoomEnabled: Boolean = true,
     hrZoneResult: HeartRateZoneResult? = null,
     lineColors: List<Color>? = null,
-    isTimestampX: Boolean = false
+    isTimestampX: Boolean = false,
+    onMarkerShown: ((Int?) -> Unit)? = null
 ) {
     val totalPoints = detailTimes?.size ?: overallRawData?.size ?: 0
     val axisValuesOverrider = remember(hrZoneResult, unit, totalPoints) {
@@ -147,12 +150,18 @@ fun CommonChartSection(
                     val c = ceil(max.toDouble()).toFloat()
                     return if (c <= floor(currentMin.toDouble()).toFloat()) c + 2f else c + 1f
                 }
+                if (unit == "m" && title.contains("Wysokość", ignoreCase = true)) {
+                    return floor(max.toDouble() + 1.0).toFloat()
+                }
                 return (ceil(max.toDouble() / 8.0) * 8.0).toFloat().coerceAtLeast(1f)
             }
             override fun getMinY(model: ChartEntryModel): Float {
                 val minDataValue = if (model.minY.isNaN()) 0f else model.minY
                 if (unit == "hPa") return floor(minDataValue.toDouble()).toFloat() - 1f
                 if (unit == "bpm") return (minDataValue - 5f).coerceAtLeast(0f)
+                if (unit == "m" && title.contains("Wysokość", ignoreCase = true)) {
+                    return floor(minDataValue.toDouble() - 0.001).toFloat().coerceAtLeast(0f)
+                }
                 return 0f
             }
             override fun getMinX(model: ChartEntryModel): Float = if (totalPoints == 1) model.minX - 0.5f else model.minX
@@ -207,7 +216,8 @@ fun CommonChartSection(
         else DecimalFormat("#,###.#", symbols)
     }
 
-    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors, isTimestampX)
+    val currentOnMarkerShown by rememberUpdatedState(onMarkerShown)
+    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors, isTimestampX, currentOnMarkerShown)
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp)) {
         if (title.isNotEmpty()) {
@@ -218,10 +228,6 @@ fun CommonChartSection(
             val chartWidthDp = this.maxWidth - 50.dp
             val totalPointsForSpacing = if (totalPoints > 1) totalPoints else 2
             val calculatedSpacing = if (isTimestampX) 20.dp else (chartWidthDp - 24.dp) / (totalPointsForSpacing - 1).toFloat()
-
-            LaunchedEffect(totalPoints, calculatedSpacing) {
-                Log.d("ChartDebug", "CommonChart: title=$title, points=$totalPoints, spacing=$calculatedSpacing, unit=$unit")
-            }
 
             val horizontalItemPlacer = remember(totalPoints, isTimestampX) {
                 if (isTimestampX) {
@@ -310,7 +316,8 @@ fun rememberMarkerCustom(
     detailTimes: List<String>?,
     unit: String,
     compareColors: List<Color>? = null,
-    isTimestampX: Boolean = false
+    isTimestampX: Boolean = false,
+    onMarkerShown: ((Int?) -> Unit)? = null
 ): Marker {
     val labelBackgroundColor = MaterialTheme.colorScheme.surface
     val labelTextColor = MaterialTheme.colorScheme.onSurface
@@ -343,17 +350,17 @@ fun rememberMarkerCustom(
     val indicator = shapeComponent(shape = Shapes.pillShape, color = primaryColor)
     val guideline = lineComponent(color = primaryColor.copy(alpha = 0.5f), thickness = 2.dp)
     
-    return remember(label, indicator, guideline, overallRawData, detailTimes, unit, compareColors, isTimestampX) {
+    return remember(label, indicator, guideline, overallRawData, detailTimes, unit, compareColors, isTimestampX, onMarkerShown) {
         object : MarkerComponent(label, indicator, guideline) {
-            override fun getInsets(
-                context: com.patrykandpatrick.vico.core.context.MeasureContext,
-                outInsets: com.patrykandpatrick.vico.core.chart.insets.Insets,
-                horizontalDimensions: com.patrykandpatrick.vico.core.chart.dimensions.HorizontalDimensions
+            override fun draw(
+                context: DrawContext,
+                bounds: RectF,
+                markedEntries: List<Marker.EntryModel>,
+                chartValuesProvider: com.patrykandpatrick.vico.core.chart.values.ChartValuesProvider
             ) {
-                with(context) {
-                    val height = label.getHeight(context, text = if (isDetail || isTimestampX) "100.0 unit\n00:00:00" else "Activity\n2024-01-01\n100.0 unit")
-                    outInsets.top = height + (density * 4f)
-                }
+                super.draw(context, bounds, markedEntries, chartValuesProvider)
+                val index = markedEntries.firstOrNull()?.entry?.x?.toInt()
+                onMarkerShown?.invoke(index)
             }
         }.apply {
             labelFormatter = MarkerLabelFormatter { markedEntries, _ ->

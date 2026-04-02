@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.stats
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -12,6 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.R
 import com.example.sportapp.data.model.WorkoutLap
@@ -31,10 +33,12 @@ import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 import java.util.Locale
+import kotlin.math.pow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +54,10 @@ fun ActivityDetailScreen(
     val hrZoneResult by viewModel.hrZoneResult.collectAsStateWithLifecycle()
     val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
     val autoLapDistance by viewModel.autoLapDistance.collectAsStateWithLifecycle()
+
+    var isIntervalsExpanded by remember { mutableStateOf(false) }
+    var isHrZonesExpanded by remember { mutableStateOf(false) }
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -101,19 +109,33 @@ fun ActivityDetailScreen(
                     when (widget.id) {
                         "map" -> {
                             if (data.route.isNotEmpty()) {
-                                MapSection(data, settings, isDarkTheme, selectedLap, laps, autoLapDistance, viewModel::selectLap)
+                                MapSection(data, settings, isDarkTheme, selectedLap, selectedIndex)
                                 Spacer(modifier = Modifier.height(16.dp))
+                            }
+                            if (laps.isNotEmpty()) {
+                                ExpandableLapsSection(
+                                    laps = laps,
+                                    selectedLap = selectedLap,
+                                    onLapClick = { viewModel.selectLap(it) },
+                                    autoLapDistance = autoLapDistance,
+                                    isExpanded = isIntervalsExpanded,
+                                    onToggleExpanded = { isIntervalsExpanded = !isIntervalsExpanded }
+                                )
                             }
                         }
                         "bpm" -> {
                             val producer = viewModel.chartProducers["bpm"]
                             if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
                                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    HeartRateChartSection("Tętno (bpm)", producer, data.times, hrZoneResult)
+                                    HeartRateChartSection("Tętno (bpm)", producer, data.times, hrZoneResult) { selectedIndex = it }
                                 }
                                 hrZoneResult?.let { result ->
                                     Spacer(modifier = Modifier.height(24.dp))
-                                    HeartRateZonesSection(result)
+                                    HeartRateZonesSection(
+                                        result = result,
+                                        isExpanded = isHrZonesExpanded,
+                                        onToggleExpanded = { isHrZonesExpanded = !isHrZonesExpanded }
+                                    )
                                 }
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
@@ -122,7 +144,13 @@ fun ActivityDetailScreen(
                             val producer = viewModel.chartProducers[widget.id]
                             if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
                                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    CommonChartSection(widget.label, producer, getUnitForWidget(widget.id), detailTimes = data.times)
+                                    CommonChartSection(
+                                        title = widget.label, 
+                                        producer = producer, 
+                                        unit = getUnitForWidget(widget.id), 
+                                        detailTimes = data.times,
+                                        onMarkerShown = { selectedIndex = it }
+                                    )
                                 }
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
@@ -141,9 +169,7 @@ fun MapSection(
     settings: ActivityDetailSettings,
     isDarkTheme: Boolean,
     selectedLap: WorkoutLap?,
-    laps: List<WorkoutLap>,
-    autoLapDistance: Double?,
-    onLapSelect: (WorkoutLap?) -> Unit
+    selectedIndex: Int? = null
 ) {
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
@@ -160,24 +186,98 @@ fun MapSection(
         }
     }
 
+    LaunchedEffect(selectedIndex) {
+        if (selectedIndex != null && selectedIndex in data.route.indices) {
+            cameraPositionState.animate(CameraUpdateFactory.newLatLng(data.route[selectedIndex]))
+        }
+    }
+
     Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 16.dp).clip(RoundedCornerShape(12.dp))) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
-            onMapClick = { onLapSelect(null) }
+            onMapClick = { /* Opcjonalnie reset zaznaczenia lapu można przenieść wyżej */ }
         ) {
             Polyline(points = data.route, color = Color(settings.trackColor), width = 10f)
             selectedLap?.let { lap ->
                 val lapPoints = data.route.subList(lap.startLocationIndex.coerceIn(data.route.indices), (lap.endLocationIndex + 1).coerceIn(data.route.indices))
                 if (lapPoints.isNotEmpty()) Polyline(points = lapPoints, color = MaterialTheme.colorScheme.tertiary, width = 15f, zIndex = 1f)
             }
+            if (selectedIndex != null && selectedIndex in data.route.indices) {
+                val zoom = cameraPositionState.position.zoom
+                val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
+                Circle(
+                    center = data.route[selectedIndex],
+                    radius = adaptiveRadius,
+                    fillColor = Color.White.copy(alpha = 0.7f),
+                    strokeColor = Color.Black,
+                    strokeWidth = 2f,
+                    zIndex = 9f
+                )
+            }
         }
     }
+}
 
-    if (laps.isNotEmpty()) {
+@Composable
+fun ExpandableLapsSection(
+    laps: List<WorkoutLap>,
+    selectedLap: WorkoutLap?,
+    onLapClick: (WorkoutLap) -> Unit,
+    autoLapDistance: Double?,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit
+) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onToggleExpanded() },
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = if (autoLapDistance != null && autoLapDistance > 0) "Odcinki (${formatDistance(autoLapDistance)})" else "Odcinki",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                if (!isExpanded) {
+                    Text(
+                        text = "Liczba odcinków: ${laps.size}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+                LapsTable(laps, selectedLap, onLapClick, autoLapDistance)
+            }
+        }
+        
         Spacer(modifier = Modifier.height(16.dp))
-        LapsTable(laps, selectedLap, onLapSelect, autoLapDistance)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -186,33 +286,94 @@ fun HeartRateChartSection(
     title: String,
     producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer,
     detailTimes: List<String>,
-    hrZoneResult: HeartRateZoneResult?
+    hrZoneResult: HeartRateZoneResult?,
+    onMarkerShown: (Int?) -> Unit
 ) {
-    CommonChartSection(title = title, producer = producer, unit = "bpm", detailTimes = detailTimes, hrZoneResult = hrZoneResult)
+    CommonChartSection(
+        title = title, 
+        producer = producer, 
+        unit = "bpm", 
+        detailTimes = detailTimes, 
+        hrZoneResult = hrZoneResult,
+        onMarkerShown = onMarkerShown
+    )
 }
 
 @Composable
-fun HeartRateZonesSection(result: HeartRateZoneResult) {
+fun HeartRateZonesSection(
+    result: HeartRateZoneResult,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit
+) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text("Strefy tętna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onToggleExpanded() },
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    DonutChart(stats = result.zones, modifier = Modifier.size(100.dp))
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Przeważający efekt treningu", style = MaterialTheme.typography.labelMedium)
-                        Text(result.trainingEffect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    }
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Strefy tętna",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                result.zones.reversed().forEach { stat ->
-                    ZoneRow(stat)
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                
+                if (!isExpanded) {
+                    Text(
+                        text = result.trainingEffect,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            DonutChart(stats = result.zones, modifier = Modifier.size(100.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("Przeważający efekt treningu", style = MaterialTheme.typography.labelMedium)
+                                Text(result.trainingEffect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        result.zones.reversed().forEach { stat ->
+                            ZoneRow(stat)
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                        }
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -246,9 +407,7 @@ fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (Wor
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberScrollState()
 
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(if (autoLapDistance != null && autoLapDistance > 0) "Odcinki: ${formatDistance(autoLapDistance)}" else "Odcinki", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
+    Column {
         Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
             Column {
                 Row {
