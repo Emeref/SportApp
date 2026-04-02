@@ -1,6 +1,8 @@
 package com.example.sportapp.presentation.activities
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +11,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -58,6 +62,7 @@ fun ActivityCompareScreen(
     val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
 
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    var isHrZonesExpanded by remember { mutableStateOf(false) }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -129,7 +134,12 @@ fun ActivityCompareScreen(
                                             onMarkerShown = { selectedIndex = it }
                                         )
                                         if (hrZones1 != null && hrZones2 != null && hrZones1!!.zones.isNotEmpty() && hrZones2!!.zones.isNotEmpty()) {
-                                            CompareHeartRateZones(hrZones1!!, hrZones2!!)
+                                            CompareHeartRateZones(
+                                                hr1 = hrZones1!!, 
+                                                hr2 = hrZones2!!,
+                                                isExpanded = isHrZonesExpanded,
+                                                onToggleExpanded = { isHrZonesExpanded = !isHrZonesExpanded }
+                                            )
                                         }
                                         Spacer(modifier = Modifier.height(16.dp))
                                     }
@@ -283,25 +293,68 @@ fun CompareChart(
 }
 
 @Composable
-fun CompareHeartRateZones(hr1: HeartRateZoneResult, hr2: HeartRateZoneResult) {
+fun CompareHeartRateZones(
+    hr1: HeartRateZoneResult,
+    hr2: HeartRateZoneResult,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit
+) {
     // Safety check: if either is empty or they don't match in size, don't attempt to draw comparison rows
     if (hr1.zones.isEmpty() || hr2.zones.isEmpty() || hr1.zones.size != hr2.zones.size) return
 
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Text("Strefy tętna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr1.zones, Modifier.fillMaxSize(0.8f)) }
-            Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr2.zones, Modifier.fillMaxSize(0.8f)) }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
-            Column(modifier = Modifier.padding(8.dp)) {
-                hr1.zones.indices.reversed().forEach { i ->
-                    CompareZoneRow(hr1.zones[i], hr2.zones[i], MaterialTheme.colorScheme.onSurface)
-                    if (i > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onToggleExpanded() },
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Strefy tętna",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr1.zones, Modifier.fillMaxSize(0.8f)) }
+                    Box(modifier = Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) { DonutChart(hr2.zones, Modifier.fillMaxSize(0.8f)) }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        hr1.zones.indices.reversed().forEach { i ->
+                            CompareZoneRow(hr1.zones[i], hr2.zones[i], MaterialTheme.colorScheme.onSurface)
+                            if (i > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        }
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 

@@ -56,6 +56,7 @@ fun ActivityDetailScreen(
     val autoLapDistance by viewModel.autoLapDistance.collectAsStateWithLifecycle()
 
     var isIntervalsExpanded by remember { mutableStateOf(false) }
+    var isHrZonesExpanded by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
@@ -130,7 +131,11 @@ fun ActivityDetailScreen(
                                 }
                                 hrZoneResult?.let { result ->
                                     Spacer(modifier = Modifier.height(24.dp))
-                                    HeartRateZonesSection(result)
+                                    HeartRateZonesSection(
+                                        result = result,
+                                        isExpanded = isHrZonesExpanded,
+                                        onToggleExpanded = { isHrZonesExpanded = !isHrZonesExpanded }
+                                    )
                                 }
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
@@ -295,27 +300,80 @@ fun HeartRateChartSection(
 }
 
 @Composable
-fun HeartRateZonesSection(result: HeartRateZoneResult) {
+fun HeartRateZonesSection(
+    result: HeartRateZoneResult,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit
+) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text("Strefy tętna", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onToggleExpanded() },
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    DonutChart(stats = result.zones, modifier = Modifier.size(100.dp))
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Przeważający efekt treningu", style = MaterialTheme.typography.labelMedium)
-                        Text(result.trainingEffect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    }
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Strefy tętna",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                result.zones.reversed().forEach { stat ->
-                    ZoneRow(stat)
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                
+                if (!isExpanded) {
+                    Text(
+                        text = result.trainingEffect,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            DonutChart(stats = result.zones, modifier = Modifier.size(100.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("Przeważający efekt treningu", style = MaterialTheme.typography.labelMedium)
+                                Text(result.trainingEffect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        result.zones.reversed().forEach { stat ->
+                            ZoneRow(stat)
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                        }
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
