@@ -180,6 +180,12 @@ fun MapSection(
         }
     }
 
+    LaunchedEffect(selectedIndex) {
+        if (selectedIndex != null && selectedIndex in data.route.indices) {
+            cameraPositionState.animate(CameraUpdateFactory.newLatLng(data.route[selectedIndex]))
+        }
+    }
+
     Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 16.dp).clip(RoundedCornerShape(12.dp))) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -195,7 +201,7 @@ fun MapSection(
             if (selectedIndex != null && selectedIndex in data.route.indices) {
                 Circle(
                     center = data.route[selectedIndex],
-                    radius = 10.0,
+                    radius = 20.0,
                     fillColor = Color.White.copy(alpha = 0.7f),
                     strokeColor = Color.Black,
                     strokeWidth = 2f,

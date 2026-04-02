@@ -57,6 +57,7 @@ import com.patrykandpatrick.vico.core.component.shape.Shapes
 import com.patrykandpatrick.vico.core.component.shape.cornered.Corner
 import com.patrykandpatrick.vico.core.component.shape.cornered.MarkerCorneredShape
 import com.patrykandpatrick.vico.core.component.shape.shader.DynamicShaders
+import com.patrykandpatrick.vico.core.context.DrawContext
 import com.patrykandpatrick.vico.core.dimensions.MutableDimensions
 import com.patrykandpatrick.vico.core.entry.ChartEntryModel
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -215,18 +216,8 @@ fun CommonChartSection(
         else DecimalFormat("#,###.#", symbols)
     }
 
-    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors, isTimestampX)
-
-    val markerVisibilityChangeListener = remember(onMarkerShown) {
-        object : MarkerVisibilityChangeListener {
-            override fun onMarkerShown(marker: Marker, markerEntryModels: List<Marker.EntryModel>) {
-                onMarkerShown?.invoke(markerEntryModels.firstOrNull()?.entry?.x?.toInt())
-            }
-            override fun onMarkerHidden(marker: Marker) {
-                onMarkerShown?.invoke(null)
-            }
-        }
-    }
+    val currentOnMarkerShown by rememberUpdatedState(onMarkerShown)
+    val marker = rememberMarkerCustom(overallRawData, detailTimes, unit, lineColors, isTimestampX, currentOnMarkerShown)
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp)) {
         if (title.isNotEmpty()) {
@@ -237,10 +228,6 @@ fun CommonChartSection(
             val chartWidthDp = this.maxWidth - 50.dp
             val totalPointsForSpacing = if (totalPoints > 1) totalPoints else 2
             val calculatedSpacing = if (isTimestampX) 20.dp else (chartWidthDp - 24.dp) / (totalPointsForSpacing - 1).toFloat()
-
-            LaunchedEffect(totalPoints, calculatedSpacing) {
-                Log.d("ChartDebug", "CommonChart: title=$title, points=$totalPoints, spacing=$calculatedSpacing, unit=$unit")
-            }
 
             val horizontalItemPlacer = remember(totalPoints, isTimestampX) {
                 if (isTimestampX) {
@@ -262,7 +249,6 @@ fun CommonChartSection(
                 ),
                 chartModelProducer = producer,
                 marker = marker,
-                markerVisibilityChangeListener = markerVisibilityChangeListener,
                 startAxis = rememberStartAxis(
                     label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
                     valueFormatter = { value, _ -> 
@@ -330,7 +316,8 @@ fun rememberMarkerCustom(
     detailTimes: List<String>?,
     unit: String,
     compareColors: List<Color>? = null,
-    isTimestampX: Boolean = false
+    isTimestampX: Boolean = false,
+    onMarkerShown: ((Int?) -> Unit)? = null
 ): Marker {
     val labelBackgroundColor = MaterialTheme.colorScheme.surface
     val labelTextColor = MaterialTheme.colorScheme.onSurface
@@ -363,17 +350,17 @@ fun rememberMarkerCustom(
     val indicator = shapeComponent(shape = Shapes.pillShape, color = primaryColor)
     val guideline = lineComponent(color = primaryColor.copy(alpha = 0.5f), thickness = 2.dp)
     
-    return remember(label, indicator, guideline, overallRawData, detailTimes, unit, compareColors, isTimestampX) {
+    return remember(label, indicator, guideline, overallRawData, detailTimes, unit, compareColors, isTimestampX, onMarkerShown) {
         object : MarkerComponent(label, indicator, guideline) {
-            override fun getInsets(
-                context: com.patrykandpatrick.vico.core.context.MeasureContext,
-                outInsets: com.patrykandpatrick.vico.core.chart.insets.Insets,
-                horizontalDimensions: com.patrykandpatrick.vico.core.chart.dimensions.HorizontalDimensions
+            override fun draw(
+                context: DrawContext,
+                bounds: RectF,
+                markedEntries: List<Marker.EntryModel>,
+                chartValuesProvider: com.patrykandpatrick.vico.core.chart.values.ChartValuesProvider
             ) {
-                with(context) {
-                    val height = label.getHeight(context, text = if (isDetail || isTimestampX) "100.0 unit\n00:00:00" else "Activity\n2024-01-01\n100.0 unit")
-                    outInsets.top = height + (density * 4f)
-                }
+                super.draw(context, bounds, markedEntries, chartValuesProvider)
+                val index = markedEntries.firstOrNull()?.entry?.x?.toInt()
+                onMarkerShown?.invoke(index)
             }
         }.apply {
             labelFormatter = MarkerLabelFormatter { markedEntries, _ ->
