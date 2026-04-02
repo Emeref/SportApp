@@ -34,6 +34,7 @@ import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
@@ -181,16 +182,21 @@ fun MapSection(
         } else data.route
 
         if (pointsToShow.isNotEmpty()) {
-            val bounds = LatLngBounds.Builder().apply { pointsToShow.forEach { include(it) } }.build()
-            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+            // Szukanie punktów ekstremalnych (N, E, W, S)
+            val n = pointsToShow.maxBy { it.latitude }
+            val s = pointsToShow.minBy { it.latitude }
+            val e = pointsToShow.maxBy { it.longitude }
+            val w = pointsToShow.minBy { it.longitude }
+            
+            val bounds = LatLngBounds.Builder()
+                .include(n).include(s).include(e).include(w)
+                .build()
+                
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 50))
         }
     }
 
-    LaunchedEffect(selectedIndex) {
-        if (selectedIndex != null && selectedIndex in data.route.indices) {
-            cameraPositionState.animate(CameraUpdateFactory.newLatLng(data.route[selectedIndex]))
-        }
-    }
+    // Centrowanie kamery na zaznaczonym punkcie zostało usunięte.
 
     Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 16.dp).clip(RoundedCornerShape(12.dp))) {
         GoogleMap(

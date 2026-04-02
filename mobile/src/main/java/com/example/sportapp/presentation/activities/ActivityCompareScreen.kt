@@ -384,30 +384,46 @@ fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean, selected
     val routesAreClose = areRoutesClose(s1.route, s2.route, AppConstants.MAP_COMPARISON_RADIUS_KM)
     if (routesAreClose) {
         val cameraPositionState = rememberCameraPositionState()
+        var isMapLoaded by remember { mutableStateOf(false) }
         val bounds = remember(s1.route, s2.route) {
-            LatLngBounds.Builder().apply { (s1.route + s2.route).forEach { include(it) } }.build()
-        }
-        LaunchedEffect(bounds) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100)) }
-        
-        LaunchedEffect(selectedIndex) {
-            if (selectedIndex != null) {
-                val points = mutableListOf<LatLng>()
-                if (selectedIndex in s1.route.indices) points.add(s1.route[selectedIndex])
-                if (selectedIndex in s2.route.indices) points.add(s2.route[selectedIndex])
-                if (points.isNotEmpty()) {
-                    if (points.size == 1) {
-                        cameraPositionState.animate(CameraUpdateFactory.newLatLng(points[0]))
-                    } else {
-                        val pointBounds = LatLngBounds.Builder().apply { points.forEach { include(it) } }.build()
-                        // Jeśli punkty są blisko siebie, centrujemy między nimi, ale nie zmieniamy zoomu zbyt drastycznie
-                        cameraPositionState.animate(CameraUpdateFactory.newLatLng(pointBounds.center))
-                    }
-                }
+            // Filtracja punktów (0,0) przed obliczeniami
+            val combined = (s1.route + s2.route).filter { it.latitude != 0.0 && it.longitude != 0.0 }
+            if (combined.isEmpty()) null
+            else {
+                // Jawne szukanie punktów ekstremalnych (N, E, W, S) z obu tras
+                val n = combined.maxBy { it.latitude }.latitude
+                val s = combined.minBy { it.latitude }.latitude
+                val e = combined.maxBy { it.longitude }.longitude
+                val w = combined.minBy { it.longitude }.longitude
+                
+                // Minimalna rozpiętość (ok. 100m), aby uniknąć ucinania trasy przy dużym zoomie
+                val minSpan = 0.001 
+                val finalN = if (n - s < minSpan) n + (minSpan / 2) else n
+                val finalS = if (n - s < minSpan) s - (minSpan / 2) else s
+                val finalE = if (e - w < minSpan) e + (minSpan / 2) else e
+                val finalW = if (e - w < minSpan) w - (minSpan / 2) else w
+
+                LatLngBounds.Builder()
+                    .include(LatLng(finalN, finalE))
+                    .include(LatLng(finalS, finalW))
+                    .build()
             }
         }
-
+        
+        // Kamera ustawiana tylko gdy mapa jest w pełni załadowana (onMapLoaded)
+        LaunchedEffect(bounds, isMapLoaded) {
+            if (isMapLoaded && bounds != null) {
+                cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 20))
+            }
+        }
+        
         Box(modifier = Modifier.fillMaxWidth().height(300.dp).padding(16.dp).clip(RoundedCornerShape(12.dp))) {
-            GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = mapStyle), cameraPositionState = cameraPositionState) {
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(), 
+                properties = MapProperties(mapStyleOptions = mapStyle), 
+                cameraPositionState = cameraPositionState,
+                onMapLoaded = { isMapLoaded = true }
+            ) {
                 Polyline(s1.route, color = Color1, width = 8f); Polyline(s2.route, color = Color2, width = 8f)
                 
                 if (selectedIndex != null) {
@@ -433,19 +449,43 @@ fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean, selected
 @Composable
 fun MapSmall(route: List<LatLng>, color: Color, style: MapStyleOptions?, modifier: Modifier, selectedIndex: Int? = null) {
     val cameraPositionState = rememberCameraPositionState()
-    if (route.isNotEmpty()) {
-        val bounds = remember(route) { LatLngBounds.Builder().apply { route.forEach { include(it) } }.build() }
-        LaunchedEffect(bounds) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 50)) }
+    var isMapLoaded by remember { mutableStateOf(false) }
+    val bounds = remember(route) {
+        val filtered = route.filter { it.latitude != 0.0 && it.longitude != 0.0 }
+        if (filtered.isEmpty()) null
+        else {
+            val n = filtered.maxBy { it.latitude }.latitude
+            val s = filtered.minBy { it.latitude }.latitude
+            val e = filtered.maxBy { it.longitude }.longitude
+            val w = filtered.minBy { it.longitude }.longitude
+            
+            val minSpan = 0.001
+            val finalN = if (n - s < minSpan) n + (minSpan / 2) else n
+            val finalS = if (n - s < minSpan) s - (minSpan / 2) else s
+            val finalE = if (e - w < minSpan) e + (minSpan / 2) else e
+            val finalW = if (e - w < minSpan) w - (minSpan / 2) else w
+
+            LatLngBounds.Builder()
+                .include(LatLng(finalN, finalE))
+                .include(LatLng(finalS, finalW))
+                .build()
+        }
     }
 
-    LaunchedEffect(selectedIndex) {
-        if (selectedIndex != null && selectedIndex in route.indices) {
-            cameraPositionState.animate(CameraUpdateFactory.newLatLng(route[selectedIndex]))
+    LaunchedEffect(bounds, isMapLoaded) {
+        if (isMapLoaded && bounds != null) {
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 20))
         }
     }
 
     Box(modifier = modifier.clip(RoundedCornerShape(8.dp))) {
-        GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = style), uiSettings = MapUiSettings(zoomControlsEnabled = false, scrollGesturesEnabled = false), cameraPositionState = cameraPositionState) { 
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(), 
+            properties = MapProperties(mapStyleOptions = style), 
+            uiSettings = MapUiSettings(zoomControlsEnabled = false, scrollGesturesEnabled = false), 
+            cameraPositionState = cameraPositionState,
+            onMapLoaded = { isMapLoaded = true }
+        ) {
             Polyline(route, color = color, width = 6f) 
             if (selectedIndex != null && selectedIndex in route.indices) {
                 val zoom = cameraPositionState.position.zoom
