@@ -38,6 +38,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 import java.util.Locale
+import kotlin.math.pow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -199,9 +200,11 @@ fun MapSection(
                 if (lapPoints.isNotEmpty()) Polyline(points = lapPoints, color = MaterialTheme.colorScheme.tertiary, width = 15f, zIndex = 1f)
             }
             if (selectedIndex != null && selectedIndex in data.route.indices) {
+                val zoom = cameraPositionState.position.zoom
+                val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
                 Circle(
                     center = data.route[selectedIndex],
-                    radius = 20.0,
+                    radius = adaptiveRadius,
                     fillColor = Color.White.copy(alpha = 0.7f),
                     strokeColor = Color.Black,
                     strokeWidth = 2f,

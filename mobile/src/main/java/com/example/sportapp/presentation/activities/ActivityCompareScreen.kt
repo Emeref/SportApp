@@ -38,6 +38,7 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 import java.util.Locale
+import kotlin.math.pow
 
 private val Color1 = Color(0xFF2196F3) // Niebieski
 private val Color2 = Color(0xFFFF9800) // Pomarańczowy
@@ -331,16 +332,36 @@ fun CompareMaps(s1: SessionData, s2: SessionData, isDarkTheme: Boolean, selected
             LatLngBounds.Builder().apply { (s1.route + s2.route).forEach { include(it) } }.build()
         }
         LaunchedEffect(bounds) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100)) }
+        
+        LaunchedEffect(selectedIndex) {
+            if (selectedIndex != null) {
+                val points = mutableListOf<LatLng>()
+                if (selectedIndex in s1.route.indices) points.add(s1.route[selectedIndex])
+                if (selectedIndex in s2.route.indices) points.add(s2.route[selectedIndex])
+                if (points.isNotEmpty()) {
+                    if (points.size == 1) {
+                        cameraPositionState.animate(CameraUpdateFactory.newLatLng(points[0]))
+                    } else {
+                        val pointBounds = LatLngBounds.Builder().apply { points.forEach { include(it) } }.build()
+                        // Jeśli punkty są blisko siebie, centrujemy między nimi, ale nie zmieniamy zoomu zbyt drastycznie
+                        cameraPositionState.animate(CameraUpdateFactory.newLatLng(pointBounds.center))
+                    }
+                }
+            }
+        }
+
         Box(modifier = Modifier.fillMaxWidth().height(300.dp).padding(16.dp).clip(RoundedCornerShape(12.dp))) {
             GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = mapStyle), cameraPositionState = cameraPositionState) {
                 Polyline(s1.route, color = Color1, width = 8f); Polyline(s2.route, color = Color2, width = 8f)
                 
                 if (selectedIndex != null) {
+                    val zoom = cameraPositionState.position.zoom
+                    val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
                     if (selectedIndex in s1.route.indices) {
-                        Circle(center = s1.route[selectedIndex], radius = 10.0, fillColor = Color.White.copy(alpha = 0.5f), strokeColor = Color1, strokeWidth = 5f, zIndex = 9f)
+                        Circle(center = s1.route[selectedIndex], radius = adaptiveRadius, fillColor = Color.White.copy(alpha = 0.7f), strokeColor = Color1, strokeWidth = 2f, zIndex = 10f)
                     }
                     if (selectedIndex in s2.route.indices) {
-                        Circle(center = s2.route[selectedIndex], radius = 10.0, fillColor = Color.White.copy(alpha = 0.5f), strokeColor = Color2, strokeWidth = 5f, zIndex = 9f)
+                        Circle(center = s2.route[selectedIndex], radius = adaptiveRadius, fillColor = Color.White.copy(alpha = 0.7f), strokeColor = Color2, strokeWidth = 2f, zIndex = 11f)
                     }
                 }
             }
@@ -360,17 +381,20 @@ fun MapSmall(route: List<LatLng>, color: Color, style: MapStyleOptions?, modifie
         val bounds = remember(route) { LatLngBounds.Builder().apply { route.forEach { include(it) } }.build() }
         LaunchedEffect(bounds) { cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 50)) }
     }
+
+    LaunchedEffect(selectedIndex) {
+        if (selectedIndex != null && selectedIndex in route.indices) {
+            cameraPositionState.animate(CameraUpdateFactory.newLatLng(route[selectedIndex]))
+        }
+    }
+
     Box(modifier = modifier.clip(RoundedCornerShape(8.dp))) {
         GoogleMap(modifier = Modifier.fillMaxSize(), properties = MapProperties(mapStyleOptions = style), uiSettings = MapUiSettings(zoomControlsEnabled = false, scrollGesturesEnabled = false), cameraPositionState = cameraPositionState) { 
             Polyline(route, color = color, width = 6f) 
             if (selectedIndex != null && selectedIndex in route.indices) {
-                Marker(
-                    state = MarkerState(position = route[selectedIndex]),
-                    icon = BitmapDescriptorFactory.defaultMarker(if (color == Color1) BitmapDescriptorFactory.HUE_AZURE else BitmapDescriptorFactory.HUE_ORANGE),
-                    anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f),
-                    zIndex = 10f
-                )
-                Circle(center = route[selectedIndex], radius = 50.0, fillColor = Color.White.copy(alpha = 0.5f), strokeColor = color, strokeWidth = 6f, zIndex = 9f)
+                val zoom = cameraPositionState.position.zoom
+                val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
+                Circle(center = route[selectedIndex], radius = adaptiveRadius, fillColor = Color.White.copy(alpha = 0.7f), strokeColor = color, strokeWidth = 2f, zIndex = 10f)
             }
         }
     }
