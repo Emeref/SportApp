@@ -1,5 +1,9 @@
 package com.example.sportapp.presentation.stats
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -24,6 +28,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -37,8 +42,9 @@ import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
@@ -64,6 +70,11 @@ fun ActivityDetailScreen(
     var isHrZonesExpanded by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
     var isMapFullScreen by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        MapsInitializer.initialize(context)
+    }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -107,7 +118,6 @@ fun ActivityDetailScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(padding)
                 ) {
-                    // Nagłówek
                     item {
                         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                             Text(text = data.activityName, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
@@ -115,13 +125,11 @@ fun ActivityDetailScreen(
                         }
                     }
 
-                    // Widgety podsumowania
                     item {
                         SummaryWidgetsGrid(data, settings.visibleWidgets)
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    // Dynamiczne sekcje (Mapy, Wykresy)
                     items(settings.visibleCharts.filter { it.isEnabled }) { widget ->
                         when (widget.id) {
                             "map" -> {
@@ -204,9 +212,8 @@ fun MapSection(
 
     LaunchedEffect(selectedLap, data.route) {
         val pointsToShow = if (selectedLap != null) {
-            val lap = selectedLap
-            val start = lap.startLocationIndex.coerceIn(data.route.indices)
-            val end = (lap.endLocationIndex + 1).coerceIn(0, data.route.size)
+            val start = selectedLap.startLocationIndex.coerceIn(data.route.indices)
+            val end = (selectedLap.endLocationIndex + 1).coerceIn(0, data.route.size)
             if (start < end) data.route.subList(start, end) else emptyList()
         } else data.route
 
@@ -231,7 +238,29 @@ fun MapSection(
             properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
             onMapClick = { onMapClick() }
         ) {
+            val startIcon = remember { BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) }
+            val finishIcon = remember {
+                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.finish_flag)
+                val scaled = Bitmap.createScaledBitmap(bitmap, 100, 100, true)
+                BitmapDescriptorFactory.fromBitmap(scaled)
+            }
+
             Polyline(points = data.route, color = Color(settings.trackColor), width = 10f)
+            
+            if (data.route.isNotEmpty()) {
+                Marker(
+                    state = rememberMarkerState(position = data.route.first()),
+                    icon = startIcon,
+                    title = "Start"
+                )
+                Marker(
+                    state = rememberMarkerState(position = data.route.last()),
+                    icon = finishIcon,
+                    title = "Meta",
+                    anchor = Offset(0.0f, 1.0f) // Dolny lewy punkt obrazka na końcu trasy
+                )
+            }
+
             selectedLap?.let { lap ->
                 val start = lap.startLocationIndex.coerceIn(data.route.indices)
                 val end = (lap.endLocationIndex + 1).coerceIn(0, data.route.size)
@@ -275,9 +304,8 @@ fun FullScreenMap(
 
     LaunchedEffect(selectedLap, data.route) {
         val pointsToShow = if (selectedLap != null) {
-            val lap = selectedLap
-            val start = lap.startLocationIndex.coerceIn(data.route.indices)
-            val end = (lap.endLocationIndex + 1).coerceIn(0, data.route.size)
+            val start = selectedLap.startLocationIndex.coerceIn(data.route.indices)
+            val end = (selectedLap.endLocationIndex + 1).coerceIn(0, data.route.size)
             if (start < end) data.route.subList(start, end) else emptyList()
         } else data.route
 
@@ -301,7 +329,29 @@ fun FullScreenMap(
             cameraPositionState = cameraPositionState,
             properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
         ) {
+            val startIcon = remember { BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) }
+            val finishIcon = remember {
+                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.finish_flag)
+                val scaled = Bitmap.createScaledBitmap(bitmap, 100, 100, true)
+                BitmapDescriptorFactory.fromBitmap(scaled)
+            }
+
             Polyline(points = data.route, color = Color(settings.trackColor), width = 10f)
+
+            if (data.route.isNotEmpty()) {
+                Marker(
+                    state = rememberMarkerState(position = data.route.first()),
+                    icon = startIcon,
+                    title = "Start"
+                )
+                Marker(
+                    state = rememberMarkerState(position = data.route.last()),
+                    icon = finishIcon,
+                    title = "Meta",
+                    anchor = Offset(0.0f, 1.0f) // Dolny lewy punkt obrazka na końcu trasy
+                )
+            }
+
             selectedLap?.let { lap ->
                 val start = lap.startLocationIndex.coerceIn(data.route.indices)
                 val end = (lap.endLocationIndex + 1).coerceIn(0, data.route.size)
@@ -383,7 +433,7 @@ fun ExpandableLapsSection(
         AnimatedVisibility(visible = isExpanded) {
             Column {
                 Spacer(modifier = Modifier.height(8.dp))
-                LapsTable(laps, selectedLap, onLapClick, autoLapDistance)
+                LapsTable(laps, selectedLap, onLapClick)
             }
         }
         
@@ -511,7 +561,7 @@ private fun formatSeconds(seconds: Long): String {
 }
 
 @Composable
-fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (WorkoutLap) -> Unit, autoLapDistance: Double?) {
+fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (WorkoutLap) -> Unit) {
     val validLapsForPace = laps.filter { it.avgPaceSecondsPerKm > 0 }
     val fastestPace = validLapsForPace.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
     val slowestPace = validLapsForPace.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
