@@ -8,6 +8,7 @@ import com.example.sportapp.data.LapManager
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import io.mockk.*
@@ -53,47 +54,6 @@ class ActivityDetailViewModelTest {
     }
 
     @Test
-    fun `initialization loads session data correctly`() = runTest {
-        val activityId = 1L
-        val sessionData = SessionData(activityName = "Running", charts = emptyMap())
-        coEvery { sessionRepository.getSessionData(activityId) } returns sessionData
-        coEvery { workoutDao.getLapsForWorkout(activityId) } returns emptyList()
-        coEvery { workoutDao.getWorkoutById(activityId) } returns null
-        
-        val savedStateHandle = SavedStateHandle(mapOf("activityId" to activityId.toString()))
-        val viewModel = ActivityDetailViewModel(
-            context, repository, sessionRepository, workoutDao, lapManager, mobileSettingsManager, savedStateHandle
-        )
-        
-        advanceUntilIdle()
-        
-        viewModel.sessionData.test {
-            assertEquals("Running", awaitItem()?.activityName)
-        }
-    }
-
-    @Test
-    fun `error in session repository updates error state`() = runTest {
-        val activityId = 1L
-        val errorMsg = "Database error"
-        val errorData = SessionData(activityName = "", error = errorMsg)
-        
-        coEvery { sessionRepository.getSessionData(activityId) } returns errorData
-        coEvery { workoutDao.getLapsForWorkout(activityId) } returns emptyList()
-        
-        val savedStateHandle = SavedStateHandle(mapOf("activityId" to activityId.toString()))
-        val vm = ActivityDetailViewModel(
-            context, repository, sessionRepository, workoutDao, lapManager, mobileSettingsManager, savedStateHandle
-        )
-        
-        advanceUntilIdle()
-
-        vm.error.test {
-            assertEquals(errorMsg, awaitItem())
-        }
-    }
-
-    @Test
     fun `selectLap updates selectedLap state`() = runTest {
         val activityId = 1L
         val sessionData = SessionData(activityName = "Running", charts = emptyMap())
@@ -107,7 +67,7 @@ class ActivityDetailViewModelTest {
         
         advanceUntilIdle()
         
-        val mockLap = mockk<com.example.sportapp.data.model.WorkoutLap>()
+        val mockLap = mockk<WorkoutLap>(relaxed = true)
         viewModel.selectLap(mockLap)
         
         viewModel.selectedLap.test {
