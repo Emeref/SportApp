@@ -1,5 +1,10 @@
 package com.example.sportapp.presentation.stats
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,17 +14,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -33,8 +42,9 @@ import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
@@ -59,6 +69,12 @@ fun ActivityDetailScreen(
     var isIntervalsExpanded by remember { mutableStateOf(false) }
     var isHrZonesExpanded by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    var isMapFullScreen by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        MapsInitializer.initialize(context)
+    }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -75,90 +91,107 @@ fun ActivityDetailScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Szczegóły aktywności") },
-                navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót") } }
-            )
-        }
-    ) { padding ->
-        if (sessionData == null && error == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-        } else if (sessionData != null) {
-            val data = sessionData!!
-            
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding)
-            ) {
-                // Nagłówek
-                item {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text(text = data.activityName, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                        Text(text = data.activityDate, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-
-                // Widgety podsumowania
-                item {
-                    SummaryWidgetsGrid(data, settings.visibleWidgets)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Dynamiczne sekcje (Mapy, Wykresy)
-                items(settings.visibleCharts.filter { it.isEnabled }) { widget ->
-                    when (widget.id) {
-                        "map" -> {
-                            if (data.route.isNotEmpty()) {
-                                MapSection(data, settings, isDarkTheme, selectedLap, selectedIndex)
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
-                            if (laps.isNotEmpty()) {
-                                ExpandableLapsSection(
-                                    laps = laps,
-                                    selectedLap = selectedLap,
-                                    onLapClick = { viewModel.selectLap(it) },
-                                    autoLapDistance = autoLapDistance,
-                                    isExpanded = isIntervalsExpanded,
-                                    onToggleExpanded = { isIntervalsExpanded = !isIntervalsExpanded }
-                                )
-                            }
+    if (isMapFullScreen && sessionData != null) {
+        BackHandler { isMapFullScreen = false }
+        FullScreenMap(
+            data = sessionData!!,
+            settings = settings,
+            isDarkTheme = isDarkTheme,
+            selectedLap = selectedLap,
+            selectedIndex = selectedIndex,
+            onClose = { isMapFullScreen = false }
+        )
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Szczegóły aktywności") },
+                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót") } }
+                )
+            }
+        ) { padding ->
+            if (sessionData == null && error == null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            } else if (sessionData != null) {
+                val data = sessionData!!
+                
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding)
+                ) {
+                    item {
+                        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                            Text(text = data.activityName, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                            Text(text = data.activityDate, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        "bpm" -> {
-                            val producer = viewModel.chartProducers["bpm"]
-                            if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
-                                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    HeartRateChartSection("Tętno (bpm)", producer, data.times, hrZoneResult) { selectedIndex = it }
+                    }
+
+                    item {
+                        SummaryWidgetsGrid(data, settings.visibleWidgets)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    items(settings.visibleCharts.filter { it.isEnabled }) { widget ->
+                        when (widget.id) {
+                            "map" -> {
+                                if (data.route.isNotEmpty()) {
+                                    MapSection(
+                                        data = data, 
+                                        settings = settings, 
+                                        isDarkTheme = isDarkTheme, 
+                                        selectedLap = selectedLap, 
+                                        onMapClick = { viewModel.selectLap(null) }, 
+                                        selectedIndex = selectedIndex,
+                                        onExpandClick = { isMapFullScreen = true }
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
                                 }
-                                hrZoneResult?.let { result ->
+                                if (laps.isNotEmpty()) {
+                                    ExpandableLapsSection(
+                                        laps = laps,
+                                        selectedLap = selectedLap,
+                                        onLapClick = { viewModel.selectLap(it) },
+                                        autoLapDistance = autoLapDistance,
+                                        isExpanded = isIntervalsExpanded,
+                                        onToggleExpanded = { isIntervalsExpanded = !isIntervalsExpanded }
+                                    )
+                                }
+                            }
+                            "bpm" -> {
+                                val producer = viewModel.chartProducers["bpm"]
+                                if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
+                                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                        HeartRateChartSection("Tętno (bpm)", producer, data.times, hrZoneResult) { selectedIndex = it }
+                                    }
+                                    hrZoneResult?.let { result ->
+                                        Spacer(modifier = Modifier.height(24.dp))
+                                        HeartRateZonesSection(
+                                            result = result,
+                                            isExpanded = isHrZonesExpanded,
+                                            onToggleExpanded = { isHrZonesExpanded = !isHrZonesExpanded }
+                                        )
+                                    }
                                     Spacer(modifier = Modifier.height(24.dp))
-                                    HeartRateZonesSection(
-                                        result = result,
-                                        isExpanded = isHrZonesExpanded,
-                                        onToggleExpanded = { isHrZonesExpanded = !isHrZonesExpanded }
-                                    )
                                 }
-                                Spacer(modifier = Modifier.height(24.dp))
                             }
-                        }
-                        else -> {
-                            val producer = viewModel.chartProducers[widget.id]
-                            if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
-                                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    CommonChartSection(
-                                        title = widget.label, 
-                                        producer = producer, 
-                                        unit = getUnitForWidget(widget.id), 
-                                        detailTimes = data.times,
-                                        onMarkerShown = { selectedIndex = it }
-                                    )
+                            else -> {
+                                val producer = viewModel.chartProducers[widget.id]
+                                if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
+                                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                        CommonChartSection(
+                                            title = widget.label, 
+                                            producer = producer, 
+                                            unit = getUnitForWidget(widget.id), 
+                                            detailTimes = data.times,
+                                            onMarkerShown = { selectedIndex = it }
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(24.dp))
                                 }
-                                Spacer(modifier = Modifier.height(24.dp))
                             }
                         }
                     }
+                    item { Spacer(modifier = Modifier.height(32.dp)) }
                 }
-                item { Spacer(modifier = Modifier.height(32.dp)) }
             }
         }
     }
@@ -170,19 +203,21 @@ fun MapSection(
     settings: ActivityDetailSettings,
     isDarkTheme: Boolean,
     selectedLap: WorkoutLap?,
-    selectedIndex: Int? = null
+    onMapClick: () -> Unit,
+    selectedIndex: Int? = null,
+    onExpandClick: () -> Unit = {}
 ) {
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
 
     LaunchedEffect(selectedLap, data.route) {
         val pointsToShow = if (selectedLap != null) {
-            val lap = selectedLap
-            data.route.subList(lap.startLocationIndex.coerceIn(data.route.indices), (lap.endLocationIndex + 1).coerceIn(data.route.indices))
+            val start = selectedLap.startLocationIndex.coerceIn(data.route.indices)
+            val end = (selectedLap.endLocationIndex + 1).coerceIn(0, data.route.size)
+            if (start < end) data.route.subList(start, end) else emptyList()
         } else data.route
 
         if (pointsToShow.isNotEmpty()) {
-            // Szukanie punktów ekstremalnych (N, E, W, S)
             val n = pointsToShow.maxBy { it.latitude }
             val s = pointsToShow.minBy { it.latitude }
             val e = pointsToShow.maxBy { it.longitude }
@@ -196,18 +231,40 @@ fun MapSection(
         }
     }
 
-    // Centrowanie kamery na zaznaczonym punkcie zostało usunięte.
-
     Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 16.dp).clip(RoundedCornerShape(12.dp))) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
-            onMapClick = { /* Opcjonalnie reset zaznaczenia lapu można przenieść wyżej */ }
+            onMapClick = { onMapClick() }
         ) {
+            val startIcon = remember { BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) }
+            val finishIcon = remember {
+                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.finish_flag)
+                val scaled = Bitmap.createScaledBitmap(bitmap, 100, 100, true)
+                BitmapDescriptorFactory.fromBitmap(scaled)
+            }
+
             Polyline(points = data.route, color = Color(settings.trackColor), width = 10f)
+            
+            if (data.route.isNotEmpty()) {
+                Marker(
+                    state = rememberMarkerState(position = data.route.first()),
+                    icon = startIcon,
+                    title = "Start"
+                )
+                Marker(
+                    state = rememberMarkerState(position = data.route.last()),
+                    icon = finishIcon,
+                    title = "Meta",
+                    anchor = Offset(0.0f, 1.0f) // Dolny lewy punkt obrazka na końcu trasy
+                )
+            }
+
             selectedLap?.let { lap ->
-                val lapPoints = data.route.subList(lap.startLocationIndex.coerceIn(data.route.indices), (lap.endLocationIndex + 1).coerceIn(data.route.indices))
+                val start = lap.startLocationIndex.coerceIn(data.route.indices)
+                val end = (lap.endLocationIndex + 1).coerceIn(0, data.route.size)
+                val lapPoints = if (start < end) data.route.subList(start, end) else emptyList()
                 if (lapPoints.isNotEmpty()) Polyline(points = lapPoints, color = MaterialTheme.colorScheme.tertiary, width = 15f, zIndex = 1f)
             }
             if (selectedIndex != null && selectedIndex in data.route.indices) {
@@ -222,6 +279,104 @@ fun MapSection(
                     zIndex = 9f
                 )
             }
+        }
+        
+        IconButton(
+            onClick = onExpandClick,
+            modifier = Modifier.padding(8.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+        ) {
+            Icon(Icons.Default.Fullscreen, contentDescription = "Powiększ mapę")
+        }
+    }
+}
+
+@Composable
+fun FullScreenMap(
+    data: com.example.sportapp.data.SessionData,
+    settings: ActivityDetailSettings,
+    isDarkTheme: Boolean,
+    selectedLap: WorkoutLap?,
+    selectedIndex: Int?,
+    onClose: () -> Unit
+) {
+    val cameraPositionState = rememberCameraPositionState()
+    val context = LocalContext.current
+
+    LaunchedEffect(selectedLap, data.route) {
+        val pointsToShow = if (selectedLap != null) {
+            val start = selectedLap.startLocationIndex.coerceIn(data.route.indices)
+            val end = (selectedLap.endLocationIndex + 1).coerceIn(0, data.route.size)
+            if (start < end) data.route.subList(start, end) else emptyList()
+        } else data.route
+
+        if (pointsToShow.isNotEmpty()) {
+            val n = pointsToShow.maxBy { it.latitude }
+            val s = pointsToShow.minBy { it.latitude }
+            val e = pointsToShow.maxBy { it.longitude }
+            val w = pointsToShow.minBy { it.longitude }
+            
+            val bounds = LatLngBounds.Builder()
+                .include(n).include(s).include(e).include(w)
+                .build()
+                
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 50))
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
+        ) {
+            val startIcon = remember { BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) }
+            val finishIcon = remember {
+                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.finish_flag)
+                val scaled = Bitmap.createScaledBitmap(bitmap, 100, 100, true)
+                BitmapDescriptorFactory.fromBitmap(scaled)
+            }
+
+            Polyline(points = data.route, color = Color(settings.trackColor), width = 10f)
+
+            if (data.route.isNotEmpty()) {
+                Marker(
+                    state = rememberMarkerState(position = data.route.first()),
+                    icon = startIcon,
+                    title = "Start"
+                )
+                Marker(
+                    state = rememberMarkerState(position = data.route.last()),
+                    icon = finishIcon,
+                    title = "Meta",
+                    anchor = Offset(0.0f, 1.0f) // Dolny lewy punkt obrazka na końcu trasy
+                )
+            }
+
+            selectedLap?.let { lap ->
+                val start = lap.startLocationIndex.coerceIn(data.route.indices)
+                val end = (lap.endLocationIndex + 1).coerceIn(0, data.route.size)
+                val lapPoints = if (start < end) data.route.subList(start, end) else emptyList()
+                if (lapPoints.isNotEmpty()) Polyline(points = lapPoints, color = MaterialTheme.colorScheme.tertiary, width = 15f, zIndex = 1f)
+            }
+            if (selectedIndex != null && selectedIndex in data.route.indices) {
+                val zoom = cameraPositionState.position.zoom
+                val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
+                Circle(
+                    center = data.route[selectedIndex],
+                    radius = adaptiveRadius,
+                    fillColor = Color.White.copy(alpha = 0.7f),
+                    strokeColor = Color.Black,
+                    strokeWidth = 2f,
+                    zIndex = 9f
+                )
+            }
+        }
+        
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+        ) {
+            Icon(Icons.Default.FullscreenExit, contentDescription = "Zmniejsz mapę")
         }
     }
 }
@@ -278,7 +433,7 @@ fun ExpandableLapsSection(
         AnimatedVisibility(visible = isExpanded) {
             Column {
                 Spacer(modifier = Modifier.height(8.dp))
-                LapsTable(laps, selectedLap, onLapClick, autoLapDistance)
+                LapsTable(laps, selectedLap, onLapClick)
             }
         }
         
@@ -406,7 +561,7 @@ private fun formatSeconds(seconds: Long): String {
 }
 
 @Composable
-fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (WorkoutLap) -> Unit, autoLapDistance: Double?) {
+fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (WorkoutLap) -> Unit) {
     val validLapsForPace = laps.filter { it.avgPaceSecondsPerKm > 0 }
     val fastestPace = validLapsForPace.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
     val slowestPace = validLapsForPace.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0

@@ -210,7 +210,11 @@ class ActivityDetailViewModel @Inject constructor(
     }
 
     fun selectLap(lap: WorkoutLap?) {
-        _selectedLap.value = lap
+        if (_selectedLap.value?.lapNumber == lap?.lapNumber) {
+            _selectedLap.value = null
+        } else {
+            _selectedLap.value = lap
+        }
     }
 
     fun clearError() {
