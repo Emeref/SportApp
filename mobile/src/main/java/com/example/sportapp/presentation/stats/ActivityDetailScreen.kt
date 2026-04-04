@@ -110,7 +110,7 @@ fun ActivityDetailScreen(
                     when (widget.id) {
                         "map" -> {
                             if (data.route.isNotEmpty()) {
-                                MapSection(data, settings, isDarkTheme, selectedLap, selectedIndex)
+                                MapSection(data, settings, isDarkTheme, selectedLap, { viewModel.selectLap(null) }, selectedIndex)
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
                             if (laps.isNotEmpty()) {
@@ -170,6 +170,7 @@ fun MapSection(
     settings: ActivityDetailSettings,
     isDarkTheme: Boolean,
     selectedLap: WorkoutLap?,
+    onMapClick: () -> Unit,
     selectedIndex: Int? = null
 ) {
     val cameraPositionState = rememberCameraPositionState()
@@ -178,11 +179,12 @@ fun MapSection(
     LaunchedEffect(selectedLap, data.route) {
         val pointsToShow = if (selectedLap != null) {
             val lap = selectedLap
-            data.route.subList(lap.startLocationIndex.coerceIn(data.route.indices), (lap.endLocationIndex + 1).coerceIn(data.route.indices))
+            val start = lap.startLocationIndex.coerceIn(data.route.indices)
+            val end = (lap.endLocationIndex + 1).coerceIn(0, data.route.size)
+            if (start < end) data.route.subList(start, end) else emptyList()
         } else data.route
 
         if (pointsToShow.isNotEmpty()) {
-            // Szukanie punktów ekstremalnych (N, E, W, S)
             val n = pointsToShow.maxBy { it.latitude }
             val s = pointsToShow.minBy { it.latitude }
             val e = pointsToShow.maxBy { it.longitude }
@@ -196,18 +198,18 @@ fun MapSection(
         }
     }
 
-    // Centrowanie kamery na zaznaczonym punkcie zostało usunięte.
-
     Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 16.dp).clip(RoundedCornerShape(12.dp))) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
-            onMapClick = { /* Opcjonalnie reset zaznaczenia lapu można przenieść wyżej */ }
+            onMapClick = { onMapClick() }
         ) {
             Polyline(points = data.route, color = Color(settings.trackColor), width = 10f)
             selectedLap?.let { lap ->
-                val lapPoints = data.route.subList(lap.startLocationIndex.coerceIn(data.route.indices), (lap.endLocationIndex + 1).coerceIn(data.route.indices))
+                val start = lap.startLocationIndex.coerceIn(data.route.indices)
+                val end = (lap.endLocationIndex + 1).coerceIn(0, data.route.size)
+                val lapPoints = if (start < end) data.route.subList(start, end) else emptyList()
                 if (lapPoints.isNotEmpty()) Polyline(points = lapPoints, color = MaterialTheme.colorScheme.tertiary, width = 15f, zIndex = 1f)
             }
             if (selectedIndex != null && selectedIndex in data.route.indices) {
