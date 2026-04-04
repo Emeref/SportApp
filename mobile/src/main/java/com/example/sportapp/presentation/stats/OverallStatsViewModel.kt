@@ -70,6 +70,45 @@ class OverallStatsViewModel @Inject constructor(
 
     init {
         refreshActivityTypes()
+
+        viewModelScope.launch {
+            // Ustawienie domyślnych dat na podstawie historii aktywności
+            repository.getAllWorkouts().filter { it.isNotEmpty() }.take(1).collect { workouts ->
+                val oldestWorkoutDate = workouts.minOf { it.startTime }
+                val oneMonthAgoCal = Calendar.getInstance().apply {
+                    add(Calendar.MONTH, -1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val oneMonthAgo = oneMonthAgoCal.timeInMillis
+
+                if (oldestWorkoutDate < oneMonthAgo) {
+                    // Najstarsza aktywność jest starsza niż miesiąc temu -> ustawiamy filtr na miesiąc temu
+                    _startDate.value = oneMonthAgoCal.time
+                } else {
+                    // Najstarsza aktywność jest nowsza niż miesiąc temu -> ustawiamy filtr na dzień przed pierwszą aktywnością
+                    _startDate.value = Calendar.getInstance().apply {
+                        timeInMillis = oldestWorkoutDate
+                        add(Calendar.DAY_OF_YEAR, -1)
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.time
+                }
+
+                if (_endDate.value == null) {
+                    _endDate.value = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, 23)
+                        set(Calendar.MINUTE, 59)
+                        set(Calendar.SECOND, 59)
+                        set(Calendar.MILLISECOND, 999)
+                    }.time
+                }
+            }
+        }
         
         viewModelScope.launch {
             combine(_selectedType, _startDate, _endDate, repository.getAllWorkouts()) { type, start, end, _ ->
