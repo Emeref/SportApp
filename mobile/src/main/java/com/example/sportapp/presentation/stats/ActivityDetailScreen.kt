@@ -227,7 +227,7 @@ fun MapSection(
                 .include(n).include(s).include(e).include(w)
                 .build()
                 
-            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 50))
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
         }
     }
 
@@ -319,7 +319,7 @@ fun FullScreenMap(
                 .include(n).include(s).include(e).include(w)
                 .build()
                 
-            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 50))
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
         }
     }
 

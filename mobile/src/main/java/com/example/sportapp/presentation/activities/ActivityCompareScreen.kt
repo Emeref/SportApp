@@ -445,7 +445,7 @@ fun CompareMaps(
         
         LaunchedEffect(bounds, isMapLoaded) {
             if (isMapLoaded && bounds != null) {
-                cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 20))
+                cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
             }
         }
         
@@ -539,7 +539,7 @@ fun FullScreenCompareMap(
 
     LaunchedEffect(bounds, isMapLoaded) {
         if (isMapLoaded && bounds != null) {
-            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 50))
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
         }
     }
 
@@ -626,7 +626,7 @@ fun MapSmall(
 
     LaunchedEffect(bounds, isMapLoaded) {
         if (isMapLoaded && bounds != null) {
-            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 20))
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
         }
     }
 
