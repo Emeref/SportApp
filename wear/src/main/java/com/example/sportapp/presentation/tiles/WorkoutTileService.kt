@@ -108,11 +108,24 @@ class WorkoutTileService : SuspendingTileService() {
             "DirectionsWalk" -> R.drawable.directionswalk
             "DirectionsBike" -> R.drawable.directionsbike
             "Pool" -> R.drawable.pool
-            "Fitness" -> R.drawable.fitness
+            "Fitness" -> R.drawable.fitnesscenter
             "SelfImprovement" -> R.drawable.selfimprovement
             "Mountain" -> R.drawable.mountain
             "SportsTennis" -> R.drawable.sportstennis
-            else -> R.drawable.ic_launcher_foreground
+            "Kayaking" -> R.drawable.kayaking
+            "Snowboarding" -> R.drawable.snowboarding
+            "Surfing" -> R.drawable.surfing
+            "IceSkating" -> R.drawable.iceskating
+            "Golf" -> R.drawable.golf
+            "SportsSoccer" -> R.drawable.sportssoccer
+            "SportsBasketball" -> R.drawable.sportsbasketball
+            "SportsVolleyball" -> R.drawable.sportsvolleyball
+            "SportsBaseball" -> R.drawable.sportsbaseball
+            "Sailing" -> R.drawable.sailing
+            "Skateboarding" -> R.drawable.skateboarding
+            "Sports" -> R.drawable.emojievents
+            "Timer" -> R.drawable.timer
+            else -> R.drawable.timer
         }
     }
 
