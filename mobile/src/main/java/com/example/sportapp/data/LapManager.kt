@@ -10,56 +10,45 @@ import javax.inject.Singleton
 @Singleton
 class LapManager @Inject constructor() {
 
+    /**
+     * Oblicza listę odcinków na podstawie listy punktów i zadanego dystansu autolapa.
+     * Zawsze przelicza wszystko od początku, aby zapewnić spójność danych i uniknąć "dziur" w numeracji.
+     */
     fun processLaps(
         workoutId: Long,
         points: List<WorkoutPointEntity>,
         autoLapDistance: Double,
-        existingLaps: List<WorkoutLap> = emptyList()
+        existingLaps: List<WorkoutLap> = emptyList() // Parametr zachowany dla kompatybilności, ale ignorowany
     ): List<WorkoutLap> {
-        if (points.size < 2 || autoLapDistance <= 0) return existingLaps
+        if (points.size < 2 || autoLapDistance <= 0) return emptyList()
 
         val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-        
-        // Znajdź odcinki, które są "pełne" (osiągnęły wymagany dystans)
-        // Ostatni odcinek w existingLaps mógł być "niepełny" (kończący trening), 
-        // więc traktujemy go jako do przeliczenia, jeśli przybyło punktów.
-        val completedLaps = existingLaps.filter { it.distanceMeters >= autoLapDistance * 0.999 }.toMutableList()
+        val resultLaps = mutableListOf<WorkoutLap>()
         
         var currentLapStartIdx = 0
         var lapNumber = 1
         
-        if (completedLaps.isNotEmpty()) {
-            val lastComplete = completedLaps.last()
-            currentLapStartIdx = lastComplete.endLocationIndex
-            lapNumber = lastComplete.lapNumber + 1
-        }
+        // Pobierz dystans początkowy, aby obsłużyć przesunięcia (np. start od 500m w logu)
+        val initialDist = points.first().let { it.distanceGps?.toDouble() ?: it.distanceSteps?.toDouble() ?: 0.0 }
         
-        // Jeśli nie ma nowych punktów do przetworzenia w stosunku do ostatniego pełnego odcinka
-        if (currentLapStartIdx >= points.size - 1 && completedLaps.size == existingLaps.size && existingLaps.isNotEmpty()) {
-            return existingLaps
-        }
+        // Próg dla pierwszego odcinka to kolejna wielokrotność autoLapDistance
+        var nextLapThreshold = ((initialDist / autoLapDistance).toInt() + 1) * autoLapDistance
 
-        val resultLaps = completedLaps.toMutableList()
-        
-        // Oblicz skumulowany dystans do punktu startowego obecnego odcinka
-        val startPoint = points[currentLapStartIdx]
-        val startTotalDist = startPoint.distanceGps?.toDouble() ?: startPoint.distanceSteps?.toDouble() ?: 0.0
-        
-        // Ustal próg dla następnego odcinka (następna wielokrotność autoLapDistance)
-        var nextLapThreshold = ((startTotalDist / autoLapDistance).toInt() + 1) * autoLapDistance
-
-        for (index in currentLapStartIdx until points.size) {
+        for (index in 0 until points.size) {
             val point = points[index]
             val currentTotalDist = point.distanceGps?.toDouble() ?: point.distanceSteps?.toDouble() ?: 0.0
             val isLastPoint = index == points.size - 1
             
+            // Warunek zakończenia odcinka: przekroczenie dystansu LUB ostatni punkt trasy
             if (currentTotalDist >= nextLapThreshold || isLastPoint) {
+                // Dodajemy odcinek tylko jeśli zawiera jakieś punkty (index > currentLapStartIdx)
                 if (index > currentLapStartIdx) {
                     val lapPoints = points.subList(currentLapStartIdx, index + 1)
                     val lap = calculateLapStats(workoutId, lapNumber, currentLapStartIdx, index, lapPoints, timeFormatter)
                     resultLaps.add(lap)
                     
-                    if (currentTotalDist >= nextLapThreshold) {
+                    // Jeśli to był próg dystansu (a nie tylko koniec trasy), przygotuj kolejny odcinek
+                    if (currentTotalDist >= nextLapThreshold && !isLastPoint) {
                         lapNumber++
                         while (nextLapThreshold <= currentTotalDist) {
                             nextLapThreshold += autoLapDistance

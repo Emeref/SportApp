@@ -19,6 +19,10 @@ Ponadto chcesz aby aplikacja działała szybko i była dobrze skonfigurowana.
 - Lokalizacja: Zawsze sprawdzaj uprawnienia (Permissions) przed odpaleniem sensorów.
 - Wszystkie sensory wymagające uprawnień muszą mieć obsłużony stan 'Brak uprawnień' (Permission Denied) w sposób czytelny dla użytkownika (np. ekran z prośą o włączenie w ustawieniach).
 
+
+## Baza danych
+- każda zmiana bazy danych musi zawierać kod migracji, aby żadne dane nie zostały stracone.
+
 ## Zarządzanie Plikami i Logami
 - Baza danych: Wszystkie logi i podsumowania zapisuj w bazie danych Room.
 - Optymalizacja: Dla logów w bazie danych używaj buforowania w pamięci RAM i zapisu w blokach lub przy pauzie/końcu treningu w celu oszczędzania baterii.

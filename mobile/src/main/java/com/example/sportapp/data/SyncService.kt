@@ -79,19 +79,22 @@ class SyncService : WearableListenerService() {
             
             val json = fd.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
             
+            // Parsowanie JSONa w sposób bezpieczny dla nowej struktury WorkoutEntity
             val type = object : TypeToken<Map<String, Any>>() {}.type
             val rawData: Map<String, Any> = gson.fromJson(json, type)
             
-            val workoutJson = gson.toJson(rawData["workout"])
+            val workoutMap = rawData["workout"] as Map<String, Any>
             val pointsJson = gson.toJson(rawData["points"])
 
-            val workout: WorkoutEntity = gson.fromJson(workoutJson, WorkoutEntity::class.java)
+            // Ręczne mapowanie lub użycie GSON z obsługa brakujących pól
+            val workout: WorkoutEntity = gson.fromJson(gson.toJson(workoutMap), WorkoutEntity::class.java)
             val points: List<WorkoutPointEntity> = gson.fromJson(pointsJson, object : TypeToken<List<WorkoutPointEntity>>() {}.type)
 
             val existingWorkouts = workoutDao.getWorkoutsSince(workout.startTime - 1000)
             val alreadyExists = existingWorkouts.find { it.startTime == workout.startTime && it.activityName == workout.activityName }
 
             val localId = if (alreadyExists != null) {
+                // Jeśli trening już istnieje, aktualizujemy go, ale zachowujemy autoLapDistance z nowej paczki jeśli tam jest
                 val updatedWorkout = workout.copy(id = alreadyExists.id)
                 workoutDao.updateWorkout(updatedWorkout)
                 alreadyExists.id

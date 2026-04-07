@@ -150,7 +150,7 @@ fun ActivityDetailScreen(
                                         laps = laps,
                                         selectedLap = selectedLap,
                                         onLapClick = { viewModel.selectLap(it) },
-                                        autoLapDistance = autoLapDistance,
+                                        autoLapDistance = autoLapDistance ?: data.autoLapDistance,
                                         isExpanded = isIntervalsExpanded,
                                         onToggleExpanded = { isIntervalsExpanded = !isIntervalsExpanded }
                                     )
@@ -703,7 +703,7 @@ private fun getUnitForWidget(id: String): String {
     return when(id) {
         "bpm", "srednie_bpm" -> "bpm"
         "kalorie_min", "kalorie_suma" -> "kcal"
-        "kroki_min" -> "kroków/min"
+        "kroków/min" -> "kroków/min"
         "odl_kroki", "gps_dystans" -> "m"
         "predkosc", "predkosc_kroki" -> "km/h"
         "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"

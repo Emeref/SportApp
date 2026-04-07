@@ -24,7 +24,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "sportapp_db"
         )
-        .fallbackToDestructiveMigration() // For development, simplify migration
+        .addMigrations(AppDatabase.MIGRATION_14_15)
         .build()
     }
 
