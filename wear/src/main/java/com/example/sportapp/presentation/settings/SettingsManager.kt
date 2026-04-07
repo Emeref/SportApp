@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.sportapp.TextsWearEN
 import com.example.sportapp.TextsWearPL
+import com.example.sportapp.TextsWearES
 import com.example.sportapp.WearTexts
 import com.example.sportapp.presentation.workout.DataLayerManager
 import com.google.gson.Gson
@@ -32,6 +33,7 @@ enum class ScreenBehavior {
 
 enum class AppLanguage(val code: String, val label: String, val texts: WearTexts) {
     POLISH("pl", "Polski", TextsWearPL),
+    SPANISH("es", "Español", TextsWearES),
     ENGLISH("en", "English", TextsWearEN)
 }
 
