@@ -17,6 +17,7 @@ import androidx.wear.compose.material.*
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import com.example.sportapp.TextsWearPL
 import com.example.sportapp.presentation.menu.ChooseSportScreen
 import com.example.sportapp.presentation.menu.MainMenuScreen
 import com.example.sportapp.presentation.menu.StatisticsScreen
@@ -186,10 +187,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_age") {
                             NumericInputScreen(
-                                label = "Wiek",
+                                label = TextsWearPL.HEALTH_AGE,
                                 value = healthData.age,
                                 range = 16..120,
-                                unit = "lat",
+                                unit = TextsWearPL.UNIT_YEARS,
                                 onValueChange = { 
                                     healthData = healthData.copy(age = it, maxHR = 220 - it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -199,10 +200,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_weight") {
                             NumericInputScreen(
-                                label = "Waga",
+                                label = TextsWearPL.HEALTH_WEIGHT,
                                 value = healthData.weight,
                                 range = 30..250,
-                                unit = "kg",
+                                unit = TextsWearPL.UNIT_KG,
                                 onValueChange = { 
                                     healthData = healthData.copy(weight = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -212,10 +213,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_height") {
                             NumericInputScreen(
-                                label = "Wzrost",
+                                label = TextsWearPL.HEALTH_HEIGHT,
                                 value = healthData.height,
                                 range = 100..230,
-                                unit = "cm",
+                                unit = TextsWearPL.UNIT_CM,
                                 onValueChange = { 
                                     healthData = healthData.copy(height = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -225,10 +226,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_step_length") {
                             NumericInputScreen(
-                                label = "Długość kroku",
+                                label = TextsWearPL.HEALTH_STEP_LENGTH,
                                 value = healthData.stepLength,
                                 range = 30..130,
-                                unit = "cm",
+                                unit = TextsWearPL.UNIT_CM,
                                 onValueChange = { 
                                     healthData = healthData.copy(stepLength = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -238,10 +239,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_resting_hr") {
                             NumericInputScreen(
-                                label = "Tętno spoczynkowe",
+                                label = TextsWearPL.HEALTH_RESTING_HR,
                                 value = healthData.restingHR,
                                 range = 30..200,
-                                unit = "BPM",
+                                unit = TextsWearPL.UNIT_BPM,
                                 onValueChange = { 
                                     healthData = healthData.copy(restingHR = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
@@ -251,10 +252,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("health_max_hr") {
                             NumericInputScreen(
-                                label = "Tętno maksymalne",
+                                label = TextsWearPL.HEALTH_MAX_HR,
                                 value = healthData.maxHR,
                                 range = 100..240,
-                                unit = "BPM",
+                                unit = TextsWearPL.UNIT_BPM,
                                 onValueChange = { 
                                     healthData = healthData.copy(maxHR = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }

@@ -17,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
 import com.example.sportapp.R
+import com.example.sportapp.TextsWearPL
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
@@ -86,7 +87,7 @@ class WorkoutService : Service(), SensorEventListener {
     private var pressureValue = 0.0
     private var healthData: HealthData? = null
     private var sportDefinition: WorkoutDefinition? = null
-    private var fallbackActivityName: String = "Aktywność"
+    private var fallbackActivityName: String = TextsWearPL.GEN_ACTIVITY
     private var totalCaloriesAcc = 0.0
     
     private val pointsList = mutableListOf<WorkoutPointEntity>()
@@ -160,7 +161,7 @@ class WorkoutService : Service(), SensorEventListener {
 
                 val definitionId = intent.getLongExtra(EXTRA_DEFINITION_ID, -1L)
                 currentDefinitionId = definitionId
-                fallbackActivityName = intent.getStringExtra(EXTRA_ACTIVITY_NAME) ?: "Aktywność"
+                fallbackActivityName = intent.getStringExtra(EXTRA_ACTIVITY_NAME) ?: TextsWearPL.GEN_ACTIVITY
                 val hDataJson = intent.getStringExtra(EXTRA_HEALTH_DATA_JSON)
                 val hData = if (hDataJson != null) gson.fromJson(hDataJson, HealthData::class.java) else HealthData()
                 
@@ -539,7 +540,7 @@ class WorkoutService : Service(), SensorEventListener {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("${sportDefinition?.name ?: fallbackActivityName}")
-            .setContentText("Czas: ${formatTime(totalSeconds)}")
+            .setContentText("${TextsWearPL.SUMMARY_DURATION}: ${formatTime(totalSeconds)}")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .setOngoing(true)

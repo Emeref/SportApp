@@ -2,12 +2,10 @@ package com.example.sportapp.presentation.settings
 
 import android.content.Context
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import com.example.sportapp.presentation.settings.ReportingPeriod
-import com.example.sportapp.presentation.settings.WidgetItem
+import com.example.sportapp.TextsWearPL
 import com.example.sportapp.presentation.workout.DataLayerManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -48,7 +46,6 @@ class SettingsManager @Inject constructor(
         private val WATCH_STATS_CUSTOM_DAYS_KEY = intPreferencesKey("watch_stats_custom_days")
         
         val Orange = Color(0xFFFFA500)
-        val Transparent = Color.Transparent
     }
 
     val settingsFlow: Flow<UserSettings> = context.dataStore.data
@@ -103,13 +100,13 @@ class SettingsManager @Inject constructor(
         }
 
     private val defaultWatchStatsWidgets = listOf(
-        WidgetItem("count", "Liczba aktywności"),
-        WidgetItem("calories", "Spalone kalorie"),
-        WidgetItem("distanceGps", "Dystans (GPS)"),
-        WidgetItem("distanceSteps", "Dystans (kroki)"),
-        WidgetItem("ascent", "Przewyższenia w górę"),
-        WidgetItem("descent", "Przewyższenia w dół"),
-        WidgetItem("steps", "Wszystkie kroki")
+        WidgetItem("count", TextsWearPL.STATS_WIDGET_COUNT),
+        WidgetItem("calories", TextsWearPL.SENSOR_CALORIES_SUM),
+        WidgetItem("distanceGps", TextsWearPL.STATS_WIDGET_DISTANCE_GPS),
+        WidgetItem("distanceSteps", TextsWearPL.SENSOR_DISTANCE_STEPS),
+        WidgetItem("ascent", TextsWearPL.SENSOR_TOTAL_ASCENT),
+        WidgetItem("descent", TextsWearPL.SENSOR_TOTAL_DESCENT),
+        WidgetItem("steps", TextsWearPL.STATS_WIDGET_STEPS_ALL)
     )
 
     private fun triggerSync() {

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
+import com.example.sportapp.TextsWearPL
 
 @Composable
 fun WorkoutReadyScreen(
@@ -92,9 +93,9 @@ fun WorkoutReadyScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Start")
+                            Icon(Icons.Default.PlayArrow, contentDescription = TextsWearPL.WORKOUT_READY_START)
                             Spacer(Modifier.width(8.dp))
-                            Text("Start")
+                            Text(TextsWearPL.WORKOUT_READY_START)
                         }
                     }
 
@@ -110,11 +111,11 @@ fun WorkoutReadyScreen(
                             colors = ButtonDefaults.secondaryButtonColors(),
                             modifier = Modifier.size(ButtonDefaults.SmallButtonSize)
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = TextsWearPL.WORKOUT_READY_BACK)
                         }
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Powrót",
+                            text = TextsWearPL.WORKOUT_READY_BACK,
                             style = MaterialTheme.typography.caption2
                         )
                     }

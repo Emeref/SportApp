@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
+import com.example.sportapp.TextsWearPL
 
 @Composable
 fun ScreenBehaviorSelectionScreen(
@@ -18,12 +19,12 @@ fun ScreenBehaviorSelectionScreen(
         modifier = Modifier.fillMaxSize(),
         state = listState
     ) {
-        item { ListHeader { Text("Zachowanie ekranu") } }
+        item { ListHeader { Text(TextsWearPL.SETTINGS_SCREEN_BEHAVIOR_TITLE) } }
         item {
             ToggleChip(
                 checked = currentBehavior == ScreenBehavior.KEEP_SCREEN_ON,
                 onCheckedChange = { if (it) onBehaviorSelected(ScreenBehavior.KEEP_SCREEN_ON) },
-                label = { Text("Zawsze włączony") },
+                label = { Text(TextsWearPL.SETTINGS_SCREEN_ALWAYS_ON) },
                 toggleControl = {
                     RadioButton(selected = currentBehavior == ScreenBehavior.KEEP_SCREEN_ON)
                 },
@@ -34,7 +35,7 @@ fun ScreenBehaviorSelectionScreen(
             ToggleChip(
                 checked = currentBehavior == ScreenBehavior.AMBIENT,
                 onCheckedChange = { if (it) onBehaviorSelected(ScreenBehavior.AMBIENT) },
-                label = { Text("Tryb Ambient") },
+                label = { Text(TextsWearPL.SETTINGS_SCREEN_AMBIENT) },
                 toggleControl = {
                     RadioButton(selected = currentBehavior == ScreenBehavior.AMBIENT)
                 },
@@ -45,7 +46,7 @@ fun ScreenBehaviorSelectionScreen(
             ToggleChip(
                 checked = currentBehavior == ScreenBehavior.SYSTEM,
                 onCheckedChange = { if (it) onBehaviorSelected(ScreenBehavior.SYSTEM) },
-                label = { Text("Tryb automatyczny") },
+                label = { Text(TextsWearPL.SETTINGS_SCREEN_AUTO) },
                 toggleControl = {
                     RadioButton(selected = currentBehavior == ScreenBehavior.SYSTEM)
                 },

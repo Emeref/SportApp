@@ -14,18 +14,19 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.RadioButton
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
+import com.example.sportapp.TextsWearPL
 
 @Composable
 fun ClockColorSelectionScreen(selectedColor: Color?, onColorSelected: (Color?) -> Unit) {
     val listState = rememberScalingLazyListState()
     val colors = listOf(
-        Color.Red to "Czerwony",
-        Color.White to "Biały",
-        Color.Green to "Zielony",
-        Color.Yellow to "Żółty",
-        Color.Blue to "Niebieski",
-        Color.Black to "Czarny",
-        null to "Brak"
+        Color.Red to TextsWearPL.COLOR_RED,
+        Color.White to TextsWearPL.COLOR_WHITE,
+        Color.Green to TextsWearPL.COLOR_GREEN,
+        Color.Yellow to TextsWearPL.COLOR_YELLOW,
+        Color.Blue to TextsWearPL.COLOR_BLUE,
+        Color.Black to TextsWearPL.COLOR_BLACK,
+        null to TextsWearPL.COLOR_NONE
     )
 
     ScalingLazyColumn(
@@ -33,7 +34,7 @@ fun ClockColorSelectionScreen(selectedColor: Color?, onColorSelected: (Color?) -
         state = listState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { ListHeader { Text("Kolor zegara") } }
+        item { ListHeader { Text(TextsWearPL.SETTINGS_CLOCK_COLOR) } }
         colors.forEach { (color, label) ->
             item {
                 ToggleChip(

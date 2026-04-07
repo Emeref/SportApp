@@ -17,6 +17,7 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.material.*
+import com.example.sportapp.TextsWearPL
 
 @Composable
 fun WorkoutSummaryScreen(
@@ -52,13 +53,13 @@ fun WorkoutSummaryScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Potwierdź"
+                                contentDescription = TextsWearPL.SUMMARY_CONFIRM_DESC
                             )
                         }
                     }
                     item {
                         Text(
-                            text = "PODSUMOWANIE",
+                            text = TextsWearPL.SUMMARY_TITLE,
                             style = MaterialTheme.typography.caption1,
                             color = Color.Gray,
                             modifier = Modifier.padding(top = 10.dp)
@@ -108,7 +109,7 @@ fun WorkoutSummaryScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Potwierdź"
+                                contentDescription = TextsWearPL.SUMMARY_CONFIRM_DESC
                             )
                         }
                     }

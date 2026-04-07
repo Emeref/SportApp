@@ -11,6 +11,7 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
+import com.example.sportapp.TextsWearPL
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.workout.SummaryManager
 import java.util.Locale
@@ -48,7 +49,7 @@ fun StatisticsScreen(
             if (enabledWidgets.isEmpty()) {
                 item {
                     Text(
-                        text = "Brak wybranych pól",
+                        text = TextsWearPL.STATS_NO_WIDGETS,
                         style = MaterialTheme.typography.body2,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(16.dp)
@@ -86,11 +87,11 @@ fun formatDistance(meters: Int): String {
 
 fun getPeriodLabel(period: ReportingPeriod, customDays: Int): String {
     return when (period) {
-        ReportingPeriod.TODAY -> "Dziś"
-        ReportingPeriod.WEEK -> "Ostatnie 7 dni"
-        ReportingPeriod.MONTH -> "Ostatnie 30 dni"
-        ReportingPeriod.YEAR -> "Ostatni rok"
-        ReportingPeriod.CUSTOM -> "Ostatnie $customDays dni"
+        ReportingPeriod.TODAY -> TextsWearPL.STATS_PERIOD_TODAY
+        ReportingPeriod.WEEK -> TextsWearPL.STATS_PERIOD_7_DAYS
+        ReportingPeriod.MONTH -> TextsWearPL.STATS_PERIOD_30_DAYS
+        ReportingPeriod.YEAR -> TextsWearPL.STATS_PERIOD_YEAR
+        ReportingPeriod.CUSTOM -> TextsWearPL.statsPeriodCustom(customDays)
     }
 }
 

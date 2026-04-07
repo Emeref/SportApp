@@ -14,6 +14,7 @@ import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
+import com.example.sportapp.TextsWearPL
 
 @Composable
 fun HealthDataScreen(
@@ -32,11 +33,11 @@ fun HealthDataScreen(
         state = listState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { ListHeader { Text("Dane zdrowotne") } }
+        item { ListHeader { Text(TextsWearPL.SETTINGS_HEALTH_DATA) } }
         
         item {
             Chip(
-                label = { Text("Płeć") },
+                label = { Text(TextsWearPL.HEALTH_GENDER) },
                 secondaryLabel = { Text(data.gender.toPolish()) },
                 onClick = onNavigateToGender,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
@@ -45,8 +46,8 @@ fun HealthDataScreen(
         
         item {
             Chip(
-                label = { Text("Wiek") },
-                secondaryLabel = { Text("${data.age} lat") },
+                label = { Text(TextsWearPL.HEALTH_AGE) },
+                secondaryLabel = { Text(TextsWearPL.healthAgeValue(data.age)) },
                 onClick = onNavigateToAge,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
             )
@@ -54,8 +55,8 @@ fun HealthDataScreen(
         
         item {
             Chip(
-                label = { Text("Waga") },
-                secondaryLabel = { Text("${data.weight} kg") },
+                label = { Text(TextsWearPL.HEALTH_WEIGHT) },
+                secondaryLabel = { Text(TextsWearPL.healthWeightValue(data.weight)) },
                 onClick = onNavigateToWeight,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
             )
@@ -63,8 +64,8 @@ fun HealthDataScreen(
         
         item {
             Chip(
-                label = { Text("Wzrost") },
-                secondaryLabel = { Text("${data.height} cm") },
+                label = { Text(TextsWearPL.HEALTH_HEIGHT) },
+                secondaryLabel = { Text(TextsWearPL.healthHeightValue(data.height)) },
                 onClick = onNavigateToHeight,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
             )
@@ -72,8 +73,8 @@ fun HealthDataScreen(
 
         item {
             Chip(
-                label = { Text("Długość kroku") },
-                secondaryLabel = { Text("${data.stepLength} cm") },
+                label = { Text(TextsWearPL.HEALTH_STEP_LENGTH) },
+                secondaryLabel = { Text(TextsWearPL.healthStepLengthValue(data.stepLength)) },
                 onClick = onNavigateToStepLength,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
             )
@@ -81,8 +82,8 @@ fun HealthDataScreen(
 
         item {
             Chip(
-                label = { Text("Tętno spoczynkowe") },
-                secondaryLabel = { Text("${data.restingHR} BPM") },
+                label = { Text(TextsWearPL.HEALTH_RESTING_HR) },
+                secondaryLabel = { Text(TextsWearPL.healthHRValue(data.restingHR)) },
                 onClick = onNavigateToRestingHR,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
             )
@@ -90,8 +91,8 @@ fun HealthDataScreen(
 
         item {
             Chip(
-                label = { Text("Tętno maksymalne") },
-                secondaryLabel = { Text("${data.maxHR} BPM") },
+                label = { Text(TextsWearPL.HEALTH_MAX_HR) },
+                secondaryLabel = { Text(TextsWearPL.healthHRValue(data.maxHR)) },
                 onClick = onNavigateToMaxHR,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
@@ -159,7 +160,7 @@ fun NumericInputScreen(
         }
 
         Chip(
-            label = { Text("Zapisz", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+            label = { Text(TextsWearPL.HEALTH_SAVE, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
             onClick = {
                 onValueChange(range.first + state.selectedOption)
                 onDone()
@@ -176,7 +177,7 @@ fun NumericInputScreen(
 fun GenderSelectionScreen(selected: Gender, onSelected: (Gender) -> Unit) {
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-        item { ListHeader { Text("Wybierz płeć") } }
+        item { ListHeader { Text(TextsWearPL.HEALTH_CHOOSE_GENDER) } }
         Gender.values().forEach { gender ->
             item {
                 ToggleChip(
