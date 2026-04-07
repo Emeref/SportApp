@@ -26,6 +26,7 @@ class SessionRepository @Inject constructor(
         val route = mutableListOf<LatLng>()
         
         val heartRates = mutableListOf<Float?>()
+        val heartRatesRaw = mutableListOf<Int>()
         val caloriesMin = mutableListOf<Float?>()
         val caloriesSum = mutableListOf<Float?>()
         val stepsMin = mutableListOf<Float?>()
@@ -59,7 +60,10 @@ class SessionRepository @Inject constructor(
                 }
             }
             
-            heartRates.add(point.bpm?.toFloat())
+            point.bpm?.let {
+                heartRates.add(it.toFloat())
+                heartRatesRaw.add(it)
+            } ?: heartRates.add(null)
             
             point.calorieMin?.let { 
                 val valF = it.toFloat()
@@ -153,7 +157,7 @@ class SessionRepository @Inject constructor(
             (workout.durationSeconds / 60.0) / (finalTotalDistanceGps / 1000.0)
         } else 0.0
 
-        val calculatedAvgBpm = if (heartRates.filterNotNull().isNotEmpty()) heartRates.filterNotNull().average().toInt() else 0
+        val calculatedAvgBpm = if (heartRatesRaw.isNotEmpty()) heartRatesRaw.average().toInt() else 0
 
         val pressureStart = pressures.filterNotNull().firstOrNull()?.toDouble()
         val pressureEnd = pressures.filterNotNull().lastOrNull()?.toDouble()
@@ -169,7 +173,7 @@ class SessionRepository @Inject constructor(
             activityDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(workout.startTime)),
             duration = workout.durationFormatted,
             durationSeconds = workout.durationSeconds,
-            maxBpm = workout.maxBpm ?: (if (heartRates.filterNotNull().isNotEmpty()) heartRates.filterNotNull().maxOrNull()?.toInt() ?: 0 else 0),
+            maxBpm = workout.maxBpm ?: (if (heartRatesRaw.isNotEmpty()) heartRatesRaw.maxOrNull() ?: 0 else 0),
             avgBpm = workout.avgBpm?.toInt() ?: calculatedAvgBpm,
             totalCalories = workout.totalCalories?.toInt() ?: totalCalories.toInt(),
             maxCaloriesMin = workout.maxCalorieMin?.toFloat() ?: maxCaloriesMin,
@@ -189,7 +193,8 @@ class SessionRepository @Inject constructor(
             pressureEnd = pressureEnd,
             maxPressure = workout.maxPressure ?: calcMaxPressure,
             minPressure = workout.minPressure ?: calcMinPressure,
-            bestPace1km = workout.bestPace1km
+            bestPace1km = workout.bestPace1km,
+            autoLapDistance = workout.autoLapDistance
         )
     }
 }
@@ -223,5 +228,6 @@ data class SessionData(
     val pressureEnd: Double? = null,
     val maxPressure: Double? = null,
     val minPressure: Double? = null,
-    val bestPace1km: Double? = null
+    val bestPace1km: Double? = null,
+    val autoLapDistance: Double? = null
 )

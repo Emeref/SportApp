@@ -32,6 +32,7 @@ data class WorkoutEntity(
     val maxPressure: Double? = null, // hPa
     val minPressure: Double? = null, // hPa
     val bestPace1km: Double? = null, // min/km
+    val autoLapDistance: Double? = null, // m - dystans autolapa w momencie startu
     val isSynced: Boolean = false
 )
 

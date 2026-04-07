@@ -183,7 +183,8 @@ class WorkoutService : Service(), SensorEventListener {
                         maxBpm = 0,
                         totalCalories = 0.0,
                         maxCalorieMin = 0.0,
-                        durationSeconds = 0
+                        durationSeconds = 0,
+                        autoLapDistance = definition?.autoLapDistance
                     )
                     currentWorkoutId = workoutDao.insertWorkout(workout)
                     withContext(Dispatchers.Main) {

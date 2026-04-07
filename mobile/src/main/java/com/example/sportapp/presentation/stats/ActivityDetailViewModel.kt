@@ -110,29 +110,31 @@ class ActivityDetailViewModel @Inject constructor(
         val pointsFlow = workoutDao.getPointsFlowForWorkout(activityId)
         val lapsFlow = workoutDao.getLapsFlowForWorkout(activityId)
 
-        // 1. Ładowanie dystansu autolapa gdy mamy dane treningu
-        workoutFlow
-            .map { it.activityName }
-            .distinctUntilChanged()
-            .onEach { loadAutoLapDistance(it) }
-            .launchIn(viewModelScope)
-
         // 2. Obserwacja i przetwarzanie wszystkich danych w jednym strumieniu
         combine(
             workoutFlow,
             pointsFlow,
             lapsFlow,
-            _autoLapDistance,
             mobileSettingsManager.settingsFlow
-        ) { workout, points, dbLaps, autoLapDist, mSettings ->
+        ) { workout, points, dbLaps, mSettings ->
+            // Priorytet ma dystans autolapa zapisany w treningu (w momencie startu)
+            // Jeśli go nie ma (stare treningi), próbujemy pobrać z definicji (fallback)
+            val effectiveAutoLapDist = workout.autoLapDistance ?: _autoLapDistance.value
+            
+            // Jeśli jeszcze nie załadowaliśmy dystansu z definicji, zróbmy to teraz (tylko raz dla danej aktywności)
+            if (workout.autoLapDistance == null && _autoLapDistance.value == null) {
+                loadAutoLapDistance(workout.activityName)
+            }
+
             // Obliczenia danych sesji i statystyk
             val data = sessionRepository.calculateSessionData(workout, points)
             _sessionData.value = data
+            _autoLapDistance.value = effectiveAutoLapDist // Aktualizacja stanu UI
             updateCharts(data)
             
             // Obsługa odcinków - wymuszamy przeliczenie od początku, aby uniknąć błędów w numeracji
-            if (autoLapDist != null && autoLapDist > 0) {
-                val generatedLaps = lapManager.processLaps(activityId, points, autoLapDist)
+            if (effectiveAutoLapDist != null && effectiveAutoLapDist > 0) {
+                val generatedLaps = lapManager.processLaps(activityId, points, effectiveAutoLapDist)
                 
                 // Aktualizacja UI natychmiastowo obliczonymi danymi (rozwiązuje problem dziur w Nr)
                 _laps.value = generatedLaps
