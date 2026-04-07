@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.sportapp.TextsMobilePL
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -23,35 +24,35 @@ class OverallStatsSettingsManager(private val context: Context) {
         private val CHARTS_JSON = stringPreferencesKey("charts_json")
         
         val DEFAULT_WIDGETS = listOf(
-            WidgetItem("count", "Liczba aktywności"),
-            WidgetItem("calories", "Spalone kalorie"),
-            WidgetItem("distanceGps", "Dystans (GPS)"),
-            WidgetItem("distanceSteps", "Dystans (kroki)"),
-            WidgetItem("ascent", "W sumie w górę"),
-            WidgetItem("descent", "W sumie do dołu"),
-            WidgetItem("steps", "Wszystkie kroki"),
-            WidgetItem("avg_cadence", "Średnia kadencja"),
-            WidgetItem("max_speed", "Maks prędkość"),
-            WidgetItem("max_altitude", "Maks wysokość"),
-            WidgetItem("max_elevation_gain", "Najwięcej przewyższeń"),
-            WidgetItem("max_distance", "Największy dystans"),
-            WidgetItem("max_duration", "Najdłuższy czas"),
-            WidgetItem("max_calories", "Najwięcej kalorii"),
-            WidgetItem("max_avg_cadence", "Najwyższa śr. kadencja"),
-            WidgetItem("max_avg_speed", "Najwyższa śr. prędkość")
+            WidgetItem("count", TextsMobilePL.WIDGET_COUNT),
+            WidgetItem("calories", TextsMobilePL.WIDGET_CALORIES),
+            WidgetItem("distanceGps", TextsMobilePL.WIDGET_DISTANCE_GPS),
+            WidgetItem("distanceSteps", TextsMobilePL.WIDGET_DISTANCE_STEPS),
+            WidgetItem("ascent", TextsMobilePL.WIDGET_ASCENT),
+            WidgetItem("descent", TextsMobilePL.WIDGET_DESCENT),
+            WidgetItem("steps", TextsMobilePL.WIDGET_STEPS),
+            WidgetItem("avg_cadence", TextsMobilePL.WIDGET_AVG_CADENCE),
+            WidgetItem("max_speed", TextsMobilePL.WIDGET_MAX_SPEED),
+            WidgetItem("max_altitude", TextsMobilePL.WIDGET_MAX_ALTITUDE),
+            WidgetItem("max_elevation_gain", TextsMobilePL.WIDGET_MAX_ELEVATION_GAIN),
+            WidgetItem("max_distance", TextsMobilePL.WIDGET_MAX_DISTANCE),
+            WidgetItem("max_duration", TextsMobilePL.WIDGET_MAX_DURATION),
+            WidgetItem("max_calories", TextsMobilePL.WIDGET_MAX_CALORIES),
+            WidgetItem("max_avg_cadence", TextsMobilePL.WIDGET_MAX_AVG_CADENCE),
+            WidgetItem("max_avg_speed", TextsMobilePL.WIDGET_MAX_AVG_SPEED)
         )
 
         val DEFAULT_CHARTS = listOf(
-            WidgetItem("calories", "Spalone kalorie"),
-            WidgetItem("distanceGps", "Dystans (GPS)"),
-            WidgetItem("distanceSteps", "Dystans (kroki)"),
-            WidgetItem("ascent", "Suma podejść"),
-            WidgetItem("descent", "Suma zejść"),
-            WidgetItem("steps", "Kroki"),
-            WidgetItem("avg_cadence", "Średnia kadencja"),
-            WidgetItem("maxPressure", "Maks. ciśnienie"),
-            WidgetItem("minPressure", "Min. ciśnienie"),
-            WidgetItem("bestPace1km", "Najlepsze tempo (1km)")
+            WidgetItem("calories", TextsMobilePL.WIDGET_CALORIES),
+            WidgetItem("distanceGps", TextsMobilePL.WIDGET_DISTANCE_GPS),
+            WidgetItem("distanceSteps", TextsMobilePL.WIDGET_DISTANCE_STEPS),
+            WidgetItem("ascent", TextsMobilePL.WIDGET_TOTAL_ASCENT),
+            WidgetItem("descent", TextsMobilePL.WIDGET_TOTAL_DESCENT),
+            WidgetItem("steps", TextsMobilePL.WIDGET_STEPS),
+            WidgetItem("avg_cadence", TextsMobilePL.WIDGET_AVG_CADENCE),
+            WidgetItem("maxPressure", TextsMobilePL.WIDGET_MAX_PRESSURE),
+            WidgetItem("minPressure", TextsMobilePL.WIDGET_MIN_PRESSURE),
+            WidgetItem("bestPace1km", TextsMobilePL.WIDGET_BEST_PACE_1KM)
         )
     }
 

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.model.WorkoutDefinition
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,23 +24,24 @@ fun WorkoutDefinitionListScreen(
     onNavigateToEdit: (Long) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val definitions by viewModel.definitions.collectAsState()
     var definitionToDelete by remember { mutableStateOf<WorkoutDefinition?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Definicja aktywności") },
+                title = { Text(texts.DEF_LIST_TITLE) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { onNavigateToEdit(0L) }) {
-                Icon(Icons.Default.Add, contentDescription = "Dodaj nową")
+                Icon(Icons.Default.Add, contentDescription = texts.DEF_ADD)
             }
         }
     ) { padding ->
@@ -64,8 +66,8 @@ fun WorkoutDefinitionListScreen(
         if (definitionToDelete != null) {
             AlertDialog(
                 onDismissRequest = { definitionToDelete = null },
-                title = { Text("Usuń aktywność") },
-                text = { Text("Czy na pewno chcesz usunąć aktywność '${definitionToDelete?.name}'?") },
+                title = { Text(texts.DEF_DELETE_TITLE) },
+                text = { Text(texts.defDeleteConfirm(definitionToDelete?.name ?: "")) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -74,12 +76,12 @@ fun WorkoutDefinitionListScreen(
                         },
                         colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
                     ) {
-                        Text("Usuń")
+                        Text(texts.DEF_DELETE)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { definitionToDelete = null }) {
-                        Text("Anuluj")
+                        Text(texts.SETTINGS_CANCEL)
                     }
                 }
             )
@@ -95,6 +97,7 @@ fun WorkoutDefinitionItem(
     onMoveUp: (() -> Unit)? = null,
     onMoveDown: (() -> Unit)? = null
 ) {
+    val texts = LocalMobileTexts.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -129,18 +132,18 @@ fun WorkoutDefinitionItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     IconButton(onClick = onMoveUp ?: {}, enabled = onMoveUp != null, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Przesuń w górę")
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = texts.DEF_MOVE_UP)
                     }
                     IconButton(onClick = onMoveDown ?: {}, enabled = onMoveDown != null, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Przesuń w dół")
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = texts.DEF_MOVE_DOWN)
                     }
                 }
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edytuj")
+                    Icon(Icons.Default.Edit, contentDescription = texts.DEF_EDIT)
                 }
                 if (!definition.isDefault) {
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Usuń", tint = Color.Red)
+                        Icon(Icons.Default.Delete, contentDescription = texts.DEF_DELETE, tint = Color.Red)
                     }
                 } else {
                     // Spacer to keep layout consistent when delete button is missing

@@ -280,6 +280,24 @@ object TextsMobilePL : MobileTexts {
     override val WIDGET_MAX_PRESSURE = "Maks. ciśnienie"
     override val WIDGET_MIN_PRESSURE = "Min. ciśnienie"
     override val WIDGET_BEST_PACE_1KM = "Najlepsze tempo (1km)"
+    override val WIDGET_WATCH_ASCENT = "Przewyższenia w górę"
+    override val WIDGET_WATCH_DESCENT = "Przewyższenia w dół"
+
+    // Sensors
+    override val SENSOR_HEART_RATE = "Tętno"
+    override val SENSOR_CALORIES_SUM = "Spalone kalorie"
+    override val SENSOR_CALORIES_MIN = "Kalorie na minutę"
+    override val SENSOR_STEPS = "Kroki"
+    override val SENSOR_STEPS_MIN = "Kadencja (kroki/min)"
+    override val SENSOR_DISTANCE_STEPS = "Dystans (kroki)"
+    override val SENSOR_SPEED_GPS = "Prędkość"
+    override val SENSOR_SPEED_STEPS = "Prędkość (kroki)"
+    override val SENSOR_DISTANCE_GPS = "Dystans"
+    override val SENSOR_ALTITUDE = "Wysokość"
+    override val SENSOR_TOTAL_ASCENT = "W sumie w górę"
+    override val SENSOR_TOTAL_DESCENT = "W sumie do dołu"
+    override val SENSOR_PRESSURE = "Ciśnienie atm."
+    override val SENSOR_MAP = "Dane lokalizacji"
 
     // Trim Screen
     override val TRIM_TITLE = "Edytuj trening (Przycinanie)"

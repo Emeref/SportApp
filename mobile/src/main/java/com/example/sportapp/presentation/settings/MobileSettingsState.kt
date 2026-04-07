@@ -25,33 +25,34 @@ data class WidgetItem(
 
 data class MobileSettingsState(
     val widgets: List<WidgetItem> = listOf(
-        WidgetItem("count", "Liczba aktywności"),
-        WidgetItem("calories", "Spalone kalorie"),
-        WidgetItem("distanceGps", "Dystans (GPS)"),
-        WidgetItem("distanceSteps", "Dystans (kroki)"),
-        WidgetItem("ascent", "W sumie w górę"),
-        WidgetItem("descent", "W sumie do dołu"),
-        WidgetItem("steps", "Wszystkie kroki"),
-        WidgetItem("max_speed", "Maks prędkość"),
-        WidgetItem("max_altitude", "Maks wysokość"),
-        WidgetItem("max_elevation_gain", "Najwięcej przewyższeń"),
-        WidgetItem("max_distance", "Największy dystans"),
-        WidgetItem("max_duration", "Najdłuższy czas"),
-        WidgetItem("max_calories", "Najwięcej kalorii"),
-        WidgetItem("max_avg_cadence", "Najwyższa śr. kadencja"),
-        WidgetItem("max_avg_speed", "Najwyższa śr. prędkość")
+
+        WidgetItem("count", TextsMobilePL.WIDGET_COUNT),
+        WidgetItem("calories", TextsMobilePL.WIDGET_CALORIES),
+        WidgetItem("distanceGps", TextsMobilePL.WIDGET_DISTANCE_GPS),
+        WidgetItem("distanceSteps", TextsMobilePL.WIDGET_DISTANCE_STEPS),
+        WidgetItem("ascent", TextsMobilePL.WIDGET_ASCENT),
+        WidgetItem("descent", TextsMobilePL.WIDGET_DESCENT),
+        WidgetItem("steps", TextsMobilePL.WIDGET_STEPS),
+        WidgetItem("max_speed", TextsMobilePL.WIDGET_MAX_SPEED),
+        WidgetItem("max_altitude", TextsMobilePL.WIDGET_MAX_ALTITUDE),
+        WidgetItem("max_elevation_gain", TextsMobilePL.WIDGET_MAX_ELEVATION_GAIN),
+        WidgetItem("max_distance", TextsMobilePL.WIDGET_MAX_DISTANCE),
+        WidgetItem("max_duration", TextsMobilePL.WIDGET_MAX_DURATION),
+        WidgetItem("max_calories", TextsMobilePL.WIDGET_MAX_CALORIES),
+        WidgetItem("max_avg_cadence", TextsMobilePL.WIDGET_MAX_AVG_CADENCE),
+        WidgetItem("max_avg_speed", TextsMobilePL.WIDGET_MAX_AVG_SPEED)
     ),
     val period: ReportingPeriod = ReportingPeriod.WEEK,
     val customDays: Int = 7,
     // Sekcja: Statystyki na zegarku
     val watchStatsWidgets: List<WidgetItem> = listOf(
-        WidgetItem("count", "Liczba aktywności"),
-        WidgetItem("calories", "Spalone kalorie"),
-        WidgetItem("distanceGps", "Dystans (GPS)"),
-        WidgetItem("distanceSteps", "Dystans (kroki)"),
-        WidgetItem("ascent", "Przewyższenia w górę"),
-        WidgetItem("descent", "Przewyższenia w dół"),
-        WidgetItem("steps", "Wszystkie kroki")
+        WidgetItem("count", TextsMobilePL.WIDGET_COUNT),
+        WidgetItem("calories", TextsMobilePL.WIDGET_CALORIES),
+        WidgetItem("distanceGps", TextsMobilePL.WIDGET_DISTANCE_GPS),
+        WidgetItem("distanceSteps", TextsMobilePL.WIDGET_DISTANCE_STEPS),
+        WidgetItem("ascent", TextsMobilePL.WIDGET_WATCH_ASCENT),
+        WidgetItem("descent", TextsMobilePL.WIDGET_WATCH_DESCENT),
+        WidgetItem("steps", TextsMobilePL.WIDGET_STEPS)
     ),
     val watchStatsPeriod: ReportingPeriod = ReportingPeriod.WEEK,
     val watchStatsCustomDays: Int = 7,

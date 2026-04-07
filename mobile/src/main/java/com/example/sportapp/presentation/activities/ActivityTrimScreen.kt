@@ -5,7 +5,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.presentation.stats.CommonChartSection
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
@@ -26,6 +25,7 @@ fun ActivityTrimScreen(
     viewModel: ActivityTrimViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val workout by viewModel.workout.collectAsState()
     val points by viewModel.points.collectAsState()
     val trimRange by viewModel.trimRange.collectAsState()
@@ -48,8 +48,8 @@ fun ActivityTrimScreen(
     if (showConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
-            title = { Text("Potwierdź przycięcie") },
-            text = { Text("Czy na pewno chcesz usunąć dane poza wybranym zakresem? Te dane zostaną trwale usunięte z bazy danych.") },
+            title = { Text(texts.TRIM_CONFIRM_TITLE) },
+            text = { Text(texts.TRIM_CONFIRM_DESC) },
             confirmButton = {
                 TextButton(onClick = {
                     showConfirmDialog = false
@@ -57,12 +57,12 @@ fun ActivityTrimScreen(
                         onNavigateBack()
                     }
                 }) {
-                    Text("Przytnij i zapisz", color = Color.Red)
+                    Text(texts.TRIM_SAVE_BTN, color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmDialog = false }) {
-                    Text("Anuluj")
+                    Text(texts.SETTINGS_CANCEL)
                 }
             }
         )
@@ -71,10 +71,10 @@ fun ActivityTrimScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edytuj trening (Przycinanie)") },
+                title = { Text(texts.TRIM_TITLE) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                     }
                 },
 
@@ -107,7 +107,7 @@ fun ActivityTrimScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Start: ${sdf.format(Date(w.startTime))}",
+                            text = "${texts.ACTIVITY_FROM}: ${sdf.format(Date(w.startTime))}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -117,7 +117,7 @@ fun ActivityTrimScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Wykres tętna",
+                    text = texts.TRIM_CHART_HR,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -126,9 +126,9 @@ fun ActivityTrimScreen(
 
                 Box(modifier = Modifier.height(250.dp)) {
                     CommonChartSection(
-                        title = "Tętno (BPM)",
+                        title = "${texts.DETAIL_HEART_RATE} (${texts.UNIT_BPM})",
                         producer = hrProducer,
-                        unit = "bpm",
+                        unit = texts.UNIT_BPM,
                         detailTimes = points.map { it.time },
                         isScrollEnabled = false
                     )
@@ -137,7 +137,7 @@ fun ActivityTrimScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Wybierz zakres treningu",
+                    text = texts.TRIM_RANGE_TITLE,
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -155,8 +155,8 @@ fun ActivityTrimScreen(
                 ) {
                     val startIndex = trimRange.start.toInt().coerceIn(points.indices)
                     val endIndex = trimRange.endInclusive.toInt().coerceIn(points.indices)
-                    Text("Start: ${points[startIndex].time}", style = MaterialTheme.typography.labelSmall)
-                    Text("Koniec: ${points[endIndex].time}", style = MaterialTheme.typography.labelSmall)
+                    Text("${texts.TRIM_START}: ${points[startIndex].time}", style = MaterialTheme.typography.labelSmall)
+                    Text("${texts.TRIM_END}: ${points[endIndex].time}", style = MaterialTheme.typography.labelSmall)
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -166,15 +166,15 @@ fun ActivityTrimScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Podgląd nowych statystyk", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(texts.TRIM_PREVIEW_TITLE, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         previewStats?.let { stats ->
-                            StatRow("Nowy czas trwania:", stats.duration)
-                            StatRow("Dystans (GPS):", stats.distanceGps)
-                            StatRow("Dystans (Kroki):", stats.distanceSteps)
-                            StatRow("Spalone kalorie:", stats.calories)
-                            StatRow("Średnie tętno:", stats.avgBpm)
+                            StatRow(texts.TRIM_NEW_DURATION, stats.duration)
+                            StatRow(texts.TRIM_DISTANCE_GPS, stats.distanceGps)
+                            StatRow(texts.TRIM_DISTANCE_STEPS, stats.distanceSteps)
+                            StatRow(texts.TRIM_CALORIES, stats.calories)
+                            StatRow(texts.TRIM_AVG_BPM, stats.avgBpm)
                         }
                     }
                 }
@@ -186,7 +186,7 @@ fun ActivityTrimScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isSaving
                 ) {
-                    Text("Zatwierdź zmiany")
+                    Text(texts.SETTINGS_SAVE)
                 }
             }
         }

@@ -275,6 +275,24 @@ interface MobileTexts {
     val WIDGET_MAX_PRESSURE: String
     val WIDGET_MIN_PRESSURE: String
     val WIDGET_BEST_PACE_1KM: String
+    val WIDGET_WATCH_ASCENT: String
+    val WIDGET_WATCH_DESCENT: String
+
+    // Sensors
+    val SENSOR_HEART_RATE: String
+    val SENSOR_CALORIES_SUM: String
+    val SENSOR_CALORIES_MIN: String
+    val SENSOR_STEPS: String
+    val SENSOR_STEPS_MIN: String
+    val SENSOR_DISTANCE_STEPS: String
+    val SENSOR_SPEED_GPS: String
+    val SENSOR_SPEED_STEPS: String
+    val SENSOR_DISTANCE_GPS: String
+    val SENSOR_ALTITUDE: String
+    val SENSOR_TOTAL_ASCENT: String
+    val SENSOR_TOTAL_DESCENT: String
+    val SENSOR_PRESSURE: String
+    val SENSOR_MAP: String
 
     // Trim Screen
     val TRIM_TITLE: String
@@ -318,4 +336,3 @@ interface MobileTexts {
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {
     error("No MobileTexts provided")
 }
-

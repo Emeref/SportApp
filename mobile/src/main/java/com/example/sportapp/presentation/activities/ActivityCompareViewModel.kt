@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.MobileTexts
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
@@ -114,10 +115,11 @@ class ActivityCompareViewModel @Inject constructor(
                     viewModelScope.launch {
                         val mSettings = mobileSettingsManager.settingsFlow.first()
                         val maxHr = mSettings.healthData.maxHR
+                        val texts = mSettings.language.texts
                         val points1 = workoutDao.getPointsForWorkout(id1)
                         val points2 = workoutDao.getPointsForWorkout(id2)
-                        _hrZones1.value = HeartRateMath.calculateZones(points1, maxHr)
-                        _hrZones2.value = HeartRateMath.calculateZones(points2, maxHr)
+                        _hrZones1.value = HeartRateMath.calculateZones(points1, maxHr, texts)
+                        _hrZones2.value = HeartRateMath.calculateZones(points2, maxHr, texts)
                     }
                 }
             } catch (e: Exception) {

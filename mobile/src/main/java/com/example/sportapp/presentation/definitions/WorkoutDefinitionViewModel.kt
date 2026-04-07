@@ -8,6 +8,7 @@ import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.data.WorkoutDefinitionSyncManager
+import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.stats.ActivityDetailSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,6 +24,7 @@ import javax.inject.Inject
 class WorkoutDefinitionViewModel @Inject constructor(
     private val dao: WorkoutDefinitionDao,
     private val syncManager: WorkoutDefinitionSyncManager,
+    private val mobileSettingsManager: MobileSettingsManager,
     @ApplicationContext context: Context
 ) : ViewModel() {
 
@@ -38,11 +41,12 @@ class WorkoutDefinitionViewModel @Inject constructor(
     private fun ensureDefaultDefinition() {
         viewModelScope.launch {
             if (dao.getDefaultCount() == 0) {
+                val texts = mobileSettingsManager.settingsFlow.first().language.texts
                 val defaultSensors = WorkoutSensor.entries.map {
                     SensorConfig(it.id, isVisible = true, isRecording = true)
                 }
                 val defaultDef = WorkoutDefinition(
-                    name = "Standardowa aktywność",
+                    name = texts.DEF_STANDARD_ACTIVITY,
                     iconName = "DirectionsRun",
                     sensors = defaultSensors,
                     baseType = "Other",

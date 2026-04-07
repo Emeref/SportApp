@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
@@ -150,7 +151,7 @@ fun CommonChartSection(
                     val c = ceil(max.toDouble()).toFloat()
                     return if (c <= floor(currentMin.toDouble()).toFloat()) c + 2f else c + 1f
                 }
-                if (unit == "m" && title.contains("Wysokość", ignoreCase = true)) {
+                if (unit == "m" && (title.contains("Wysokość", ignoreCase = true) || title.contains("Altitude", ignoreCase = true))) {
                     return floor(max.toDouble() + 1.0).toFloat()
                 }
                 return (ceil(max.toDouble() / 8.0) * 8.0).toFloat().coerceAtLeast(1f)
@@ -159,7 +160,7 @@ fun CommonChartSection(
                 val minDataValue = if (model.minY.isNaN()) 0f else model.minY
                 if (unit == "hPa") return floor(minDataValue.toDouble()).toFloat() - 1f
                 if (unit == "bpm") return (minDataValue - 5f).coerceAtLeast(0f)
-                if (unit == "m" && title.contains("Wysokość", ignoreCase = true)) {
+                if (unit == "m" && (title.contains("Wysokość", ignoreCase = true) || title.contains("Altitude", ignoreCase = true))) {
                     return floor(minDataValue.toDouble() - 0.001).toFloat().coerceAtLeast(0f)
                 }
                 return 0f
@@ -319,6 +320,7 @@ fun rememberMarkerCustom(
     isTimestampX: Boolean = false,
     onMarkerShown: ((Int?) -> Unit)? = null
 ): Marker {
+    val texts = LocalMobileTexts.current
     val labelBackgroundColor = MaterialTheme.colorScheme.surface
     val labelTextColor = MaterialTheme.colorScheme.onSurface
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -391,7 +393,7 @@ fun rememberMarkerCustom(
                             when (val data = overallRawData[index]) {
                                 is WorkoutEntity -> "${data.activityName}\n${outputSdf.format(Date(data.startTime))}\n$value $unit"
                                 is Map<*, *> -> {
-                                    val name = data["nazwa aktywnosci"]?.toString() ?: "Aktywność"
+                                    val name = data["nazwa aktywnosci"]?.toString() ?: texts.DEF_STANDARD_ACTIVITY
                                     val rawDate = data["data"]?.toString() ?: ""
                                     val formattedDate = try { inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate } catch (_: Exception) { rawDate }
                                     "$name\n$formattedDate\n$value $unit"

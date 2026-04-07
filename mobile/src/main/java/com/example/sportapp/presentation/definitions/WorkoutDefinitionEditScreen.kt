@@ -16,12 +16,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
@@ -33,6 +33,7 @@ fun WorkoutDefinitionEditScreen(
     definitionId: Long,
     onNavigateBack: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val definitions by viewModel.definitions.collectAsState()
     val existingDefinition = definitions.find { it.id == definitionId }
 
@@ -73,10 +74,10 @@ fun WorkoutDefinitionEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (definitionId == 0L) "Nowa aktywność" else "Edytuj aktywność") },
+                title = { Text(if (definitionId == 0L) texts.DEF_NEW_ACTIVITY else texts.DEF_EDIT_ACTIVITY) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                     }
                 }
             )
@@ -95,12 +96,12 @@ fun WorkoutDefinitionEditScreen(
                         name = newValue
                     }
                 },
-                label = { Text("Nazwa aktywności") },
+                label = { Text(texts.DEF_NAME_LABEL) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = { showIconPicker = true }) {
-                        Icon(getIconForName(iconName), contentDescription = "Wybierz ikonę")
+                        Icon(getIconForName(iconName), contentDescription = texts.DEF_SELECT_ICON)
                     }
                 }
             )
@@ -114,7 +115,7 @@ fun WorkoutDefinitionEditScreen(
                         autoLapDistance = newValue
                     }
                 },
-                label = { Text("Automatyczny odcinek (metry, opcjonalnie)") },
+                label = { Text(texts.DEF_AUTO_LAP_LABEL) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -127,12 +128,12 @@ fun WorkoutDefinitionEditScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    "Widget w aktywności",
+                    texts.DEF_WIDGET_IN_ACTIVITY,
                     style = MaterialTheme.typography.titleSmall, 
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    "Widoczność", 
+                    texts.DEF_VISIBILITY, 
                     style = MaterialTheme.typography.bodySmall, 
                     fontSize = 9.sp, 
                     modifier = Modifier.width(72.dp),
@@ -140,7 +141,7 @@ fun WorkoutDefinitionEditScreen(
                     lineHeight = 10.sp
                 )
                 Text(
-                    "Zapis", 
+                    texts.DEF_RECORD, 
                     style = MaterialTheme.typography.bodySmall, 
                     fontSize = 9.sp, 
                     modifier = Modifier.width(52.dp),
@@ -194,7 +195,7 @@ fun WorkoutDefinitionEditScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Typ bazowy", style = MaterialTheme.typography.titleMedium)
+            Text(texts.DEF_BASE_TYPE, style = MaterialTheme.typography.titleMedium)
             BaseTypePicker(selectedType = baseType, onTypeSelected = { baseType = it })
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -229,14 +230,14 @@ fun WorkoutDefinitionEditScreen(
                     enabled = name.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)) // Zielony
                 ) {
-                    Text("Zapisz", color = Color.White)
+                    Text(texts.DEF_SAVE, color = Color.White)
                 }
                 Button(
                     onClick = onNavigateBack,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)) // Czerwony
                 ) {
-                    Text("Zakończ", color = Color.White)
+                    Text(texts.DEF_FINISH, color = Color.White)
                 }
             }
         }
@@ -263,6 +264,7 @@ fun SensorConfigItem(
     enabledVisible: Boolean = true,
     enabledRecording: Boolean = !config.isVisible
 ) {
+    val texts = LocalMobileTexts.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -291,10 +293,10 @@ fun SensorConfigItem(
 
         Row(modifier = Modifier.width(64.dp), horizontalArrangement = Arrangement.End) {
             IconButton(onClick = { onMoveUp?.invoke() }, enabled = onMoveUp != null, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.ArrowUpward, contentDescription = "Góra")
+                Icon(Icons.Default.ArrowUpward, contentDescription = texts.DEF_MOVE_UP)
             }
             IconButton(onClick = { onMoveDown?.invoke() }, enabled = onMoveDown != null, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.ArrowDownward, contentDescription = "Dół")
+                Icon(Icons.Default.ArrowDownward, contentDescription = texts.DEF_MOVE_DOWN)
             }
         }
     }
@@ -302,12 +304,13 @@ fun SensorConfigItem(
 
 @Composable
 fun BaseTypePicker(selectedType: String, onTypeSelected: (String) -> Unit) {
+    val texts = LocalMobileTexts.current
     val types = mapOf(
-        "Walking" to "Chodzenie",
-        "Running" to "Bieganie",
-        "Cycling" to "Jazda na rowerze",
-        "Hiking" to "Wędrówka",
-        "Other" to "Inne"
+        "Walking" to texts.DEF_WALKING,
+        "Running" to texts.DEF_RUNNING,
+        "Cycling" to texts.DEF_CYCLING,
+        "Hiking" to texts.DEF_HIKING,
+        "Other" to texts.DEF_OTHER
     )
     var expanded by remember { mutableStateOf(false) }
 
@@ -337,9 +340,10 @@ fun BaseTypePicker(selectedType: String, onTypeSelected: (String) -> Unit) {
 
 @Composable
 fun IconPickerSelection(onIconSelected: (String) -> Unit, onDismiss: () -> Unit) {
+    val texts = LocalMobileTexts.current
     val icons = mapOf(
-        "DirectionsRun" to (Icons.AutoMirrored.Filled.DirectionsRun to "Bieganie"),
-        "DirectionsWalk" to (Icons.AutoMirrored.Filled.DirectionsWalk to "Chodzenie"),
+        "DirectionsRun" to (Icons.AutoMirrored.Filled.DirectionsRun to texts.DEF_RUNNING),
+        "DirectionsWalk" to (Icons.AutoMirrored.Filled.DirectionsWalk to texts.DEF_WALKING),
         "DirectionsBike" to (Icons.AutoMirrored.Filled.DirectionsBike to "Rower"),
         "Pool" to (Icons.Default.Pool to "Pływanie"),
         "Mountain" to (Icons.Default.Terrain to "Góry"),
@@ -363,7 +367,7 @@ fun IconPickerSelection(onIconSelected: (String) -> Unit, onDismiss: () -> Unit)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Wybierz ikonę") },
+        title = { Text(texts.DEF_SELECT_ICON_TITLE) },
         text = {
             LazyColumn {
                 icons.forEach { (name, pair) ->

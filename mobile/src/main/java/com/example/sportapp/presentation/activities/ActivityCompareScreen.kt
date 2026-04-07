@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.AppConstants
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.model.HeartRateZoneResult
@@ -61,6 +62,7 @@ fun ActivityCompareScreen(
     viewModel: ActivityCompareViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val session1 by viewModel.session1.collectAsStateWithLifecycle()
     val session2 by viewModel.session2.collectAsStateWithLifecycle()
     val hrZones1 by viewModel.hrZones1.collectAsStateWithLifecycle()
@@ -99,7 +101,7 @@ fun ActivityCompareScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = session1?.let { "Porównanie: ${it.activityName}" } ?: "Porównanie aktywności",
+                            text = session1?.let { "${texts.COMPARE_VS} ${it.activityName}" } ?: texts.COMPARE_TITLE,
                             style = MaterialTheme.typography.titleMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -107,7 +109,7 @@ fun ActivityCompareScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                         }
                     }
                 )
@@ -156,9 +158,9 @@ fun ActivityCompareScreen(
                                     viewModel.chartProducers["bpm"]?.let { producer ->
                                         if (s1.charts["bpm"]?.isNotEmpty() == true || s2.charts["bpm"]?.isNotEmpty() == true) {
                                             CompareChart(
-                                                title = "Tętno (bpm)", 
+                                                title = texts.DETAIL_HEART_RATE, 
                                                 producer = producer, 
-                                                unit = "bpm", 
+                                                unit = texts.UNIT_BPM, 
                                                 times = if (s1.times.size >= s2.times.size) s1.times else s2.times,
                                                 hrZoneResult = hrZones1,
                                                 onMarkerShown = { selectedIndex = it }
@@ -181,7 +183,7 @@ fun ActivityCompareScreen(
                                             CompareChart(
                                                 title = widget.label,
                                                 producer = producer,
-                                                unit = getUnitForWidget(widget.id),
+                                                unit = getUnitForWidget(widget.id, texts),
                                                 times = if (s1.times.size >= s2.times.size) s1.times else s2.times,
                                                 onMarkerShown = { selectedIndex = it }
                                             )
@@ -205,29 +207,30 @@ fun ActivityCompareScreen(
 
 @Composable
 fun CompareStatsSection(s1: SessionData, s2: SessionData, visibleWidgets: List<WidgetItem>) {
+    val texts = LocalMobileTexts.current
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
     val widgetConfigs = mapOf(
-        "duration" to ("Czas trwania" to true),
-        "max_bpm" to ("Maksymalne tętno" to null),
-        "avg_bpm" to ("Średnie tętno" to null),
-        "total_calories" to ("Spalone kalorie" to true),
-        "max_calories_min" to ("Maks spalanie kalorii" to true),
-        "avg_pace" to ("Średnie tempo" to false),
-        "max_speed" to ("Maks prędkość" to true),
-        "max_altitude" to ("Maks wysokość" to null),
-        "total_ascent" to ("Suma podejść" to true),
-        "total_descent" to ("Suma zejść" to true),
-        "avg_step_length" to ("Wyliczona długość kroku" to null),
-        "avg_cadence" to ("Śr. kadencja" to true),
-        "max_cadence" to ("Maks. kadencja" to true),
-        "total_steps" to ("Liczba kroków" to true),
-        "total_distance_gps" to ("Dystans (GPS)" to true),
-        "total_distance_steps" to ("Dystans (kroki)" to true),
-        "pressure_start" to ("Ciśnienie atm. (start)" to null),
-        "pressure_end" to ("Ciśnienie atm. (koniec)" to null),
-        "max_pressure" to ("Maks. ciśnienie" to null),
-        "min_pressure" to ("Min. ciśnienie" to null),
-        "best_pace_1km" to ("Najlepsze tempo (1km)" to false)
+        "duration" to (texts.WIDGET_DURATION to true),
+        "max_bpm" to (texts.WIDGET_MAX_BPM to null),
+        "avg_bpm" to (texts.WIDGET_AVG_BPM to null),
+        "total_calories" to (texts.WIDGET_TOTAL_CALORIES to true),
+        "max_calories_min" to (texts.WIDGET_MAX_CALORIES_MIN to true),
+        "avg_pace" to (texts.WIDGET_AVG_PACE to false),
+        "max_speed" to (texts.WIDGET_MAX_SPEED to true),
+        "max_altitude" to (texts.WIDGET_MAX_ALTITUDE_DESC to null),
+        "total_ascent" to (texts.WIDGET_TOTAL_ASCENT to true),
+        "total_descent" to (texts.WIDGET_TOTAL_DESCENT to true),
+        "avg_step_length" to (texts.WIDGET_AVG_STEP_LENGTH to null),
+        "avg_cadence" to (texts.WIDGET_AVG_CADENCE_DESC to true),
+        "max_cadence" to (texts.WIDGET_MAX_CADENCE to true),
+        "total_steps" to (texts.WIDGET_TOTAL_STEPS to true),
+        "total_distance_gps" to (texts.WIDGET_DISTANCE_GPS to true),
+        "total_distance_steps" to (texts.WIDGET_DISTANCE_STEPS to true),
+        "pressure_start" to (texts.WIDGET_PRESSURE_START to null),
+        "pressure_end" to (texts.WIDGET_PRESSURE_END to null),
+        "max_pressure" to (texts.WIDGET_MAX_PRESSURE to null),
+        "min_pressure" to (texts.WIDGET_MIN_PRESSURE to null),
+        "best_pace_1km" to (texts.WIDGET_BEST_PACE_1KM to false)
     )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -235,7 +238,7 @@ fun CompareStatsSection(s1: SessionData, s2: SessionData, visibleWidgets: List<W
             widgetConfigs[widget.id]?.let { (label, higherIsBetter) ->
                 val v1 = getSessionValue(s1, widget.id)
                 val v2 = getSessionValue(s2, widget.id)
-                CompareStatRow(label, v1, v2, { formatValue(widget.id, it) }, higherIsBetter)
+                CompareStatRow(label, v1, v2, { formatValue(widget.id, it, texts) }, higherIsBetter)
             }
         }
     }
@@ -243,35 +246,47 @@ fun CompareStatsSection(s1: SessionData, s2: SessionData, visibleWidgets: List<W
 
 private fun getSessionValue(s: SessionData, id: String): Any {
     return when(id) {
-        "duration" -> s.duration; "max_bpm" -> s.maxBpm; "avg_bpm" -> s.avgBpm
-        "total_calories" -> s.totalCalories.toDouble(); "max_calories_min" -> s.maxCaloriesMin.toDouble()
-        "avg_pace" -> s.avgPace; "max_speed" -> s.maxSpeed; "max_altitude" -> s.maxAltitude
-        "total_ascent" -> s.totalAscent; "total_descent" -> s.totalDescent; "avg_step_length" -> s.avgStepLength
-        "avg_cadence" -> s.avgCadence; "max_cadence" -> s.maxCadence; "total_steps" -> s.totalSteps.toDouble()
-        "total_distance_gps" -> s.totalDistanceGps; "total_distance_steps" -> s.totalDistanceSteps
-        "pressure_start" -> s.pressureStart ?: 0.0; "pressure_end" -> s.pressureEnd ?: 0.0
-        "max_pressure" -> s.maxPressure ?: 0.0; "min_pressure" -> s.minPressure ?: 0.0
+        "duration" -> s.duration
+        "max_bpm" -> s.maxBpm
+        "avg_bpm" -> s.avgBpm
+        "total_calories" -> s.totalCalories.toDouble()
+        "max_calories_min" -> s.maxCaloriesMin.toDouble()
+        "avg_pace" -> s.avgPace
+        "max_speed" -> s.maxSpeed
+        "max_altitude" -> s.maxAltitude
+        "total_ascent" -> s.totalAscent
+        "total_descent" -> s.totalDescent
+        "avg_step_length" -> s.avgStepLength
+        "avg_cadence" -> s.avgCadence
+        "max_cadence" -> s.maxCadence
+        "total_steps" -> s.totalSteps.toDouble()
+        "total_distance_gps" -> s.totalDistanceGps
+        "total_distance_steps" -> s.totalDistanceSteps
+        "pressure_start" -> s.pressureStart ?: 0.0
+        "pressure_end" -> s.pressureEnd ?: 0.0
+        "max_pressure" -> s.maxPressure ?: 0.0
+        "min_pressure" -> s.minPressure ?: 0.0
         "best_pace_1km" -> s.bestPace1km ?: 0.0
         else -> ""
     }
 }
 
-private fun formatValue(id: String, value: Any): String {
+private fun formatValue(id: String, value: Any, texts: com.example.sportapp.MobileTexts): String {
     val n = (value as? Number)?.toDouble() ?: return value.toString()
     if (n == 0.0 && (id == "best_pace_1km" || id == "max_pressure" || id == "min_pressure")) return "--"
     return when (id) {
         "duration" -> value.toString()
-        "total_calories" -> "${n.toInt()} kcal"
-        "max_calories_min" -> "%.2f kcal/min".format(Locale.US, n)
+        "total_calories" -> "${n.toInt()} ${texts.UNIT_KCAL}"
+        "max_calories_min" -> "%.2f ${texts.UNIT_KCAL_MIN}".format(Locale.US, n)
         "avg_pace", "best_pace_1km" -> formatPace(n)
-        "max_speed" -> "%.1f km/h".format(Locale.US, n)
-        "max_altitude", "total_ascent", "total_descent" -> "%.0f m".format(Locale.US, n)
-        "avg_step_length" -> "%.2f m".format(Locale.US, n)
-        "avg_cadence", "max_cadence" -> "%.0f kr/min".format(Locale.US, n)
+        "max_speed" -> "%.1f ${texts.UNIT_KM_H}".format(Locale.US, n)
+        "max_altitude", "total_ascent", "total_descent" -> "%.0f ${texts.UNIT_M}".format(Locale.US, n)
+        "avg_step_length" -> "%.2f ${texts.UNIT_M}".format(Locale.US, n)
+        "avg_cadence", "max_cadence" -> "%.0f ${texts.UNIT_STEP_MIN}".format(Locale.US, n)
         "total_steps" -> "${n.toInt()}"
-        "total_distance_gps", "total_distance_steps" -> formatDistance(n)
-        "pressure_start", "pressure_end", "max_pressure", "min_pressure" -> "%.1f hPa".format(Locale.US, n)
-        "max_bpm", "avg_bpm" -> "${n.toInt()} bpm"
+        "total_distance_gps", "total_distance_steps" -> formatDistance(n, texts.UNIT_M, texts.UNIT_KM)
+        "pressure_start", "pressure_end", "max_pressure", "min_pressure" -> "%.1f ${texts.UNIT_HPA}".format(Locale.US, n)
+        "max_bpm", "avg_bpm" -> "${n.toInt()} ${texts.UNIT_BPM}"
         else -> value.toString()
     }
 }
@@ -330,6 +345,7 @@ fun CompareHeartRateZones(
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     if (hr1.zones.isEmpty() || hr2.zones.isEmpty() || hr1.zones.size != hr2.zones.size) return
 
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -351,12 +367,12 @@ fun CompareHeartRateZones(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        contentDescription = if (isExpanded) texts.DETAIL_COLLAPSE else texts.DETAIL_EXPAND,
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Strefy tętna",
+                        text = texts.DETAIL_HR_ZONES,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -415,6 +431,7 @@ fun CompareMaps(
     selectedIndex: Int? = null,
     onExpandClick: () -> Unit = {}
 ) {
+    val texts = LocalMobileTexts.current
     val context = LocalContext.current
     val mapStyle = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
     val routesAreClose = areRoutesClose(s1.route, s2.route, AppConstants.MAP_COMPARISON_RADIUS_KM)
@@ -467,12 +484,12 @@ fun CompareMaps(
                 Polyline(s2.route, color = Color2, width = 8f)
                 
                 if (s1.route.isNotEmpty()) {
-                    Marker(state = rememberMarkerState(position = s1.route.first()), icon = startIcon, title = "Start 1")
-                    Marker(state = rememberMarkerState(position = s1.route.last()), icon = finishIcon, title = "Meta 1", anchor = Offset(0.0f, 1.0f))
+                    Marker(state = rememberMarkerState(position = s1.route.first()), icon = startIcon, title = "${texts.DETAIL_MAP_START} 1")
+                    Marker(state = rememberMarkerState(position = s1.route.last()), icon = finishIcon, title = "${texts.DETAIL_MAP_FINISH} 1", anchor = Offset(0.0f, 1.0f))
                 }
                 if (s2.route.isNotEmpty()) {
-                    Marker(state = rememberMarkerState(position = s2.route.first()), icon = startIcon, title = "Start 2")
-                    Marker(state = rememberMarkerState(position = s2.route.last()), icon = finishIcon, title = "Meta 2", anchor = Offset(0.0f, 1.0f))
+                    Marker(state = rememberMarkerState(position = s2.route.first()), icon = startIcon, title = "${texts.DETAIL_MAP_START} 2")
+                    Marker(state = rememberMarkerState(position = s2.route.last()), icon = finishIcon, title = "${texts.DETAIL_MAP_FINISH} 2", anchor = Offset(0.0f, 1.0f))
                 }
 
                 if (selectedIndex != null) {
@@ -491,7 +508,7 @@ fun CompareMaps(
                 onClick = onExpandClick,
                 modifier = Modifier.padding(8.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
             ) {
-                Icon(Icons.Default.Fullscreen, contentDescription = "Powiększ mapę")
+                Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND)
             }
         }
     } else {
@@ -510,6 +527,7 @@ fun FullScreenCompareMap(
     selectedIndex: Int?,
     onClose: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val context = LocalContext.current
     val mapStyle = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
     val cameraPositionState = rememberCameraPositionState()
@@ -561,12 +579,12 @@ fun FullScreenCompareMap(
             Polyline(s2.route, color = Color2, width = 8f)
             
             if (s1.route.isNotEmpty()) {
-                Marker(state = rememberMarkerState(position = s1.route.first()), icon = startIcon, title = "Start 1")
-                Marker(state = rememberMarkerState(position = s1.route.last()), icon = finishIcon, title = "Meta 1", anchor = Offset(0.0f, 1.0f))
+                Marker(state = rememberMarkerState(position = s1.route.first()), icon = startIcon, title = "${texts.DETAIL_MAP_START} 1")
+                Marker(state = rememberMarkerState(position = s1.route.last()), icon = finishIcon, title = "${texts.DETAIL_MAP_FINISH} 1", anchor = Offset(0.0f, 1.0f))
             }
             if (s2.route.isNotEmpty()) {
-                Marker(state = rememberMarkerState(position = s2.route.first()), icon = startIcon, title = "Start 2")
-                Marker(state = rememberMarkerState(position = s2.route.last()), icon = finishIcon, title = "Meta 2", anchor = Offset(0.0f, 1.0f))
+                Marker(state = rememberMarkerState(position = s2.route.first()), icon = startIcon, title = "${texts.DETAIL_MAP_START} 2")
+                Marker(state = rememberMarkerState(position = s2.route.last()), icon = finishIcon, title = "${texts.DETAIL_MAP_FINISH} 2", anchor = Offset(0.0f, 1.0f))
             }
 
             if (selectedIndex != null) {
@@ -585,7 +603,7 @@ fun FullScreenCompareMap(
             onClick = onClose,
             modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
         ) {
-            Icon(Icons.Default.FullscreenExit, contentDescription = "Zmniejsz mapę")
+            Icon(Icons.Default.FullscreenExit, contentDescription = texts.DETAIL_MAP_COLLAPSE)
         }
     }
 }
@@ -599,6 +617,7 @@ fun MapSmall(
     selectedIndex: Int? = null,
     onExpandClick: () -> Unit = {}
 ) {
+    val texts = LocalMobileTexts.current
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -663,7 +682,7 @@ fun MapSmall(
             onClick = onExpandClick,
             modifier = Modifier.padding(4.dp).size(32.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
         ) {
-            Icon(Icons.Default.Fullscreen, contentDescription = "Powiększ mapę", modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -676,7 +695,7 @@ private fun areRoutesClose(route1: List<LatLng>, route2: List<LatLng>, radiusKm:
     return results[0] <= radiusKm * 1000 * 5
 }
 
-private fun formatDistance(distanceMeters: Double): String = if (distanceMeters >= 1000) "%.2f km".format(Locale.US, distanceMeters / 1000.0) else "%.0f m".format(Locale.US, distanceMeters)
+private fun formatDistance(distanceMeters: Double, unitM: String, unitKm: String): String = if (distanceMeters >= 1000) "%.2f $unitKm".format(Locale.US, distanceMeters / 1000.0) else "%.0f $unitM".format(Locale.US, distanceMeters)
 private fun formatPace(paceDecimal: Double): String {
     if (paceDecimal <= 0 || paceDecimal > 120) return "--:--"
     return "%02d:%02d/km".format(paceDecimal.toInt(), ((paceDecimal - paceDecimal.toInt()) * 60).toInt())
@@ -685,4 +704,4 @@ private fun formatSeconds(seconds: Long): String {
     val h = seconds / 3600; val m = (seconds % 3600) / 60; val s = seconds % 60
     return if (h > 0) "%d:%02d:%02d".format(Locale.US, h, m, s) else "%02d:%02d".format(Locale.US, m, s)
 }
-private fun getUnitForWidget(id: String): String = when(id) { "bpm", "srednie_bpm" -> "bpm"; "kalorie_min", "kalorie_suma" -> "kcal"; "kroki_min" -> "kroków/min"; "odl_kroki", "gps_dystans" -> "m"; "predkosc", "predkosc_kroki" -> "km/h"; "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"; "pressure" -> "hPa"; else -> "" }
+private fun getUnitForWidget(id: String, texts: com.example.sportapp.MobileTexts): String = when(id) { "bpm", "srednie_bpm" -> texts.UNIT_BPM; "kalorie_min" -> texts.UNIT_KCAL_MIN; "kalorie_suma" -> texts.UNIT_KCAL; "kroki_min" -> texts.UNIT_STEP_MIN; "odl_kroki", "gps_dystans" -> texts.UNIT_M; "predkosc", "predkosc_kroki" -> texts.UNIT_KM_H; "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> texts.UNIT_M; "pressure" -> texts.UNIT_HPA; else -> "" }
