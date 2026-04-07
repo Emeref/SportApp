@@ -11,7 +11,8 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.example.sportapp.TextsWearPL
+import com.example.sportapp.LocalWearTexts
+import com.example.sportapp.WearTexts
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.workout.SummaryManager
 import java.util.Locale
@@ -20,6 +21,7 @@ import java.util.Locale
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel()
 ) {
+    val texts = LocalWearTexts.current
     val stats by viewModel.stats.collectAsState()
     val settings by viewModel.settings.collectAsState(initial = null)
     val listState = rememberScalingLazyListState()
@@ -33,7 +35,7 @@ fun StatisticsScreen(
         settings?.let { userSettings ->
             item {
                 Text(
-                    text = getPeriodLabel(userSettings.watchStatsPeriod, userSettings.watchStatsCustomDays),
+                    text = getPeriodLabel(userSettings.watchStatsPeriod, userSettings.watchStatsCustomDays, texts),
                     style = MaterialTheme.typography.caption1,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -49,7 +51,7 @@ fun StatisticsScreen(
             if (enabledWidgets.isEmpty()) {
                 item {
                     Text(
-                        text = TextsWearPL.STATS_NO_WIDGETS,
+                        text = texts.STATS_NO_WIDGETS,
                         style = MaterialTheme.typography.body2,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(16.dp)
@@ -85,13 +87,13 @@ fun formatDistance(meters: Int): String {
         "$meters m"
 }
 
-fun getPeriodLabel(period: ReportingPeriod, customDays: Int): String {
+fun getPeriodLabel(period: ReportingPeriod, customDays: Int, texts: WearTexts): String {
     return when (period) {
-        ReportingPeriod.TODAY -> TextsWearPL.STATS_PERIOD_TODAY
-        ReportingPeriod.WEEK -> TextsWearPL.STATS_PERIOD_7_DAYS
-        ReportingPeriod.MONTH -> TextsWearPL.STATS_PERIOD_30_DAYS
-        ReportingPeriod.YEAR -> TextsWearPL.STATS_PERIOD_YEAR
-        ReportingPeriod.CUSTOM -> TextsWearPL.statsPeriodCustom(customDays)
+        ReportingPeriod.TODAY -> texts.STATS_PERIOD_TODAY
+        ReportingPeriod.WEEK -> texts.STATS_PERIOD_7_DAYS
+        ReportingPeriod.MONTH -> texts.STATS_PERIOD_30_DAYS
+        ReportingPeriod.YEAR -> texts.STATS_PERIOD_YEAR
+        ReportingPeriod.CUSTOM -> texts.statsPeriodCustom(customDays)
     }
 }
 

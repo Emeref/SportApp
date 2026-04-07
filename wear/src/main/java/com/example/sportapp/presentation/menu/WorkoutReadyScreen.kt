@@ -17,7 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
-import com.example.sportapp.TextsWearPL
+import com.example.sportapp.LocalWearTexts
 
 @Composable
 fun WorkoutReadyScreen(
@@ -25,6 +25,7 @@ fun WorkoutReadyScreen(
     initialDefinitionId: Long,
     viewModel: ChooseSportViewModel = hiltViewModel()
 ) {
+    val texts = LocalWearTexts.current
     val definitions by viewModel.definitions.collectAsState()
 
     if (definitions == null) {
@@ -93,9 +94,9 @@ fun WorkoutReadyScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = TextsWearPL.WORKOUT_READY_START)
+                            Icon(Icons.Default.PlayArrow, contentDescription = texts.WORKOUT_READY_START)
                             Spacer(Modifier.width(8.dp))
-                            Text(TextsWearPL.WORKOUT_READY_START)
+                            Text(texts.WORKOUT_READY_START)
                         }
                     }
 
@@ -111,11 +112,11 @@ fun WorkoutReadyScreen(
                             colors = ButtonDefaults.secondaryButtonColors(),
                             modifier = Modifier.size(ButtonDefaults.SmallButtonSize)
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = TextsWearPL.WORKOUT_READY_BACK)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.WORKOUT_READY_BACK)
                         }
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = TextsWearPL.WORKOUT_READY_BACK,
+                            text = texts.WORKOUT_READY_BACK,
                             style = MaterialTheme.typography.caption2
                         )
                     }

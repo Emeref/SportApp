@@ -17,6 +17,7 @@ import androidx.wear.compose.material.*
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import com.example.sportapp.LocalWearTexts
 import com.example.sportapp.TextsWearPL
 import com.example.sportapp.presentation.menu.ChooseSportScreen
 import com.example.sportapp.presentation.menu.MainMenuScreen
@@ -74,6 +75,7 @@ class MainActivity : ComponentActivity() {
                 clockColor = Color.Red,
                 healthData = HealthData(),
                 screenBehavior = ScreenBehavior.KEEP_SCREEN_ON,
+                language = AppLanguage.POLISH,
                 watchStatsWidgets = emptyList(),
                 watchStatsPeriod = ReportingPeriod.WEEK,
                 watchStatsCustomDays = 7
@@ -82,11 +84,13 @@ class MainActivity : ComponentActivity() {
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
             var healthData by remember { mutableStateOf(HealthData()) }
             var screenBehavior by remember { mutableStateOf(ScreenBehavior.KEEP_SCREEN_ON) }
+            var currentLanguage by remember { mutableStateOf(AppLanguage.POLISH) }
 
             LaunchedEffect(settingsState) {
                 selectedClockColor = settingsState.clockColor
                 healthData = settingsState.healthData
                 screenBehavior = settingsState.screenBehavior
+                currentLanguage = settingsState.language
             }
 
             val targetWorkoutId by navigationIntentId.collectAsState()
@@ -119,183 +123,195 @@ class MainActivity : ComponentActivity() {
 
             var currentSummaryData by remember { mutableStateOf<Pair<String, List<Pair<String, String>>>?>(null) }
 
-            SportAppTheme {
-                Scaffold(
-                    timeText = { 
-                        if (selectedClockColor != null && !isAmbient) {
-                            TimeText(
-                                timeTextStyle = MaterialTheme.typography.caption1.copy(
-                                    color = selectedClockColor!!
+            CompositionLocalProvider(LocalWearTexts provides currentLanguage.texts) {
+                SportAppTheme {
+                    val texts = LocalWearTexts.current
+                    Scaffold(
+                        timeText = { 
+                            if (selectedClockColor != null && !isAmbient) {
+                                TimeText(
+                                    timeTextStyle = MaterialTheme.typography.caption1.copy(
+                                        color = selectedClockColor!!
+                                    )
                                 )
-                            )
+                            }
                         }
-                    }
-                ) {
-                    SwipeDismissableNavHost(
-                        navController = navController,
-                        startDestination = "main_menu"
                     ) {
-                        composable("main_menu") { MainMenuScreen(navController) }
-                        composable("choose_sport") { ChooseSportScreen(navController) }
-                        composable(
-                            "workout_ready/{definitionId}",
-                            arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
-                        ) { backStackEntry ->
-                            val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
-                            WorkoutReadyScreen(navController, definitionId)
-                        }
-                        composable("statistics") { StatisticsScreen() }
-                        composable("settings") { 
-                            SettingsScreen(
-                                navController = navController, 
-                                currentClockColor = selectedClockColor,
-                                currentScreenBehavior = screenBehavior
-                            ) 
-                        }
+                        SwipeDismissableNavHost(
+                            navController = navController,
+                            startDestination = "main_menu"
+                        ) {
+                            composable("main_menu") { MainMenuScreen(navController) }
+                            composable("choose_sport") { ChooseSportScreen(navController) }
+                            composable(
+                                "workout_ready/{definitionId}",
+                                arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
+                            ) { backStackEntry ->
+                                val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
+                                WorkoutReadyScreen(navController, definitionId)
+                            }
+                            composable("statistics") { StatisticsScreen() }
+                            composable("settings") { 
+                                SettingsScreen(
+                                    navController = navController, 
+                                    currentClockColor = selectedClockColor,
+                                    currentScreenBehavior = screenBehavior,
+                                    currentLanguage = currentLanguage
+                                ) 
+                            }
 
-                        composable("screen_behavior_selection") {
-                            ScreenBehaviorSelectionScreen(screenBehavior) {
-                                screenBehavior = it
-                                scope.launch { settingsManager.saveScreenBehavior(it) }
+                            composable("screen_behavior_selection") {
+                                ScreenBehaviorSelectionScreen(screenBehavior) {
+                                    screenBehavior = it
+                                    scope.launch { settingsManager.saveScreenBehavior(it) }
+                                }
                             }
-                        }
-                        
-                        composable("clock_color_selection") {
-                            ClockColorSelectionScreen(selectedClockColor) { 
-                                selectedClockColor = it
-                                scope.launch { settingsManager.saveClockColor(it) }
+                            
+                            composable("clock_color_selection") {
+                                ClockColorSelectionScreen(selectedClockColor) { 
+                                    selectedClockColor = it
+                                    scope.launch { settingsManager.saveClockColor(it) }
+                                }
                             }
-                        }
-                        
-                        composable("health_data") { 
-                            HealthDataScreen(
-                                data = healthData,
-                                onNavigateToGender = { navController.navigate("health_gender") },
-                                onNavigateToAge = { navController.navigate("health_age") },
-                                onNavigateToWeight = { navController.navigate("health_weight") },
-                                onNavigateToHeight = { navController.navigate("health_height") },
-                                onNavigateToRestingHR = { navController.navigate("health_resting_hr") },
-                                onNavigateToMaxHR = { navController.navigate("health_max_hr") },
-                                onNavigateToStepLength = { navController.navigate("health_step_length") }
-                            ) 
-                        }
-                        composable("health_gender") {
-                            GenderSelectionScreen(healthData.gender) { 
-                                healthData = healthData.copy(gender = it)
-                                scope.launch { settingsManager.saveHealthData(healthData) }
+
+                            composable("language_selection") {
+                                LanguageSelectionScreen(currentLanguage) {
+                                    currentLanguage = it
+                                    scope.launch { settingsManager.saveLanguage(it) }
+                                    navController.popBackStack()
+                                }
                             }
-                        }
-                        composable("health_age") {
-                            NumericInputScreen(
-                                label = TextsWearPL.HEALTH_AGE,
-                                value = healthData.age,
-                                range = 16..120,
-                                unit = TextsWearPL.UNIT_YEARS,
-                                onValueChange = { 
-                                    healthData = healthData.copy(age = it, maxHR = 220 - it)
+                            
+                            composable("health_data") { 
+                                HealthDataScreen(
+                                    data = healthData,
+                                    onNavigateToGender = { navController.navigate("health_gender") },
+                                    onNavigateToAge = { navController.navigate("health_age") },
+                                    onNavigateToWeight = { navController.navigate("health_weight") },
+                                    onNavigateToHeight = { navController.navigate("health_height") },
+                                    onNavigateToRestingHR = { navController.navigate("health_resting_hr") },
+                                    onNavigateToMaxHR = { navController.navigate("health_max_hr") },
+                                    onNavigateToStepLength = { navController.navigate("health_step_length") }
+                                ) 
+                            }
+                            composable("health_gender") {
+                                GenderSelectionScreen(healthData.gender) { 
+                                    healthData = healthData.copy(gender = it)
                                     scope.launch { settingsManager.saveHealthData(healthData) }
-                                },
-                                onDone = { navController.popBackStack() }
-                            )
-                        }
-                        composable("health_weight") {
-                            NumericInputScreen(
-                                label = TextsWearPL.HEALTH_WEIGHT,
-                                value = healthData.weight,
-                                range = 30..250,
-                                unit = TextsWearPL.UNIT_KG,
-                                onValueChange = { 
-                                    healthData = healthData.copy(weight = it)
-                                    scope.launch { settingsManager.saveHealthData(healthData) }
-                                },
-                                onDone = { navController.popBackStack() }
-                            )
-                        }
-                        composable("health_height") {
-                            NumericInputScreen(
-                                label = TextsWearPL.HEALTH_HEIGHT,
-                                value = healthData.height,
-                                range = 100..230,
-                                unit = TextsWearPL.UNIT_CM,
-                                onValueChange = { 
-                                    healthData = healthData.copy(height = it)
-                                    scope.launch { settingsManager.saveHealthData(healthData) }
-                                },
-                                onDone = { navController.popBackStack() }
-                            )
-                        }
-                        composable("health_step_length") {
-                            NumericInputScreen(
-                                label = TextsWearPL.HEALTH_STEP_LENGTH,
-                                value = healthData.stepLength,
-                                range = 30..130,
-                                unit = TextsWearPL.UNIT_CM,
-                                onValueChange = { 
-                                    healthData = healthData.copy(stepLength = it)
-                                    scope.launch { settingsManager.saveHealthData(healthData) }
-                                },
-                                onDone = { navController.popBackStack() }
-                            )
-                        }
-                        composable("health_resting_hr") {
-                            NumericInputScreen(
-                                label = TextsWearPL.HEALTH_RESTING_HR,
-                                value = healthData.restingHR,
-                                range = 30..200,
-                                unit = TextsWearPL.UNIT_BPM,
-                                onValueChange = { 
-                                    healthData = healthData.copy(restingHR = it)
-                                    scope.launch { settingsManager.saveHealthData(healthData) }
-                                },
-                                onDone = { navController.popBackStack() }
-                            )
-                        }
-                        composable("health_max_hr") {
-                            NumericInputScreen(
-                                label = TextsWearPL.HEALTH_MAX_HR,
-                                value = healthData.maxHR,
-                                range = 100..240,
-                                unit = TextsWearPL.UNIT_BPM,
-                                onValueChange = { 
-                                    healthData = healthData.copy(maxHR = it)
-                                    scope.launch { settingsManager.saveHealthData(healthData) }
-                                },
-                                onDone = { navController.popBackStack() }
-                            )
-                        }
-                        
-                        composable("workout_summary") {
-                            currentSummaryData?.let { (title, data) ->
-                                WorkoutSummaryScreen(
-                                    title = title,
-                                    summaryData = data,
-                                    onConfirm = {
-                                        navController.navigate("choose_sport") {
+                                }
+                            }
+                            composable("health_age") {
+                                NumericInputScreen(
+                                    label = texts.HEALTH_AGE,
+                                    value = healthData.age,
+                                    range = 16..120,
+                                    unit = texts.UNIT_YEARS,
+                                    onValueChange = { 
+                                        healthData = healthData.copy(age = it, maxHR = 220 - it)
+                                        scope.launch { settingsManager.saveHealthData(healthData) }
+                                    },
+                                    onDone = { navController.popBackStack() }
+                                )
+                            }
+                            composable("health_weight") {
+                                NumericInputScreen(
+                                    label = texts.HEALTH_WEIGHT,
+                                    value = healthData.weight,
+                                    range = 30..250,
+                                    unit = texts.UNIT_KG,
+                                    onValueChange = { 
+                                        healthData = healthData.copy(weight = it)
+                                        scope.launch { settingsManager.saveHealthData(healthData) }
+                                    },
+                                    onDone = { navController.popBackStack() }
+                                )
+                            }
+                            composable("health_height") {
+                                NumericInputScreen(
+                                    label = texts.HEALTH_HEIGHT,
+                                    value = healthData.height,
+                                    range = 100..230,
+                                    unit = texts.UNIT_CM,
+                                    onValueChange = { 
+                                        healthData = healthData.copy(height = it)
+                                        scope.launch { settingsManager.saveHealthData(healthData) }
+                                    },
+                                    onDone = { navController.popBackStack() }
+                                )
+                            }
+                            composable("health_step_length") {
+                                NumericInputScreen(
+                                    label = texts.HEALTH_STEP_LENGTH,
+                                    value = healthData.stepLength,
+                                    range = 30..130,
+                                    unit = texts.UNIT_CM,
+                                    onValueChange = { 
+                                        healthData = healthData.copy(stepLength = it)
+                                        scope.launch { settingsManager.saveHealthData(healthData) }
+                                    },
+                                    onDone = { navController.popBackStack() }
+                                )
+                            }
+                            composable("health_resting_hr") {
+                                NumericInputScreen(
+                                    label = texts.HEALTH_RESTING_HR,
+                                    value = healthData.restingHR,
+                                    range = 30..200,
+                                    unit = texts.UNIT_BPM,
+                                    onValueChange = { 
+                                        healthData = healthData.copy(restingHR = it)
+                                        scope.launch { settingsManager.saveHealthData(healthData) }
+                                    },
+                                    onDone = { navController.popBackStack() }
+                                )
+                            }
+                            composable("health_max_hr") {
+                                NumericInputScreen(
+                                    label = texts.HEALTH_MAX_HR,
+                                    value = healthData.maxHR,
+                                    range = 100..240,
+                                    unit = texts.UNIT_BPM,
+                                    onValueChange = { 
+                                        healthData = healthData.copy(maxHR = it)
+                                        scope.launch { settingsManager.saveHealthData(healthData) }
+                                    },
+                                    onDone = { navController.popBackStack() }
+                                )
+                            }
+                            
+                            composable("workout_summary") {
+                                currentSummaryData?.let { (title, data) ->
+                                    WorkoutSummaryScreen(
+                                        title = title,
+                                        summaryData = data,
+                                        onConfirm = {
+                                            navController.navigate("choose_sport") {
+                                                popUpTo("main_menu") { inclusive = false }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+
+                            composable(
+                                "dynamic_workout/{definitionId}",
+                                arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
+                            ) { backStackEntry ->
+                                val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
+                                DynamicWorkoutScreen(
+                                    definitionId = definitionId,
+                                    clockColor = selectedClockColor,
+                                    healthData = healthData,
+                                    screenBehavior = screenBehavior,
+                                    isAmbient = isAmbient,
+                                    onEndWorkout = { name, summary ->
+                                        currentSummaryData = name to summary
+                                        navController.navigate("workout_summary") {
                                             popUpTo("main_menu") { inclusive = false }
                                         }
                                     }
                                 )
                             }
-                        }
-
-                        composable(
-                            "dynamic_workout/{definitionId}",
-                            arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
-                        ) { backStackEntry ->
-                            val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
-                            DynamicWorkoutScreen(
-                                definitionId = definitionId,
-                                clockColor = selectedClockColor,
-                                healthData = healthData,
-                                screenBehavior = screenBehavior,
-                                isAmbient = isAmbient,
-                                onEndWorkout = { name, summary ->
-                                    currentSummaryData = name to summary
-                                    navController.navigate("workout_summary") {
-                                        popUpTo("main_menu") { inclusive = false }
-                                    }
-                                }
-                            )
                         }
                     }
                 }

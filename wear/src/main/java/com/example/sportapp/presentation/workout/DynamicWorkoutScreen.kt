@@ -25,7 +25,7 @@ import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.foundation.rotary.RotaryScrollableDefaults
 import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.material.*
-import com.example.sportapp.TextsWearPL
+import com.example.sportapp.LocalWearTexts
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.components.SportDataRow
@@ -214,8 +214,9 @@ private fun ActiveWorkoutUI(
 
 @Composable
 private fun WorkoutTimerHeader(formattedTime: String) {
+    val texts = LocalWearTexts.current
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 20.dp, start = 8.dp, end = 8.dp)) {
-        Text(TextsWearPL.WORKOUT_LABEL_TIMER, style = MaterialTheme.typography.caption2, color = Color.Gray)
+        Text(texts.WORKOUT_LABEL_TIMER, style = MaterialTheme.typography.caption2, color = Color.Gray)
         Text(formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
     }
 }
@@ -320,8 +321,9 @@ fun DynamicSensorDispatcher(
     session: WorkoutSessionState,
     isAmbient: Boolean
 ) {
+    val texts = LocalWearTexts.current
     val sensor = WorkoutSensor.entries.find { it.id == id } ?: return
-    val label = sensor.label
+    val label = sensor.getLabel(texts)
     val p = session.lastPoint
     val color = if (isAmbient) Color.White else when (id) {
         "bpm" -> Color.Red

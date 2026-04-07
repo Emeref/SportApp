@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.*
-import com.example.sportapp.TextsWearPL
+import com.example.sportapp.LocalWearTexts
 import com.example.sportapp.presentation.sensors.WorkoutStatus
 import com.example.sportapp.presentation.settings.HealthData
 
@@ -24,11 +24,12 @@ fun WorkoutControlScreen(
     healthData: HealthData,
     onWorkoutFinished: (String, List<Pair<String, String>>) -> Unit
 ) {
+    val texts = LocalWearTexts.current
     // Note: This is a placeholder for backward compatibility
     // In the new system, we should use DynamicWorkoutScreen directly from MainActivity
     
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(TextsWearPL.WORKOUT_READY_MSG)
+        Text(texts.WORKOUT_READY_MSG)
     }
 }
 
@@ -38,6 +39,7 @@ fun WorkoutControls(
     onTogglePause: () -> Unit,
     onEnd: () -> Unit
 ) {
+    val texts = LocalWearTexts.current
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -53,7 +55,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = if (status == WorkoutStatus.PAUSED) Icons.Default.PlayArrow else Icons.Default.Pause,
-                    contentDescription = if (status == WorkoutStatus.PAUSED) TextsWearPL.WORKOUT_RESUME else TextsWearPL.WORKOUT_PAUSE,
+                    contentDescription = if (status == WorkoutStatus.PAUSED) texts.WORKOUT_RESUME else texts.WORKOUT_PAUSE,
                     tint = Color.Black
                 )
             }
@@ -65,7 +67,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.Stop,
-                    contentDescription = TextsWearPL.WORKOUT_FINISH,
+                    contentDescription = texts.WORKOUT_FINISH,
                     tint = Color.White
                 )
             }
@@ -77,7 +79,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = TextsWearPL.WORKOUT_START,
+                    contentDescription = texts.WORKOUT_START,
                     tint = Color.Black
                 )
             }

@@ -18,11 +18,12 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
+import com.example.sportapp.LocalWearTexts
 import com.example.sportapp.R
-import com.example.sportapp.TextsWearPL
 
 @Composable
 fun MainMenuScreen(navController: NavHostController) {
+    val texts = LocalWearTexts.current
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -34,7 +35,7 @@ fun MainMenuScreen(navController: NavHostController) {
         item {
             Image(
                 painter = painterResource(id = R.drawable.logo_apki_biale),
-                contentDescription = TextsWearPL.APP_LOGO_DESC,
+                contentDescription = texts.APP_LOGO_DESC,
                 modifier = Modifier
                     .size(48.dp)
                     .padding(bottom = 8.dp)
@@ -43,26 +44,26 @@ fun MainMenuScreen(navController: NavHostController) {
 
         item {
             Chip(
-                label = { Text(TextsWearPL.MENU_SPORT) },
+                label = { Text(texts.MENU_SPORT) },
                 onClick = { navController.navigate("choose_sport") },
-                icon = { Icon(Icons.Default.DirectionsRun, contentDescription = TextsWearPL.MENU_SPORT) },
+                icon = { Icon(Icons.Default.DirectionsRun, contentDescription = texts.MENU_SPORT) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
         }
         item {
             Chip(
-                label = { Text(TextsWearPL.MENU_STATISTICS) },
+                label = { Text(texts.MENU_STATISTICS) },
                 onClick = { navController.navigate("statistics") },
-                icon = { Icon(Icons.Default.BarChart, contentDescription = TextsWearPL.MENU_STATISTICS) },
+                icon = { Icon(Icons.Default.BarChart, contentDescription = texts.MENU_STATISTICS) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 colors = ChipDefaults.secondaryChipColors()
             )
         }
         item {
             Chip(
-                label = { Text(TextsWearPL.MENU_SETTINGS) },
+                label = { Text(texts.MENU_SETTINGS) },
                 onClick = { navController.navigate("settings") },
-                icon = { Icon(Icons.Default.Settings, contentDescription = TextsWearPL.MENU_SETTINGS) },
+                icon = { Icon(Icons.Default.Settings, contentDescription = texts.MENU_SETTINGS) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 colors = ChipDefaults.secondaryChipColors()
             )
