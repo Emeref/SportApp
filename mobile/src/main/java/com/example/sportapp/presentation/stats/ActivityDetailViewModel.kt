@@ -106,82 +106,77 @@ class ActivityDetailViewModel @Inject constructor(
     }
 
     private fun startDataObservation() {
-        // 1. Obserwacja podstawowych danych trasy i treningu
-        workoutDao.getWorkoutFlowById(activityId)
-            .filterNotNull()
-            .combine(workoutDao.getPointsFlowForWorkout(activityId)) { workout, points ->
-                workout to points
-            }
-            .flowOn(Dispatchers.Default)
-            .onEach { (workout, points) ->
-                val data = sessionRepository.calculateSessionData(workout, points)
-                _sessionData.value = data
-                updateCharts(data)
-                
-                // Dynamiczne generowanie odcinków przy każdej aktualizacji punktów
-                checkAndGenerateLapsReactive(points)
-                
-                // Aktualizacja stref tętna
-                val mSettings = mobileSettingsManager.settingsFlow.first()
-                _hrZoneResult.value = HeartRateMath.calculateZones(points, mSettings.healthData.maxHR)
-            }
+        val workoutFlow = workoutDao.getWorkoutFlowById(activityId).filterNotNull()
+        val pointsFlow = workoutDao.getPointsFlowForWorkout(activityId)
+        val lapsFlow = workoutDao.getLapsFlowForWorkout(activityId)
+
+        // 1. Ładowanie dystansu autolapa gdy mamy dane treningu
+        workoutFlow
+            .map { it.activityName }
+            .distinctUntilChanged()
+            .onEach { loadAutoLapDistance(it) }
             .launchIn(viewModelScope)
 
-        // 2. Obserwacja odcinków z bazy danych
-        workoutDao.getLapsFlowForWorkout(activityId)
-            .onEach { dbLaps ->
+        // 2. Obserwacja i przetwarzanie wszystkich danych w jednym strumieniu
+        combine(
+            workoutFlow,
+            pointsFlow,
+            lapsFlow,
+            _autoLapDistance,
+            mobileSettingsManager.settingsFlow
+        ) { workout, points, dbLaps, autoLapDist, mSettings ->
+            // Obliczenia danych sesji i statystyk
+            val data = sessionRepository.calculateSessionData(workout, points)
+            _sessionData.value = data
+            updateCharts(data)
+            
+            // Obsługa odcinków - wymuszamy przeliczenie od początku, aby uniknąć błędów w numeracji
+            if (autoLapDist != null && autoLapDist > 0) {
+                val generatedLaps = lapManager.processLaps(activityId, points, autoLapDist)
+                
+                // Aktualizacja UI natychmiastowo obliczonymi danymi (rozwiązuje problem dziur w Nr)
+                _laps.value = generatedLaps
+                
+                // Sprawdź czy zaszły istotne zmiany przed zapisem do bazy
+                val hasChanges = if (generatedLaps.size != dbLaps.size) {
+                    true
+                } else if (generatedLaps.isNotEmpty() && dbLaps.isNotEmpty()) {
+                    val lastNew = generatedLaps.last()
+                    val lastOld = dbLaps.last()
+                    // Sprawdzamy czy ostatni odcinek uległ zmianie (trwający trening)
+                    lastNew.durationMillis != lastOld.durationMillis || 
+                    lastNew.distanceMeters != lastOld.distanceMeters ||
+                    lastNew.endLocationIndex != lastOld.endLocationIndex
+                } else {
+                    false
+                }
+
+                if (hasChanges) {
+                    // Zapisujemy asynchronicznie, aby nie blokować transformacji flow
+                    viewModelScope.launch(Dispatchers.IO) {
+                        try {
+                            workoutDao.updateLapsForWorkout(activityId, generatedLaps)
+                        } catch (e: Exception) {
+                            Log.e("ActivityDetail", "Błąd zapisu odcinków", e)
+                        }
+                    }
+                }
+            } else {
+                // Jeśli nie ma autolapa, pokazujemy to co jest w bazie (może nic nie być)
                 _laps.value = dbLaps
             }
-            .launchIn(viewModelScope)
-
-        // 3. Ładowanie dystansu autolapa (tylko raz na początku lub gdy zmieni się nazwa aktywności)
-        viewModelScope.launch {
-            _sessionData.filterNotNull().first().let { data ->
-                loadAutoLapDistance(data.activityName)
-            }
+            
+            // Aktualizacja stref tętna
+            _hrZoneResult.value = HeartRateMath.calculateZones(points, mSettings.healthData.maxHR)
         }
+        .flowOn(Dispatchers.Default)
+        .launchIn(viewModelScope)
     }
 
     private suspend fun loadAutoLapDistance(activityName: String) {
         val definitions = repository.getAllDefinitions().first()
         val definition = definitions.find { it.name == activityName }
         _autoLapDistance.value = definition?.autoLapDistance
-    }
-
-    /**
-     * Reaktywne sprawdzanie i generowanie odcinków.
-     * Wywoływane wewnątrz flow obserwującego punkty (Dispatchers.Default).
-     */
-    private suspend fun checkAndGenerateLapsReactive(points: List<WorkoutPointEntity>) {
-        val autoLapDist = _autoLapDistance.value ?: return
-        if (autoLapDist <= 0.0) return
-
-        val existingLaps = _laps.value
-        
-        // Wykorzystujemy LapManager do przyrostowego obliczenia odcinków
-        val generatedLaps = lapManager.processLaps(activityId, points, autoLapDist, existingLaps)
-        
-        // Sprawdź czy zaszły istotne zmiany przed zapisem do bazy
-        val hasChanges = if (generatedLaps.size != existingLaps.size) {
-            true
-        } else if (generatedLaps.isNotEmpty() && existingLaps.isNotEmpty()) {
-            val lastNew = generatedLaps.last()
-            val lastOld = existingLaps.last()
-            // Zmiana dystansu, czasu lub indeksu końcowego (dla trwającego odcinka)
-            lastNew.durationMillis != lastOld.durationMillis || 
-            lastNew.distanceMeters != lastOld.distanceMeters ||
-            lastNew.endLocationIndex != lastOld.endLocationIndex
-        } else {
-            false
-        }
-
-        if (hasChanges) {
-            // Uwaga: Dla wydajności przy trwających aktywnościach, Room i tak obsłuży to asynchronicznie.
-            // Używamy transakcji wewnątrz DAO (jeśli byłaby potrzebna), tutaj prosty delete/insert.
-            workoutDao.deleteLapsForWorkout(activityId)
-            workoutDao.insertLaps(generatedLaps)
-            // _laps zostanie zaktualizowane przez flow z bazy danych
-        }
     }
 
     private fun updateCharts(data: SessionData) {
