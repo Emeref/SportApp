@@ -8,6 +8,10 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.example.sportapp.TextsWearEN
 import com.example.sportapp.TextsWearPL
 import com.example.sportapp.TextsWearES
+import com.example.sportapp.TextsWearIT
+import com.example.sportapp.TextsWearDE
+import com.example.sportapp.TextsWearFR
+import com.example.sportapp.TextsWearPT
 import com.example.sportapp.WearTexts
 import com.example.sportapp.presentation.workout.DataLayerManager
 import com.google.gson.Gson
@@ -32,9 +36,13 @@ enum class ScreenBehavior {
 }
 
 enum class AppLanguage(val code: String, val label: String, val texts: WearTexts) {
-    POLISH("pl", "Polski", TextsWearPL),
+    GERMAN("de", "Deutsch", TextsWearDE),
+    ENGLISH("en", "English", TextsWearEN),
+    FRENCH("fr", "Français", TextsWearFR),
     SPANISH("es", "Español", TextsWearES),
-    ENGLISH("en", "English", TextsWearEN)
+    ITALIAN("it", "Italiano", TextsWearIT),
+    POLISH("pl", "Polski", TextsWearPL),
+    PORTUGUESE("pt", "Português", TextsWearPT)
 }
 
 @Singleton
