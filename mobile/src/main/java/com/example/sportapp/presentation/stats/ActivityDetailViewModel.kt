@@ -2,8 +2,6 @@ package com.example.sportapp.presentation.stats
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,11 +10,11 @@ import com.example.sportapp.data.LapManager
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
-import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -102,49 +100,44 @@ class ActivityDetailViewModel @Inject constructor(
 
     init {
         Log.d("ChartDebug", "ActivityDetail init: activityId=$activityId")
-        loadSessionData()
-        loadLaps()
+        if (activityId != -1L) {
+            startDataObservation()
+        }
     }
 
-    private fun loadSessionData() {
-        viewModelScope.launch {
-            if (activityId == -1L) return@launch
-
-            try {
-                val data = sessionRepository.getSessionData(activityId)
-                if (data.error != null) {
-                    _error.value = data.error
-                } else {
-                    _sessionData.value = data
-                    // Natychmiastowa aktualizacja wykresów
-                    updateCharts(data)
-                    
-                    // Inne operacje w tle
-                    viewModelScope.launch {
-                        checkAndGenerateLaps(data)
-                        calculateHeartRateZones(activityId)
-                        loadAutoLapDistance(data.activityName)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("ChartDebug", "Błąd loadSessionData", e)
+    private fun startDataObservation() {
+        // 1. Obserwacja podstawowych danych trasy i treningu
+        workoutDao.getWorkoutFlowById(activityId)
+            .filterNotNull()
+            .combine(workoutDao.getPointsFlowForWorkout(activityId)) { workout, points ->
+                workout to points
             }
-        }
-    }
+            .flowOn(Dispatchers.Default)
+            .onEach { (workout, points) ->
+                val data = sessionRepository.calculateSessionData(workout, points)
+                _sessionData.value = data
+                updateCharts(data)
+                
+                // Dynamiczne generowanie odcinków przy każdej aktualizacji punktów
+                checkAndGenerateLapsReactive(points)
+                
+                // Aktualizacja stref tętna
+                val mSettings = mobileSettingsManager.settingsFlow.first()
+                _hrZoneResult.value = HeartRateMath.calculateZones(points, mSettings.healthData.maxHR)
+            }
+            .launchIn(viewModelScope)
 
-    private fun calculateHeartRateZones(workoutId: Long) {
-        viewModelScope.launch {
-            val points = workoutDao.getPointsForWorkout(workoutId)
-            val mSettings = mobileSettingsManager.settingsFlow.first()
-            val maxHr = mSettings.healthData.maxHR
-            _hrZoneResult.value = HeartRateMath.calculateZones(points, maxHr)
-        }
-    }
+        // 2. Obserwacja odcinków z bazy danych
+        workoutDao.getLapsFlowForWorkout(activityId)
+            .onEach { dbLaps ->
+                _laps.value = dbLaps
+            }
+            .launchIn(viewModelScope)
 
-    private fun loadLaps() {
+        // 3. Ładowanie dystansu autolapa (tylko raz na początku lub gdy zmieni się nazwa aktywności)
         viewModelScope.launch {
-            if (activityId != -1L) {
-                _laps.value = workoutDao.getLapsForWorkout(activityId)
+            _sessionData.filterNotNull().first().let { data ->
+                loadAutoLapDistance(data.activityName)
             }
         }
     }
@@ -155,23 +148,39 @@ class ActivityDetailViewModel @Inject constructor(
         _autoLapDistance.value = definition?.autoLapDistance
     }
 
-    private suspend fun checkAndGenerateLaps(data: SessionData) {
-        if (activityId == -1L) return
-        val existingLaps = workoutDao.getLapsForWorkout(activityId)
-        if (existingLaps.isNotEmpty()) return
+    /**
+     * Reaktywne sprawdzanie i generowanie odcinków.
+     * Wywoływane wewnątrz flow obserwującego punkty (Dispatchers.Default).
+     */
+    private suspend fun checkAndGenerateLapsReactive(points: List<WorkoutPointEntity>) {
+        val autoLapDist = _autoLapDistance.value ?: return
+        if (autoLapDist <= 0.0) return
 
-        val workout = workoutDao.getWorkoutById(activityId) ?: return
-        val definitions = repository.getAllDefinitions().first()
-        val definition = definitions.find { it.name == workout.activityName }
+        val existingLaps = _laps.value
         
-        val autoLapDist = definition?.autoLapDistance
-        if (autoLapDist != null && autoLapDist > 0.0) {
-            val points = workoutDao.getPointsForWorkout(activityId)
-            val generatedLaps = lapManager.processLaps(activityId, points, autoLapDist)
-            if (generatedLaps.isNotEmpty()) {
-                workoutDao.insertLaps(generatedLaps)
-                _laps.value = workoutDao.getLapsForWorkout(activityId)
-            }
+        // Wykorzystujemy LapManager do przyrostowego obliczenia odcinków
+        val generatedLaps = lapManager.processLaps(activityId, points, autoLapDist, existingLaps)
+        
+        // Sprawdź czy zaszły istotne zmiany przed zapisem do bazy
+        val hasChanges = if (generatedLaps.size != existingLaps.size) {
+            true
+        } else if (generatedLaps.isNotEmpty() && existingLaps.isNotEmpty()) {
+            val lastNew = generatedLaps.last()
+            val lastOld = existingLaps.last()
+            // Zmiana dystansu, czasu lub indeksu końcowego (dla trwającego odcinka)
+            lastNew.durationMillis != lastOld.durationMillis || 
+            lastNew.distanceMeters != lastOld.distanceMeters ||
+            lastNew.endLocationIndex != lastOld.endLocationIndex
+        } else {
+            false
+        }
+
+        if (hasChanges) {
+            // Uwaga: Dla wydajności przy trwających aktywnościach, Room i tak obsłuży to asynchronicznie.
+            // Używamy transakcji wewnątrz DAO (jeśli byłaby potrzebna), tutaj prosty delete/insert.
+            workoutDao.deleteLapsForWorkout(activityId)
+            workoutDao.insertLaps(generatedLaps)
+            // _laps zostanie zaktualizowane przez flow z bazy danych
         }
     }
 
@@ -203,7 +212,6 @@ class ActivityDetailViewModel @Inject constructor(
                 results.forEach { (id, entries) ->
                     val producer = chartProducers[id]
                     producer?.setEntries(entries)
-                    Log.d("ChartDebug", "Producer $id (detail): ustawiono ${entries.size} punktów")
                 }
             }
         }

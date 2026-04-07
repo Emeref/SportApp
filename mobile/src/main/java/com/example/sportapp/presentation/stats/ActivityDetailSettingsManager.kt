@@ -50,6 +50,8 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("total_calories", "Spalone kalorie"),
             WidgetItem("max_calories_min", "Maks spalanie kalorii"),
             WidgetItem("avg_pace", "Średnie tempo"),
+            WidgetItem("avg_speed_gps", "Średnia prędkość (GPS)"),
+            WidgetItem("avg_speed_steps", "Średnia prędkość (kroki)"),
             WidgetItem("max_speed", "Maks prędkość"),
             WidgetItem("max_altitude", "Maks wysokość"),
             WidgetItem("total_ascent", "Suma podejść"),

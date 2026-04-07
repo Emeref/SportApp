@@ -10,37 +10,67 @@ import javax.inject.Singleton
 @Singleton
 class LapManager @Inject constructor() {
 
-    fun processLaps(workoutId: Long, points: List<WorkoutPointEntity>, autoLapDistance: Double): List<WorkoutLap> {
-        if (points.size < 2 || autoLapDistance <= 0) return emptyList()
-
-        val laps = mutableListOf<WorkoutLap>()
-        var currentLapStartIdx = 0
-        var lapNumber = 1
-        var nextLapThreshold = autoLapDistance
+    fun processLaps(
+        workoutId: Long,
+        points: List<WorkoutPointEntity>,
+        autoLapDistance: Double,
+        existingLaps: List<WorkoutLap> = emptyList()
+    ): List<WorkoutLap> {
+        if (points.size < 2 || autoLapDistance <= 0) return existingLaps
 
         val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+        
+        // Znajdź odcinki, które są "pełne" (osiągnęły wymagany dystans)
+        // Ostatni odcinek w existingLaps mógł być "niepełny" (kończący trening), 
+        // więc traktujemy go jako do przeliczenia, jeśli przybyło punktów.
+        val completedLaps = existingLaps.filter { it.distanceMeters >= autoLapDistance * 0.999 }.toMutableList()
+        
+        var currentLapStartIdx = 0
+        var lapNumber = 1
+        
+        if (completedLaps.isNotEmpty()) {
+            val lastComplete = completedLaps.last()
+            currentLapStartIdx = lastComplete.endLocationIndex
+            lapNumber = lastComplete.lapNumber + 1
+        }
+        
+        // Jeśli nie ma nowych punktów do przetworzenia w stosunku do ostatniego pełnego odcinka
+        if (currentLapStartIdx >= points.size - 1 && completedLaps.size == existingLaps.size && existingLaps.isNotEmpty()) {
+            return existingLaps
+        }
 
-        points.forEachIndexed { index, point ->
-            val currentDistance = point.distanceGps?.toDouble() ?: point.distanceSteps?.toDouble() ?: 0.0
-            
+        val resultLaps = completedLaps.toMutableList()
+        
+        // Oblicz skumulowany dystans do punktu startowego obecnego odcinka
+        val startPoint = points[currentLapStartIdx]
+        val startTotalDist = startPoint.distanceGps?.toDouble() ?: startPoint.distanceSteps?.toDouble() ?: 0.0
+        
+        // Ustal próg dla następnego odcinka (następna wielokrotność autoLapDistance)
+        var nextLapThreshold = ((startTotalDist / autoLapDistance).toInt() + 1) * autoLapDistance
+
+        for (index in currentLapStartIdx until points.size) {
+            val point = points[index]
+            val currentTotalDist = point.distanceGps?.toDouble() ?: point.distanceSteps?.toDouble() ?: 0.0
             val isLastPoint = index == points.size - 1
-            if (currentDistance >= nextLapThreshold || isLastPoint) {
-                val lapPoints = points.subList(currentLapStartIdx, index + 1)
-                
-                if (lapPoints.size >= 2) {
-                    laps.add(calculateLapStats(workoutId, lapNumber, currentLapStartIdx, index, lapPoints, timeFormatter))
-                    lapNumber++
+            
+            if (currentTotalDist >= nextLapThreshold || isLastPoint) {
+                if (index > currentLapStartIdx) {
+                    val lapPoints = points.subList(currentLapStartIdx, index + 1)
+                    val lap = calculateLapStats(workoutId, lapNumber, currentLapStartIdx, index, lapPoints, timeFormatter)
+                    resultLaps.add(lap)
                     
-                    // Update threshold to handle jumps
-                    while (nextLapThreshold <= currentDistance) {
-                        nextLapThreshold += autoLapDistance
+                    if (currentTotalDist >= nextLapThreshold) {
+                        lapNumber++
+                        while (nextLapThreshold <= currentTotalDist) {
+                            nextLapThreshold += autoLapDistance
+                        }
+                        currentLapStartIdx = index
                     }
-                    currentLapStartIdx = index
                 }
             }
         }
 
-        return laps
+        return resultLaps
     }
 
     private fun calculateLapStats(

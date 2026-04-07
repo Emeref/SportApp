@@ -227,7 +227,7 @@ fun MapSection(
                 .include(n).include(s).include(e).include(w)
                 .build()
                 
-            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 50))
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
         }
     }
 
@@ -319,7 +319,7 @@ fun FullScreenMap(
                 .include(n).include(s).include(e).include(w)
                 .build()
                 
-            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 50))
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
         }
     }
 
@@ -637,6 +637,10 @@ private fun formatPaceFromSeconds(totalSeconds: Int): String {
 @Composable
 fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidgets: List<WidgetItem>) {
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
+    
+    val avgSpeedGps = if (data.durationSeconds > 0) (data.totalDistanceGps / 1000.0) / (data.durationSeconds / 3600.0) else 0.0
+    val avgSpeedSteps = if (data.durationSeconds > 0) (data.totalDistanceSteps / 1000.0) / (data.durationSeconds / 3600.0) else 0.0
+
     val widgetValues = mapOf(
         "duration" to ("Czas trwania" to data.duration),
         "max_bpm" to ("Maksymalne tętno" to "${data.maxBpm} bpm"),
@@ -644,6 +648,8 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidge
         "total_calories" to ("Spalone kalorie" to "${data.totalCalories} kcal"),
         "max_calories_min" to ("Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin)),
         "avg_pace" to ("Średnie tempo" to formatPace(data.avgPace)),
+        "avg_speed_gps" to ("Średnia prędkość (GPS)" to String.format(Locale.US, "%.1f km/h", avgSpeedGps)),
+        "avg_speed_steps" to ("Średnia prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", avgSpeedSteps)),
         "max_speed" to ("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeed)),
         "max_altitude" to ("Maks wysokość" to String.format(Locale.US, "%.0f m n.p.m.", data.maxAltitude)),
         "total_ascent" to ("Suma podejść" to String.format(Locale.US, "+%.0f m", data.totalAscent)),

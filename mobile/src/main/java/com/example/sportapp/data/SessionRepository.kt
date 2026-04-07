@@ -2,6 +2,7 @@ package com.example.sportapp.data
 
 import com.example.sportapp.AppConstants
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,10 @@ class SessionRepository @Inject constructor(
     suspend fun getSessionData(workoutId: Long): SessionData = withContext(Dispatchers.IO) {
         val workout = workoutDao.getWorkoutById(workoutId) ?: return@withContext SessionData(error = "Nie znaleziono treningu")
         val points = workoutDao.getPointsForWorkout(workoutId)
+        return@withContext calculateSessionData(workout, points)
+    }
 
+    fun calculateSessionData(workout: WorkoutEntity, points: List<WorkoutPointEntity>): SessionData {
         val times = mutableListOf<String>()
         val route = mutableListOf<LatLng>()
         
@@ -157,7 +161,7 @@ class SessionRepository @Inject constructor(
         val calcMaxPressure = pressures.filterNotNull().maxOrNull()?.toDouble()
         val calcMinPressure = pressures.filterNotNull().minOrNull()?.toDouble()
 
-        return@withContext SessionData(
+        return SessionData(
             times = times,
             route = route,
             charts = chartData,

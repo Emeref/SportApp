@@ -18,6 +18,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts WHERE id = :id")
     suspend fun getWorkoutById(id: Long): WorkoutEntity?
 
+    @Query("SELECT * FROM workouts WHERE id = :id")
+    fun getWorkoutFlowById(id: Long): Flow<WorkoutEntity?>
+
     @Delete
     suspend fun deleteWorkout(workout: WorkoutEntity)
 
@@ -26,6 +29,9 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM workout_points WHERE workoutId = :workoutId ORDER BY id ASC")
     suspend fun getPointsForWorkout(workoutId: Long): List<WorkoutPointEntity>
+
+    @Query("SELECT * FROM workout_points WHERE workoutId = :workoutId ORDER BY id ASC")
+    fun getPointsFlowForWorkout(workoutId: Long): Flow<List<WorkoutPointEntity>>
     
     @Query("SELECT * FROM workouts WHERE startTime >= :since")
     suspend fun getWorkoutsSince(since: Long): List<WorkoutEntity>
@@ -64,6 +70,15 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_laps WHERE workoutId = :workoutId ORDER BY lapNumber ASC")
     suspend fun getLapsForWorkout(workoutId: Long): List<WorkoutLap>
 
+    @Query("SELECT * FROM workout_laps WHERE workoutId = :workoutId ORDER BY lapNumber ASC")
+    fun getLapsFlowForWorkout(workoutId: Long): Flow<List<WorkoutLap>>
+
     @Query("DELETE FROM workout_laps WHERE workoutId = :workoutId")
     suspend fun deleteLapsForWorkout(workoutId: Long)
+
+    @Transaction
+    suspend fun updateLapsForWorkout(workoutId: Long, laps: List<WorkoutLap>) {
+        deleteLapsForWorkout(workoutId)
+        insertLaps(laps)
+    }
 }
