@@ -44,7 +44,7 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_LANGUAGE_TITLE = "Seleccionar idioma"
     override val SETTINGS_HEALTH_DATA = "Datos de salud y FC"
     override val SETTINGS_HEALTH_DATA_DESC = "Edad, peso, FC Máx y zonas"
-    override val SETTINGS_DEFINITIONS = "Definiciones de actividad"
+    override val SETTINGS_DEFINITIONS = "Definicione de actividad"
     override val SETTINGS_DEFINITIONS_DESC = "Gestionar lista de deportes y sensores"
     override val SETTINGS_WIDGETS_HOME = "Widgets de la pantalla de inicio"
     override val SETTINGS_WIDGETS_HOME_TITLE = "Vista de inicio"
@@ -163,18 +163,18 @@ object TextsMobileES : MobileTexts {
     override val STATS_MOVE_UP = "Mover arriba"
     override val STATS_MOVE_DOWN = "Mover abajo"
     override fun chartDistanceGps(km: Boolean) = if (km) "Distancia (GPS) en km" else "Distancia (GPS) en m"
-    override fun chartDistanceSteps(km: Boolean) = if (km) "Distancia (pasos) en km" else "Distancia (pasos) en m"
+    override fun chartDistanceSteps(km: Boolean) = if (km) "Distancia (pasos) en km" else "Distancia (pasos) in m"
     override val CHART_STEPS = "Pasos"
 
     // Definitions
-    override val DEF_TITLE = "Definiciones de entrenamiento"
+    override val DEF_TITLE = "Definicione de entrenamiento"
     override val DEF_ADD = "Añadir definición"
     override val DEF_EDIT = "Editar definición"
     override val DEF_DELETE = "Eliminar definición"
     override val DEF_NAME = "Nombre"
     override val DEF_ICON = "Icono"
     override val DEF_SENSORS = "Sensores"
-    override val DEF_LIST_TITLE = "Definición de actividad"
+    override val DEF_LIST_TITLE = "Definicione de actividad"
     override val DEF_SENSORS_DESC = "Gestionar lista de deportes y sensores"
     override val DEF_RECORDING = "Grabación"
     override val DEF_SELECT_ICON = "Seleccionar icono"
@@ -197,6 +197,23 @@ object TextsMobileES : MobileTexts {
     override val DEF_RUNNING = "Correr"
     override val DEF_CYCLING = "Ciclismo"
     override val DEF_HIKING = "Senderismo"
+    override val DEF_SWIMMING = "Natación"
+    override val DEF_GYM = "Gimnasio"
+    override val DEF_YOGA = "Yoga"
+    override val DEF_TENNIS = "Tenis"
+    override val DEF_KAYAKING = "Piragüismo"
+    override val DEF_SNOWBOARDING = "Snowboard"
+    override val DEF_SURFING = "Surf"
+    override val DEF_SKATING = "Patinaje sobre hielo"
+    override val DEF_GOLF = "Golf"
+    override val DEF_FOOTBALL = "Fútbol"
+    override val DEF_BASKETBALL = "Baloncesto"
+    override val DEF_VOLLEYBALL = "Voleibol"
+    override val DEF_BASEBALL = "Béisbol"
+    override val DEF_SAILING = "Vela"
+    override val DEF_SKATEBOARDING = "Skateboarding"
+    override val DEF_COMPETITION = "Competición"
+    override val DEF_STOPWATCH = "Cronómetro"
     override val DEF_OTHER = "Otro"
     override val DEF_STANDARD_ACTIVITY = "Actividad estándar"
 
@@ -240,8 +257,8 @@ object TextsMobileES : MobileTexts {
     // Gpx Importer
     override val GPX_NO_POINTS = "El archivo GPX no contiene puntos de ruta."
     override val GPX_WARN_HR = "El archivo contiene datos de FC, pero la actividad seleccionada no los admite."
-    override val GPX_WARN_ELE = "El archivo contiene datos de altitud, pero la actividad seleccionada no los admite."
-    override val GPX_WARN_CADENCE = "El archivo contiene datos de cadencia, pero la actividad seleccionada no los admite."
+    override val GPX_WARN_ELE = "El archivo contiene datos de altitud, mas la actividad seleccionada no los admite."
+    override val GPX_WARN_CADENCE = "El archivo contiene datos de cadencia, mas la actividad seleccionada no los admite."
 
     // Periods
     override val PERIOD_TODAY = "Hoy"
@@ -307,6 +324,20 @@ object TextsMobileES : MobileTexts {
     override val SENSOR_PRESSURE = "Presión atm."
     override val SENSOR_MAP = "Datos de ubicación"
 
+    // Units
+    override val UNIT_KCAL = "kcal"
+    override val UNIT_M = "m"
+    override val UNIT_KM = "km"
+    override val UNIT_STEP_MIN = "spm"
+    override val UNIT_KM_H = "km/h"
+    override val UNIT_STEPS = "pasos"
+    override val UNIT_HPA = "hPa"
+    override val UNIT_MIN_KM = "min/km"
+    override val UNIT_M_ASL = "m s.n.m."
+    override val UNIT_MIN_KM_LABEL = "min/km"
+    override val UNIT_BPM = "bpm"
+    override val UNIT_KCAL_MIN = "kcal/min"
+
     // Trim Screen
     override val TRIM_TITLE = "Editar entrenamiento (Recortar)"
     override val TRIM_CONFIRM_TITLE = "Confirmar recorte"
@@ -328,20 +359,6 @@ object TextsMobileES : MobileTexts {
     override val COMPARE_VS = "Comparación:"
     override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
     override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
-
-    // Units
-    override val UNIT_KCAL = "kcal"
-    override val UNIT_M = "m"
-    override val UNIT_KM = "km"
-    override val UNIT_STEP_MIN = "spm"
-    override val UNIT_KM_H = "km/h"
-    override val UNIT_STEPS = "pasos"
-    override val UNIT_HPA = "hPa"
-    override val UNIT_MIN_KM = "min/km"
-    override val UNIT_M_ASL = "m s.n.m."
-    override val UNIT_MIN_KM_LABEL = "min/km"
-    override val UNIT_BPM = "bpm"
-    override val UNIT_KCAL_MIN = "kcal/min"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -386,6 +403,10 @@ object TextsMobileES : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "ascent" -> WIDGET_ASCENT
+            "descent" -> WIDGET_DESCENT
+            "calories" -> WIDGET_CALORIES
             else -> getSensorLabel(id)
         }
     }

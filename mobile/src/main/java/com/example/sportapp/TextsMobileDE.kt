@@ -19,7 +19,7 @@ object TextsMobileDE : MobileTexts {
     override val HOME_SYNC = "Synchronisieren"
     override val HOME_OPTIONS = "Optionen"
     override val HOME_GENERAL_STATS = "Allgemeine Statistiken"
-    override val HOME_WORKOUT_DETAILS = "Training-Details"
+    override val HOME_WORKOUT_DETAILS = "Trainingsdetails"
     override val HOME_LOGO_DESC = "App-Logo"
     override val HOME_SECRET_TITLE = "Schön, dass du klickst, aber hier ist nichts"
     override val HOME_CLOSE = "Schließen"
@@ -197,6 +197,23 @@ object TextsMobileDE : MobileTexts {
     override val DEF_RUNNING = "Laufen"
     override val DEF_CYCLING = "Radfahren"
     override val DEF_HIKING = "Wandern"
+    override val DEF_SWIMMING = "Schwimmen"
+    override val DEF_GYM = "Fitnessstudio"
+    override val DEF_YOGA = "Yoga"
+    override val DEF_TENNIS = "Tennis"
+    override val DEF_KAYAKING = "Kajakfahren"
+    override val DEF_SNOWBOARDING = "Snowboarden"
+    override val DEF_SURFING = "Surfen"
+    override val DEF_SKATING = "Eislaufen"
+    override val DEF_GOLF = "Golf"
+    override val DEF_FOOTBALL = "Fußball"
+    override val DEF_BASKETBALL = "Basketball"
+    override val DEF_VOLLEYBALL = "Volleyball"
+    override val DEF_BASEBALL = "Baseball"
+    override val DEF_SAILING = "Segeln"
+    override val DEF_SKATEBOARDING = "Skateboarden"
+    override val DEF_COMPETITION = "Wettbewerb"
+    override val DEF_STOPWATCH = "Stoppuhr"
     override val DEF_OTHER = "Sonstiges"
     override val DEF_STANDARD_ACTIVITY = "Standardaktivität"
 
@@ -386,6 +403,10 @@ object TextsMobileDE : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "ascent" -> WIDGET_ASCENT
+            "descent" -> WIDGET_DESCENT
+            "calories" -> WIDGET_CALORIES
             else -> getSensorLabel(id)
         }
     }

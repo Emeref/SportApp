@@ -197,6 +197,23 @@ object TextsMobileEN : MobileTexts {
     override val DEF_RUNNING = "Running"
     override val DEF_CYCLING = "Cycling"
     override val DEF_HIKING = "Hiking"
+    override val DEF_SWIMMING = "Swimming"
+    override val DEF_GYM = "Gym"
+    override val DEF_YOGA = "Yoga"
+    override val DEF_TENNIS = "Tennis"
+    override val DEF_KAYAKING = "Kayaking"
+    override val DEF_SNOWBOARDING = "Snowboarding"
+    override val DEF_SURFING = "Surfing"
+    override val DEF_SKATING = "Skating"
+    override val DEF_GOLF = "Golf"
+    override val DEF_FOOTBALL = "Football"
+    override val DEF_BASKETBALL = "Basketball"
+    override val DEF_VOLLEYBALL = "Volleyball"
+    override val DEF_BASEBALL = "Baseball"
+    override val DEF_SAILING = "Sailing"
+    override val DEF_SKATEBOARDING = "Skateboarding"
+    override val DEF_COMPETITION = "Competition"
+    override val DEF_STOPWATCH = "Stopwatch"
     override val DEF_OTHER = "Other"
     override val DEF_STANDARD_ACTIVITY = "Standard activity"
 
@@ -225,6 +242,12 @@ object TextsMobileEN : MobileTexts {
     override val ZONE_Z3 = "Moderate"
     override val ZONE_Z4 = "Hard"
     override val ZONE_Z5 = "Maximum"
+
+    // Compare Screen
+    override val COMPARE_TITLE = "Activity Compare"
+    override val COMPARE_VS = "Compare:"
+    override val COMPARE_HIGHER_IS_BETTER = "Higher result is better"
+    override val COMPARE_LOWER_IS_BETTER = "Lower result is better"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Initializing export..."
@@ -322,12 +345,6 @@ object TextsMobileEN : MobileTexts {
     override val TRIM_AVG_BPM = "Avg HR:"
     override val TRIM_START = "Start"
     override val TRIM_END = "End"
-
-    // Compare Screen
-    override val COMPARE_TITLE = "Activity Compare"
-    override val COMPARE_VS = "Compare:"
-    override val COMPARE_HIGHER_IS_BETTER = "Higher result is better"
-    override val COMPARE_LOWER_IS_BETTER = "Lower result is better"
 
     // Units
     override val UNIT_KCAL = "kcal"

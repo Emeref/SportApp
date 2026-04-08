@@ -125,7 +125,7 @@ object TextsMobileFR : MobileTexts {
     override val DETAIL_DATA_ERROR_TITLE = "Erreur de données"
     override val DETAIL_ERROR_OK = "OK"
     override val DETAIL_INTERVALS = "Intervalles"
-    override fun detailLapsWithDistance(distance: String) = "Intervalles ($distance)"
+    override fun detailLapsWithDistance(distance: String) = "Intervalle ($distance)"
     override fun detailLapsCount(count: Int) = "Nombre de tours : $count"
     override val DETAIL_HEART_RATE = "Fréquence cardiaque (bpm)"
     override val DETAIL_HR_ZONES = "Zones de FC"
@@ -197,6 +197,23 @@ object TextsMobileFR : MobileTexts {
     override val DEF_RUNNING = "Course"
     override val DEF_CYCLING = "Cyclisme"
     override val DEF_HIKING = "Randonnée"
+    override val DEF_SWIMMING = "Natation"
+    override val DEF_GYM = "Gym"
+    override val DEF_YOGA = "Yoga"
+    override val DEF_TENNIS = "Tennis"
+    override val DEF_KAYAKING = "Kayak"
+    override val DEF_SNOWBOARDING = "Snowboard"
+    override val DEF_SURFING = "Surf"
+    override val DEF_SKATING = "Patinage"
+    override val DEF_GOLF = "Golf"
+    override val DEF_FOOTBALL = "Football"
+    override val DEF_BASKETBALL = "Basket-ball"
+    override val DEF_VOLLEYBALL = "Volley-ball"
+    override val DEF_BASEBALL = "Baseball"
+    override val DEF_SAILING = "Voile"
+    override val DEF_SKATEBOARDING = "Skate"
+    override val DEF_COMPETITION = "Compétition"
+    override val DEF_STOPWATCH = "Chronomètre"
     override val DEF_OTHER = "Autre"
     override val DEF_STANDARD_ACTIVITY = "Activité standard"
 
@@ -225,6 +242,12 @@ object TextsMobileFR : MobileTexts {
     override val ZONE_Z3 = "Modéré"
     override val ZONE_Z4 = "Difficile"
     override val ZONE_Z5 = "Maximum"
+
+    // Compare Screen
+    override val COMPARE_TITLE = "Comparaison d'activités"
+    override val COMPARE_VS = "Comparaison :"
+    override val COMPARE_HIGHER_IS_BETTER = "Un score plus élevé est préférable"
+    override val COMPARE_LOWER_IS_BETTER = "Un score plus bas est préférable"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Initialisation de l'exportation..."
@@ -307,6 +330,20 @@ object TextsMobileFR : MobileTexts {
     override val SENSOR_PRESSURE = "Pression atm."
     override val SENSOR_MAP = "Données de localisation"
 
+    // Units
+    override val UNIT_KCAL = "kcal"
+    override val UNIT_M = "m"
+    override val UNIT_KM = "km"
+    override val UNIT_STEP_MIN = "spm"
+    override val UNIT_KM_H = "km/h"
+    override val UNIT_STEPS = "pas"
+    override val UNIT_HPA = "hPa"
+    override val UNIT_MIN_KM = "min/km"
+    override val UNIT_M_ASL = "m"
+    override val UNIT_MIN_KM_LABEL = "min/km"
+    override val UNIT_BPM = "bpm"
+    override val UNIT_KCAL_MIN = "kcal/min"
+
     // Trim Screen
     override val TRIM_TITLE = "Modifier l'entraînement (Rognage)"
     override val TRIM_CONFIRM_TITLE = "Confirmer le rognage"
@@ -322,26 +359,6 @@ object TextsMobileFR : MobileTexts {
     override val TRIM_AVG_BPM = "FC Moyenne :"
     override val TRIM_START = "Départ"
     override val TRIM_END = "Fin"
-
-    // Compare Screen
-    override val COMPARE_TITLE = "Comparaison d'activités"
-    override val COMPARE_VS = "Comparaison :"
-    override val COMPARE_HIGHER_IS_BETTER = "Un score plus élevé est préférable"
-    override val COMPARE_LOWER_IS_BETTER = "Un score plus bas est préférable"
-
-    // Units
-    override val UNIT_KCAL = "kcal"
-    override val UNIT_M = "m"
-    override val UNIT_KM = "km"
-    override val UNIT_STEP_MIN = "spm"
-    override val UNIT_KM_H = "km/h"
-    override val UNIT_STEPS = "pas"
-    override val UNIT_HPA = "hPa"
-    override val UNIT_MIN_KM = "min/km"
-    override val UNIT_M_ASL = "m"
-    override val UNIT_MIN_KM_LABEL = "min/km"
-    override val UNIT_BPM = "bpm"
-    override val UNIT_KCAL_MIN = "kcal/min"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -386,6 +403,10 @@ object TextsMobileFR : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "ascent" -> WIDGET_ASCENT
+            "descent" -> WIDGET_DESCENT
+            "calories" -> WIDGET_CALORIES
             else -> getSensorLabel(id)
         }
     }

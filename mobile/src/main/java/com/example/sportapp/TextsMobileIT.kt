@@ -53,7 +53,7 @@ object TextsMobileIT : MobileTexts {
     override val SETTINGS_WIDGETS_WATCH_TITLE = "Campi statistiche"
     override val SETTINGS_WIDGETS_WATCH_DESC = "Seleziona e imposta l'ordine sull'orologio"
     override val SETTINGS_SAVE = "Salva"
-    override val SETTINGS_CANCEL = "Annulla"
+    override val SETTINGS_CANCEL = "Anulla"
     override val SETTINGS_CLOSE = "Chiudi"
     override val SETTINGS_PERIOD = "Periodo predefinito"
     override val SETTINGS_PERIOD_HOME_DESC = "Per quale periodo mostrare i widget?"
@@ -94,7 +94,7 @@ object TextsMobileIT : MobileTexts {
     override val ACTIVITY_IMPORT_GPX = "Importa GPX"
     override val ACTIVITY_EXPORT_GPX = "Esporta GPX"
     override val ACTIVITY_CHART_SETTINGS = "Impostazioni grafico"
-    override val ACTIVITY_FILTERS = "Filtri"
+    override val ACTIVITY_FILTERS = "Filtry"
     override val ACTIVITY_ALL_TYPES = "Tutti i tipi"
     override val ACTIVITY_FROM = "Da"
     override val ACTIVITY_TO = "A"
@@ -103,7 +103,7 @@ object TextsMobileIT : MobileTexts {
     override val ACTIVITY_DURATION = "Tempo"
     override val ACTIVITY_CALORIES = "Calorie"
     override val ACTIVITY_DISTANCE_GPS = "Distanza (GPS)"
-    override val ACTIVITY_DISTANCE_STEPS = "Distanza (Passi)"
+    override val ACTIVITY_DISTANCE_STEPS = "Dystanza (Passi)"
     override val ACTIVITY_DELETE = "Elimina"
     override val ACTIVITY_IMPORT_SELECT_TYPE = "Seleziona tipo di attività"
     override val ACTIVITY_IMPORT_SELECT_DESC = "Seleziona il tipo di allenamento per il file GPX importato:"
@@ -174,7 +174,7 @@ object TextsMobileIT : MobileTexts {
     override val DEF_NAME = "Nome"
     override val DEF_ICON = "Icona"
     override val DEF_SENSORS = "Sensori"
-    override val DEF_LIST_TITLE = "Definizione attività"
+    override val DEF_LIST_TITLE = "Definizioni attività"
     override val DEF_SENSORS_DESC = "Gestisci elenco sport e sensori"
     override val DEF_RECORDING = "Registrazione"
     override val DEF_SELECT_ICON = "Seleziona icona"
@@ -197,6 +197,23 @@ object TextsMobileIT : MobileTexts {
     override val DEF_RUNNING = "Corsa"
     override val DEF_CYCLING = "Ciclismo"
     override val DEF_HIKING = "Escursionismo"
+    override val DEF_SWIMMING = "Nuoto"
+    override val DEF_GYM = "Palestra"
+    override val DEF_YOGA = "Yoga"
+    override val DEF_TENNIS = "Tennis"
+    override val DEF_KAYAKING = "Canoa"
+    override val DEF_SNOWBOARDING = "Snowboard"
+    override val DEF_SURFING = "Surf"
+    override val DEF_SKATING = "Pattinaggio"
+    override val DEF_GOLF = "Golf"
+    override val DEF_FOOTBALL = "Calcio"
+    override val DEF_BASKETBALL = "Pallacanestro"
+    override val DEF_VOLLEYBALL = "Pallavolo"
+    override val DEF_BASEBALL = "Baseball"
+    override val DEF_SAILING = "Vela"
+    override val DEF_SKATEBOARDING = "Skateboard"
+    override val DEF_COMPETITION = "Gara"
+    override val DEF_STOPWATCH = "Cronometro"
     override val DEF_OTHER = "Altro"
     override val DEF_STANDARD_ACTIVITY = "Attività standard"
 
@@ -386,6 +403,10 @@ object TextsMobileIT : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "ascent" -> WIDGET_ASCENT
+            "descent" -> WIDGET_DESCENT
+            "calories" -> WIDGET_CALORIES
             else -> getSensorLabel(id)
         }
     }

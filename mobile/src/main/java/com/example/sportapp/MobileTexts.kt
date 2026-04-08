@@ -192,6 +192,23 @@ interface MobileTexts {
     val DEF_RUNNING: String
     val DEF_CYCLING: String
     val DEF_HIKING: String
+    val DEF_SWIMMING: String
+    val DEF_GYM: String
+    val DEF_YOGA: String
+    val DEF_TENNIS: String
+    val DEF_KAYAKING: String
+    val DEF_SNOWBOARDING: String
+    val DEF_SURFING: String
+    val DEF_SKATING: String
+    val DEF_GOLF: String
+    val DEF_FOOTBALL: String
+    val DEF_BASKETBALL: String
+    val DEF_VOLLEYBALL: String
+    val DEF_BASEBALL: String
+    val DEF_SAILING: String
+    val DEF_SKATEBOARDING: String
+    val DEF_COMPETITION: String
+    val DEF_STOPWATCH: String
     val DEF_OTHER: String
     val DEF_STANDARD_ACTIVITY: String
 

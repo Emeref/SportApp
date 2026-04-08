@@ -197,6 +197,23 @@ object TextsMobilePL : MobileTexts {
     override val DEF_RUNNING = "Bieganie"
     override val DEF_CYCLING = "Jazda na rowerze"
     override val DEF_HIKING = "Wędrówka"
+    override val DEF_SWIMMING = "Pływanie"
+    override val DEF_GYM = "Siłownia"
+    override val DEF_YOGA = "Joga"
+    override val DEF_TENNIS = "Tenis"
+    override val DEF_KAYAKING = "Kajakarstwo"
+    override val DEF_SNOWBOARDING = "Snowboarding"
+    override val DEF_SURFING = "Surfing"
+    override val DEF_SKATING = "Łyżwiarstwo"
+    override val DEF_GOLF = "Golf"
+    override val DEF_FOOTBALL = "Piłka nożna"
+    override val DEF_BASKETBALL = "Koszykówka"
+    override val DEF_VOLLEYBALL = "Siatkówka"
+    override val DEF_BASEBALL = "Baseball"
+    override val DEF_SAILING = "Żeglarstwo"
+    override val DEF_SKATEBOARDING = "Deskorolka"
+    override val DEF_COMPETITION = "Zawody"
+    override val DEF_STOPWATCH = "Stoper"
     override val DEF_OTHER = "Inne"
     override val DEF_STANDARD_ACTIVITY = "Standardowa aktywność"
 
@@ -225,6 +242,12 @@ object TextsMobilePL : MobileTexts {
     override val ZONE_Z3 = "Umiarkowany"
     override val ZONE_Z4 = "Ciężki"
     override val ZONE_Z5 = "Maksymalny"
+
+    // Compare Screen
+    override val COMPARE_TITLE = "Porównanie aktywności"
+    override val COMPARE_VS = "Porównanie:"
+    override val COMPARE_HIGHER_IS_BETTER = "Wyższy wynik jest lepszy"
+    override val COMPARE_LOWER_IS_BETTER = "Niższy wynik jest lepszy"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Inicjalizacja eksportu..."
@@ -323,12 +346,6 @@ object TextsMobilePL : MobileTexts {
     override val TRIM_START = "Start"
     override val TRIM_END = "Koniec"
 
-    // Compare Screen
-    override val COMPARE_TITLE = "Porównanie aktywności"
-    override val COMPARE_VS = "Porównanie:"
-    override val COMPARE_HIGHER_IS_BETTER = "Wyższy wynik jest lepszy"
-    override val COMPARE_LOWER_IS_BETTER = "Niższy wynik jest lepszy"
-
     // Units
     override val UNIT_KCAL = "kcal"
     override val UNIT_M = "m"
@@ -386,6 +403,7 @@ object TextsMobilePL : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
             else -> getSensorLabel(id)
         }
     }
