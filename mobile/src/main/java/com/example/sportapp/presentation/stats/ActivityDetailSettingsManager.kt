@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.sportapp.TextsMobilePL
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -29,44 +30,44 @@ class ActivityDetailSettingsManager(private val context: Context) {
         private fun getTrackColorKey(typeName: String) = stringPreferencesKey("track_color_$typeName")
 
         val DEFAULT_CHARTS = listOf(
-            WidgetItem("map", "Mapa"),
-            WidgetItem("bpm", "Tętno (bpm)"),
-            WidgetItem("kalorie_min", "Kalorie/min"),
-            WidgetItem("kroki_min", "Kadencja (kroki/min)"),
-            WidgetItem("odl_kroki", "Dystans (kroki)"),
-            WidgetItem("predkosc_kroki", "Prędkość (kroki)"),
-            WidgetItem("gps_dystans", "Dystans (GPS)"),
-            WidgetItem("predkosc", "Prędkość (GPS)"),
-            WidgetItem("wysokosc", "Wysokość"),
-            WidgetItem("przewyzszenia_gora", "Suma podejść"),
-            WidgetItem("przewyzszenia_dol", "Suma zejść"),
-            WidgetItem("pressure", "Ciśnienie atmosferyczne")
+            WidgetItem("map", TextsMobilePL.DETAIL_MAP),
+            WidgetItem("bpm", TextsMobilePL.DETAIL_HEART_RATE),
+            WidgetItem("kalorie_min", TextsMobilePL.SENSOR_CALORIES_MIN),
+            WidgetItem("kroki_min", TextsMobilePL.SENSOR_STEPS_MIN),
+            WidgetItem("odl_kroki", TextsMobilePL.SENSOR_DISTANCE_STEPS),
+            WidgetItem("predkosc_kroki", TextsMobilePL.SENSOR_SPEED_STEPS),
+            WidgetItem("gps_dystans", TextsMobilePL.SENSOR_DISTANCE_GPS),
+            WidgetItem("predkosc", TextsMobilePL.SENSOR_SPEED_GPS),
+            WidgetItem("wysokosc", TextsMobilePL.SENSOR_ALTITUDE),
+            WidgetItem("przewyzszenia_gora", TextsMobilePL.SENSOR_TOTAL_ASCENT),
+            WidgetItem("przewyzszenia_dol", TextsMobilePL.SENSOR_TOTAL_DESCENT),
+            WidgetItem("pressure", TextsMobilePL.SENSOR_PRESSURE)
         )
 
         val DEFAULT_WIDGETS = listOf(
-            WidgetItem("duration", "Czas trwania"),
-            WidgetItem("max_bpm", "Maksymalne tętno"),
-            WidgetItem("avg_bpm", "Średnie tętno"),
-            WidgetItem("total_calories", "Spalone kalorie"),
-            WidgetItem("max_calories_min", "Maks spalanie kalorii"),
-            WidgetItem("avg_pace", "Średnie tempo"),
-            WidgetItem("avg_speed_gps", "Średnia prędkość (GPS)"),
-            WidgetItem("avg_speed_steps", "Średnia prędkość (kroki)"),
-            WidgetItem("max_speed", "Maks prędkość"),
-            WidgetItem("max_altitude", "Maks wysokość"),
-            WidgetItem("total_ascent", "Suma podejść"),
-            WidgetItem("total_descent", "Suma zejść"),
-            WidgetItem("avg_step_length", "Wyliczona długość kroku"),
-            WidgetItem("avg_cadence", "Śr. kadencja"),
-            WidgetItem("max_cadence", "Maks. kadencja"),
-            WidgetItem("total_steps", "Liczba kroków"),
-            WidgetItem("total_distance_gps", "Dystans (GPS)"),
-            WidgetItem("total_distance_steps", "Dystans (kroki)"),
-            WidgetItem("pressure_start", "Ciśnienie atm. (start)"),
-            WidgetItem("pressure_end", "Ciśnienie atm. (koniec)"),
-            WidgetItem("max_pressure", "Maks. ciśnienie atm."),
-            WidgetItem("min_pressure", "Min. ciśnienie atm."),
-            WidgetItem("best_pace_1km", "Najlepsze tempo (1km)")
+            WidgetItem("duration", TextsMobilePL.WIDGET_DURATION),
+            WidgetItem("max_bpm", TextsMobilePL.WIDGET_MAX_BPM),
+            WidgetItem("avg_bpm", TextsMobilePL.WIDGET_AVG_BPM),
+            WidgetItem("total_calories", TextsMobilePL.WIDGET_TOTAL_CALORIES),
+            WidgetItem("max_calories_min", TextsMobilePL.WIDGET_MAX_CALORIES_MIN),
+            WidgetItem("avg_pace", TextsMobilePL.WIDGET_AVG_PACE),
+            WidgetItem("avg_speed_gps", TextsMobilePL.WIDGET_AVG_SPEED_GPS),
+            WidgetItem("avg_speed_steps", TextsMobilePL.WIDGET_AVG_SPEED_STEPS),
+            WidgetItem("max_speed", TextsMobilePL.WIDGET_MAX_SPEED),
+            WidgetItem("max_altitude", TextsMobilePL.WIDGET_MAX_ALTITUDE),
+            WidgetItem("total_ascent", TextsMobilePL.WIDGET_TOTAL_ASCENT),
+            WidgetItem("total_descent", TextsMobilePL.WIDGET_TOTAL_DESCENT),
+            WidgetItem("avg_step_length", TextsMobilePL.WIDGET_AVG_STEP_LENGTH),
+            WidgetItem("avg_cadence", TextsMobilePL.WIDGET_AVG_CADENCE_DESC),
+            WidgetItem("max_cadence", TextsMobilePL.WIDGET_MAX_CADENCE),
+            WidgetItem("total_steps", TextsMobilePL.WIDGET_TOTAL_STEPS),
+            WidgetItem("total_distance_gps", TextsMobilePL.WIDGET_DISTANCE_GPS),
+            WidgetItem("total_distance_steps", TextsMobilePL.WIDGET_DISTANCE_STEPS),
+            WidgetItem("pressure_start", TextsMobilePL.WIDGET_PRESSURE_START),
+            WidgetItem("pressure_end", TextsMobilePL.WIDGET_PRESSURE_END),
+            WidgetItem("max_pressure", TextsMobilePL.WIDGET_MAX_PRESSURE),
+            WidgetItem("min_pressure", TextsMobilePL.WIDGET_MIN_PRESSURE),
+            WidgetItem("best_pace_1km", TextsMobilePL.WIDGET_BEST_PACE_1KM)
         )
         
         val DEFAULT_COLOR = 0xFFFF9800.toInt()

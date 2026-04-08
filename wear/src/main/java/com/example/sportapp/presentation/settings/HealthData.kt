@@ -1,5 +1,7 @@
 package com.example.sportapp.presentation.settings
 
+import com.example.sportapp.WearTexts
+
 data class HealthData(
     val gender: Gender = Gender.MALE,
     val age: Int = 40,
@@ -13,6 +15,12 @@ data class HealthData(
 enum class Gender {
     MALE, FEMALE;
     
+    fun toText(texts: WearTexts): String = when (this) {
+        MALE -> texts.GENDER_MALE
+        FEMALE -> texts.GENDER_FEMALE
+    }
+
+    @Deprecated("Use toText(texts)", ReplaceWith("toText(texts)"))
     fun toPolish(): String = when (this) {
         MALE -> "Mężczyzna"
         FEMALE -> "Kobieta"

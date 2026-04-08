@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
 import com.example.sportapp.presentation.home.WidgetFactory
 import com.example.sportapp.presentation.settings.WidgetItem
@@ -75,6 +76,7 @@ fun OverallStatsContent(
     onNavigateBack: () -> Unit,
     onNavigateToOptions: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     var showTypeMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val sdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
@@ -89,17 +91,17 @@ fun OverallStatsContent(
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
-                        Text("Statystyki ogólne")
+                        Text(texts.STATS_TITLE)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToOptions) {
-                        Icon(Icons.Default.Settings, contentDescription = "Opcje")
+                        Icon(Icons.Default.Settings, contentDescription = texts.HOME_OPTIONS)
                     }
                 }
             )
@@ -121,18 +123,18 @@ fun OverallStatsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Filtry", style = MaterialTheme.typography.titleSmall)
+                    Text(texts.STATS_FILTERS, style = MaterialTheme.typography.titleSmall)
                     
                     Box {
                         OutlinedButton(
                             onClick = { showTypeMenu = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(selectedType ?: "Wszystkie typy")
+                            Text(selectedType ?: texts.STATS_ALL_TYPES)
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
                         DropdownMenu(expanded = showTypeMenu, onDismissRequest = { showTypeMenu = false }) {
-                            DropdownMenuItem(text = { Text("Wszystkie") }, onClick = { onTypeSelected(null); showTypeMenu = false })
+                            DropdownMenuItem(text = { Text(texts.ACTIVITY_ALL) }, onClick = { onTypeSelected(null); showTypeMenu = false })
                             activityTypes.forEach { type ->
                                 DropdownMenuItem(text = { Text(type) }, onClick = { onTypeSelected(type); showTypeMenu = false })
                             }
@@ -152,7 +154,7 @@ fun OverallStatsContent(
                         ) {
                             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(startDate?.let { sdf.format(it) } ?: "Od")
+                            Text(startDate?.let { sdf.format(it) } ?: texts.STATS_FROM)
                         }
 
                         OutlinedButton(
@@ -167,7 +169,7 @@ fun OverallStatsContent(
                         ) {
                             Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(endDate?.let { sdf.format(it) } ?: "Do")
+                            Text(endDate?.let { sdf.format(it) } ?: texts.STATS_TO)
                         }
                     }
                 }
@@ -178,7 +180,7 @@ fun OverallStatsContent(
             // 2. Widgety
             val activeWidgets = widgets.filter { it.isEnabled }
             if (activeWidgets.isEmpty()) {
-                Text("Brak aktywnych widgetów. Włącz je w opcjach.")
+                Text(texts.STATS_NO_WIDGETS)
             } else {
                 activeWidgets.chunked(2).forEach { rowItems ->
                     if (rowItems.size == 2) {
@@ -202,7 +204,7 @@ fun OverallStatsContent(
             if (activeCharts.isNotEmpty()) {
                 if (!rawData.isNullOrEmpty()) {
                     Text(
-                        text = "Wykresy trendów",
+                        text = texts.STATS_TREND_CHARTS,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                     )
@@ -212,21 +214,21 @@ fun OverallStatsContent(
                         if (producer != null) {
                             val maxVal = chartMaxValues[chart.id] ?: 0.0
                             val unit = when(chart.id) {
-                                "distanceGps" -> if (maxVal > 6000) "km" else "m"
-                                "distanceSteps" -> if (maxVal > 6000) "km" else "m"
-                                "calories" -> "kcal"
-                                "steps" -> "kroków"
-                                "avg_cadence" -> "kr/min"
-                                "ascent", "descent" -> "m"
-                                "maxPressure", "minPressure" -> "hPa"
-                                "bestPace1km" -> "min/km"
+                                "distanceGps" -> if (maxVal > 6000) texts.UNIT_KM else texts.UNIT_M
+                                "distanceSteps" -> if (maxVal > 6000) texts.UNIT_KM else texts.UNIT_M
+                                "calories" -> texts.UNIT_KCAL
+                                "steps" -> texts.UNIT_STEPS
+                                "avg_cadence" -> texts.UNIT_STEP_MIN
+                                "ascent", "descent" -> texts.UNIT_M
+                                "maxPressure", "minPressure" -> texts.UNIT_HPA
+                                "bestPace1km" -> texts.UNIT_MIN_KM_LABEL
                                 else -> ""
                             }
                             val title = when(chart.id) {
-                                "distanceGps" -> if (maxVal > 6000) "Dystans (GPS) w kilometrach" else "Dystans (GPS) w metrach"
-                                "distanceSteps" -> if (maxVal > 6000) "Dystans (kroki) w kilometrach" else "Dystans (kroki) w metrach"
-                                "steps" -> "Kroki"
-                                else -> chart.label
+                                "distanceGps" -> texts.chartDistanceGps(maxVal > 6000)
+                                "distanceSteps" -> texts.chartDistanceSteps(maxVal > 6000)
+                                "steps" -> texts.CHART_STEPS
+                                else -> texts.getSensorLabel(chart.id)
                             }
                             CommonChartSection(
                                 title = title,
@@ -242,7 +244,7 @@ fun OverallStatsContent(
                     }
                 } else if (stats.containsKey("raw_data")) {
                     Text(
-                        text = "Brak danych do wyświetlenia wykresów.",
+                        text = texts.STATS_NO_DATA,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray,
                         modifier = Modifier.padding(vertical = 16.dp)
@@ -254,7 +256,7 @@ fun OverallStatsContent(
 
             Image(
                 painter = painterResource(id = R.drawable.logo_apki_biale),
-                contentDescription = "Logo SportApp",
+                contentDescription = texts.HOME_LOGO_DESC,
                 modifier = Modifier.height(40.dp).padding(vertical = 8.dp)
             )
         }

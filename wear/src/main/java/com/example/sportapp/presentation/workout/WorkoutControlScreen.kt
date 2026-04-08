@@ -8,33 +8,28 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
-import androidx.wear.compose.foundation.pager.HorizontalPager
-import androidx.wear.compose.foundation.pager.VerticalPager
-import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.material.*
+import com.example.sportapp.LocalWearTexts
 import com.example.sportapp.presentation.sensors.WorkoutStatus
 import com.example.sportapp.presentation.settings.HealthData
-import com.google.maps.android.compose.MapType
 
 // This component seems redundant now that we have DynamicWorkoutScreen, 
 // but I will fix it to keep the project compilable if it's still used.
 
-@OptIn(ExperimentalWearFoundationApi::class)
 @Composable
 fun WorkoutControlScreen(
     workoutType: String,
     healthData: HealthData,
     onWorkoutFinished: (String, List<Pair<String, String>>) -> Unit
 ) {
+    val texts = LocalWearTexts.current
     // Note: This is a placeholder for backward compatibility
     // In the new system, we should use DynamicWorkoutScreen directly from MainActivity
     
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Użyj DynamicWorkoutScreen")
+        Text(texts.WORKOUT_READY_MSG)
     }
 }
 
@@ -44,6 +39,7 @@ fun WorkoutControls(
     onTogglePause: () -> Unit,
     onEnd: () -> Unit
 ) {
+    val texts = LocalWearTexts.current
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -59,7 +55,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = if (status == WorkoutStatus.PAUSED) Icons.Default.PlayArrow else Icons.Default.Pause,
-                    contentDescription = if (status == WorkoutStatus.PAUSED) "Wznów" else "Pauza",
+                    contentDescription = if (status == WorkoutStatus.PAUSED) texts.WORKOUT_RESUME else texts.WORKOUT_PAUSE,
                     tint = Color.Black
                 )
             }
@@ -71,7 +67,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.Stop,
-                    contentDescription = "Zakończ",
+                    contentDescription = texts.WORKOUT_FINISH,
                     tint = Color.White
                 )
             }
@@ -83,7 +79,7 @@ fun WorkoutControls(
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Start",
+                    contentDescription = texts.WORKOUT_START,
                     tint = Color.Black
                 )
             }

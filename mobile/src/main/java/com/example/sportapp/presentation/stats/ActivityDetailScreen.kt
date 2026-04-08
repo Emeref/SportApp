@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
@@ -57,6 +58,7 @@ fun ActivityDetailScreen(
     viewModel: ActivityDetailViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val sessionData by viewModel.sessionData.collectAsStateWithLifecycle()
     val laps by viewModel.laps.collectAsStateWithLifecycle()
     val selectedLap by viewModel.selectedLap.collectAsStateWithLifecycle()
@@ -85,9 +87,9 @@ fun ActivityDetailScreen(
     if (error != null) {
         AlertDialog(
             onDismissRequest = { },
-            title = { Text("Błąd danych") },
-            text = { Text(error ?: "Błąd") },
-            confirmButton = { Button(onClick = { viewModel.clearError(); onNavigateBack() }) { Text("OK") } }
+            title = { Text(texts.DETAIL_DATA_ERROR_TITLE) },
+            text = { Text(error ?: "") },
+            confirmButton = { Button(onClick = { viewModel.clearError(); onNavigateBack() }) { Text(texts.DETAIL_ERROR_OK) } }
         )
     }
 
@@ -105,8 +107,8 @@ fun ActivityDetailScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Szczegóły aktywności") },
-                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót") } }
+                    title = { Text(texts.DETAIL_TITLE) },
+                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE) } }
                 )
             }
         ) { padding ->
@@ -160,7 +162,7 @@ fun ActivityDetailScreen(
                                 val producer = viewModel.chartProducers["bpm"]
                                 if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
                                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                        HeartRateChartSection("Tętno (bpm)", producer, data.times, hrZoneResult) { selectedIndex = it }
+                                        HeartRateChartSection(texts.DETAIL_HEART_RATE, producer, data.times, hrZoneResult) { selectedIndex = it }
                                     }
                                     hrZoneResult?.let { result ->
                                         Spacer(modifier = Modifier.height(24.dp))
@@ -178,9 +180,9 @@ fun ActivityDetailScreen(
                                 if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
                                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                                         CommonChartSection(
-                                            title = widget.label, 
+                                            title = texts.getSensorLabel(widget.id), 
                                             producer = producer, 
-                                            unit = getUnitForWidget(widget.id), 
+                                            unit = getUnitForWidget(widget.id, texts), 
                                             detailTimes = data.times,
                                             onMarkerShown = { selectedIndex = it }
                                         )
@@ -207,6 +209,7 @@ fun MapSection(
     selectedIndex: Int? = null,
     onExpandClick: () -> Unit = {}
 ) {
+    val texts = LocalMobileTexts.current
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
 
@@ -251,12 +254,12 @@ fun MapSection(
                 Marker(
                     state = rememberMarkerState(position = data.route.first()),
                     icon = startIcon,
-                    title = "Start"
+                    title = texts.DETAIL_MAP_START
                 )
                 Marker(
                     state = rememberMarkerState(position = data.route.last()),
                     icon = finishIcon,
-                    title = "Meta",
+                    title = texts.DETAIL_MAP_FINISH,
                     anchor = Offset(0.0f, 1.0f) // Dolny lewy punkt obrazka na końcu trasy
                 )
             }
@@ -285,7 +288,7 @@ fun MapSection(
             onClick = onExpandClick,
             modifier = Modifier.padding(8.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
         ) {
-            Icon(Icons.Default.Fullscreen, contentDescription = "Powiększ mapę")
+            Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND)
         }
     }
 }
@@ -299,6 +302,7 @@ fun FullScreenMap(
     selectedIndex: Int?,
     onClose: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
 
@@ -342,12 +346,12 @@ fun FullScreenMap(
                 Marker(
                     state = rememberMarkerState(position = data.route.first()),
                     icon = startIcon,
-                    title = "Start"
+                    title = texts.DETAIL_MAP_START
                 )
                 Marker(
                     state = rememberMarkerState(position = data.route.last()),
                     icon = finishIcon,
-                    title = "Meta",
+                    title = texts.DETAIL_MAP_FINISH,
                     anchor = Offset(0.0f, 1.0f) // Dolny lewy punkt obrazka na końcu trasy
                 )
             }
@@ -376,7 +380,7 @@ fun FullScreenMap(
             onClick = onClose,
             modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
         ) {
-            Icon(Icons.Default.FullscreenExit, contentDescription = "Zmniejsz mapę")
+            Icon(Icons.Default.FullscreenExit, contentDescription = texts.DETAIL_MAP_COLLAPSE)
         }
     }
 }
@@ -390,6 +394,7 @@ fun ExpandableLapsSection(
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Surface(
             modifier = Modifier
@@ -409,12 +414,12 @@ fun ExpandableLapsSection(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        contentDescription = if (isExpanded) texts.DETAIL_COLLAPSE else texts.DETAIL_EXPAND,
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = if (autoLapDistance != null && autoLapDistance > 0) "Odcinki (${formatDistance(autoLapDistance)})" else "Odcinki",
+                        text = if (autoLapDistance != null && autoLapDistance > 0) texts.detailLapsWithDistance(formatDistance(autoLapDistance, texts.UNIT_M, texts.UNIT_KM)) else texts.DETAIL_INTERVALS,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -422,7 +427,7 @@ fun ExpandableLapsSection(
                 
                 if (!isExpanded) {
                     Text(
-                        text = "Liczba odcinków: ${laps.size}",
+                        text = texts.detailLapsCount(laps.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -450,10 +455,11 @@ fun HeartRateChartSection(
     hrZoneResult: HeartRateZoneResult?,
     onMarkerShown: (Int?) -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     CommonChartSection(
         title = title, 
         producer = producer, 
-        unit = "bpm", 
+        unit = texts.UNIT_BPM, 
         detailTimes = detailTimes, 
         hrZoneResult = hrZoneResult,
         onMarkerShown = onMarkerShown
@@ -466,6 +472,7 @@ fun HeartRateZonesSection(
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Surface(
             modifier = Modifier
@@ -485,12 +492,12 @@ fun HeartRateZonesSection(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (isExpanded) "Zwiń" else "Rozwiń",
+                        contentDescription = if (isExpanded) texts.DETAIL_COLLAPSE else texts.DETAIL_EXPAND,
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Strefy tętna",
+                        text = texts.DETAIL_HR_ZONES,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -516,10 +523,10 @@ fun HeartRateZonesSection(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            DonutChart(stats = result.zones, modifier = Modifier.size(100.dp))
+                             DonutChart(stats = result.zones, modifier = Modifier.size(100.dp))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
-                                Text("Przeważający efekt treningu", style = MaterialTheme.typography.labelMedium)
+                                Text(texts.DETAIL_PREDOMINANT_EFFECT, style = MaterialTheme.typography.labelMedium)
                                 Text(result.trainingEffect, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             }
                         }
@@ -540,12 +547,22 @@ fun HeartRateZonesSection(
 
 @Composable
 fun ZoneRow(stat: ZoneStat) {
+    val texts = LocalMobileTexts.current
+    val zoneName = when(stat.zone.name) {
+        "Z0" -> texts.ZONE_Z0
+        "Z1" -> texts.ZONE_Z1
+        "Z2" -> texts.ZONE_Z2
+        "Z3" -> texts.ZONE_Z3
+        "Z4" -> texts.ZONE_Z4
+        "Z5" -> texts.ZONE_Z5
+        else -> stat.zone.displayName
+    }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(2.dp)).background(stat.zone.color))
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(stat.zone.displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-            Text("${stat.minBpm}-${stat.maxBpm} bpm", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(zoneName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+            Text("${stat.minBpm}-${stat.maxBpm} ${texts.UNIT_BPM}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(formatSeconds(stat.durationSeconds), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(70.dp), textAlign = TextAlign.End)
         Text(String.format(Locale.US, "%.1f%%", stat.percentage), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.width(50.dp), textAlign = TextAlign.End)
@@ -562,6 +579,7 @@ private fun formatSeconds(seconds: Long): String {
 
 @Composable
 fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (WorkoutLap) -> Unit) {
+    val texts = LocalMobileTexts.current
     val validLapsForPace = laps.filter { it.avgPaceSecondsPerKm > 0 }
     val fastestPace = validLapsForPace.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
     val slowestPace = validLapsForPace.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
@@ -572,16 +590,16 @@ fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (Wor
         Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
             Column {
                 Row {
-                    Box(modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer).padding(8.dp)) { LapCell("Nr", width = 40.dp, isHeader = true) }
+                    Box(modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer).padding(8.dp)) { LapCell(texts.DETAIL_LAP_NR, width = 40.dp, isHeader = true) }
                     Box(modifier = Modifier.horizontalScroll(horizontalScrollState)) {
                         Row(modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer).padding(8.dp)) {
-                            LapCell("Czas", width = 80.dp, isHeader = true)
-                            LapCell("Śr. Tempo", width = 90.dp, isHeader = true)
-                            LapCell("Śr. Prędkość", width = 100.dp, isHeader = true)
-                            LapCell("Max Prędkość", width = 100.dp, isHeader = true)
-                            LapCell("Śr. HR", width = 70.dp, isHeader = true)
-                            LapCell("Max HR", width = 70.dp, isHeader = true)
-                            LapCell("Góra/Dół", width = 100.dp, isHeader = true)
+                            LapCell(texts.DETAIL_LAP_TIME, width = 80.dp, isHeader = true)
+                            LapCell(texts.DETAIL_LAP_AVG_PACE, width = 90.dp, isHeader = true)
+                            LapCell(texts.DETAIL_LAP_AVG_SPEED, width = 100.dp, isHeader = true)
+                            LapCell(texts.DETAIL_LAP_MAX_SPEED, width = 100.dp, isHeader = true)
+                            LapCell(texts.DETAIL_LAP_AVG_HR, width = 70.dp, isHeader = true)
+                            LapCell(texts.DETAIL_LAP_MAX_HR, width = 70.dp, isHeader = true)
+                            LapCell(texts.DETAIL_LAP_ASCENT_DESCENT, width = 100.dp, isHeader = true)
                         }
                     }
                 }
@@ -600,8 +618,8 @@ fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (Wor
                                 Row(modifier = Modifier.clickable { onLapClick(lap) }.background(bgColor).padding(8.dp)) {
                                     LapCell(formatMillis(lap.durationMillis), width = 80.dp)
                                     LapCell(formatPaceFromSeconds(lap.avgPaceSecondsPerKm), width = 90.dp)
-                                    LapCell(String.format(Locale.US, "%.1f km/h", lap.avgSpeed), width = 100.dp)
-                                    LapCell(String.format(Locale.US, "%.1f km/h", lap.maxSpeed), width = 100.dp)
+                                    LapCell(String.format(Locale.US, "%.1f %s", lap.avgSpeed, texts.UNIT_KM_H), width = 100.dp)
+                                    LapCell(String.format(Locale.US, "%.1f %s", lap.maxSpeed, texts.UNIT_KM_H), width = 100.dp)
                                     LapCell("${lap.avgHeartRate}", width = 70.dp)
                                     LapCell("${lap.maxHeartRate}", width = 70.dp)
                                     LapCell(String.format(Locale.US, "+%.0f/-%.0f", lap.totalAscent, lap.totalDescent), width = 100.dp)
@@ -636,35 +654,36 @@ private fun formatPaceFromSeconds(totalSeconds: Int): String {
 
 @Composable
 fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidgets: List<WidgetItem>) {
+    val texts = LocalMobileTexts.current
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
     
     val avgSpeedGps = if (data.durationSeconds > 0) (data.totalDistanceGps / 1000.0) / (data.durationSeconds / 3600.0) else 0.0
     val avgSpeedSteps = if (data.durationSeconds > 0) (data.totalDistanceSteps / 1000.0) / (data.durationSeconds / 3600.0) else 0.0
 
     val widgetValues = mapOf(
-        "duration" to ("Czas trwania" to data.duration),
-        "max_bpm" to ("Maksymalne tętno" to "${data.maxBpm} bpm"),
-        "avg_bpm" to ("Średnie tętno" to "${data.avgBpm} bpm"),
-        "total_calories" to ("Spalone kalorie" to "${data.totalCalories} kcal"),
-        "max_calories_min" to ("Maks spalanie kalorii" to String.format(Locale.US, "%.2f kcal/min", data.maxCaloriesMin)),
-        "avg_pace" to ("Średnie tempo" to formatPace(data.avgPace)),
-        "avg_speed_gps" to ("Średnia prędkość (GPS)" to String.format(Locale.US, "%.1f km/h", avgSpeedGps)),
-        "avg_speed_steps" to ("Średnia prędkość (kroki)" to String.format(Locale.US, "%.1f km/h", avgSpeedSteps)),
-        "max_speed" to ("Maks prędkość" to String.format(Locale.US, "%.1f km/h", data.maxSpeed)),
-        "max_altitude" to ("Maks wysokość" to String.format(Locale.US, "%.0f m n.p.m.", data.maxAltitude)),
-        "total_ascent" to ("Suma podejść" to String.format(Locale.US, "+%.0f m", data.totalAscent)),
-        "total_descent" to ("Suma zejść" to String.format(Locale.US, "-%.0f m", data.totalDescent)),
-        "avg_step_length" to ("Wyliczona długość kroku" to String.format(Locale.US, "%.2f m", data.avgStepLength)),
-        "avg_cadence" to ("Śr. kadencja" to String.format(Locale.US, "%.0f kr/min", data.avgCadence)),
-        "max_cadence" to ("Maks. kadencja" to String.format(Locale.US, "%.0f kr/min", data.maxCadence)),
-        "total_steps" to ("Liczba kroków" to "${data.totalSteps}"),
-        "total_distance_gps" to ("Dystans (GPS)" to formatDistance(data.totalDistanceGps)),
-        "total_distance_steps" to ("Dystans (kroki)" to formatDistance(data.totalDistanceSteps)),
-        "pressure_start" to ("Ciśnienie atm. (start)" to (data.pressureStart?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")),
-        "pressure_end" to ("Ciśnienie atm. (koniec)" to (data.pressureEnd?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")),
-        "max_pressure" to ("Maks. ciśnienie" to (data.maxPressure?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")),
-        "min_pressure" to ("Min. ciśnienie" to (data.minPressure?.let { String.format(Locale.US, "%.1f hPa", it) } ?: "-- hPa")),
-        "best_pace_1km" to ("Najlepsze tempo (1km)" to formatPace(data.bestPace1km ?: 0.0))
+        "duration" to (texts.WIDGET_DURATION to data.duration),
+        "max_bpm" to (texts.WIDGET_MAX_BPM to "${data.maxBpm} ${texts.UNIT_BPM}"),
+        "avg_bpm" to (texts.WIDGET_AVG_BPM to "${data.avgBpm} ${texts.UNIT_BPM}"),
+        "total_calories" to (texts.WIDGET_TOTAL_CALORIES to "${data.totalCalories} ${texts.UNIT_KCAL}"),
+        "max_calories_min" to (texts.WIDGET_MAX_CALORIES_MIN to String.format(Locale.US, "%.2f %s", data.maxCaloriesMin, texts.UNIT_KCAL_MIN)),
+        "avg_pace" to (texts.WIDGET_AVG_PACE to formatPace(data.avgPace, texts.UNIT_MIN_KM)),
+        "avg_speed_gps" to (texts.WIDGET_AVG_SPEED_GPS to String.format(Locale.US, "%.1f %s", avgSpeedGps, texts.UNIT_KM_H)),
+        "avg_speed_steps" to (texts.WIDGET_AVG_SPEED_STEPS to String.format(Locale.US, "%.1f %s", avgSpeedSteps, texts.UNIT_KM_H)),
+        "max_speed" to (texts.WIDGET_MAX_SPEED to String.format(Locale.US, "%.1f %s", data.maxSpeed, texts.UNIT_KM_H)),
+        "max_altitude" to (texts.WIDGET_MAX_ALTITUDE_DESC to String.format(Locale.US, "%.0f %s", data.maxAltitude, texts.UNIT_M_ASL)),
+        "total_ascent" to (texts.WIDGET_TOTAL_ASCENT to String.format(Locale.US, "+%.0f %s", data.totalAscent, texts.UNIT_M)),
+        "total_descent" to (texts.WIDGET_TOTAL_DESCENT to String.format(Locale.US, "-%.0f %s", data.totalDescent, texts.UNIT_M)),
+        "avg_step_length" to (texts.WIDGET_AVG_STEP_LENGTH to String.format(Locale.US, "%.2f %s", data.avgStepLength, texts.UNIT_M)),
+        "avg_cadence" to (texts.WIDGET_AVG_CADENCE_DESC to String.format(Locale.US, "%.0f %s", data.avgCadence, texts.UNIT_STEP_MIN)),
+        "max_cadence" to (texts.WIDGET_MAX_CADENCE to String.format(Locale.US, "%.0f %s", data.maxCadence, texts.UNIT_STEP_MIN)),
+        "total_steps" to (texts.WIDGET_TOTAL_STEPS to "${data.totalSteps}"),
+        "total_distance_gps" to (texts.WIDGET_DISTANCE_GPS to formatDistance(data.totalDistanceGps, texts.UNIT_M, texts.UNIT_KM)),
+        "total_distance_steps" to (texts.WIDGET_DISTANCE_STEPS to formatDistance(data.totalDistanceSteps, texts.UNIT_M, texts.UNIT_KM)),
+        "pressure_start" to (texts.WIDGET_PRESSURE_START to (data.pressureStart?.let { String.format(Locale.US, "%.1f %s", it, texts.UNIT_HPA) } ?: "-- ${texts.UNIT_HPA}")),
+        "pressure_end" to (texts.WIDGET_PRESSURE_END to (data.pressureEnd?.let { String.format(Locale.US, "%.1f %s", it, texts.UNIT_HPA) } ?: "-- ${texts.UNIT_HPA}")),
+        "max_pressure" to (texts.WIDGET_MAX_PRESSURE to (data.maxPressure?.let { String.format(Locale.US, "%.1f %s", it, texts.UNIT_HPA) } ?: "-- ${texts.UNIT_HPA}")),
+        "min_pressure" to (texts.WIDGET_MIN_PRESSURE to (data.minPressure?.let { String.format(Locale.US, "%.1f %s", it, texts.UNIT_HPA) } ?: "-- ${texts.UNIT_HPA}")),
+        "best_pace_1km" to (texts.WIDGET_BEST_PACE_1KM to formatPace(data.bestPace1km ?: 0.0, texts.UNIT_MIN_KM))
     )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -680,13 +699,13 @@ fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidge
     }
 }
 
-private fun formatPace(paceDecimal: Double): String {
+private fun formatPace(paceDecimal: Double, unit: String): String {
     if (paceDecimal <= 0 || paceDecimal > 120) return "--:--"
-    return String.format(Locale.US, "%02d:%02d min/km", paceDecimal.toInt(), ((paceDecimal - paceDecimal.toInt()) * 60).toInt())
+    return String.format(Locale.US, "%02d:%02d %s", paceDecimal.toInt(), ((paceDecimal - paceDecimal.toInt()) * 60).toInt(), unit)
 }
 
-private fun formatDistance(distanceMeters: Double): String {
-    return if (distanceMeters >= 1000) String.format(Locale.US, "%.2f km", distanceMeters / 1000.0) else String.format(Locale.US, "%.0f m", distanceMeters)
+private fun formatDistance(distanceMeters: Double, unitM: String, unitKm: String): String {
+    return if (distanceMeters >= 1000) String.format(Locale.US, "%.2f %s", distanceMeters / 1000.0, unitKm) else String.format(Locale.US, "%.0f %s", distanceMeters, unitM)
 }
 
 @Composable
@@ -699,15 +718,15 @@ fun SummaryItem(label: String, value: String, modifier: Modifier = Modifier) {
     }
 }
 
-private fun getUnitForWidget(id: String): String {
+private fun getUnitForWidget(id: String, texts: com.example.sportapp.MobileTexts): String {
     return when(id) {
-        "bpm", "srednie_bpm" -> "bpm"
-        "kalorie_min", "kalorie_suma" -> "kcal"
-        "kroków/min" -> "kroków/min"
-        "odl_kroki", "gps_dystans" -> "m"
-        "predkosc", "predkosc_kroki" -> "km/h"
-        "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> "m"
-        "pressure" -> "hPa"
+        "bpm", "srednie_bpm" -> texts.UNIT_BPM
+        "kalorie_min", "kalorie_suma" -> texts.UNIT_KCAL
+        "kroki_min" -> texts.UNIT_STEP_MIN
+        "odl_kroki", "gps_dystans" -> texts.UNIT_M
+        "predkosc", "predkosc_kroki" -> texts.UNIT_KM_H
+        "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> texts.UNIT_M
+        "pressure" -> texts.UNIT_HPA
         else -> ""
     }
 }

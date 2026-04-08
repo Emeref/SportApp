@@ -18,10 +18,12 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
+import com.example.sportapp.LocalWearTexts
 import com.example.sportapp.R
 
 @Composable
 fun MainMenuScreen(navController: NavHostController) {
+    val texts = LocalWearTexts.current
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -33,7 +35,7 @@ fun MainMenuScreen(navController: NavHostController) {
         item {
             Image(
                 painter = painterResource(id = R.drawable.logo_apki_biale),
-                contentDescription = "SportApp Logo",
+                contentDescription = texts.APP_LOGO_DESC,
                 modifier = Modifier
                     .size(48.dp)
                     .padding(bottom = 8.dp)
@@ -42,26 +44,26 @@ fun MainMenuScreen(navController: NavHostController) {
 
         item {
             Chip(
-                label = { Text("Sport") },
+                label = { Text(texts.MENU_SPORT) },
                 onClick = { navController.navigate("choose_sport") },
-                icon = { Icon(Icons.Default.DirectionsRun, contentDescription = "Sport") },
+                icon = { Icon(Icons.Default.DirectionsRun, contentDescription = texts.MENU_SPORT) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
         }
         item {
             Chip(
-                label = { Text("Statystyki") },
+                label = { Text(texts.MENU_STATISTICS) },
                 onClick = { navController.navigate("statistics") },
-                icon = { Icon(Icons.Default.BarChart, contentDescription = "Statystyki") },
+                icon = { Icon(Icons.Default.BarChart, contentDescription = texts.MENU_STATISTICS) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 colors = ChipDefaults.secondaryChipColors()
             )
         }
         item {
             Chip(
-                label = { Text("Ustawienia") },
+                label = { Text(texts.MENU_SETTINGS) },
                 onClick = { navController.navigate("settings") },
-                icon = { Icon(Icons.Default.Settings, contentDescription = "Ustawienia") },
+                icon = { Icon(Icons.Default.Settings, contentDescription = texts.MENU_SETTINGS) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 colors = ChipDefaults.secondaryChipColors()
             )

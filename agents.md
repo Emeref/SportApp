@@ -20,6 +20,10 @@ Ponadto chcesz aby aplikacja działała szybko i była dobrze skonfigurowana.
 - Wszystkie sensory wymagające uprawnień muszą mieć obsłużony stan 'Brak uprawnień' (Permission Denied) w sposób czytelny dla użytkownika (np. ekran z prośą o włączenie w ustawieniach).
 
 
+## Tłumaczenia
+- Każdy nowy tekst w aplikacji jest zapisany jako zmienna w plikach WearTexts lub MobileTexts (zależnie od tego gdzie sie pojawia)
+- Każda nowa zmienna ma być uzupełniona w plikach tłumaczeń dla wszystkich języków
+
 ## Baza danych
 - każda zmiana bazy danych musi zawierać kod migracji, aby żadne dane nie zostały stracone.
 

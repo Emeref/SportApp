@@ -20,12 +20,14 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
+import com.example.sportapp.LocalWearTexts
 
 @Composable
 fun ChooseSportScreen(
     navController: NavHostController,
     viewModel: ChooseSportViewModel = hiltViewModel()
 ) {
+    val texts = LocalWearTexts.current
     val definitions by viewModel.definitions.collectAsState()
     val listState = rememberScalingLazyListState()
 
@@ -40,14 +42,14 @@ fun ChooseSportScreen(
             state = listState,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item { ListHeader { Text("Wybierz sport") } }
+            item { ListHeader { Text(texts.CHOOSE_SPORT_TITLE) } }
             
             val currentDefinitions = definitions!!
             
             if (currentDefinitions.isEmpty()) {
                 item {
                     Text(
-                        text = "Brak definicji aktywności. Zdefiniuj je w aplikacji na telefonie.",
+                        text = texts.CHOOSE_SPORT_NO_DEFINITIONS,
                         modifier = Modifier.padding(16.dp),
                         style = androidx.wear.compose.material.MaterialTheme.typography.body2,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center

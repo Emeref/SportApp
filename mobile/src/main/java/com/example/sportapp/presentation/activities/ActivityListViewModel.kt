@@ -5,11 +5,13 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.MobileTexts
 import com.example.sportapp.data.GpxGenerator
 import com.example.sportapp.data.GpxImporter
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.ZipManager
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.presentation.settings.AppLanguage
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -145,7 +147,7 @@ class ActivityListViewModel @Inject constructor(
     }
 
     fun onTypeSelected(type: String?) {
-        _selectedType.value = if (type == "Wszystkie") null else type
+        _selectedType.value = type
     }
 
     fun onDateRangeSelected(start: Date?, end: Date?) {
@@ -210,7 +212,8 @@ class ActivityListViewModel @Inject constructor(
         if (ids.isEmpty()) return
 
         viewModelScope.launch {
-            _exportState.value = ExportState.Exporting(0f, "Inicjalizacja eksportu...")
+            val texts = getTexts()
+            _exportState.value = ExportState.Exporting(0f, texts.VM_EXPORT_INITIALIZING)
             
             try {
                 val gpxGenerator = GpxGenerator()
@@ -228,7 +231,7 @@ class ActivityListViewModel @Inject constructor(
                     
                     _exportState.value = ExportState.Exporting(
                         (index.toFloat() / ids.size), 
-                        "Generowanie: ${workout.activityName} (${index + 1}/${ids.size})"
+                        texts.vmExportGenerating(workout.activityName, index + 1, ids.size)
                     )
 
                     val gpxContent = gpxGenerator.generateGpx(workout, points)
@@ -242,7 +245,7 @@ class ActivityListViewModel @Inject constructor(
                 }
 
                 if (generatedFiles.isEmpty()) {
-                    _exportState.value = ExportState.Error("Nie wygenerowano żadnych plików.")
+                    _exportState.value = ExportState.Error(texts.VM_EXPORT_NO_FILES)
                     return@launch
                 }
 
@@ -250,7 +253,7 @@ class ActivityListViewModel @Inject constructor(
                     val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", generatedFiles[0])
                     _exportState.value = ExportState.Success(uri, false)
                 } else {
-                    _exportState.value = ExportState.Exporting(0.9f, "Pakowanie do ZIP...")
+                    _exportState.value = ExportState.Exporting(0.9f, texts.VM_EXPORT_ZIPPING)
                     val zipFile = File(exportDir, "SportApp_Export_${sdf.format(Date())}.zip")
                     ZipManager().zipFiles(generatedFiles, zipFile)
                     val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", zipFile)
@@ -258,9 +261,13 @@ class ActivityListViewModel @Inject constructor(
                 }
 
             } catch (e: Exception) {
-                _exportState.value = ExportState.Error("Błąd podczas eksportu: ${e.message}")
+                _exportState.value = ExportState.Error(texts.vmExportError(e.message ?: "Unknown error"))
             }
         }
+    }
+
+    private suspend fun getTexts(): MobileTexts {
+        return settingsManager.settingsFlow.first().language.texts
     }
 
     fun resetExportState() {
@@ -270,18 +277,19 @@ class ActivityListViewModel @Inject constructor(
     fun importGpx(uri: Uri, definition: WorkoutDefinition) {
         viewModelScope.launch {
             _importState.value = ImportState.Loading
+            val texts = getTexts()
             try {
                 val settings = settingsManager.settingsFlow.first()
                 val result = withContext(Dispatchers.IO) {
                     context.contentResolver.openInputStream(uri)?.use { input ->
-                        gpxImporter.importGpx(input, definition, settings.healthData)
-                    } ?: throw Exception("Nie można otworzyć pliku")
+                        gpxImporter.importGpx(input, definition, settings.healthData, texts)
+                    } ?: throw Exception(texts.VM_IMPORT_OPEN_ERROR)
                 }
 
                 val isDuplicate = checkDuplicate(result.workout.startTime, result.workout.durationSeconds)
                 val warnings = result.warnings.toMutableList()
                 if (isDuplicate) {
-                    warnings.add(0, "Wykryto potencjalny duplikat (taka sama data startu i czas trwania).")
+                    warnings.add(0, texts.VM_IMPORT_DUPLICATE_WARNING)
                 }
 
                 if (warnings.isNotEmpty()) {
@@ -292,7 +300,7 @@ class ActivityListViewModel @Inject constructor(
                     saveImportedWorkout(result)
                 }
             } catch (e: Exception) {
-                _importState.value = ImportState.Error("Błąd importu: ${e.message}")
+                _importState.value = ImportState.Error(texts.vmImportError(e.message ?: "Unknown error"))
             }
         }
     }
@@ -304,6 +312,7 @@ class ActivityListViewModel @Inject constructor(
 
     private fun saveImportedWorkout(result: GpxImporter.ImportResult) {
         viewModelScope.launch {
+            val texts = getTexts()
             try {
                 val workoutId = repository.insertWorkout(result.workout)
                 val points = result.points.map { it.copy(workoutId = workoutId) }
@@ -311,10 +320,10 @@ class ActivityListViewModel @Inject constructor(
                 val laps = result.laps.map { it.copy(workoutId = workoutId) }
                 repository.insertLaps(laps)
                 
-                _importState.value = ImportState.Success("Trening zaimportowany pomyślnie.")
+                _importState.value = ImportState.Success(texts.VM_IMPORT_SUCCESS)
                 refreshActivityTypes()
             } catch (e: Exception) {
-                _importState.value = ImportState.Error("Błąd zapisu do bazy: ${e.message}")
+                _importState.value = ImportState.Error(texts.vmImportError(e.message ?: "Unknown error"))
             }
         }
     }

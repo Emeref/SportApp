@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.menu
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sportapp.TextsWearPL
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
@@ -36,7 +37,7 @@ class ChooseSportViewModel @Inject constructor(
                     SensorConfig(it.id, isVisible = true, isRecording = true)
                 }
                 val defaultDef = WorkoutDefinition(
-                    name = "Standardowa aktywność",
+                    name = TextsWearPL.CHOOSE_SPORT_DEFAULT_NAME,
                     iconName = "DirectionsRun",
                     sensors = defaultSensors,
                     baseType = "Other",

@@ -36,6 +36,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         
         private val HEALTH_DATA_JSON = stringPreferencesKey("health_data_json")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
+        private val LANGUAGE = stringPreferencesKey("language")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -76,6 +77,9 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             defaultState.healthData
         }
 
+        val langCode = preferences[LANGUAGE]
+        val language = AppLanguage.values().find { it.code == langCode } ?: defaultState.language
+
         MobileSettingsState(
             widgets = widgets,
             period = ReportingPeriod.valueOf(preferences[PERIOD] ?: defaultState.period.name),
@@ -84,7 +88,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             watchStatsPeriod = ReportingPeriod.valueOf(preferences[WATCH_PERIOD] ?: defaultState.watchStatsPeriod.name),
             watchStatsCustomDays = preferences[WATCH_CUSTOM_DAYS] ?: defaultState.watchStatsCustomDays,
             healthData = healthData,
-            themeMode = ThemeMode.valueOf(preferences[THEME_MODE] ?: defaultState.themeMode.name)
+            themeMode = ThemeMode.valueOf(preferences[THEME_MODE] ?: defaultState.themeMode.name),
+            language = language
         )
     }
 
@@ -100,6 +105,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             
             preferences[HEALTH_DATA_JSON] = gson.toJson(state.healthData)
             preferences[THEME_MODE] = state.themeMode.name
+            preferences[LANGUAGE] = state.language.code
         }
         syncWatchStatsSettings(state)
         syncHealthData(state.healthData)

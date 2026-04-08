@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.text.DecimalFormat
@@ -31,6 +32,7 @@ fun HomeScreen(
     onNavigateToActivityList: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val stats by viewModel.stats.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val settings by viewModel.settings.collectAsState()
@@ -39,17 +41,14 @@ fun HomeScreen(
     val activeWidgets = settings.widgets.filter { it.isEnabled }
 
     val title = if (activeWidgets.isEmpty()) {
-        "Nie masz wybranego żadnego widgeta"
+        texts.HOME_NO_WIDGETS
     } else {
         when (settings.period) {
-            ReportingPeriod.TODAY -> "Wyniki z dzisiaj:"
-            ReportingPeriod.WEEK -> "Wyniki z tego tygodnia:"
-            ReportingPeriod.MONTH -> {
-                val monthName = Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.LONG, Locale("pl"))
-                "Wyniki z $monthName:"
-            }
-            ReportingPeriod.YEAR -> "Wyniki z tego roku:"
-            ReportingPeriod.CUSTOM -> if (settings.customDays == 1) "Wyniki z ostatniego dnia:" else "Wyniki z ostatnich ${settings.customDays} dni:"
+            ReportingPeriod.TODAY -> texts.homeResultsToday()
+            ReportingPeriod.WEEK -> texts.homeResultsWeek()
+            ReportingPeriod.MONTH -> texts.homeResultsMonth()
+            ReportingPeriod.YEAR -> texts.homeResultsYear()
+            ReportingPeriod.CUSTOM -> texts.homeResultsCustom(settings.customDays)
         }
     }
 
@@ -59,10 +58,10 @@ fun HomeScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         IconButton(onClick = { showSecretPopup = false }) {
-                            Icon(Icons.Default.Close, contentDescription = "Zamknij")
+                            Icon(Icons.Default.Close, contentDescription = texts.HOME_CLOSE)
                         }
                     }
-                    Text("Super, że klikasz, ale tu nic nie ma", style = MaterialTheme.typography.bodyLarge)
+                    Text(texts.HOME_SECRET_TITLE, style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
@@ -78,7 +77,7 @@ fun HomeScreen(
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
-                        Text("SportApp")
+                        Text(texts.HOME_TITLE)
                     }
                 },
                 navigationIcon = {
@@ -88,13 +87,13 @@ fun HomeScreen(
                         }
                     } else {
                         IconButton(onClick = { viewModel.triggerSync() }) {
-                            Icon(Icons.Default.Sync, contentDescription = "Synchronizuj")
+                            Icon(Icons.Default.Sync, contentDescription = texts.HOME_SYNC)
                         }
                     }
                 },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, contentDescription = "Opcje")
+                        Icon(Icons.Default.Settings, contentDescription = texts.HOME_OPTIONS)
                     }
                 }
             )
@@ -130,18 +129,18 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = onNavigateToStats, modifier = Modifier.fillMaxWidth()) {
-                Text("Statystyki ogólne")
+                Text(texts.HOME_GENERAL_STATS)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onNavigateToActivityList, modifier = Modifier.fillMaxWidth()) {
-                Text("Szczegóły treningu")
+                Text(texts.HOME_WORKOUT_DETAILS)
             }
 
             Spacer(modifier = Modifier.weight(1f))
             
             Image(
                 painter = painterResource(id = R.drawable.logo_apki_biale),
-                contentDescription = "Logo Apki",
+                contentDescription = texts.HOME_LOGO_DESC,
                 modifier = Modifier
                     .height(40.dp)
                     .padding(vertical = 8.dp)
@@ -153,24 +152,30 @@ fun HomeScreen(
 
 @Composable
 fun WidgetFactory(id: String, stats: Map<String, Any>, modifier: Modifier) {
-    when (id) {
-        "count" -> StatCard(modifier, "Liczba aktywności", formatLargeNumber(stats["count"]))
-        "calories" -> StatCard(modifier, "Spalone kalorie", "${formatLargeNumber(stats["calories"])} kcal")
-        "distanceGps" -> StatCard(modifier, "Dystans (GPS)", formatDistanceUI(stats["distanceGpsM"] as? Double ?: 0.0))
-        "distanceSteps" -> StatCard(modifier, "Dystans (kroki)", formatDistanceUI(stats["distanceStepsM"] as? Double ?: 0.0))
-        "ascent" -> StatCard(modifier, "W sumie w górę", "${formatLargeNumber(stats["ascent"])} m")
-        "descent" -> StatCard(modifier, "W sumie do dołu", "${formatLargeNumber(stats["descent"])} m")
-        "steps" -> StatCard(modifier, "Kroki", formatLargeNumber(stats["steps"]))
-        "avg_cadence" -> StatCard(modifier, "Średnia kadencja", String.format(Locale.US, "%.0f kr/min", stats["avg_cadence"] as? Double ?: 0.0))
-        "max_speed" -> StatCard(modifier, "Maks prędkość", String.format(Locale.US, "%.1f km/h", stats["max_speed"] as? Double ?: 0.0))
-        "max_altitude" -> StatCard(modifier, "Maks wysokość", String.format(Locale.US, "%.0f m", stats["max_altitude"] as? Double ?: 0.0))
-        "max_elevation_gain" -> StatCard(modifier, "Najwięcej przewyższeń", String.format(Locale.US, "+%.0f m", stats["max_elevation_gain"] as? Double ?: 0.0))
-        "max_distance" -> StatCard(modifier, "Największy dystans", formatDistanceUI(stats["max_distance"] as? Double ?: 0.0))
-        "max_duration" -> StatCard(modifier, "Najdłuższy czas", formatDuration(stats["max_duration"] as? Long ?: 0L))
-        "max_calories" -> StatCard(modifier, "Najwięcej kalorii", "${formatLargeNumber(stats["max_calories"])} kcal")
-        "max_avg_cadence" -> StatCard(modifier, "Najwyższa śr. kadencja", String.format(Locale.US, "%.0f kr/min", stats["max_avg_cadence"] as? Double ?: 0.0))
-        "max_avg_speed" -> StatCard(modifier, "Najwyższa śr. prędkość", String.format(Locale.US, "%.1f km/h", stats["max_avg_speed"] as? Double ?: 0.0))
+    val texts = LocalMobileTexts.current
+    val label = texts.getWidgetLabel(id)
+    
+    val value = when (id) {
+        "count" -> formatLargeNumber(stats["count"])
+        "calories" -> "${formatLargeNumber(stats["calories"])} ${texts.UNIT_KCAL}"
+        "distanceGps" -> formatDistanceUI(stats["distanceGpsM"] as? Double ?: 0.0, texts.UNIT_M, texts.UNIT_KM)
+        "distanceSteps" -> formatDistanceUI(stats["distanceStepsM"] as? Double ?: 0.0, texts.UNIT_M, texts.UNIT_KM)
+        "ascent" -> "${formatLargeNumber(stats["ascent"])} ${texts.UNIT_M}"
+        "descent" -> "${formatLargeNumber(stats["descent"])} ${texts.UNIT_M}"
+        "steps" -> formatLargeNumber(stats["steps"])
+        "avg_cadence" -> String.format(Locale.US, "%.0f %s", stats["avg_cadence"] as? Double ?: 0.0, texts.UNIT_STEP_MIN)
+        "max_speed" -> String.format(Locale.US, "%.1f %s", stats["max_speed"] as? Double ?: 0.0, texts.UNIT_KM_H)
+        "max_altitude" -> String.format(Locale.US, "%.0f %s", stats["max_altitude"] as? Double ?: 0.0, texts.UNIT_M)
+        "max_elevation_gain" -> String.format(Locale.US, "+%.0f %s", stats["max_elevation_gain"] as? Double ?: 0.0, texts.UNIT_M)
+        "max_distance" -> formatDistanceUI(stats["max_distance"] as? Double ?: 0.0, texts.UNIT_M, texts.UNIT_KM)
+        "max_duration" -> formatDuration(stats["max_duration"] as? Long ?: 0L)
+        "max_calories" -> "${formatLargeNumber(stats["max_calories"])} ${texts.UNIT_KCAL}"
+        "max_avg_cadence" -> String.format(Locale.US, "%.0f %s", stats["max_avg_cadence"] as? Double ?: 0.0, texts.UNIT_STEP_MIN)
+        "max_avg_speed" -> String.format(Locale.US, "%.1f %s", stats["max_avg_speed"] as? Double ?: 0.0, texts.UNIT_KM_H)
+        else -> ""
     }
+    
+    StatCard(modifier, label, value)
 }
 
 private fun formatLargeNumber(value: Any?): String {
@@ -195,19 +200,12 @@ private fun formatDuration(seconds: Long): String {
     else String.format(Locale.US, "%02d:%02d", m, s)
 }
 
-private fun formatPace(pace: Double): String {
-    if (pace <= 0.0) return "0:00"
-    val minutes = pace.toInt()
-    val seconds = ((pace - minutes) * 60).toInt()
-    return String.format(Locale.US, "%d:%02d", minutes, seconds)
-}
-
-private fun formatDistanceUI(meters: Double): String {
+private fun formatDistanceUI(meters: Double, unitM: String, unitKm: String): String {
     return when {
-        meters < 1000 -> "${formatLargeNumber(meters)} m"
-        meters < 10000 -> String.format(Locale.US, "%.2f km", Math.floor(meters / 10.0) / 100.0)
-        meters < 100000 -> String.format(Locale.US, "%.1f km", Math.floor(meters / 100.0) / 10.0)
-        else -> "${formatLargeNumber(Math.floor(meters / 1000.0))} km"
+        meters < 1000 -> "${formatLargeNumber(meters)} $unitM"
+        meters < 10000 -> String.format(Locale.US, "%.2f $unitKm", Math.floor(meters / 10.0) / 100.0)
+        meters < 100000 -> String.format(Locale.US, "%.1f $unitKm", Math.floor(meters / 100.0) / 10.0)
+        else -> "${formatLargeNumber(Math.floor(meters / 1000.0))} $unitKm"
     }
 }
 

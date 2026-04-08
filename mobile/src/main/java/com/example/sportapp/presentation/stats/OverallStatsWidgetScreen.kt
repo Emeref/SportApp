@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.presentation.settings.WidgetItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,6 +24,7 @@ fun OverallStatsWidgetScreen(
     onSave: (List<WidgetItem>, List<WidgetItem>) -> Unit,
     onCancel: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     var internalWidgets by remember(widgets) { mutableStateOf(widgets) }
     var internalCharts by remember(charts) { mutableStateOf(charts) }
 
@@ -31,7 +33,7 @@ fun OverallStatsWidgetScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Ustawienia statystyk ogólnych",
+                        text = texts.STATS_SETTINGS_TITLE,
                         modifier = Modifier.padding(top = 16.dp)
                     )
                 },
@@ -40,7 +42,7 @@ fun OverallStatsWidgetScreen(
                         onClick = onCancel,
                         modifier = Modifier.padding(top = 16.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                     }
                 }
             )
@@ -58,7 +60,7 @@ fun OverallStatsWidgetScreen(
             ) {
                 item {
                     Text(
-                        text = "Sekcja: Widgety",
+                        text = texts.STATS_SECTION_WIDGETS,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -70,6 +72,7 @@ fun OverallStatsWidgetScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalWidgets.size - 1,
+                        label = texts.getWidgetLabel(item.id),
                         onMoveUp = {
                             val list = internalWidgets.toMutableList()
                             val temp = list[index]
@@ -95,7 +98,7 @@ fun OverallStatsWidgetScreen(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Sekcja: Wykresy trendów",
+                        text = texts.STATS_SECTION_CHARTS,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -107,6 +110,7 @@ fun OverallStatsWidgetScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalCharts.size - 1,
+                        label = texts.getWidgetLabel(item.id),
                         onMoveUp = {
                             val list = internalCharts.toMutableList()
                             val temp = list[index]
@@ -143,14 +147,14 @@ fun OverallStatsWidgetScreen(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
-                    Text("Zapisz", color = Color.White)
+                    Text(texts.SETTINGS_SAVE, color = Color.White)
                 }
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
                 ) {
-                    Text("Zamknij", color = Color.White)
+                    Text(texts.SETTINGS_CLOSE, color = Color.White)
                 }
             }
         }
@@ -162,10 +166,12 @@ fun OverallStatsWidgetRow(
     item: WidgetItem,
     isFirst: Boolean,
     isLast: Boolean,
+    label: String,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -175,12 +181,16 @@ fun OverallStatsWidgetRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(checked = item.isEnabled, onCheckedChange = onCheckedChange)
-            Text(item.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = label,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge
+            )
             IconButton(onClick = onMoveUp, enabled = !isFirst) {
-                Icon(Icons.Default.KeyboardArrowUp, "Przesuń w górę")
+                Icon(Icons.Default.KeyboardArrowUp, texts.STATS_MOVE_UP)
             }
             IconButton(onClick = onMoveDown, enabled = !isLast) {
-                Icon(Icons.Default.KeyboardArrowDown, "Przesuń w dół")
+                Icon(Icons.Default.KeyboardArrowDown, texts.STATS_MOVE_DOWN)
             }
         }
     }

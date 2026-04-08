@@ -21,6 +21,7 @@ import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
 import com.example.sportapp.R
+import com.example.sportapp.TextsWearPL
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.presentation.MainActivity
@@ -137,7 +138,7 @@ class WorkoutTileService : SuspendingTileService() {
         val colors = Colors.DEFAULT
         
         val content: LayoutElement = if (definitions.isEmpty()) {
-            Text.Builder(this, "Brak aktywności")
+            Text.Builder(this, TextsWearPL.CHOOSE_SPORT_NO_DEFINITIONS)
                 .setTypography(Typography.TYPOGRAPHY_BODY1)
                 .setColor(argb(colors.onSurface))
                 .build()
@@ -168,7 +169,7 @@ class WorkoutTileService : SuspendingTileService() {
 
         val headerColumn = LayoutElementBuilders.Column.Builder()
             .addContent(
-                Text.Builder(this, "Wybierz trening")
+                Text.Builder(this, TextsWearPL.CHOOSE_SPORT_TITLE)
                     .setTypography(Typography.TYPOGRAPHY_CAPTION1)
                     .setColor(argb(0x80FFFFFF.toInt()))
                     .build()
@@ -190,7 +191,7 @@ class WorkoutTileService : SuspendingTileService() {
             .setPrimaryLabelTextContent(headerColumn.build())
             .setContent(content)
             .setPrimaryChipContent(
-                CompactChip.Builder(this, "START", startClickable, deviceParameters)
+                CompactChip.Builder(this, TextsWearPL.WORKOUT_READY_START, startClickable, deviceParameters)
                     .setChipColors(ChipColors.primaryChipColors(colors))
                     .build()
             )

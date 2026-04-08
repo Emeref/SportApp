@@ -13,15 +13,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.LocalMobileTexts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WidgetSelectionScreen(
     widgets: List<WidgetItem>,
-    title: String = "Widgety na stronie głównej",
+    title: String,
     onSave: (List<WidgetItem>) -> Unit,
     onCancel: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     // Używamy remember(widgets), aby zaktualizować listę, gdy dane zostaną załadowane z DataStore
     var internalWidgets by remember(widgets) { mutableStateOf(widgets) }
 
@@ -39,7 +41,7 @@ fun WidgetSelectionScreen(
                         onClick = onCancel,
                         modifier = Modifier.padding(top = 16.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                     }
                 }
             )
@@ -60,6 +62,7 @@ fun WidgetSelectionScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalWidgets.size - 1,
+                        label = texts.getWidgetLabel(item.id),
                         onMoveUp = {
                             val list = internalWidgets.toMutableList()
                             val temp = list[index]
@@ -95,14 +98,14 @@ fun WidgetSelectionScreen(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
-                    Text("Zapisz", color = Color.White)
+                    Text(texts.SETTINGS_SAVE, color = Color.White)
                 }
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
                 ) {
-                    Text("Zamknij", color = Color.White)
+                    Text(texts.SETTINGS_CLOSE, color = Color.White)
                 }
             }
         }
@@ -114,10 +117,12 @@ fun WidgetSelectionRow(
     item: WidgetItem,
     isFirst: Boolean,
     isLast: Boolean,
+    label: String,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -132,17 +137,17 @@ fun WidgetSelectionRow(
             )
             
             Text(
-                text = item.label,
+                text = label,
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge
             )
 
             IconButton(onClick = onMoveUp, enabled = !isFirst) {
-                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Przesuń w górę")
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = texts.STATS_MOVE_UP)
             }
             
             IconButton(onClick = onMoveDown, enabled = !isLast) {
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Przesuń w dół")
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = texts.STATS_MOVE_DOWN)
             }
         }
     }

@@ -2,6 +2,7 @@ package com.example.sportapp.data
 
 import android.location.Location
 import android.util.Xml
+import com.example.sportapp.MobileTexts
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
@@ -33,11 +34,11 @@ class GpxImporter @Inject constructor() {
         val warnings: List<String> = emptyList()
     )
 
-    fun importGpx(inputStream: InputStream, definition: WorkoutDefinition, healthData: HealthData): ImportResult {
+    fun importGpx(inputStream: InputStream, definition: WorkoutDefinition, healthData: HealthData, texts: MobileTexts): ImportResult {
         val points = parseGpx(inputStream)
-        if (points.isEmpty()) throw Exception("Plik GPX nie zawiera punktów trasy.")
+        if (points.isEmpty()) throw Exception(texts.GPX_NO_POINTS)
 
-        val warnings = validateDefinition(points, definition)
+        val warnings = validateDefinition(points, definition, texts)
         
         val firstPoint = points.first()
         val lastPoint = points.last()
@@ -232,7 +233,7 @@ class GpxImporter @Inject constructor() {
         return points
     }
 
-    private fun validateDefinition(points: List<RawPoint>, definition: WorkoutDefinition): List<String> {
+    private fun validateDefinition(points: List<RawPoint>, definition: WorkoutDefinition, texts: MobileTexts): List<String> {
         val warnings = mutableListOf<String>()
         val hasHr = points.any { it.hr != null }
         val hasEle = points.any { it.ele != null }
@@ -241,13 +242,13 @@ class GpxImporter @Inject constructor() {
         val supportedSensors = definition.sensors.map { it.sensorId }
         
         if (hasHr && !supportedSensors.contains(WorkoutSensor.HEART_RATE.id)) {
-            warnings.add("Plik zawiera dane tętna, ale wybrana aktywność ich nie obsługuje.")
+            warnings.add(texts.GPX_WARN_HR)
         }
         if (hasEle && !supportedSensors.contains(WorkoutSensor.ALTITUDE.id)) {
-            warnings.add("Plik zawiera dane wysokości, ale wybrana aktywność ich nie obsługuje.")
+            warnings.add(texts.GPX_WARN_ELE)
         }
         if (hasCadence && !supportedSensors.contains(WorkoutSensor.STEPS_PER_MINUTE.id)) {
-            warnings.add("Plik zawiera dane kadencji, ale wybrana aktywność ich nie obsługuje.")
+            warnings.add(texts.GPX_WARN_CADENCE)
         }
         
         return warnings

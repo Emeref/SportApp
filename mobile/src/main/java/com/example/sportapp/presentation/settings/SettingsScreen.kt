@@ -14,11 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.sportapp.BuildConfig
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,10 +28,12 @@ fun SettingsScreen(
     onNavigateToWidgetSelection: () -> Unit,
     onNavigateToWatchWidgetSelection: () -> Unit,
     onNavigateToDefinitions: () -> Unit,
-    onNavigateToHealthData: () -> Unit
+    onNavigateToHealthData: () -> Unit,
+    onNavigateToLanguageSelection: () -> Unit
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
+    val texts = LocalMobileTexts.current
 
     val isDark = when (state.themeMode) {
         ThemeMode.LIGHT -> false
@@ -53,14 +53,14 @@ fun SettingsScreen(
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
-                        Text("Ustawienia")
+                        Text(texts.SETTINGS_TITLE)
                     }
                 },
                 navigationIcon = {
                     IconButton(
                         onClick = onCancel
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CANCEL)
                     }
                 }
             )
@@ -75,23 +75,37 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // 0. Sekcja Wygląd
-            SettingsSection(title = "Wygląd") {
-                Text(text = "Motyw aplikacji", style = MaterialTheme.typography.bodyMedium)
+            SettingsSection(title = texts.SETTINGS_APPEARANCE) {
+                Text(text = texts.SETTINGS_THEME, style = MaterialTheme.typography.bodyMedium)
                 ThemeSelectionGrid(
                     selectedMode = state.themeMode,
                     onSelect = { state = state.copy(themeMode = it) }
                 )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                OutlinedCard(
+                    onClick = onNavigateToLanguageSelection,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text(texts.SETTINGS_LANGUAGE) },
+                        supportingContent = { Text(state.language.label) },
+                        leadingContent = { Icon(Icons.Default.Language, null) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
+                    )
+                }
             }
 
             // 0. Sekcja Profil
-            SettingsSection(title = "Mój Profil") {
+            SettingsSection(title = texts.SETTINGS_MY_PROFILE) {
                 OutlinedCard(
                     onClick = onNavigateToHealthData,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
-                        headlineContent = { Text("Dane zdrowotne i tętno") },
-                        supportingContent = { Text("Wiek, waga, HR Max i strefy") },
+                        headlineContent = { Text(texts.SETTINGS_HEALTH_DATA) },
+                        supportingContent = { Text(texts.SETTINGS_HEALTH_DATA_DESC) },
                         leadingContent = { Icon(Icons.Default.Favorite, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
@@ -99,14 +113,14 @@ fun SettingsScreen(
             }
 
             // 1. Sekcja Aktywności
-            SettingsSection(title = "Treningi") {
+            SettingsSection(title = texts.NAV_ACTIVITIES) {
                 OutlinedCard(
                     onClick = onNavigateToDefinitions,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
-                        headlineContent = { Text("Definicja aktywności") },
-                        supportingContent = { Text("Zarządzaj listą i czujnikami sportów") },
+                        headlineContent = { Text(texts.SETTINGS_DEFINITIONS) },
+                        supportingContent = { Text(texts.SETTINGS_DEFINITIONS_DESC) },
                         leadingContent = { Icon(Icons.Default.SettingsAccessibility, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
@@ -114,14 +128,14 @@ fun SettingsScreen(
             }
 
             // 2. Sekcja Widgety na stronie głównej
-            SettingsSection(title = "Widok ekranu głównego") {
+            SettingsSection(title = texts.SETTINGS_WIDGETS_HOME_TITLE) {
                 OutlinedCard(
                     onClick = onNavigateToWidgetSelection,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
-                        headlineContent = { Text("Widgety na stronie głównej") },
-                        supportingContent = { Text("Wybierz i ustaw kolejność") },
+                        headlineContent = { Text(texts.SETTINGS_WIDGETS_HOME) },
+                        supportingContent = { Text(texts.SETTINGS_WIDGETS_HOME_DESC) },
                         leadingContent = { Icon(Icons.Default.Dashboard, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
@@ -129,7 +143,7 @@ fun SettingsScreen(
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                Text(text = "Za jaki okres pokazujemy widgety?", style = MaterialTheme.typography.bodyMedium)
+                Text(text = texts.SETTINGS_PERIOD_HOME_DESC, style = MaterialTheme.typography.bodyMedium)
                 PeriodSelectionGrid(
                     selectedPeriod = state.period,
                     onSelect = { state = state.copy(period = it) }
@@ -144,7 +158,7 @@ fun SettingsScreen(
                                 state = state.copy(customDays = days)
                             }
                         },
-                        label = { Text("Liczba dni") },
+                        label = { Text(texts.SETTINGS_CUSTOM_DAYS_LABEL) },
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
@@ -154,14 +168,14 @@ fun SettingsScreen(
             }
 
             // 3. Sekcja Statystyki na zegarku
-            SettingsSection(title = "Statystyki na zegarku") {
+            SettingsSection(title = texts.SETTINGS_WIDGETS_WATCH) {
                 OutlinedCard(
                     onClick = onNavigateToWatchWidgetSelection,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     ListItem(
-                        headlineContent = { Text("Pola statystyk") },
-                        supportingContent = { Text("Wybierz i ustaw kolejność pól na zegarku") },
+                        headlineContent = { Text(texts.SETTINGS_WIDGETS_WATCH_TITLE) },
+                        supportingContent = { Text(texts.SETTINGS_WIDGETS_WATCH_DESC) },
                         leadingContent = { Icon(Icons.Default.Watch, null) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
                     )
@@ -169,7 +183,7 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(text = "Z jakiego okresu statystyki?", style = MaterialTheme.typography.bodyMedium)
+                Text(text = texts.SETTINGS_PERIOD_WATCH_DESC, style = MaterialTheme.typography.bodyMedium)
                 PeriodSelectionGrid(
                     selectedPeriod = state.watchStatsPeriod,
                     onSelect = { state = state.copy(watchStatsPeriod = it) }
@@ -184,7 +198,7 @@ fun SettingsScreen(
                                 state = state.copy(watchStatsCustomDays = days)
                             }
                         },
-                        label = { Text("Liczba dni") },
+                        label = { Text(texts.SETTINGS_CUSTOM_DAYS_LABEL) },
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
@@ -194,10 +208,10 @@ fun SettingsScreen(
             }
 
             // 4. Sekcja Integracja
-            SettingsSection(title = "Integracja") {
+            SettingsSection(title = texts.SETTINGS_INTEGRATION) {
                 ListItem(
-                    headlineContent = { Text("Google Drive") },
-                    supportingContent = { Text("Zapisuj historię i podsumowania (Wkrótce)") },
+                    headlineContent = { Text(texts.SETTINGS_GOOGLE_DRIVE) },
+                    supportingContent = { Text(texts.SETTINGS_GOOGLE_DRIVE_DESC) },
                     leadingContent = { Icon(Icons.Default.CloudQueue, null) },
                     trailingContent = { Switch(checked = false, onCheckedChange = null, enabled = false) }
                 )
@@ -215,14 +229,14 @@ fun SettingsScreen(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Zapisz", color = MaterialTheme.colorScheme.onPrimary)
+                    Text(texts.SETTINGS_SAVE, color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Zamknij", color = MaterialTheme.colorScheme.onError)
+                    Text(texts.SETTINGS_CLOSE, color = MaterialTheme.colorScheme.onError)
                 }
             }
 
@@ -259,10 +273,11 @@ fun ThemeSelectionGrid(
     selectedMode: ThemeMode,
     onSelect: (ThemeMode) -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     Row(modifier = Modifier.fillMaxWidth()) {
-        ThemeOptionChip("System", ThemeMode.SYSTEM, selectedMode, onSelect, Modifier.weight(1f))
-        ThemeOptionChip("Jasny", ThemeMode.LIGHT, selectedMode, onSelect, Modifier.weight(1f))
-        ThemeOptionChip("Ciemny", ThemeMode.DARK, selectedMode, onSelect, Modifier.weight(1f))
+        ThemeOptionChip(texts.SETTINGS_THEME_SYSTEM, ThemeMode.SYSTEM, selectedMode, onSelect, Modifier.weight(1f))
+        ThemeOptionChip(texts.SETTINGS_THEME_LIGHT, ThemeMode.LIGHT, selectedMode, onSelect, Modifier.weight(1f))
+        ThemeOptionChip(texts.SETTINGS_THEME_DARK, ThemeMode.DARK, selectedMode, onSelect, Modifier.weight(1f))
     }
 }
 
@@ -290,15 +305,16 @@ fun PeriodSelectionGrid(
     selectedPeriod: ReportingPeriod,
     onSelect: (ReportingPeriod) -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     Column {
         Row(modifier = Modifier.fillMaxWidth()) {
-            PeriodOptionChip("Dziś", ReportingPeriod.TODAY, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip("Tydzień", ReportingPeriod.WEEK, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip("Miesiąc", ReportingPeriod.MONTH, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(texts.PERIOD_TODAY, ReportingPeriod.TODAY, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(texts.PERIOD_WEEK, ReportingPeriod.WEEK, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(texts.PERIOD_MONTH, ReportingPeriod.MONTH, selectedPeriod, onSelect, Modifier.weight(1f))
         }
         Row(modifier = Modifier.fillMaxWidth()) {
-            PeriodOptionChip("Rok", ReportingPeriod.YEAR, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip("Inne", ReportingPeriod.CUSTOM, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(texts.PERIOD_YEAR, ReportingPeriod.YEAR, selectedPeriod, onSelect, Modifier.weight(1f))
+            PeriodOptionChip(texts.PERIOD_CUSTOM, ReportingPeriod.CUSTOM, selectedPeriod, onSelect, Modifier.weight(1f))
             Spacer(modifier = Modifier.weight(1f))
         }
     }

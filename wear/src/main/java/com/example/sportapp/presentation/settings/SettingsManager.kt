@@ -2,12 +2,17 @@ package com.example.sportapp.presentation.settings
 
 import android.content.Context
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import com.example.sportapp.presentation.settings.ReportingPeriod
-import com.example.sportapp.presentation.settings.WidgetItem
+import com.example.sportapp.TextsWearEN
+import com.example.sportapp.TextsWearPL
+import com.example.sportapp.TextsWearES
+import com.example.sportapp.TextsWearIT
+import com.example.sportapp.TextsWearDE
+import com.example.sportapp.TextsWearFR
+import com.example.sportapp.TextsWearPT
+import com.example.sportapp.WearTexts
 import com.example.sportapp.presentation.workout.DataLayerManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -30,6 +35,16 @@ enum class ScreenBehavior {
     KEEP_SCREEN_ON, AMBIENT, SYSTEM
 }
 
+enum class AppLanguage(val code: String, val label: String, val texts: WearTexts) {
+    GERMAN("de", "Deutsch", TextsWearDE),
+    ENGLISH("en", "English", TextsWearEN),
+    FRENCH("fr", "Français", TextsWearFR),
+    SPANISH("es", "Español", TextsWearES),
+    ITALIAN("it", "Italiano", TextsWearIT),
+    POLISH("pl", "Polski", TextsWearPL),
+    PORTUGUESE("pt", "Português", TextsWearPT)
+}
+
 @Singleton
 class SettingsManager @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -42,13 +57,13 @@ class SettingsManager @Inject constructor(
         private val CLOCK_COLOR_KEY = longPreferencesKey("clock_color")
         private val HEALTH_DATA_KEY = stringPreferencesKey("health_data")
         private val SCREEN_BEHAVIOR_KEY = stringPreferencesKey("screen_behavior")
+        private val LANGUAGE_KEY = stringPreferencesKey("language")
         
         private val WATCH_STATS_WIDGETS_KEY = stringPreferencesKey("watch_stats_widgets")
         private val WATCH_STATS_PERIOD_KEY = stringPreferencesKey("watch_stats_period")
         private val WATCH_STATS_CUSTOM_DAYS_KEY = intPreferencesKey("watch_stats_custom_days")
         
         val Orange = Color(0xFFFFA500)
-        val Transparent = Color.Transparent
     }
 
     val settingsFlow: Flow<UserSettings> = context.dataStore.data
@@ -69,6 +84,9 @@ class SettingsManager @Inject constructor(
                 HealthData()
             }
             val screenBehavior = preferences[SCREEN_BEHAVIOR_KEY]?.let { ScreenBehavior.valueOf(it) } ?: ScreenBehavior.KEEP_SCREEN_ON
+            val language = preferences[LANGUAGE_KEY]?.let { code -> 
+                AppLanguage.values().find { it.code == code } 
+            } ?: AppLanguage.POLISH
 
             val watchStatsWidgetsJson = preferences[WATCH_STATS_WIDGETS_KEY]
             val watchStatsWidgets = if (watchStatsWidgetsJson != null) {
@@ -76,40 +94,44 @@ class SettingsManager @Inject constructor(
                     val type = object : TypeToken<List<WidgetItem>>() {}.type
                     val decoded: List<WidgetItem>? = gson.fromJson(watchStatsWidgetsJson, type)
                     if (decoded.isNullOrEmpty()) {
-                        defaultWatchStatsWidgets
+                        getDefaultWatchStatsWidgets(language.texts)
                     } else {
-                        // Merging logic
-                        val currentIds = defaultWatchStatsWidgets.map { it.id }.toSet()
-                        val filtered = decoded.filter { it.id in currentIds }.toMutableList()
-                        val missing = defaultWatchStatsWidgets.filter { def -> filtered.none { it.id == def.id } }
+                        // Merging logic & Dynamic Label update
+                        val defWidgets = getDefaultWatchStatsWidgets(language.texts)
+                        val currentIds = defWidgets.map { it.id }.toSet()
+                        val filtered = decoded.filter { it.id in currentIds }.map { d ->
+                            val def = defWidgets.find { it.id == d.id }
+                            if (def != null) d.copy(label = def.label) else d
+                        }.toMutableList()
+                        val missing = defWidgets.filter { def -> filtered.none { it.id == def.id } }
                         if (missing.isNotEmpty()) {
                             filtered.addAll(missing)
                         }
                         filtered
                     }
                 } catch (e: Exception) {
-                    defaultWatchStatsWidgets
+                    getDefaultWatchStatsWidgets(language.texts)
                 }
             } else {
-                defaultWatchStatsWidgets
+                getDefaultWatchStatsWidgets(language.texts)
             }
             val watchStatsPeriod = preferences[WATCH_STATS_PERIOD_KEY]?.let { ReportingPeriod.valueOf(it) } ?: ReportingPeriod.WEEK
             val watchStatsCustomDays = preferences[WATCH_STATS_CUSTOM_DAYS_KEY] ?: 7
 
             UserSettings(
-                clockColor, healthData, screenBehavior,
+                clockColor, healthData, screenBehavior, language,
                 watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays
             )
         }
 
-    private val defaultWatchStatsWidgets = listOf(
-        WidgetItem("count", "Liczba aktywności"),
-        WidgetItem("calories", "Spalone kalorie"),
-        WidgetItem("distanceGps", "Dystans (GPS)"),
-        WidgetItem("distanceSteps", "Dystans (kroki)"),
-        WidgetItem("ascent", "Przewyższenia w górę"),
-        WidgetItem("descent", "Przewyższenia w dół"),
-        WidgetItem("steps", "Wszystkie kroki")
+    private fun getDefaultWatchStatsWidgets(texts: WearTexts) = listOf(
+        WidgetItem("count", texts.STATS_WIDGET_COUNT),
+        WidgetItem("calories", texts.STATS_WIDGET_CALORIES),
+        WidgetItem("distanceGps", texts.STATS_WIDGET_DISTANCE_GPS),
+        WidgetItem("distanceSteps", texts.STATS_WIDGET_DISTANCE_STEPS),
+        WidgetItem("ascent", texts.STATS_WIDGET_ASCENT),
+        WidgetItem("descent", texts.STATS_WIDGET_DESCENT),
+        WidgetItem("steps", texts.STATS_WIDGET_STEPS_ALL)
     )
 
     private fun triggerSync() {
@@ -151,12 +173,20 @@ class SettingsManager @Inject constructor(
         }
         triggerSync()
     }
+
+    suspend fun saveLanguage(language: AppLanguage) {
+        context.dataStore.edit { preferences ->
+            preferences[LANGUAGE_KEY] = language.code
+        }
+        triggerSync()
+    }
 }
 
 data class UserSettings(
     val clockColor: Color?,
     val healthData: HealthData,
     val screenBehavior: ScreenBehavior,
+    val language: AppLanguage,
     val watchStatsWidgets: List<WidgetItem>,
     val watchStatsPeriod: ReportingPeriod,
     val watchStatsCustomDays: Int

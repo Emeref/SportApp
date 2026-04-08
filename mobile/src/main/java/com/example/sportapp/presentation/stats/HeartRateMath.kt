@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.stats
 
+import com.example.sportapp.MobileTexts
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.HeartRateZone
 import com.example.sportapp.data.model.HeartRateZoneResult
@@ -7,9 +8,9 @@ import com.example.sportapp.data.model.ZoneStat
 
 object HeartRateMath {
 
-    fun calculateZones(points: List<WorkoutPointEntity>, maxHr: Int): HeartRateZoneResult {
+    fun calculateZones(points: List<WorkoutPointEntity>, maxHr: Int, texts: MobileTexts): HeartRateZoneResult {
         if (points.isEmpty() || maxHr <= 0) {
-            return HeartRateZoneResult(emptyList(), "Brak danych tętna", null)
+            return HeartRateZoneResult(emptyList(), texts.HR_NO_DATA, null)
         }
 
         // 1. Filtracja Moving Average (3 punkty)
@@ -18,7 +19,7 @@ object HeartRateMath {
         }
 
         if (filteredBpm.isEmpty()) {
-            return HeartRateZoneResult(emptyList(), "Zbyt mało danych", null)
+            return HeartRateZoneResult(emptyList(), texts.HR_TOO_LITTLE_DATA, null)
         }
 
         // 2. Grupowanie w strefy
@@ -33,7 +34,7 @@ object HeartRateMath {
 
         val totalPoints = zoneCounts.values.sum().toFloat()
         if (totalPoints == 0f) {
-            return HeartRateZoneResult(emptyList(), "Tętno poniżej stref", null)
+            return HeartRateZoneResult(emptyList(), texts.HR_BELOW_ZONES, null)
         }
 
         // 3. Przygotowanie wyników
@@ -50,13 +51,13 @@ object HeartRateMath {
 
         val dominantZone = zoneStats.maxByOrNull { it.durationSeconds }?.zone
         val effect = when (dominantZone) {
-            HeartRateZone.Z0 -> "Niska intensywność / Rozgrzewka"
-            HeartRateZone.Z1 -> "Baza tlenowa i regeneracja"
-            HeartRateZone.Z2 -> "Efektywne spalanie tłuszczu"
-            HeartRateZone.Z3 -> "Poprawa wydolności tlenowej"
-            HeartRateZone.Z4 -> "Zwiększenie progu mleczanowego"
-            HeartRateZone.Z5 -> "Trening beztlenowy i VO2 Max"
-            null -> "Brak dominującej strefy"
+            HeartRateZone.Z0 -> texts.HR_EFFECT_Z0
+            HeartRateZone.Z1 -> texts.HR_EFFECT_Z1
+            HeartRateZone.Z2 -> texts.HR_EFFECT_Z2
+            HeartRateZone.Z3 -> texts.HR_EFFECT_Z3
+            HeartRateZone.Z4 -> texts.HR_EFFECT_Z4
+            HeartRateZone.Z5 -> texts.HR_EFFECT_Z5
+            null -> texts.HR_EFFECT_NONE
         }
 
         return HeartRateZoneResult(zoneStats, effect, dominantZone)

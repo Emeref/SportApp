@@ -9,8 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.WidgetSelectionRow
 
@@ -18,19 +18,22 @@ import com.example.sportapp.presentation.settings.WidgetSelectionRow
 @Composable
 fun ActivityDetailSettingsEditScreen(
     viewModel: ActivityDetailSettingsViewModel,
+    initialWidgets: List<WidgetItem>,
+    initialCharts: List<WidgetItem>,
     onNavigateBack: () -> Unit
 ) {
-    val settings by viewModel.settings.collectAsState()
-    var internalCharts by remember(settings.visibleCharts) { mutableStateOf(settings.visibleCharts) }
-    var internalWidgets by remember(settings.visibleWidgets) { mutableStateOf(settings.visibleWidgets) }
+    val texts = LocalMobileTexts.current
+    
+    var internalCharts by remember(initialCharts) { mutableStateOf(initialCharts) }
+    var internalWidgets by remember(initialWidgets) { mutableStateOf(initialWidgets) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ustawienia: ${viewModel.typeName}") },
+                title = { Text("${texts.AD_SETTINGS_EDIT_TITLE}: ${viewModel.typeName}") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                     }
                 }
             )
@@ -48,7 +51,7 @@ fun ActivityDetailSettingsEditScreen(
             ) {
                 item {
                     Text(
-                        text = "Sekcja: Widgety",
+                        text = texts.AD_SETTINGS_SECTION_WIDGETS,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -60,6 +63,7 @@ fun ActivityDetailSettingsEditScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalWidgets.size - 1,
+                        label = texts.getWidgetLabel(item.id),
                         onMoveUp = {
                             val list = internalWidgets.toMutableList()
                             val temp = list[index]
@@ -85,7 +89,7 @@ fun ActivityDetailSettingsEditScreen(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Sekcja: Wykresy",
+                        text = texts.AD_SETTINGS_SECTION_CHARTS,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -97,6 +101,7 @@ fun ActivityDetailSettingsEditScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalCharts.size - 1,
+                        label = texts.getSensorLabel(item.id),
                         onMoveUp = {
                             val list = internalCharts.toMutableList()
                             val temp = list[index]
@@ -135,14 +140,14 @@ fun ActivityDetailSettingsEditScreen(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
-                    Text("Zapisz", color = Color.White)
+                    Text(texts.SETTINGS_SAVE, color = Color.White)
                 }
                 Button(
                     onClick = onNavigateBack,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
                 ) {
-                    Text("Zamknij", color = Color.White)
+                    Text(texts.SETTINGS_CLOSE, color = Color.White)
                 }
             }
         }

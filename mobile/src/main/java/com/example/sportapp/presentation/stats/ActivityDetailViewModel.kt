@@ -169,7 +169,7 @@ class ActivityDetailViewModel @Inject constructor(
             }
             
             // Aktualizacja stref tętna
-            _hrZoneResult.value = HeartRateMath.calculateZones(points, mSettings.healthData.maxHR)
+            _hrZoneResult.value = HeartRateMath.calculateZones(points, mSettings.healthData.maxHR, mSettings.language.texts)
         }
         .flowOn(Dispatchers.Default)
         .launchIn(viewModelScope)

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
+import com.example.sportapp.LocalWearTexts
 
 @Composable
 fun WorkoutReadyScreen(
@@ -24,6 +25,7 @@ fun WorkoutReadyScreen(
     initialDefinitionId: Long,
     viewModel: ChooseSportViewModel = hiltViewModel()
 ) {
+    val texts = LocalWearTexts.current
     val definitions by viewModel.definitions.collectAsState()
 
     if (definitions == null) {
@@ -92,9 +94,9 @@ fun WorkoutReadyScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Start")
+                            Icon(Icons.Default.PlayArrow, contentDescription = texts.WORKOUT_READY_START)
                             Spacer(Modifier.width(8.dp))
-                            Text("Start")
+                            Text(texts.WORKOUT_READY_START)
                         }
                     }
 
@@ -110,11 +112,11 @@ fun WorkoutReadyScreen(
                             colors = ButtonDefaults.secondaryButtonColors(),
                             modifier = Modifier.size(ButtonDefaults.SmallButtonSize)
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.WORKOUT_READY_BACK)
                         }
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Powrót",
+                            text = texts.WORKOUT_READY_BACK,
                             style = MaterialTheme.typography.caption2
                         )
                     }

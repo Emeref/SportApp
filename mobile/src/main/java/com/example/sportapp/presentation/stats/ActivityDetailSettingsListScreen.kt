@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionViewModel
 import com.example.sportapp.presentation.definitions.getIconForName
@@ -25,15 +26,16 @@ fun ActivityDetailSettingsListScreen(
     onNavigateToEdit: (String) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val texts = LocalMobileTexts.current
     val definitions by viewModel.definitions.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Wybierz aktywność do modyfikacji") },
+                title = { Text(texts.AD_SETTINGS_LIST_TITLE) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)
                     }
                 }
             )
