@@ -44,8 +44,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val settingsState by settingsManager.settingsFlow.collectAsStateWithLifecycle(initialValue = MobileSettingsState())
-            
-            CompositionLocalProvider(LocalMobileTexts provides settingsState.language.texts) {
+            val texts = settingsState.language.texts
+
+            CompositionLocalProvider(LocalMobileTexts provides texts) {
                 SportAppTheme(themeMode = settingsState.themeMode) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -129,7 +130,7 @@ class MainActivity : ComponentActivity() {
                             composable("widget_selection") {
                                 WidgetSelectionScreen(
                                     widgets = settingsState.widgets,
-                                    title = "Widgety na stronie głównej",
+                                    title = texts.SETTINGS_WIDGETS_HOME,
                                     onSave = { updatedWidgets ->
                                         scope.launch {
                                             settingsManager.saveSettings(settingsState.copy(widgets = updatedWidgets))
@@ -142,7 +143,7 @@ class MainActivity : ComponentActivity() {
                             composable("watch_widget_selection") {
                                 WidgetSelectionScreen(
                                     widgets = settingsState.watchStatsWidgets,
-                                    title = "Statystyki na zegarku",
+                                    title = texts.SETTINGS_WIDGETS_WATCH,
                                     onSave = { updatedWidgets ->
                                         scope.launch {
                                             settingsManager.saveSettings(settingsState.copy(watchStatsWidgets = updatedWidgets))
@@ -162,6 +163,7 @@ class MainActivity : ComponentActivity() {
                             composable("stats_widget_selection") {
                                 val statsWidgets by statsViewModel.widgets.collectAsStateWithLifecycle()
                                 val statsCharts by statsViewModel.charts.collectAsStateWithLifecycle()
+                                
                                 OverallStatsWidgetScreen(
                                     widgets = statsWidgets,
                                     charts = statsCharts,
@@ -202,8 +204,12 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Screen.ActivityDetailSettingsEdit.route) {
                                 val detailSettingsViewModel: ActivityDetailSettingsViewModel = hiltViewModel()
+                                val detailSettings by detailSettingsViewModel.settings.collectAsStateWithLifecycle()
+
                                 ActivityDetailSettingsEditScreen(
                                     viewModel = detailSettingsViewModel,
+                                    initialWidgets = detailSettings.visibleWidgets,
+                                    initialCharts = detailSettings.visibleCharts,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }

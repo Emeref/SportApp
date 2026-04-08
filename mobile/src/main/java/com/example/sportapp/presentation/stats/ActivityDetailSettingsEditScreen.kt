@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.presentation.settings.WidgetItem
@@ -19,12 +18,14 @@ import com.example.sportapp.presentation.settings.WidgetSelectionRow
 @Composable
 fun ActivityDetailSettingsEditScreen(
     viewModel: ActivityDetailSettingsViewModel,
+    initialWidgets: List<WidgetItem>,
+    initialCharts: List<WidgetItem>,
     onNavigateBack: () -> Unit
 ) {
     val texts = LocalMobileTexts.current
-    val settings by viewModel.settings.collectAsState()
-    var internalCharts by remember(settings.visibleCharts) { mutableStateOf(settings.visibleCharts) }
-    var internalWidgets by remember(settings.visibleWidgets) { mutableStateOf(settings.visibleWidgets) }
+    
+    var internalCharts by remember(initialCharts) { mutableStateOf(initialCharts) }
+    var internalWidgets by remember(initialWidgets) { mutableStateOf(initialWidgets) }
 
     Scaffold(
         topBar = {
@@ -62,6 +63,7 @@ fun ActivityDetailSettingsEditScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalWidgets.size - 1,
+                        label = texts.getWidgetLabel(item.id),
                         onMoveUp = {
                             val list = internalWidgets.toMutableList()
                             val temp = list[index]
@@ -99,6 +101,7 @@ fun ActivityDetailSettingsEditScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalCharts.size - 1,
+                        label = texts.getSensorLabel(item.id),
                         onMoveUp = {
                             val list = internalCharts.toMutableList()
                             val temp = list[index]

@@ -72,6 +72,7 @@ fun OverallStatsWidgetScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalWidgets.size - 1,
+                        label = texts.getWidgetLabel(item.id),
                         onMoveUp = {
                             val list = internalWidgets.toMutableList()
                             val temp = list[index]
@@ -109,6 +110,7 @@ fun OverallStatsWidgetScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalCharts.size - 1,
+                        label = texts.getWidgetLabel(item.id),
                         onMoveUp = {
                             val list = internalCharts.toMutableList()
                             val temp = list[index]
@@ -164,6 +166,7 @@ fun OverallStatsWidgetRow(
     item: WidgetItem,
     isFirst: Boolean,
     isLast: Boolean,
+    label: String,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onCheckedChange: (Boolean) -> Unit
@@ -178,7 +181,11 @@ fun OverallStatsWidgetRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(checked = item.isEnabled, onCheckedChange = onCheckedChange)
-            Text(item.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = label,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge
+            )
             IconButton(onClick = onMoveUp, enabled = !isFirst) {
                 Icon(Icons.Default.KeyboardArrowUp, texts.STATS_MOVE_UP)
             }

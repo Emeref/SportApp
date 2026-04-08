@@ -218,6 +218,14 @@ object TextsMobileEN : MobileTexts {
     override val HR_EFFECT_Z5 = "Anaerobic training and VO2 Max"
     override val HR_EFFECT_NONE = "No dominant zone"
 
+    // HR Zones Names
+    override val ZONE_Z0 = "Warm up"
+    override val ZONE_Z1 = "Very light"
+    override val ZONE_Z2 = "Light"
+    override val ZONE_Z3 = "Moderate"
+    override val ZONE_Z4 = "Hard"
+    override val ZONE_Z5 = "Maximum"
+
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Initializing export..."
     override fun vmExportGenerating(name: String, current: Int, total: Int) = "Generating: $name ($current/$total)"
@@ -373,7 +381,52 @@ object TextsMobileEN : MobileTexts {
             "max_pressure" -> WIDGET_MAX_PRESSURE
             "min_pressure" -> WIDGET_MIN_PRESSURE
             "best_pace_1km" -> WIDGET_BEST_PACE_1KM
-            else -> id
+            "total_distance_gps" -> WIDGET_DISTANCE_GPS
+            "total_distance_steps" -> WIDGET_DISTANCE_STEPS
+            "maxPressure" -> WIDGET_MAX_PRESSURE
+            "minPressure" -> WIDGET_MIN_PRESSURE
+            "bestPace1km" -> WIDGET_BEST_PACE_1KM
+            else -> getSensorLabel(id)
+        }
+    }
+
+    override fun getSensorLabel(id: String): String {
+        return when (id) {
+            "bpm" -> SENSOR_HEART_RATE
+            "calorieSum" -> SENSOR_CALORIES_SUM
+            "calorieMin" -> SENSOR_CALORIES_MIN
+            "kalorie_min" -> SENSOR_CALORIES_MIN
+            "calories" -> WIDGET_CALORIES
+            "steps" -> SENSOR_STEPS
+            "stepsMin" -> SENSOR_STEPS_MIN
+            "kroki_min" -> SENSOR_STEPS_MIN
+            "distanceSteps" -> SENSOR_DISTANCE_STEPS
+            "odl_kroki" -> SENSOR_DISTANCE_STEPS
+            "speedGps" -> SENSOR_SPEED_GPS
+            "predkosc" -> SENSOR_SPEED_GPS
+            "speedSteps" -> SENSOR_SPEED_STEPS
+            "predkosc_kroki" -> SENSOR_SPEED_STEPS
+            "distanceGps" -> SENSOR_DISTANCE_GPS
+            "gps_dystans" -> SENSOR_DISTANCE_GPS
+            "altitude" -> SENSOR_ALTITUDE
+            "wysokosc" -> SENSOR_ALTITUDE
+            "totalAscent" -> SENSOR_TOTAL_ASCENT
+            "przewyzszenia_gora" -> SENSOR_TOTAL_ASCENT
+            "ascent" -> WIDGET_ASCENT
+            "totalDescent" -> SENSOR_TOTAL_DESCENT
+            "przewyzszenia_dol" -> SENSOR_TOTAL_DESCENT
+            "descent" -> WIDGET_DESCENT
+            "pressure" -> SENSOR_PRESSURE
+            "map" -> SENSOR_MAP
+            "maxPressure" -> WIDGET_MAX_PRESSURE
+            "minPressure" -> WIDGET_MIN_PRESSURE
+            "bestPace1km" -> WIDGET_BEST_PACE_1KM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
+            else -> when (id) {
+                "map" -> DETAIL_MAP
+                "bpm" -> DETAIL_HEART_RATE
+                else -> id
+            }
         }
     }
 }

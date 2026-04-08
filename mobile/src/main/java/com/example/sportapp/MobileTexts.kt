@@ -213,6 +213,14 @@ interface MobileTexts {
     val HR_EFFECT_Z5: String
     val HR_EFFECT_NONE: String
 
+    // HR Zones Names
+    val ZONE_Z0: String
+    val ZONE_Z1: String
+    val ZONE_Z2: String
+    val ZONE_Z3: String
+    val ZONE_Z4: String
+    val ZONE_Z5: String
+
     // ViewModels Messages
     val VM_EXPORT_INITIALIZING: String
     fun vmExportGenerating(name: String, current: Int, total: Int): String
@@ -331,6 +339,7 @@ interface MobileTexts {
     val UNIT_KCAL_MIN: String
     
     fun getWidgetLabel(id: String): String
+    fun getSensorLabel(id: String): String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

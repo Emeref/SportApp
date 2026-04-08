@@ -181,7 +181,7 @@ fun ActivityCompareScreen(
                                     viewModel.chartProducers[widget.id]?.let { producer ->
                                         if (s1.charts[widget.id]?.isNotEmpty() == true || s2.charts[widget.id]?.isNotEmpty() == true) {
                                             CompareChart(
-                                                title = widget.label,
+                                                title = texts.getSensorLabel(widget.id),
                                                 producer = producer,
                                                 unit = getUnitForWidget(widget.id, texts),
                                                 times = if (s1.times.size >= s2.times.size) s1.times else s2.times,
@@ -406,6 +406,16 @@ fun CompareHeartRateZones(
 
 @Composable
 fun CompareZoneRow(stat1: ZoneStat, stat2: ZoneStat, textColor: Color) {
+    val texts = LocalMobileTexts.current
+    val zoneName = when(stat1.zone.name) {
+        "Z0" -> texts.ZONE_Z0
+        "Z1" -> texts.ZONE_Z1
+        "Z2" -> texts.ZONE_Z2
+        "Z3" -> texts.ZONE_Z3
+        "Z4" -> texts.ZONE_Z4
+        "Z5" -> texts.ZONE_Z5
+        else -> stat1.zone.displayName
+    }
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
             Text(formatSeconds(stat1.durationSeconds), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = textColor)
@@ -413,7 +423,7 @@ fun CompareZoneRow(stat1: ZoneStat, stat2: ZoneStat, textColor: Color) {
         }
         Column(modifier = Modifier.width(120.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(stat1.zone.color))
-            Text(stat1.zone.displayName, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Text(zoneName, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             Text("${stat1.minBpm}-${stat1.maxBpm}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {

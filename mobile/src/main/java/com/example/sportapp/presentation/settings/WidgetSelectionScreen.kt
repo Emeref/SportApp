@@ -62,6 +62,7 @@ fun WidgetSelectionScreen(
                         item = item,
                         isFirst = index == 0,
                         isLast = index == internalWidgets.size - 1,
+                        label = texts.getWidgetLabel(item.id),
                         onMoveUp = {
                             val list = internalWidgets.toMutableList()
                             val temp = list[index]
@@ -116,6 +117,7 @@ fun WidgetSelectionRow(
     item: WidgetItem,
     isFirst: Boolean,
     isLast: Boolean,
+    label: String,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onCheckedChange: (Boolean) -> Unit
@@ -135,7 +137,7 @@ fun WidgetSelectionRow(
             )
             
             Text(
-                text = item.label,
+                text = label,
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge
             )

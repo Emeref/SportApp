@@ -180,7 +180,7 @@ fun ActivityDetailScreen(
                                 if (producer != null && (data.charts[widget.id]?.filterNotNull()?.isNotEmpty() == true)) {
                                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                                         CommonChartSection(
-                                            title = widget.label, 
+                                            title = texts.getSensorLabel(widget.id), 
                                             producer = producer, 
                                             unit = getUnitForWidget(widget.id, texts), 
                                             detailTimes = data.times,
@@ -523,7 +523,7 @@ fun HeartRateZonesSection(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            DonutChart(stats = result.zones, modifier = Modifier.size(100.dp))
+                             DonutChart(stats = result.zones, modifier = Modifier.size(100.dp))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
                                 Text(texts.DETAIL_PREDOMINANT_EFFECT, style = MaterialTheme.typography.labelMedium)
@@ -548,11 +548,20 @@ fun HeartRateZonesSection(
 @Composable
 fun ZoneRow(stat: ZoneStat) {
     val texts = LocalMobileTexts.current
+    val zoneName = when(stat.zone.name) {
+        "Z0" -> texts.ZONE_Z0
+        "Z1" -> texts.ZONE_Z1
+        "Z2" -> texts.ZONE_Z2
+        "Z3" -> texts.ZONE_Z3
+        "Z4" -> texts.ZONE_Z4
+        "Z5" -> texts.ZONE_Z5
+        else -> stat.zone.displayName
+    }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(2.dp)).background(stat.zone.color))
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(stat.zone.displayName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+            Text(zoneName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
             Text("${stat.minBpm}-${stat.maxBpm} ${texts.UNIT_BPM}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(formatSeconds(stat.durationSeconds), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(70.dp), textAlign = TextAlign.End)

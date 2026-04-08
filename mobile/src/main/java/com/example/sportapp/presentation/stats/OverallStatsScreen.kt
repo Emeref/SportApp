@@ -228,7 +228,7 @@ fun OverallStatsContent(
                                 "distanceGps" -> texts.chartDistanceGps(maxVal > 6000)
                                 "distanceSteps" -> texts.chartDistanceSteps(maxVal > 6000)
                                 "steps" -> texts.CHART_STEPS
-                                else -> chart.label
+                                else -> texts.getSensorLabel(chart.id)
                             }
                             CommonChartSection(
                                 title = title,
