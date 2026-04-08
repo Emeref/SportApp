@@ -723,7 +723,7 @@ private fun getUnitForWidget(id: String, texts: com.example.sportapp.MobileTexts
         "bpm", "srednie_bpm" -> texts.UNIT_BPM
         "kalorie_min", "kalorie_suma" -> texts.UNIT_KCAL
         "kroki_min" -> texts.UNIT_STEP_MIN
-        "odl_kroki", "gps_dystans" -> texts.UNIT_M
+        "odl_kroki", "gps_dystans", "avg_step_length_over_time" -> texts.UNIT_M
         "predkosc", "predkosc_kroki" -> texts.UNIT_KM_H
         "wysokosc", "przewyzszenia_gora", "przewyzszenia_dol" -> texts.UNIT_M
         "pressure" -> texts.UNIT_HPA

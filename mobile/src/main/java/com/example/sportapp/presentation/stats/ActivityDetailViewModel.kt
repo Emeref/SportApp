@@ -95,7 +95,8 @@ class ActivityDetailViewModel @Inject constructor(
         "wysokosc" to ChartEntryModelProducer(),
         "przewyzszenia_gora" to ChartEntryModelProducer(),
         "przewyzszenia_dol" to ChartEntryModelProducer(),
-        "pressure" to ChartEntryModelProducer()
+        "pressure" to ChartEntryModelProducer(),
+        "avg_step_length_over_time" to ChartEntryModelProducer()
     )
 
     init {
@@ -189,7 +190,7 @@ class ActivityDetailViewModel @Inject constructor(
                 try {
                     val points = data.charts[id] ?: emptyList()
                     if (points.isNotEmpty()) {
-                        val base = if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure")) {
+                        val base = if (points.size >= 10 && id in listOf("bpm", "kroki_min", "wysokosc", "predkosc", "predkosc_kroki", "pressure", "avg_step_length_over_time")) {
                             points.windowed(10, 1, true) { window ->
                                 val valid = window.filterNotNull()
                                 if (valid.isEmpty()) null else valid.average().toFloat()

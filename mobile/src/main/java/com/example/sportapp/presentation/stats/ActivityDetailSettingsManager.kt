@@ -34,6 +34,7 @@ class ActivityDetailSettingsManager(private val context: Context) {
             WidgetItem("bpm", TextsMobilePL.DETAIL_HEART_RATE),
             WidgetItem("kalorie_min", TextsMobilePL.SENSOR_CALORIES_MIN),
             WidgetItem("kroki_min", TextsMobilePL.SENSOR_STEPS_MIN),
+            WidgetItem("avg_step_length_over_time", TextsMobilePL.SENSOR_AVG_STEP_LENGTH),
             WidgetItem("odl_kroki", TextsMobilePL.SENSOR_DISTANCE_STEPS),
             WidgetItem("predkosc_kroki", TextsMobilePL.SENSOR_SPEED_STEPS),
             WidgetItem("gps_dystans", TextsMobilePL.SENSOR_DISTANCE_GPS),

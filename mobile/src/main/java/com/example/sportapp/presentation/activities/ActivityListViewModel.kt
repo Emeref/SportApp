@@ -223,6 +223,7 @@ class ActivityListViewModel @Inject constructor(
 
                 val generatedFiles = mutableListOf<File>()
                 val sdf = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US)
+                val usedFileNames = mutableMapOf<String, Int>()
 
                 ids.forEachIndexed { index, idString ->
                     val id = idString.toLongOrNull() ?: return@forEachIndexed
@@ -235,9 +236,13 @@ class ActivityListViewModel @Inject constructor(
                     )
 
                     val gpxContent = gpxGenerator.generateGpx(workout, points)
-                    val fileName = "${workout.activityName}_${sdf.format(Date(workout.startTime))}.gpx"
+                    val baseName = "${workout.activityName}_${sdf.format(Date(workout.startTime))}"
                         .replace(" ", "_")
                         .replace(":", "")
+                    
+                    val count = usedFileNames.getOrDefault(baseName, 0)
+                    val fileName = if (count == 0) "$baseName.gpx" else "${baseName}_${count + 1}.gpx"
+                    usedFileNames[baseName] = count + 1
                     
                     val file = File(exportDir, fileName)
                     file.writeText(gpxContent)

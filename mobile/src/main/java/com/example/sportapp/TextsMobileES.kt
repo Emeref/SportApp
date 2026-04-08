@@ -360,7 +360,10 @@ object TextsMobileES : MobileTexts {
     override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
     override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
 
-    override fun getWidgetLabel(id: String): String {
+    // New metric
+    override val SENSOR_AVG_STEP_LENGTH = "Longitud de paso media"
+
+        override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
             "calories" -> WIDGET_CALORIES
@@ -443,6 +446,7 @@ object TextsMobileES : MobileTexts {
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
             "avg_cadence" -> WIDGET_AVG_CADENCE
+            "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> when (id) {
                 "map" -> DETAIL_MAP
                 "bpm" -> DETAIL_HEART_RATE

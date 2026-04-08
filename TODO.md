@@ -50,7 +50,7 @@
         - [x] **Rozbudowa metryk sesji**: Dodanie Max HR, Max Speed, średniego tempa, przewyższeń i kadencji.
         - [x] **Pełna synchronizacja wykresów**: Wszystkie kolumny z `workout_points` are teraz poprawnie mapowane i wyświetlane na wykresach.
         - [ ] **Najlepsze tempo na km (Best Split)**: Automatyczne wykrywanie najszybszego odcinka 1km.
-        - [ ] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu.
+        - [x] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu (z logiką fail-safe, wygładzaniem i ograniczeniem osi Y).
         - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
         - [x] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji (wdrożono wygładzanie).
         - [x] **Weryfikacja obliczeń**: Sprawdzenie poprawności wyliczania `avgPace` oraz `avgStepLength`.
@@ -88,7 +88,7 @@
 -
 ### Ustawienia i Personalizacja (Mobile)
 - [x] Implementacja dynamicznego Dark Mode (Material 3)
-    - [x] Zarządzanie motywem w `MobileSettingsManager` (DataStore)
+    - [x] Zarządzanie motywem in `MobileSettingsManager` (DataStore)
     - [x] Definicja palet `lightColorScheme` i `darkColorScheme` (AMOLED-friendly)
     - [x] Reaktywność UI na zmianę motywu (`collectAsStateWithLifecycle`)
     - [x] Dostosowanie wykresów trendów i szczegółów aktywności (Vico Charts)
