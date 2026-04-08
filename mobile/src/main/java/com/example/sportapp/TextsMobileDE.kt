@@ -360,6 +360,9 @@ object TextsMobileDE : MobileTexts {
     override val UNIT_BPM = "bpm"
     override val UNIT_KCAL_MIN = "kcal/min"
 
+    // New metric
+    override val SENSOR_AVG_STEP_LENGTH = "Durchschn. Schrittlänge"
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -403,10 +406,6 @@ object TextsMobileDE : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
-            "avg_cadence" -> WIDGET_AVG_CADENCE
-            "ascent" -> WIDGET_ASCENT
-            "descent" -> WIDGET_DESCENT
-            "calories" -> WIDGET_CALORIES
             else -> getSensorLabel(id)
         }
     }
@@ -443,6 +442,7 @@ object TextsMobileDE : MobileTexts {
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
             "avg_cadence" -> WIDGET_AVG_CADENCE
+            "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> when (id) {
                 "map" -> DETAIL_MAP
                 "bpm" -> DETAIL_HEART_RATE

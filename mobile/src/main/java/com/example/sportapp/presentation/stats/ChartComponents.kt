@@ -139,30 +139,30 @@ fun CommonChartSection(
     onMarkerShown: ((Int?) -> Unit)? = null
 ) {
     val totalPoints = detailTimes?.size ?: overallRawData?.size ?: 0
-    val axisValuesOverrider = remember(hrZoneResult, unit, totalPoints) {
+    val axisValuesOverrider = remember(hrZoneResult, unit, totalPoints, title) {
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
                 val max = if (model.maxY.isNaN()) 0f else model.maxY
-                if (max <= 0f) return if (unit == "bpm") 180f else if (unit == "hPa") 1025f else 8f
-                if (unit == "bpm") return max + 5f
-                if (hrZoneResult != null) return hrZoneResult.zones.last().maxBpm.toFloat() + 5f
+                if (max <= 0f) return if (unit == "bpm") 180f else if (unit == "hPa") 1025f else 1f
+                
+                if (hrZoneResult != null) {
+                    val zoneMax = hrZoneResult.zones.last().maxBpm.toFloat()
+                    return if (max > zoneMax) max else zoneMax
+                }
+                
                 if (unit == "hPa") {
-                    val currentMin = if (model.minY.isNaN()) max - 2f else model.minY
-                    val c = ceil(max.toDouble()).toFloat()
-                    return if (c <= floor(currentMin.toDouble()).toFloat()) c + 2f else c + 1f
+                    return ceil(max.toDouble()).toFloat() + 1f
                 }
-                if (unit == "m" && (title.contains("Wysokość", ignoreCase = true) || title.contains("Altitude", ignoreCase = true))) {
-                    return floor(max.toDouble() + 1.0).toFloat()
-                }
-                return (ceil(max.toDouble() / 8.0) * 8.0).toFloat().coerceAtLeast(1f)
+                
+                // Ograniczenie od góry do najwyższej wartości z wykresu
+                return max
             }
             override fun getMinY(model: ChartEntryModel): Float {
-                val minDataValue = if (model.minY.isNaN()) 0f else model.minY
-                if (unit == "hPa") return floor(minDataValue.toDouble()).toFloat() - 1f
-                if (unit == "bpm") return (minDataValue - 5f).coerceAtLeast(0f)
-                if (unit == "m" && (title.contains("Wysokość", ignoreCase = true) || title.contains("Altitude", ignoreCase = true))) {
-                    return floor(minDataValue.toDouble() - 0.001).toFloat().coerceAtLeast(0f)
+                if (unit == "hPa") {
+                    val minDataValue = if (model.minY.isNaN()) 0f else model.minY
+                    return floor(minDataValue.toDouble()).toFloat() - 1f
                 }
+                // Ograniczenie od dołu do 0
                 return 0f
             }
             override fun getMinX(model: ChartEntryModel): Float = if (totalPoints == 1) model.minX - 0.5f else model.minX
@@ -212,8 +212,9 @@ fun CommonChartSection(
         }
     }
     val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
-    val formatter = remember(unit) {
-        if (unit == "hPa") DecimalFormat("#,###.##", symbols)
+    val formatter = remember(unit, title) {
+        if (unit == "hPa" || title.contains("kroku", ignoreCase = true) || title.contains("step", ignoreCase = true)) 
+            DecimalFormat("#,###.##", symbols)
         else DecimalFormat("#,###.#", symbols)
     }
 
@@ -253,7 +254,7 @@ fun CommonChartSection(
                 startAxis = rememberStartAxis(
                     label = axisLabelComponent(color = MaterialTheme.colorScheme.onSurface),
                     valueFormatter = { value, _ -> 
-                        if (unit == "hPa" || unit == "km/h" || unit == "kcal") formatter.format(value)
+                        if (unit == "hPa" || unit == "km/h" || unit == "kcal" || unit == "m") formatter.format(value)
                         else formatter.format(value.toLong())
                     },
                     itemPlacer = AxisItemPlacer.Vertical.default(maxItemCount = 9),
@@ -326,7 +327,10 @@ fun rememberMarkerCustom(
     val primaryColor = MaterialTheme.colorScheme.primary
     
     val symbols = DecimalFormatSymbols(Locale.US).apply { groupingSeparator = ' ' }
-    val formatter = DecimalFormat("#,###.#", symbols)
+    val formatter = remember(unit) {
+        if (unit == "hPa" || unit == "m") DecimalFormat("#,###.##", symbols)
+        else DecimalFormat("#,###.#", symbols)
+    }
     val outputSdf = remember(isTimestampX) { 
         SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
             if (isTimestampX) timeZone = TimeZone.getTimeZone("UTC")

@@ -132,6 +132,50 @@ class SessionRepository @Inject constructor(
             caloriesMin
         }
 
+        // Obliczanie średniej długości kroku w czasie (okno 15s) z logiką fail-safe
+        val rawStepLengthOverTime = if (points.isNotEmpty()) {
+            points.indices.map { index ->
+                val start = (index - 14).coerceAtLeast(0)
+                val pStart = points[start]
+                val pEnd = points[index]
+                
+                val dEnd = pEnd.distanceGps ?: pEnd.distanceSteps ?: 0
+                val dStart = pStart.distanceGps ?: pStart.distanceSteps ?: 0
+                val deltaDist = (dEnd - dStart).toDouble()
+                
+                val sEnd = pEnd.steps ?: 0
+                val sStart = pStart.steps ?: 0
+                val deltaSteps = sEnd - sStart
+                
+                // Warunek 1: Jeśli deltaSteps < 3, ustawiamy 0 (brak wyraźnego ruchu)
+                if (deltaSteps >= 3 && deltaDist >= 0) {
+                    val length = deltaDist / deltaSteps
+                    // Warunek 2: Jeśli krok > 2.5m, uznajemy za błąd GPS i ustawiamy 0
+                    if (length <= 2.5) {
+                        // Dokładność do 1 cm (2 miejsca po przecinku)
+                        Math.round(length * 100.0) / 100.0
+                    } else {
+                        0.0
+                    }
+                } else {
+                    0.0
+                }
+            }
+        } else {
+            emptyList()
+        }
+
+        // Warunek 3: Proste wygładzanie (średnia z 3 ostatnich pomiarów)
+        val smoothedStepLengthOverTime = if (rawStepLengthOverTime.isNotEmpty()) {
+            rawStepLengthOverTime.indices.map { index ->
+                val start = (index - 2).coerceAtLeast(0)
+                val window = rawStepLengthOverTime.subList(start, index + 1)
+                window.average().toFloat()
+            }
+        } else {
+            emptyList()
+        }
+
         val chartData = mapOf(
             "bpm" to heartRates,
             "kalorie_min" to smoothedCaloriesMin,
@@ -144,7 +188,8 @@ class SessionRepository @Inject constructor(
             "wysokosc" to altitudes,
             "przewyzszenia_gora" to ascents,
             "przewyzszenia_dol" to descents,
-            "pressure" to pressures
+            "pressure" to pressures,
+            "avg_step_length_over_time" to smoothedStepLengthOverTime
         )
 
         val finalTotalDistanceGps = if (totalDistanceGps > 0) totalDistanceGps else (workout.distanceGps ?: 0.0)

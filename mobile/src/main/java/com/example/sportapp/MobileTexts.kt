@@ -355,6 +355,9 @@ interface MobileTexts {
     val UNIT_BPM: String
     val UNIT_KCAL_MIN: String
     
+    // New metric
+    val SENSOR_AVG_STEP_LENGTH: String
+    
     fun getWidgetLabel(id: String): String
     fun getSensorLabel(id: String): String
 }
