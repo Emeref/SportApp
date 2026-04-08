@@ -3,6 +3,11 @@ package com.example.sportapp.presentation.settings
 import com.example.sportapp.MobileTexts
 import com.example.sportapp.TextsMobileEN
 import com.example.sportapp.TextsMobilePL
+import com.example.sportapp.TextsMobileDE
+import com.example.sportapp.TextsMobileFR
+import com.example.sportapp.TextsMobileES
+import com.example.sportapp.TextsMobileIT
+import com.example.sportapp.TextsMobilePT
 
 enum class ReportingPeriod {
     TODAY, WEEK, MONTH, YEAR, CUSTOM
@@ -14,7 +19,12 @@ enum class ThemeMode {
 
 enum class AppLanguage(val code: String, val label: String, val texts: MobileTexts) {
     ENGLISH("en", "English", TextsMobileEN),
-    POLISH("pl", "Polski", TextsMobilePL)
+    SPANISH("es", "Español", TextsMobileES),
+    GERMAN("de", "Deutsch", TextsMobileDE),
+    FRENCH("fr", "Français", TextsMobileFR),
+    ITALIAN("it", "Italiano", TextsMobileIT),
+    POLISH("pl", "Polski", TextsMobilePL),
+    PORTUGUESE("pt", "Português", TextsMobilePT)
 }
 
 data class WidgetItem(
