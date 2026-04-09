@@ -2,6 +2,7 @@ package com.example.sportapp.data.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
 
 @Entity(tableName = "workouts")
 data class WorkoutEntity(
@@ -9,17 +10,17 @@ data class WorkoutEntity(
     val activityName: String,
     val startTime: Long,
     val durationFormatted: String,
-    val steps: Int?,
-    val distanceSteps: Double?,
-    val distanceGps: Double?,
-    val avgSpeedSteps: Double?,
-    val avgSpeedGps: Double?,
-    val totalAscent: Double?,
-    val totalDescent: Double?,
-    val avgBpm: Double?,
-    val maxBpm: Int?,
-    val totalCalories: Double?,
-    val maxCalorieMin: Double?,
+    val steps: Int? = null,
+    val distanceSteps: Double? = null,
+    val distanceGps: Double? = null,
+    val avgSpeedSteps: Double? = null,
+    val avgSpeedGps: Double? = null,
+    val totalAscent: Double? = null,
+    val totalDescent: Double? = null,
+    val avgBpm: Double? = null,
+    val maxBpm: Int? = null,
+    val totalCalories: Double? = null,
+    val maxCalorieMin: Double? = null,
     val durationSeconds: Long,
     // Nowe metryki statystyczne
     val avgPace: Double? = null, // min/km
@@ -33,7 +34,9 @@ data class WorkoutEntity(
     val minPressure: Double? = null, // hPa
     val bestPace1km: Double? = null, // min/km
     val autoLapDistance: Double? = null, // m - dystans autolapa w momencie startu
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    @ColumnInfo(name = "hc_session_id")
+    val hcSessionId: String? = null
 )
 
 @Entity(tableName = "workout_points")

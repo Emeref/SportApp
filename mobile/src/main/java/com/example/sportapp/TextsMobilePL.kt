@@ -67,6 +67,36 @@ object TextsMobilePL : MobileTexts {
     override val LANG_PL = "Polski"
     override val LANG_EN = "Angielski"
 
+    // Health Connect Strings
+    override val SETTINGS_HC_MANAGE_PERMISSIONS = "Zarządzaj uprawnieniami Health Connect"
+    override val SETTINGS_HC_STATUS = "Status Health Connect"
+    override val HC_STATUS_AVAILABLE = "Dostępny"
+    override val HC_STATUS_UNAVAILABLE = "Niedostępny"
+    override val HC_STATUS_NOT_INSTALLED = "Brak instalacji"
+    override val HC_INSTALL = "Zainstaluj"
+    override val HC_SYNC_HEALTH_DATA = "Synchronizuj z Health Connect"
+    override val HC_SYNC_WORKOUTS = "Importuj treningi z Health Connect"
+    override val HC_SYNC_CONFIRM_TITLE = "Synchronizacja danych"
+    override val HC_SYNC_CONFIRM_DESC = "Czy chcesz zaktualizować profil o dane znalezione w Health Connect?"
+    override val HC_SYNC_SUCCESS = "Synchronizacja zakończona pomyślnie"
+    override val HC_SYNC_ERROR = "Błąd synchronizacji"
+    override val HC_SYNC_NO_DATA = "Nie znaleziono nowych danych"
+    override fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String {
+        val parts = mutableListOf<String>()
+        weight?.let { parts.add("waga $it kg") }
+        height?.let { parts.add("wzrost $it cm") }
+        vo2max?.let { parts.add("VO2Max $it ml/kg/min") }
+        return "Znaleziono w Health Connect: ${parts.joinToString(", ")} – zaktualizować?"
+    }
+
+    // Stage 3 - Import Workouts
+    override val HC_IMPORT_TITLE = "Import treningów"
+    override val HC_IMPORT_ALREADY_IMPORTED = "Już zaimportowano"
+    override val HC_IMPORT_EMPTY = "Nie znaleziono treningów w Health Connect z ostatnich 30 dni."
+    override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Czy na pewno chcesz zaimportować wybrane treningi?"
+    override fun hcImportSelected(count: Int) = "Importuj zaznaczone ($count)"
+    override fun hcImportConfirmDesc(count: Int) = "Czy chcesz zaimportować $count treningów?"
+
     // Health Data Screen
     override val HEALTH_TITLE = "Dane zdrowotne"
     override val HEALTH_GENDER = "Płeć"
@@ -82,6 +112,7 @@ object TextsMobilePL : MobileTexts {
     override val HEALTH_MAX_HR_DESC = "Tętno maksymalne (HR Max)"
     override val HEALTH_STEP_LENGTH = "Długość kroku"
     override val HEALTH_STEP_LENGTH_CM = "Długość kroku (cm)"
+    override val HEALTH_VO2_MAX = "VO2 Max"
 
     // Activity List
     override val ACTIVITY_LIST_TITLE = "Lista aktywności"
@@ -130,6 +161,7 @@ object TextsMobilePL : MobileTexts {
     override val DETAIL_HEART_RATE = "Tętno (bpm)"
     override val DETAIL_HR_ZONES = "Strefy tętna"
     override val DETAIL_TRAINING_EFFECT = "Efekt treningu"
+    override val DETAIL_TRAINING_EFFECT_DESC = "Opis efektu treningu"
     override val DETAIL_LAP_NR = "Nr"
     override val DETAIL_LAP_TIME = "Czas"
     override val DETAIL_LAP_AVG_PACE = "Śr. Tempo"
@@ -257,6 +289,7 @@ object TextsMobilePL : MobileTexts {
     override fun vmExportError(msg: String) = "Błąd podczas eksportu: $msg"
     override val VM_IMPORT_OPEN_ERROR = "Nie można otworzyć pliku"
     override val VM_IMPORT_DUPLICATE_WARNING = "Wykryto potencjalny duplikat (taka sama data startu i czas trwania)."
+    override val VM_IMPORT_DUPLICATE_WARNING_DESC = "Czy chcesz mimo to kontynuować?"
     override val VM_IMPORT_SUCCESS = "Trening zaimportowany pomyślnie."
     override fun vmImportError(msg: String) = "Błąd importu: $msg"
 
@@ -282,6 +315,7 @@ object TextsMobilePL : MobileTexts {
     override val WIDGET_ASCENT = "W sumie w górę"
     override val WIDGET_DESCENT = "W sumie do dołu"
     override val WIDGET_STEPS = "Kroki"
+    override val WIDGET_AVG_BPM = "Średnie tętno"
     override val WIDGET_AVG_CADENCE = "Średnia kadencja"
     override val WIDGET_MAX_SPEED = "Maks prędkość"
     override val WIDGET_MAX_ALTITUDE = "Maks wysokość"
@@ -293,7 +327,6 @@ object TextsMobilePL : MobileTexts {
     override val WIDGET_MAX_AVG_SPEED = "Najwyższa śr. prędkość"
     override val WIDGET_DURATION = "Czas trwania"
     override val WIDGET_MAX_BPM = "Maksymalne tętno"
-    override val WIDGET_AVG_BPM = "Średnie tętno"
     override val WIDGET_TOTAL_CALORIES = "Spalone kalorie"
     override val WIDGET_MAX_CALORIES_MIN = "Maks spalanie kalorii"
     override val WIDGET_AVG_PACE = "Średnie tempo"
@@ -319,7 +352,7 @@ object TextsMobilePL : MobileTexts {
     override val SENSOR_CALORIES_SUM = "Spalone kalorie"
     override val SENSOR_CALORIES_MIN = "Kalorie na minutę"
     override val SENSOR_STEPS = "Kroki"
-    override val SENSOR_STEPS_MIN = "Kadencja (kroki/min)"
+    override val SENSOR_STEPS_MIN = "Kadenz (kroki/min)"
     override val SENSOR_DISTANCE_STEPS = "Dystans (kroki)"
     override val SENSOR_SPEED_GPS = "Prędkość"
     override val SENSOR_SPEED_STEPS = "Prędkość (kroki)"
@@ -329,22 +362,6 @@ object TextsMobilePL : MobileTexts {
     override val SENSOR_TOTAL_DESCENT = "W sumie do dołu"
     override val SENSOR_PRESSURE = "Ciśnienie atm."
     override val SENSOR_MAP = "Dane lokalizacji"
-
-    // Trim Screen
-    override val TRIM_TITLE = "Edytuj trening (Przycinanie)"
-    override val TRIM_CONFIRM_TITLE = "Potwierdź przycięcie"
-    override val TRIM_CONFIRM_DESC = "Czy na pewno chcesz usunąć dane poza wybranym zakresem? Te dane zostaną trwale usunięte z bazy danych."
-    override val TRIM_SAVE_BTN = "Przytnij i zapisz"
-    override val TRIM_CHART_HR = "Wykres tętna"
-    override val TRIM_RANGE_TITLE = "Wybierz zakres treningu"
-    override val TRIM_PREVIEW_TITLE = "Podgląd nowych statystyk"
-    override val TRIM_NEW_DURATION = "Nowy czas trwania:"
-    override val TRIM_DISTANCE_GPS = "Dystans (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Dystans (Kroki):"
-    override val TRIM_CALORIES = "Spalone kalorie:"
-    override val TRIM_AVG_BPM = "Średnie tętno:"
-    override val TRIM_START = "Start"
-    override val TRIM_END = "Koniec"
 
     // Units
     override val UNIT_KCAL = "kcal"
@@ -359,6 +376,7 @@ object TextsMobilePL : MobileTexts {
     override val UNIT_MIN_KM_LABEL = "min/km"
     override val UNIT_BPM = "bpm"
     override val UNIT_KCAL_MIN = "kcal/min"
+    override val UNIT_VO2_MAX = "ml/kg/min"
     
     // New metric
     override val SENSOR_AVG_STEP_LENGTH = "Średnia długość kroku"
@@ -442,11 +460,23 @@ object TextsMobilePL : MobileTexts {
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
             "avg_cadence" -> WIDGET_AVG_CADENCE
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
-            else -> when (id) {
-                "map" -> DETAIL_MAP
-                "bpm" -> DETAIL_HEART_RATE
-                else -> id
-            }
+            else -> id
         }
     }
+
+    // Trim Screen
+    override val TRIM_TITLE = "Edytuj trening (Przycinanie)"
+    override val TRIM_CONFIRM_TITLE = "Potwierdź przycięcie"
+    override val TRIM_CONFIRM_DESC = "Czy na pewno chcesz usunąć dane poza wybranym zakresem? Te dane zostaną trwale usunięte."
+    override val TRIM_SAVE_BTN = "Przytnij i zapisz"
+    override val TRIM_CHART_HR = "Wykres tętna"
+    override val TRIM_RANGE_TITLE = "Wybierz zakres treningu"
+    override val TRIM_PREVIEW_TITLE = "Podgląd nowych statystyk"
+    override val TRIM_NEW_DURATION = "Nowy czas trwania:"
+    override val TRIM_DISTANCE_GPS = "Dystans (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Dystans (Kroki):"
+    override val TRIM_CALORIES = "Spalone kalorie:"
+    override val TRIM_AVG_BPM = "Średnie tętno:"
+    override val TRIM_START = "Start"
+    override val TRIM_END = "Koniec"
 }

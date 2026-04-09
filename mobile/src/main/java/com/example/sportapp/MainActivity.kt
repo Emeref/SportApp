@@ -83,7 +83,13 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToWatchWidgetSelection = { navController.navigate("watch_widget_selection") },
                                     onNavigateToDefinitions = { navController.navigate("definitions") },
                                     onNavigateToHealthData = { navController.navigate("health_data") },
-                                    onNavigateToLanguageSelection = { navController.navigate("language_selection") }
+                                    onNavigateToLanguageSelection = { navController.navigate("language_selection") },
+                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") }
+                                )
+                            }
+                            composable("exercise_import") {
+                                ExerciseImportScreen(
+                                    onNavigateBack = { navController.popBackStack() }
                                 )
                             }
                             composable("language_selection") {

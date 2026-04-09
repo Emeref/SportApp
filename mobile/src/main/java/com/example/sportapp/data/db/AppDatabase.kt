@@ -15,7 +15,7 @@ import com.example.sportapp.data.model.WorkoutLap
         WorkoutDefinition::class,
         WorkoutLap::class
     ], 
-    version = 15
+    version = 16
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -24,8 +24,13 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         val MIGRATION_14_15 = object : Migration(14, 15) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE workouts ADD COLUMN autoLapDistance REAL")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workouts ADD COLUMN autoLapDistance REAL")
+            }
+        }
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workouts ADD COLUMN hc_session_id TEXT")
             }
         }
     }

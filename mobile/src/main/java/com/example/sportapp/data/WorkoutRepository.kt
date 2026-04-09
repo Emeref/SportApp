@@ -6,6 +6,7 @@ import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutLap
+import com.example.sportapp.healthconnect.model.ExerciseSessionSyncDto
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -300,4 +302,27 @@ class WorkoutRepository @Inject constructor(
     }
 
     override fun getAllDefinitions(): Flow<List<WorkoutDefinition>> = workoutDefinitionDao.getAllDefinitions()
+
+    override suspend fun existsByHCSessionId(hcSessionId: String): Boolean = withContext(Dispatchers.IO) {
+        workoutDao.existsByHCSessionId(hcSessionId)
+    }
+
+    override suspend fun saveImportedSession(session: ExerciseSessionSyncDto): Long = withContext(Dispatchers.IO) {
+        val durationSeconds = Duration.between(session.startTime, session.endTime).seconds
+        val workout = WorkoutEntity(
+            activityName = session.title,
+            startTime = session.startTime.toEpochMilli(),
+            durationFormatted = formatDuration(durationSeconds),
+            durationSeconds = durationSeconds,
+            distanceGps = session.distanceMeters,
+            totalCalories = session.activeCalories,
+            avgBpm = session.avgHeartRate?.toDouble(),
+            maxBpm = session.maxHeartRate,
+            avgSpeedGps = session.avgSpeedMps,
+            maxSpeed = session.maxSpeedMps,
+            hcSessionId = session.hcSessionId,
+            isSynced = true
+        )
+        workoutDao.insertWorkout(workout)
+    }
 }
