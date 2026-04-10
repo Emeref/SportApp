@@ -94,6 +94,7 @@ object TextsMobilePT : MobileTexts {
     override val HC_IMPORT_ALREADY_IMPORTED = "Já importado"
     override val HC_IMPORT_EMPTY = "Nenhum treino encontrado no Health Connect nos últimos 30 dias."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Tem certeza de que deseja importar os treinos selecionados?"
+    override val HC_IMPORT_SELECT_ALL = "Selecionar todos"
     override fun hcImportSelected(count: Int) = "Importar selecionados ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Deseja importar $count treinos?"
     override fun hcImportProgress(current: Int, total: Int) = "Importando $current/$total treinos..."

@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -132,6 +133,30 @@ fun ExerciseImportScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    item {
+                        val importableSessions = uiState.sessions.filter { !it.alreadyImported }
+                        if (importableSessions.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { viewModel.toggleSelectAll(!uiState.allSelected) }
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = uiState.allSelected,
+                                    onCheckedChange = { viewModel.toggleSelectAll(it) }
+                                )
+                                Text(
+                                    text = texts.HC_IMPORT_SELECT_ALL,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                            HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
+                        }
+                    }
+
                     items(uiState.sessions) { session ->
                         ExerciseSessionItem(
                             session = session,

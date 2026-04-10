@@ -94,6 +94,7 @@ object TextsMobileDE : MobileTexts {
     override val HC_IMPORT_ALREADY_IMPORTED = "Bereits importiert"
     override val HC_IMPORT_EMPTY = "Keine Workouts in Health Connect aus den letzten 30 Tagen gefunden."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Sind Sie sicher, dass Sie die ausgewählten Workouts importieren möchten?"
+    override val HC_IMPORT_SELECT_ALL = "Alle auswählen"
     override fun hcImportSelected(count: Int) = "Ausgewählte importieren ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Möchten Sie $count Workouts importieren?"
     override fun hcImportProgress(current: Int, total: Int) = "Importiere $current/$total Workouts..."
@@ -276,6 +277,12 @@ object TextsMobileDE : MobileTexts {
     override val ZONE_Z4 = "Hart"
     override val ZONE_Z5 = "Maximum"
 
+    // Compare Screen
+    override val COMPARE_TITLE = "Aktivitätsvergleich"
+    override val COMPARE_VS = "Vergleich:"
+    override val COMPARE_HIGHER_IS_BETTER = "Höheres Ergebnis ist besser"
+    override val COMPARE_LOWER_IS_BETTER = "Niedrigeres Ergebnis ist besser"
+
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Export wird initialisiert..."
     override fun vmExportGenerating(name: String, current: Int, total: Int) = "Generiere: $name ($current/$total)"
@@ -304,7 +311,7 @@ object TextsMobileDE : MobileTexts {
 
     // Widgets
     override val WIDGET_COUNT = "Anzahl der Aktivitäten"
-    override val WIDGET_CALORIES = "Verbrannte Kalorien"
+    override val WIDGET_CALORIES = "Verbrannte Kalorie"
     override val WIDGET_DISTANCE_GPS = "Distanz (GPS)"
     override val WIDGET_DISTANCE_STEPS = "Distanz (Schritte)"
     override val WIDGET_ASCENT = "Aufstieg insgesamt"
@@ -425,12 +432,6 @@ object TextsMobileDE : MobileTexts {
             else -> id
         }
     }
-
-    // Compare Screen
-    override val COMPARE_TITLE = "Aktivitätsvergleich"
-    override val COMPARE_VS = "Vergleich:"
-    override val COMPARE_HIGHER_IS_BETTER = "Höheres Ergebnis ist besser"
-    override val COMPARE_LOWER_IS_BETTER = "Niedrigeres Ergebnis ist besser"
 
     // Sensors
     override val SENSOR_HEART_RATE = "Herzfrequenz"

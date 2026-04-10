@@ -94,6 +94,7 @@ object TextsMobileEN : MobileTexts {
     override val HC_IMPORT_ALREADY_IMPORTED = "Already imported"
     override val HC_IMPORT_EMPTY = "No workouts found in Health Connect from last 30 days."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Are you sure you want to import selected workouts?"
+    override val HC_IMPORT_SELECT_ALL = "Select all"
     override fun hcImportSelected(count: Int) = "Import selected ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Do you want to import $count workouts?"
     override fun hcImportProgress(current: Int, total: Int) = "Importing $current/$total workouts..."
@@ -265,7 +266,7 @@ object TextsMobileEN : MobileTexts {
     override val HR_EFFECT_Z2 = "Effective fat burn"
     override val HR_EFFECT_Z3 = "Aerobic capacity improvement"
     override val HR_EFFECT_Z4 = "Lactate threshold increase"
-    override val HR_EFFECT_Z5 = "Anaerobic training and VO2 Max"
+    override val HR_EFFECT_Z5 = "Analobic training and VO2 Max"
     override val HR_EFFECT_NONE = "No dominant zone"
 
     // HR Zones Names

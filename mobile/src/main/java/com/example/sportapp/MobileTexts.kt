@@ -83,6 +83,7 @@ interface MobileTexts {
     val HC_IMPORT_ALREADY_IMPORTED: String
     val HC_IMPORT_EMPTY: String
     val HC_IMPORT_CONFIRM_DESC_PLURAL: String
+    val HC_IMPORT_SELECT_ALL: String
     fun hcImportSelected(count: Int): String
     fun hcImportConfirmDesc(count: Int): String
     fun hcImportProgress(current: Int, total: Int): String

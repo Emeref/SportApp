@@ -27,7 +27,7 @@ object TextsMobilePL : MobileTexts {
     override fun homeResultsToday() = "Wyniki z dzisiaj:"
     override fun homeResultsWeek() = "Wyniki z tego tygodnia:"
     override fun homeResultsMonth(): String {
-        val monthName = Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.LONG, Locale("pl"))
+        val monthName = Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.forLanguageTag("pl"))
         return "Wyniki z $monthName:"
     }
     override fun homeResultsYear() = "Wyniki z tego roku:"
@@ -94,6 +94,7 @@ object TextsMobilePL : MobileTexts {
     override val HC_IMPORT_ALREADY_IMPORTED = "Już zaimportowano"
     override val HC_IMPORT_EMPTY = "Nie znaleziono treningów w Health Connect z ostatnich 30 dni."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Czy na pewno chcesz zaimportować wybrane treningi?"
+    override val HC_IMPORT_SELECT_ALL = "Zaznacz wszystko"
     override fun hcImportSelected(count: Int) = "Importuj zaznaczone ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Czy chcesz zaimportować $count treningów?"
     override fun hcImportProgress(current: Int, total: Int) = "Importowanie $current/$total treningów..."
@@ -131,7 +132,7 @@ object TextsMobilePL : MobileTexts {
     override val ACTIVITY_FROM = "Od"
     override val ACTIVITY_TO = "Do"
     override val ACTIVITY_TYPE = "Typ"
-    override val ACTIVITY_DATE = "Date"
+    override val ACTIVITY_DATE = "Data"
     override val ACTIVITY_DURATION = "Czas"
     override val ACTIVITY_CALORIES = "Kalorie"
     override val ACTIVITY_DISTANCE_GPS = "Dystans (GPS)"
@@ -260,7 +261,7 @@ object TextsMobilePL : MobileTexts {
     override val HR_NO_DATA = "Brak danych tętna"
     override val HR_TOO_LITTLE_DATA = "Zbyt mało danych"
     override val HR_BELOW_ZONES = "Tętno poniżej stref"
-    override val HR_EFFECT_Z0 = "Niska intensywność / Rozgrzewka"
+    override val HR_EFFECT_Z0 = "Niska intensyność / Rozgrzewka"
     override val HR_EFFECT_Z1 = "Baza tlenowa i regeneracja"
     override val HR_EFFECT_Z2 = "Efektywne spalanie tłuszczu"
     override val HR_EFFECT_Z3 = "Poprawa wydolności tlenowej"
@@ -275,12 +276,6 @@ object TextsMobilePL : MobileTexts {
     override val ZONE_Z3 = "Umiarkowany"
     override val ZONE_Z4 = "Ciężki"
     override val ZONE_Z5 = "Maksymalny"
-
-    // Compare Screen
-    override val COMPARE_TITLE = "Porównanie aktywności"
-    override val COMPARE_VS = "Porównanie:"
-    override val COMPARE_HIGHER_IS_BETTER = "Wyższy wynik jest lepszy"
-    override val COMPARE_LOWER_IS_BETTER = "Niższy wynik jest lepszy"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Inicjalizacja eksportu..."
@@ -353,16 +348,39 @@ object TextsMobilePL : MobileTexts {
     override val SENSOR_CALORIES_SUM = "Spalone kalorie"
     override val SENSOR_CALORIES_MIN = "Kalorie na minutę"
     override val SENSOR_STEPS = "Kroki"
-    override val SENSOR_STEPS_MIN = "Kadenz (kroki/min)"
+    override val SENSOR_STEPS_MIN = "Kadencja (kroki/min)"
     override val SENSOR_DISTANCE_STEPS = "Dystans (kroki)"
     override val SENSOR_SPEED_GPS = "Prędkość"
     override val SENSOR_SPEED_STEPS = "Prędkość (kroki)"
     override val SENSOR_DISTANCE_GPS = "Dystans"
     override val SENSOR_ALTITUDE = "Wysokość"
-    override val SENSOR_TOTAL_ASCENT = "W sumie w górę"
-    override val SENSOR_TOTAL_DESCENT = "W sumie do dołu"
+    override val SENSOR_TOTAL_ASCENT = "Suma podejść"
+    override val SENSOR_TOTAL_DESCENT = "Suma zejść"
     override val SENSOR_PRESSURE = "Ciśnienie atm."
     override val SENSOR_MAP = "Dane lokalizacji"
+    override val SENSOR_AVG_STEP_LENGTH = "Średnia długość kroku"
+
+    // Trim Screen
+    override val TRIM_TITLE = "Edytuj trening (Przycinanie)"
+    override val TRIM_CONFIRM_TITLE = "Potwierdź przycięcie"
+    override val TRIM_CONFIRM_DESC = "Czy na pewno chcesz usunąć dane poza wybranym zakresem? Te dane zostaną trwale usunięte."
+    override val TRIM_SAVE_BTN = "Przytnij i zapisz"
+    override val TRIM_CHART_HR = "Wykres tętna"
+    override val TRIM_RANGE_TITLE = "Wybierz zakres treningu"
+    override val TRIM_PREVIEW_TITLE = "Podgląd nowych statystyk"
+    override val TRIM_NEW_DURATION = "Nowy czas trwania:"
+    override val TRIM_DISTANCE_GPS = "Dystans (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Dystans (Kroki):"
+    override val TRIM_CALORIES = "Spalone kalorie:"
+    override val TRIM_AVG_BPM = "Średnie tętno:"
+    override val TRIM_START = "Start"
+    override val TRIM_END = "Koniec"
+
+    // Compare Screen
+    override val COMPARE_TITLE = "Porównanie aktywności"
+    override val COMPARE_VS = "Porównanie:"
+    override val COMPARE_HIGHER_IS_BETTER = "Wyższy wynik jest lepszy"
+    override val COMPARE_LOWER_IS_BETTER = "Niższy wynik jest lepszy"
 
     // Units
     override val UNIT_KCAL = "kcal"
@@ -370,7 +388,7 @@ object TextsMobilePL : MobileTexts {
     override val UNIT_KM = "km"
     override val UNIT_STEP_MIN = "kr/min"
     override val UNIT_KM_H = "km/h"
-    override val UNIT_STEPS = "kroków"
+    override val UNIT_STEPS = "kroki"
     override val UNIT_HPA = "hPa"
     override val UNIT_MIN_KM = "min/km"
     override val UNIT_M_ASL = "m n.p.m."
@@ -378,9 +396,6 @@ object TextsMobilePL : MobileTexts {
     override val UNIT_BPM = "bpm"
     override val UNIT_KCAL_MIN = "kcal/min"
     override val UNIT_VO2_MAX = "ml/kg/min"
-    
-    // New metric
-    override val SENSOR_AVG_STEP_LENGTH = "Średnia długość kroku"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -464,20 +479,4 @@ object TextsMobilePL : MobileTexts {
             else -> id
         }
     }
-
-    // Trim Screen
-    override val TRIM_TITLE = "Edytuj trening (Przycinanie)"
-    override val TRIM_CONFIRM_TITLE = "Potwierdź przycięcie"
-    override val TRIM_CONFIRM_DESC = "Czy na pewno chcesz usunąć dane poza wybranym zakresem? Te dane zostaną trwale usunięte."
-    override val TRIM_SAVE_BTN = "Przytnij i zapisz"
-    override val TRIM_CHART_HR = "Wykres tętna"
-    override val TRIM_RANGE_TITLE = "Wybierz zakres treningu"
-    override val TRIM_PREVIEW_TITLE = "Podgląd nowych statystyk"
-    override val TRIM_NEW_DURATION = "Nowy czas trwania:"
-    override val TRIM_DISTANCE_GPS = "Dystans (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Dystans (Kroki):"
-    override val TRIM_CALORIES = "Spalone kalorie:"
-    override val TRIM_AVG_BPM = "Średnie tętno:"
-    override val TRIM_START = "Start"
-    override val TRIM_END = "Koniec"
 }
