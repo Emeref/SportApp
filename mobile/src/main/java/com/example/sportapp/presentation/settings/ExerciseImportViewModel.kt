@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.settings
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
@@ -17,6 +18,8 @@ data class ExerciseImportUiState(
     val sessions: List<ExerciseSessionSyncDto> = emptyList(),
     val isLoading: Boolean = false,
     val isImporting: Boolean = false,
+    val currentImport: Int = 0,
+    val totalToImport: Int = 0,
     val error: String? = null,
     val showConfirmDialog: Boolean = false,
     val importSuccess: Boolean = false
@@ -77,13 +80,26 @@ class ExerciseImportViewModel @Inject constructor(
             _uiState.update { it.copy(showConfirmDialog = false, isImporting = true) }
             try {
                 val toImport = _uiState.value.sessions.filter { it.isSelected && !it.alreadyImported }
-                toImport.forEach { session ->
-                    workoutRepository.saveImportedSession(session)
+                val total = toImport.size
+                
+                toImport.forEachIndexed { index, session ->
+                    val current = index + 1
+                    _uiState.update { it.copy(currentImport = current, totalToImport = total) }
+                    
+                    try {
+                        val timeSeries = exerciseSyncUseCase.readSessionTimeSeries(session.hcSessionId)
+                        workoutRepository.saveImportedSession(session, timeSeries)
+                    } catch (e: Exception) {
+                        Log.e("ExerciseImport", "Failed to load time series for ${session.hcSessionId}", e)
+                        // Fallback to summary-only import
+                        workoutRepository.saveImportedSession(session, null)
+                    }
                 }
-                _uiState.update { it.copy(isImporting = false, importSuccess = true) }
+                
+                _uiState.update { it.copy(isImporting = false, currentImport = 0, totalToImport = 0, importSuccess = true) }
                 loadSessions() // Reload to show updated "already imported" status
             } catch (e: Exception) {
-                _uiState.update { it.copy(isImporting = false, error = "Import failed: ${e.message}") }
+                _uiState.update { it.copy(isImporting = false, currentImport = 0, totalToImport = 0, error = "Import failed: ${e.message}") }
             }
         }
     }

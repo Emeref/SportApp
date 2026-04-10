@@ -96,6 +96,7 @@ object TextsMobilePT : MobileTexts {
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Tem certeza de que deseja importar os treinos selecionados?"
     override fun hcImportSelected(count: Int) = "Importar selecionados ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Deseja importar $count treinos?"
+    override fun hcImportProgress(current: Int, total: Int) = "Importando $current/$total treinos..."
 
     // Health Data Screen
     override val HEALTH_TITLE = "Dados de saúde"
@@ -467,7 +468,7 @@ object TextsMobilePT : MobileTexts {
     // Trim Screen
     override val TRIM_TITLE = "Editar treino (Corte)"
     override val TRIM_CONFIRM_TITLE = "Confirmar corte"
-    override val TRIM_CONFIRM_DESC = "Tem certeza de que deseja remover os danych fora do intervalo selecionado? Esses dados serão excluídos permanentemente."
+    override val TRIM_CONFIRM_DESC = "Tem certeza de que deseja remover os dados fora do intervalo selecionado? Esses dados serão excluídos permanentemente."
     override val TRIM_SAVE_BTN = "Cortar e salvar"
     override val TRIM_CHART_HR = "Gráfico de FC"
     override val TRIM_RANGE_TITLE = "Selecionar intervalo de treino"

@@ -96,6 +96,7 @@ object TextsMobileDE : MobileTexts {
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Sind Sie sicher, dass Sie die ausgewählten Workouts importieren möchten?"
     override fun hcImportSelected(count: Int) = "Ausgewählte importieren ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Möchten Sie $count Workouts importieren?"
+    override fun hcImportProgress(current: Int, total: Int) = "Importiere $current/$total Workouts..."
 
     // Health Data Screen
     override val HEALTH_TITLE = "Gesundheitsdaten"
@@ -289,9 +290,9 @@ object TextsMobileDE : MobileTexts {
 
     // Gpx Importer
     override val GPX_NO_POINTS = "GPX-Datei enthält keine Trackpunkte."
-    override val GPX_WARN_HR = "Die Datei enthält HF-Daten, aber die ausgewählte Aktivität unterstützt diese nicht."
-    override val GPX_WARN_ELE = "Die Datei enthält Höhendaten, aber die ausgewählte Aktivität unterstützt diese nicht."
-    override val GPX_WARN_CADENCE = "Die Datei enthält Trittfrequenzdaten, aber die ausgewählte Aktivität unterstützt diese nicht."
+    override val GPX_WARN_HR = "Die Datei enthält HF-Daten, ale die ausgewählte Aktivität unterstützt diese nicht."
+    override val GPX_WARN_ELE = "Die Datei enthält Höhendaten, ale die ausgewählte Aktivität unterstützt diese nicht."
+    override val GPX_WARN_CADENCE = "Die Datei enthält Trittfrequenzdaten, ale die ausgewählte Aktivität unterstützt diese nicht."
 
     // Periods
     override val PERIOD_TODAY = "Heute"
@@ -327,8 +328,8 @@ object TextsMobileDE : MobileTexts {
     override val WIDGET_AVG_SPEED_GPS = "Durchschn. Geschw. (GPS)"
     override val WIDGET_AVG_SPEED_STEPS = "Durchschn. Geschw. (Schritte)"
     override val WIDGET_MAX_ALTITUDE_DESC = "Max. Höhe"
-    override val WIDGET_TOTAL_ASCENT = "Suma podejść"
-    override val WIDGET_TOTAL_DESCENT = "Suma zejść"
+    override val WIDGET_TOTAL_ASCENT = "Summe der Aufstiege"
+    override val WIDGET_TOTAL_DESCENT = "Summe der Abstiege"
     override val WIDGET_AVG_STEP_LENGTH = "Durchschn. Schrittlänge"
     override val WIDGET_AVG_CADENCE_DESC = "Durchschn. Kadenz"
     override val WIDGET_MAX_CADENCE = "Max. Kadenz"

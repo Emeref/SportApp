@@ -96,6 +96,7 @@ object TextsMobileIT : MobileTexts {
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Sei sicuro di voler importare gli allenamenti selezionati?"
     override fun hcImportSelected(count: Int) = "Importa selezionati ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Vuoi importare $count allenamenti?"
+    override fun hcImportProgress(current: Int, total: Int) = "Importazione di $current/$total allenamenti..."
 
     // Health Data Screen
     override val HEALTH_TITLE = "Dati sanitari"
@@ -315,6 +316,7 @@ object TextsMobileIT : MobileTexts {
     override val WIDGET_ASCENT = "Ascesa totale"
     override val WIDGET_DESCENT = "Discesa totale"
     override val WIDGET_STEPS = "Passi"
+    override val WIDGET_AVG_BPM = "FC media"
     override val WIDGET_AVG_CADENCE = "Cadenza media"
     override val WIDGET_MAX_SPEED = "Velocità massima"
     override val WIDGET_MAX_ALTITUDE = "Altitudine massima"
@@ -326,12 +328,11 @@ object TextsMobileIT : MobileTexts {
     override val WIDGET_MAX_AVG_SPEED = "Massima velocità media"
     override val WIDGET_DURATION = "Durata"
     override val WIDGET_MAX_BPM = "FC massima"
-    override val WIDGET_AVG_BPM = "FC media"
     override val WIDGET_TOTAL_CALORIES = "Calorie totali"
     override val WIDGET_MAX_CALORIES_MIN = "Massima velocità di combustione calorie"
     override val WIDGET_AVG_PACE = "Pace medio"
     override val WIDGET_AVG_SPEED_GPS = "Velocità media (GPS)"
-    override val WIDGET_AVG_SPEED_STEPS = "Velocità media (passi)"
+    override val WIDGET_AVG_SPEED_STEPS = "Velocità media (passos)"
     override val WIDGET_MAX_ALTITUDE_DESC = "Altitudine massima"
     override val WIDGET_TOTAL_ASCENT = "Somma ascese"
     override val WIDGET_TOTAL_DESCENT = "Somma discese"
@@ -466,7 +467,7 @@ object TextsMobileIT : MobileTexts {
 
     // Trim Screen
     override val TRIM_TITLE = "Modifica allenamento (Taglia)"
-    override val TRIM_CONFIRM_TITLE = "Conferma taglio"
+    override val TRIM_CONFIRM_TITLE = "Confirmer taglio"
     override val TRIM_CONFIRM_DESC = "Sei sicuro di voler rimuovere i dati fuori dall'intervallo selezionato? Questi dati verranno eliminati permanentemente."
     override val TRIM_SAVE_BTN = "Taglia e salva"
     override val TRIM_CHART_HR = "Grafico FC"

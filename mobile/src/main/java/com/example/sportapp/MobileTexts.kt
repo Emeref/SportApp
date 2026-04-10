@@ -85,6 +85,7 @@ interface MobileTexts {
     val HC_IMPORT_CONFIRM_DESC_PLURAL: String
     fun hcImportSelected(count: Int): String
     fun hcImportConfirmDesc(count: Int): String
+    fun hcImportProgress(current: Int, total: Int): String
 
     // Health Data Screen
     val HEALTH_TITLE: String

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.healthconnect.model.ExerciseSessionSyncDto
@@ -62,6 +63,32 @@ fun ExerciseImportScreen(
         )
     }
 
+    if (uiState.isImporting) {
+        Dialog(onDismissRequest = {}) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                tonalElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator()
+                    val progressText = if (uiState.totalToImport > 0) {
+                        texts.hcImportProgress(uiState.currentImport, uiState.totalToImport)
+                    } else {
+                        texts.ACTIVITY_IMPORT_PROGRESS
+                    }
+                    Text(
+                        text = progressText,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -84,11 +111,7 @@ fun ExerciseImportScreen(
                             .padding(16.dp),
                         enabled = !uiState.isImporting
                     ) {
-                        if (uiState.isImporting) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
-                        } else {
-                            Text(texts.hcImportSelected(selectedCount))
-                        }
+                        Text(texts.hcImportSelected(selectedCount))
                     }
                 }
             }

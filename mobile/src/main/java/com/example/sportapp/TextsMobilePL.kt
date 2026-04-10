@@ -96,6 +96,7 @@ object TextsMobilePL : MobileTexts {
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Czy na pewno chcesz zaimportować wybrane treningi?"
     override fun hcImportSelected(count: Int) = "Importuj zaznaczone ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Czy chcesz zaimportować $count treningów?"
+    override fun hcImportProgress(current: Int, total: Int) = "Importowanie $current/$total treningów..."
 
     // Health Data Screen
     override val HEALTH_TITLE = "Dane zdrowotne"

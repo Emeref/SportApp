@@ -40,7 +40,7 @@ mockito = "5.11.0"
 mockitoKotlin = "5.2.1"
 mockk = "1.13.10"
 turbine = "1.1.0"
-healthConnect = "1.1.0-alpha11"
+healthConnect = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
