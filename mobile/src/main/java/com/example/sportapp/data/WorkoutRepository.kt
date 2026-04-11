@@ -6,6 +6,8 @@ import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutLap
+import com.example.sportapp.healthconnect.model.ExerciseSessionSyncDto
+import com.example.sportapp.healthconnect.model.SessionTimeSeries
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +15,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -300,4 +304,143 @@ class WorkoutRepository @Inject constructor(
     }
 
     override fun getAllDefinitions(): Flow<List<WorkoutDefinition>> = workoutDefinitionDao.getAllDefinitions()
+
+    override suspend fun existsByHCSessionId(hcSessionId: String): Boolean = withContext(Dispatchers.IO) {
+        workoutDao.existsByHCSessionId(hcSessionId)
+    }
+
+    override suspend fun saveImportedSession(session: ExerciseSessionSyncDto, timeSeries: SessionTimeSeries?): Long = withContext(Dispatchers.IO) {
+        val durationSeconds = Duration.between(session.startTime, session.endTime).seconds
+        val workout = WorkoutEntity(
+            activityName = session.title,
+            startTime = session.startTime.toEpochMilli(),
+            durationFormatted = formatDuration(durationSeconds),
+            durationSeconds = durationSeconds,
+            distanceGps = session.distanceMeters,
+            totalCalories = session.activeCalories,
+            avgBpm = session.avgHeartRate?.toDouble(),
+            maxBpm = session.maxHeartRate,
+            avgSpeedGps = session.avgSpeedMps,
+            maxSpeed = session.maxSpeedMps,
+            hcSessionId = session.hcSessionId,
+            isSynced = true
+        )
+        val workoutId = workoutDao.insertWorkout(workout)
+        
+        if (timeSeries != null) {
+            val points = createPointsFromTimeSeries(workoutId, session.startTime, session.endTime, timeSeries)
+            if (points.isNotEmpty()) {
+                workoutDao.insertPoints(points)
+            }
+        }
+        
+        workoutId
+    }
+
+    override suspend fun saveImportedGpx(
+        definitionId: Long,
+        name: String,
+        startTime: Long,
+        endTime: Long,
+        durationSeconds: Long,
+        distanceGps: Double,
+        calories: Double,
+        avgBpm: Double?,
+        maxBpm: Int?,
+        totalAscent: Double,
+        totalDescent: Double,
+        points: List<WorkoutPointEntity>,
+        laps: List<WorkoutLap>
+    ): Long = withContext(Dispatchers.IO) {
+        val workout = WorkoutEntity(
+            activityName = name,
+            startTime = startTime,
+            durationFormatted = formatDuration(durationSeconds),
+            durationSeconds = durationSeconds,
+            distanceGps = distanceGps,
+            totalCalories = calories,
+            avgBpm = avgBpm,
+            maxBpm = maxBpm,
+            totalAscent = totalAscent,
+            totalDescent = totalDescent,
+            isSynced = false
+        )
+        val workoutId = workoutDao.insertWorkout(workout)
+        
+        val pointsToSave = points.map { it.copy(workoutId = workoutId) }
+        workoutDao.insertPoints(pointsToSave)
+        
+        val lapsToSave = laps.map { it.copy(workoutId = workoutId) }
+        workoutDao.insertLaps(lapsToSave)
+        
+        workoutId
+    }
+
+    private fun createPointsFromTimeSeries(
+        workoutId: Long,
+        startTime: Instant,
+        endTime: Instant,
+        timeSeries: SessionTimeSeries
+    ): List<WorkoutPointEntity> {
+        val durationSeconds = Duration.between(startTime, endTime).seconds
+        if (durationSeconds <= 0) return emptyList()
+
+        val points = mutableListOf<WorkoutPointEntity>()
+        
+        val hrMap = timeSeries.heartRates.associateBy { Duration.between(startTime, it.time).seconds }
+        val speedMap = timeSeries.speeds.associateBy { Duration.between(startTime, it.time).seconds }
+        val cadenceMap = timeSeries.cadences.associateBy { Duration.between(startTime, it.time).seconds }
+        val locationMap = timeSeries.locations.associateBy { Duration.between(startTime, it.time).seconds }
+        
+        var currentDistance = 0.0
+        var currentAscent = 0.0
+        var currentDescent = 0.0
+        var currentCalories = 0.0
+        
+        val distanceBySec = timeSeries.distances.associateBy { Duration.between(startTime, it.endTime).seconds }
+        val elevationBySec = timeSeries.elevations.associateBy { Duration.between(startTime, it.endTime).seconds }
+        val caloriesBySec = timeSeries.calories.associateBy { Duration.between(startTime, it.endTime).seconds }
+
+        for (i in 0..durationSeconds) {
+            val hr = hrMap[i]?.bpm
+            val speed = speedMap[i]?.speedMps
+            val cadence = cadenceMap[i]?.rate
+            val loc = locationMap[i]
+            
+            val distStep = distanceBySec[i]?.distanceMeters ?: 0.0
+            currentDistance += distStep
+            
+            val eleStep = elevationBySec[i]?.elevationMeters ?: 0.0
+            if (eleStep > 0) currentAscent += eleStep else currentDescent += Math.abs(eleStep)
+            
+            val calStep = caloriesBySec[i]?.kilocalories ?: 0.0
+            currentCalories += calStep
+
+            val h = i / 3600
+            val m = (i % 3600) / 60
+            val s = i % 60
+            val timeStr = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+
+            points.add(WorkoutPointEntity(
+                workoutId = workoutId,
+                time = timeStr,
+                latitude = loc?.latitude,
+                longitude = loc?.longitude,
+                bpm = hr,
+                steps = null, 
+                stepsMin = cadence,
+                distanceSteps = null,
+                distanceGps = currentDistance.toInt(),
+                speedGps = speed,
+                speedSteps = null,
+                altitude = loc?.altitude,
+                totalAscent = currentAscent,
+                totalDescent = currentDescent,
+                calorieMin = calStep,
+                calorieSum = currentCalories
+            ))
+        }
+
+        return points
+    }
 }

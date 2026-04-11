@@ -67,6 +67,38 @@ object TextsMobileEN : MobileTexts {
     override val LANG_PL = "Polish"
     override val LANG_EN = "English"
 
+    // Health Connect Strings
+    override val SETTINGS_HC_MANAGE_PERMISSIONS = "Manage Health Connect permissions"
+    override val SETTINGS_HC_STATUS = "Health Connect Status"
+    override val HC_STATUS_AVAILABLE = "Available"
+    override val HC_STATUS_UNAVAILABLE = "Unavailable"
+    override val HC_STATUS_NOT_INSTALLED = "Not installed"
+    override val HC_INSTALL = "Install"
+    override val HC_SYNC_HEALTH_DATA = "Sync with Health Connect"
+    override val HC_SYNC_WORKOUTS = "Import workouts from Health Connect"
+    override val HC_SYNC_CONFIRM_TITLE = "Data Synchronization"
+    override val HC_SYNC_CONFIRM_DESC = "Do you want to update your profile with data found in Health Connect?"
+    override val HC_SYNC_SUCCESS = "Synchronization successful"
+    override val HC_SYNC_ERROR = "Synchronization error"
+    override val HC_SYNC_NO_DATA = "No new data found"
+    override fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String {
+        val parts = mutableListOf<String>()
+        weight?.let { parts.add("weight $it kg") }
+        height?.let { parts.add("height $it cm") }
+        vo2max?.let { parts.add("VO2Max $it ml/kg/min") }
+        return "Found in Health Connect: ${parts.joinToString(", ")} – update?"
+    }
+    
+    // Stage 3 - Import Workouts
+    override val HC_IMPORT_TITLE = "Import Workouts"
+    override val HC_IMPORT_ALREADY_IMPORTED = "Already imported"
+    override val HC_IMPORT_EMPTY = "No workouts found in Health Connect from last 30 days."
+    override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Are you sure you want to import selected workouts?"
+    override val HC_IMPORT_SELECT_ALL = "Select all"
+    override fun hcImportSelected(count: Int) = "Import selected ($count)"
+    override fun hcImportConfirmDesc(count: Int) = "Do you want to import $count workouts?"
+    override fun hcImportProgress(current: Int, total: Int) = "Importing $current/$total workouts..."
+
     // Health Data Screen
     override val HEALTH_TITLE = "Health Data"
     override val HEALTH_GENDER = "Gender"
@@ -82,6 +114,7 @@ object TextsMobileEN : MobileTexts {
     override val HEALTH_MAX_HR_DESC = "Max HR"
     override val HEALTH_STEP_LENGTH = "Step Length"
     override val HEALTH_STEP_LENGTH_CM = "Step Length (cm)"
+    override val HEALTH_VO2_MAX = "VO2 Max"
 
     // Activity List
     override val ACTIVITY_LIST_TITLE = "Activity List"
@@ -130,6 +163,7 @@ object TextsMobileEN : MobileTexts {
     override val DETAIL_HEART_RATE = "Heart Rate (bpm)"
     override val DETAIL_HR_ZONES = "HR Zones"
     override val DETAIL_TRAINING_EFFECT = "Training Effect"
+    override val DETAIL_TRAINING_EFFECT_DESC = "Training effect description"
     override val DETAIL_LAP_NR = "No."
     override val DETAIL_LAP_TIME = "Time"
     override val DETAIL_LAP_AVG_PACE = "Avg Pace"
@@ -173,7 +207,7 @@ object TextsMobileEN : MobileTexts {
     override val DEF_DELETE = "Delete Definition"
     override val DEF_NAME = "Name"
     override val DEF_ICON = "Icon"
-    override val DEF_SENSORS = "Sensory"
+    override val DEF_SENSORS = "Sensors"
     override val DEF_LIST_TITLE = "Activity Definition"
     override val DEF_SENSORS_DESC = "Manage sports list and sensors"
     override val DEF_RECORDING = "Nagrywanie"
@@ -193,24 +227,51 @@ object TextsMobileEN : MobileTexts {
     override val DEF_BASE_TYPE = "Base type"
     override val DEF_FINISH = "Finish"
     override val DEF_SELECT_ICON_TITLE = "Select icon"
+    
+    // Base Types
     override val DEF_WALKING = "Walking"
+    override val DEF_SPEED_WALKING = "Speed walking"
     override val DEF_RUNNING = "Running"
+    override val DEF_TREADMILL_RUNNING = "Treadmill running"
+    override val DEF_STAIR_CLIMBING = "Stair climbing"
+    override val DEF_STAIR_CLIMBING_MACHINE = "Stair climbing machine"
     override val DEF_CYCLING = "Cycling"
+    override val DEF_CYCLING_STATIONARY = "Stationary cycling"
+    override val DEF_MOUNTAIN_BIKING = "Mountain biking"
+    override val DEF_ROAD_BIKING = "Road biking"
     override val DEF_HIKING = "Hiking"
-    override val DEF_SWIMMING = "Swimming"
-    override val DEF_GYM = "Gym"
+    override val DEF_ROCK_CLIMBING = "Rock climbing"
+    override val DEF_BOULDERING = "Bouldering"
+    override val DEF_HIIT = "HIIT"
+    override val DEF_ELLIPTICAL = "Elliptical"
+    override val DEF_ROWING_MACHINE = "Rowing machine"
+    override val DEF_STRENGTH_TRAINING = "Strength training"
+    override val DEF_CALISTHENICS = "Calisthenics"
     override val DEF_YOGA = "Yoga"
-    override val DEF_TENNIS = "Tennis"
+    override val DEF_PILATES = "Pilates"
+    override val DEF_AEROBICS = "Aerobics"
+    override val DEF_DANCING = "Dancing"
+    override val DEF_SWIMMING = "Swimming"
+    override val DEF_SWIMMING_POOL = "Swimming (pool)"
+    override val DEF_SWIMMING_OPEN_WATER = "Swimming (open water)"
     override val DEF_KAYAKING = "Kayaking"
-    override val DEF_SNOWBOARDING = "Snowboarding"
+    override val DEF_PADDLE_BOARDING = "Paddle boarding"
     override val DEF_SURFING = "Surfing"
-    override val DEF_SKATING = "Skating"
-    override val DEF_GOLF = "Golf"
+    override val DEF_SAILING = "Sailing"
     override val DEF_FOOTBALL = "Football"
     override val DEF_BASKETBALL = "Basketball"
+    override val DEF_TENNIS = "Tennis"
+    override val DEF_SQUASH = "Squash"
     override val DEF_VOLLEYBALL = "Volleyball"
+    override val DEF_GOLF = "Golf"
+    override val DEF_MARTIAL_ARTS = "Martial arts"
+    override val DEF_SKIING = "Skiing"
+    override val DEF_SNOWBOARDING = "Snowboarding"
+    override val DEF_SKATING = "Skating"
+    override val DEF_ICE_SKATING = "Ice skating"
+    
+    override val DEF_GYM = "Gym"
     override val DEF_BASEBALL = "Baseball"
-    override val DEF_SAILING = "Sailing"
     override val DEF_SKATEBOARDING = "Skateboarding"
     override val DEF_COMPETITION = "Competition"
     override val DEF_STOPWATCH = "Stopwatch"
@@ -232,7 +293,7 @@ object TextsMobileEN : MobileTexts {
     override val HR_EFFECT_Z2 = "Effective fat burn"
     override val HR_EFFECT_Z3 = "Aerobic capacity improvement"
     override val HR_EFFECT_Z4 = "Lactate threshold increase"
-    override val HR_EFFECT_Z5 = "Anaerobic training and VO2 Max"
+    override val HR_EFFECT_Z5 = "Analobic training and VO2 Max"
     override val HR_EFFECT_NONE = "No dominant zone"
 
     // HR Zones Names
@@ -244,34 +305,35 @@ object TextsMobileEN : MobileTexts {
     override val ZONE_Z5 = "Maximum"
 
     // Compare Screen
-    override val COMPARE_TITLE = "Activity Compare"
-    override val COMPARE_VS = "Compare:"
-    override val COMPARE_HIGHER_IS_BETTER = "Higher result is better"
-    override val COMPARE_LOWER_IS_BETTER = "Lower result is better"
+    override val COMPARE_TITLE = "Activity Comparison"
+    override val COMPARE_VS = "Comparison:"
+    override val COMPARE_HIGHER_IS_BETTER = "Higher score is better"
+    override val COMPARE_LOWER_IS_BETTER = "Lower score is better"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Initializing export..."
     override fun vmExportGenerating(name: String, current: Int, total: Int) = "Generating: $name ($current/$total)"
     override val VM_EXPORT_NO_FILES = "No files generated."
-    override val VM_EXPORT_ZIPPING = "Zipping..."
-    override fun vmExportError(msg: String) = "Error during export: $msg"
+    override val VM_EXPORT_ZIPPING = "Zipping to ZIP..."
+    override fun vmExportError(msg: String) = "Export error: $msg"
     override val VM_IMPORT_OPEN_ERROR = "Cannot open file"
-    override val VM_IMPORT_DUPLICATE_WARNING = "Potential duplicate detected (same start time and duration)."
+    override val VM_IMPORT_DUPLICATE_WARNING = "Potential duplicate detected (same start date and duration)."
+    override val VM_IMPORT_DUPLICATE_WARNING_DESC = "Do you want to continue anyway?"
     override val VM_IMPORT_SUCCESS = "Workout imported successfully."
     override fun vmImportError(msg: String) = "Import error: $msg"
 
     // Gpx Importer
     override val GPX_NO_POINTS = "GPX file contains no track points."
-    override val GPX_WARN_HR = "File contains HR data, but selected activity doesn't support it."
-    override val GPX_WARN_ELE = "File contains altitude data, but selected activity doesn't support it."
-    override val GPX_WARN_CADENCE = "File contains cadence data, but selected activity doesn't support it."
+    override val GPX_WARN_HR = "File contains HR data, but selected activity does not support it."
+    override val GPX_WARN_ELE = "File contains elevation data, but selected activity does not support it."
+    override val GPX_WARN_CADENCE = "File contains cadence data, but selected activity does not support it."
 
     // Periods
     override val PERIOD_TODAY = "Today"
     override val PERIOD_WEEK = "Week"
     override val PERIOD_MONTH = "Month"
     override val PERIOD_YEAR = "Year"
-    override val PERIOD_CUSTOM = "Custom"
+    override val PERIOD_CUSTOM = "Other"
     override fun periodCustomDays(days: Int) = if (days == 1) "$days day" else "$days days"
 
     // Widgets
@@ -279,89 +341,72 @@ object TextsMobileEN : MobileTexts {
     override val WIDGET_CALORIES = "Calories burned"
     override val WIDGET_DISTANCE_GPS = "Distance (GPS)"
     override val WIDGET_DISTANCE_STEPS = "Distance (steps)"
-    override val WIDGET_ASCENT = "Total ascent"
-    override val WIDGET_DESCENT = "Total descent"
+    override val WIDGET_ASCENT = "Total Ascent"
+    override val WIDGET_DESCENT = "Total Descent"
     override val WIDGET_STEPS = "Steps"
-    override val WIDGET_AVG_CADENCE = "Avg cadence"
+    override val WIDGET_AVG_BPM = "Average HR"
+    override val WIDGET_AVG_CADENCE = "Average cadence"
     override val WIDGET_MAX_SPEED = "Max speed"
     override val WIDGET_MAX_ALTITUDE = "Max altitude"
-    override val WIDGET_MAX_ELEVATION_GAIN = "Max elevation gain"
-    override val WIDGET_MAX_DISTANCE = "Max distance"
-    override val WIDGET_MAX_DURATION = "Max duration"
-    override val WIDGET_MAX_CALORIES = "Max calories"
-    override val WIDGET_MAX_AVG_CADENCE = "Max avg cadence"
-    override val WIDGET_MAX_AVG_SPEED = "Max avg speed"
+    override val WIDGET_MAX_ELEVATION_GAIN = "Most elevation gain"
+    override val WIDGET_MAX_DISTANCE = "Longest distance"
+    override val WIDGET_MAX_DURATION = "Longest duration"
+    override val WIDGET_MAX_CALORIES = "Most calories"
+    override val WIDGET_MAX_AVG_CADENCE = "Highest avg cadence"
+    override val WIDGET_MAX_AVG_SPEED = "Highest avg speed"
     override val WIDGET_DURATION = "Duration"
-    override val WIDGET_MAX_BPM = "Max HR"
-    override val WIDGET_AVG_BPM = "Avg HR"
-    override val WIDGET_TOTAL_CALORIES = "Total calories"
-    override val WIDGET_MAX_CALORIES_MIN = "Max calorie burn rate"
-    override val WIDGET_AVG_PACE = "Avg pace"
-    override val WIDGET_AVG_SPEED_GPS = "Avg speed (GPS)"
-    override val WIDGET_AVG_SPEED_STEPS = "Avg speed (steps)"
+    override val WIDGET_MAX_BPM = "Maximum HR"
+    override val WIDGET_TOTAL_CALORIES = "Calories burned"
+    override val WIDGET_MAX_CALORIES_MIN = "Max calorie burn"
+    override val WIDGET_AVG_PACE = "Average pace"
+    override val WIDGET_AVG_SPEED_GPS = "Average speed (GPS)"
+    override val WIDGET_AVG_SPEED_STEPS = "Average speed (steps)"
     override val WIDGET_MAX_ALTITUDE_DESC = "Max altitude"
     override val WIDGET_TOTAL_ASCENT = "Total ascent"
     override val WIDGET_TOTAL_DESCENT = "Total descent"
-    override val WIDGET_AVG_STEP_LENGTH = "Avg step length"
+    override val WIDGET_AVG_STEP_LENGTH = "Calculated step length"
     override val WIDGET_AVG_CADENCE_DESC = "Avg cadence"
     override val WIDGET_MAX_CADENCE = "Max cadence"
-    override val WIDGET_TOTAL_STEPS = "Steps count"
+    override val WIDGET_TOTAL_STEPS = "Step count"
     override val WIDGET_PRESSURE_START = "Atm. pressure (start)"
     override val WIDGET_PRESSURE_END = "Atm. pressure (end)"
-    override val WIDGET_MAX_PRESSURE = "Max atm. pressure"
-    override val WIDGET_MIN_PRESSURE = "Min atm. pressure"
-    override val WIDGET_BEST_PACE_1KM = "Best 1km pace"
-    override val WIDGET_WATCH_ASCENT = "Total up"
-    override val WIDGET_WATCH_DESCENT = "Total down"
+    override val WIDGET_MAX_PRESSURE = "Max pressure"
+    override val WIDGET_MIN_PRESSURE = "Min pressure"
+    override val WIDGET_BEST_PACE_1KM = "Best pace (1km)"
+    override val WIDGET_WATCH_ASCENT = "Elevation gain up"
+    override val WIDGET_WATCH_DESCENT = "Elevation gain down"
 
     // Sensors
     override val SENSOR_HEART_RATE = "Heart Rate"
-    override val SENSOR_CALORIES_SUM = "Total Calories"
-    override val SENSOR_CALORIES_MIN = "Calories per Minute"
+    override val SENSOR_CALORIES_SUM = "Calories burned"
+    override val SENSOR_CALORIES_MIN = "Calories per minute"
     override val SENSOR_STEPS = "Steps"
-    override val SENSOR_STEPS_MIN = "Cadence (spm)"
-    override val SENSOR_DISTANCE_STEPS = "Distance (Steps)"
+    override val SENSOR_STEPS_MIN = "Cadence (steps/min)"
+    override val SENSOR_DISTANCE_STEPS = "Distance (steps)"
     override val SENSOR_SPEED_GPS = "Speed"
-    override val SENSOR_SPEED_STEPS = "Speed (Steps)"
+    override val SENSOR_SPEED_STEPS = "Speed (steps)"
     override val SENSOR_DISTANCE_GPS = "Distance"
     override val SENSOR_ALTITUDE = "Altitude"
-    override val SENSOR_TOTAL_ASCENT = "Total Ascent"
-    override val SENSOR_TOTAL_DESCENT = "Total Descent"
-    override val SENSOR_PRESSURE = "Atm. Pressure"
-    override val SENSOR_MAP = "Location Data"
-
-    // Trim Screen
-    override val TRIM_TITLE = "Edit workout (Trimming)"
-    override val TRIM_CONFIRM_TITLE = "Confirm trim"
-    override val TRIM_CONFIRM_DESC = "Are you sure you want to remove data outside the selected range? This data will be permanently deleted."
-    override val TRIM_SAVE_BTN = "Trim and save"
-    override val TRIM_CHART_HR = "HR Chart"
-    override val TRIM_RANGE_TITLE = "Select workout range"
-    override val TRIM_PREVIEW_TITLE = "Preview of new stats"
-    override val TRIM_NEW_DURATION = "New duration:"
-    override val TRIM_DISTANCE_GPS = "Distance (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Distance (Steps):"
-    override val TRIM_CALORIES = "Calories burned:"
-    override val TRIM_AVG_BPM = "Avg HR:"
-    override val TRIM_START = "Start"
-    override val TRIM_END = "End"
+    override val SENSOR_TOTAL_ASCENT = "Total ascent"
+    override val SENSOR_TOTAL_DESCENT = "Total descent"
+    override val SENSOR_PRESSURE = "Atm. pressure"
+    override val SENSOR_MAP = "Location data"
+    override val SENSOR_AVG_STEP_LENGTH = "Average step length"
 
     // Units
     override val UNIT_KCAL = "kcal"
     override val UNIT_M = "m"
     override val UNIT_KM = "km"
-    override val UNIT_STEP_MIN = "spm"
+    override val UNIT_STEP_MIN = "st/min"
     override val UNIT_KM_H = "km/h"
     override val UNIT_STEPS = "steps"
     override val UNIT_HPA = "hPa"
     override val UNIT_MIN_KM = "min/km"
-    override val UNIT_M_ASL = "m asl"
+    override val UNIT_M_ASL = "m a.s.l."
     override val UNIT_MIN_KM_LABEL = "min/km"
     override val UNIT_BPM = "bpm"
     override val UNIT_KCAL_MIN = "kcal/min"
-    
-    // New metric
-    override val SENSOR_AVG_STEP_LENGTH = "Average Step Length"
+    override val UNIT_VO2_MAX = "ml/kg/min"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -409,7 +454,6 @@ object TextsMobileEN : MobileTexts {
             else -> getSensorLabel(id)
         }
     }
-
     override fun getSensorLabel(id: String): String {
         return when (id) {
             "bpm" -> SENSOR_HEART_RATE
@@ -443,11 +487,23 @@ object TextsMobileEN : MobileTexts {
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
             "avg_cadence" -> WIDGET_AVG_CADENCE
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
-            else -> when (id) {
-                "map" -> DETAIL_MAP
-                "bpm" -> DETAIL_HEART_RATE
-                else -> id
-            }
+            else -> id
         }
     }
+
+    // Trim Screen
+    override val TRIM_TITLE = "Edit Workout (Trimming)"
+    override val TRIM_CONFIRM_TITLE = "Confirm trimming"
+    override val TRIM_CONFIRM_DESC = "Are you sure you want to delete data outside selected range? This data will be permanently removed."
+    override val TRIM_SAVE_BTN = "Trim and save"
+    override val TRIM_CHART_HR = "Heart rate chart"
+    override val TRIM_RANGE_TITLE = "Select workout range"
+    override val TRIM_PREVIEW_TITLE = "New statistics preview"
+    override val TRIM_NEW_DURATION = "New duration:"
+    override val TRIM_DISTANCE_GPS = "Distance (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Distance (Steps):"
+    override val TRIM_CALORIES = "Calories burned:"
+    override val TRIM_AVG_BPM = "Average HR:"
+    override val TRIM_START = "Start"
+    override val TRIM_END = "Finish"
 }

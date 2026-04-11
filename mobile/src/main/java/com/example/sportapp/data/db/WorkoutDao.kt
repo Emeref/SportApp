@@ -81,4 +81,7 @@ interface WorkoutDao {
         deleteLapsForWorkout(workoutId)
         insertLaps(laps)
     }
+
+    @Query("SELECT EXISTS(SELECT 1 FROM workouts WHERE hc_session_id = :hcSessionId LIMIT 1)")
+    suspend fun existsByHCSessionId(hcSessionId: String): Boolean
 }

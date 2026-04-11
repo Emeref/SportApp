@@ -62,6 +62,32 @@ interface MobileTexts {
     val LANG_PL: String
     val LANG_EN: String
 
+    // Health Connect Strings
+    val SETTINGS_HC_MANAGE_PERMISSIONS: String
+    val SETTINGS_HC_STATUS: String
+    val HC_STATUS_AVAILABLE: String
+    val HC_STATUS_UNAVAILABLE: String
+    val HC_STATUS_NOT_INSTALLED: String
+    val HC_INSTALL: String
+    val HC_SYNC_HEALTH_DATA: String
+    val HC_SYNC_WORKOUTS: String
+    val HC_SYNC_CONFIRM_TITLE: String
+    val HC_SYNC_CONFIRM_DESC: String
+    val HC_SYNC_SUCCESS: String
+    val HC_SYNC_ERROR: String
+    val HC_SYNC_NO_DATA: String
+    fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String
+    
+    // Stage 3 - Import Workouts
+    val HC_IMPORT_TITLE: String
+    val HC_IMPORT_ALREADY_IMPORTED: String
+    val HC_IMPORT_EMPTY: String
+    val HC_IMPORT_CONFIRM_DESC_PLURAL: String
+    val HC_IMPORT_SELECT_ALL: String
+    fun hcImportSelected(count: Int): String
+    fun hcImportConfirmDesc(count: Int): String
+    fun hcImportProgress(current: Int, total: Int): String
+
     // Health Data Screen
     val HEALTH_TITLE: String
     val HEALTH_GENDER: String
@@ -77,6 +103,7 @@ interface MobileTexts {
     val HEALTH_MAX_HR_DESC: String
     val HEALTH_STEP_LENGTH: String
     val HEALTH_STEP_LENGTH_CM: String
+    val HEALTH_VO2_MAX: String
 
     // Activity List
     val ACTIVITY_LIST_TITLE: String
@@ -125,6 +152,7 @@ interface MobileTexts {
     val DETAIL_HEART_RATE: String
     val DETAIL_HR_ZONES: String
     val DETAIL_TRAINING_EFFECT: String
+    val DETAIL_TRAINING_EFFECT_DESC: String
     val DETAIL_LAP_NR: String
     val DETAIL_LAP_TIME: String
     val DETAIL_LAP_AVG_PACE: String
@@ -188,24 +216,51 @@ interface MobileTexts {
     val DEF_BASE_TYPE: String
     val DEF_FINISH: String
     val DEF_SELECT_ICON_TITLE: String
+    
+    // Base Types
     val DEF_WALKING: String
+    val DEF_SPEED_WALKING: String
     val DEF_RUNNING: String
+    val DEF_TREADMILL_RUNNING: String
+    val DEF_STAIR_CLIMBING: String
+    val DEF_STAIR_CLIMBING_MACHINE: String
     val DEF_CYCLING: String
+    val DEF_CYCLING_STATIONARY: String
+    val DEF_MOUNTAIN_BIKING: String
+    val DEF_ROAD_BIKING: String
     val DEF_HIKING: String
-    val DEF_SWIMMING: String
-    val DEF_GYM: String
+    val DEF_ROCK_CLIMBING: String
+    val DEF_BOULDERING: String
+    val DEF_HIIT: String
+    val DEF_ELLIPTICAL: String
+    val DEF_ROWING_MACHINE: String
+    val DEF_STRENGTH_TRAINING: String
+    val DEF_CALISTHENICS: String
     val DEF_YOGA: String
-    val DEF_TENNIS: String
+    val DEF_PILATES: String
+    val DEF_AEROBICS: String
+    val DEF_DANCING: String
+    val DEF_SWIMMING: String
+    val DEF_SWIMMING_POOL: String
+    val DEF_SWIMMING_OPEN_WATER: String
     val DEF_KAYAKING: String
-    val DEF_SNOWBOARDING: String
+    val DEF_PADDLE_BOARDING: String
     val DEF_SURFING: String
-    val DEF_SKATING: String
-    val DEF_GOLF: String
+    val DEF_SAILING: String
     val DEF_FOOTBALL: String
     val DEF_BASKETBALL: String
+    val DEF_TENNIS: String
+    val DEF_SQUASH: String
     val DEF_VOLLEYBALL: String
+    val DEF_GOLF: String
+    val DEF_MARTIAL_ARTS: String
+    val DEF_SKIING: String
+    val DEF_SNOWBOARDING: String
+    val DEF_SKATING: String
+    val DEF_ICE_SKATING: String
+    
+    val DEF_GYM: String
     val DEF_BASEBALL: String
-    val DEF_SAILING: String
     val DEF_SKATEBOARDING: String
     val DEF_COMPETITION: String
     val DEF_STOPWATCH: String
@@ -246,6 +301,7 @@ interface MobileTexts {
     fun vmExportError(msg: String): String
     val VM_IMPORT_OPEN_ERROR: String
     val VM_IMPORT_DUPLICATE_WARNING: String
+    val VM_IMPORT_DUPLICATE_WARNING_DESC: String
     val VM_IMPORT_SUCCESS: String
     fun vmImportError(msg: String): String
 
@@ -271,6 +327,7 @@ interface MobileTexts {
     val WIDGET_ASCENT: String
     val WIDGET_DESCENT: String
     val WIDGET_STEPS: String
+    val WIDGET_AVG_BPM: String
     val WIDGET_AVG_CADENCE: String
     val WIDGET_MAX_SPEED: String
     val WIDGET_MAX_ALTITUDE: String
@@ -282,7 +339,6 @@ interface MobileTexts {
     val WIDGET_MAX_AVG_SPEED: String
     val WIDGET_DURATION: String
     val WIDGET_MAX_BPM: String
-    val WIDGET_AVG_BPM: String
     val WIDGET_TOTAL_CALORIES: String
     val WIDGET_MAX_CALORIES_MIN: String
     val WIDGET_AVG_PACE: String
@@ -354,6 +410,7 @@ interface MobileTexts {
     val UNIT_MIN_KM_LABEL: String
     val UNIT_BPM: String
     val UNIT_KCAL_MIN: String
+    val UNIT_VO2_MAX: String
     
     // New metric
     val SENSOR_AVG_STEP_LENGTH: String

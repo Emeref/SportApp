@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.example.sportapp"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.sportapp"
@@ -102,6 +102,9 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    // Health Connect
+    implementation(libs.androidx.health.connect.client)
 
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.11.1")

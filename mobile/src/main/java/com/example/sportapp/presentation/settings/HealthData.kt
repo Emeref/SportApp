@@ -3,11 +3,12 @@ package com.example.sportapp.presentation.settings
 data class HealthData(
     val gender: Gender = Gender.MALE,
     val age: Int = 40,
-    val weight: Int = 87,
-    val height: Int = 184,
+    val weight: Double = 87.0,
+    val height: Double = 184.0,
     val restingHR: Int = 56,
     val maxHR: Int = 220 - 40, // Domyślnie 220 - wiek
-    val stepLength: Int = 79
+    val stepLength: Int = 79,
+    val vo2Max: Double? = null
 )
 
 enum class Gender {

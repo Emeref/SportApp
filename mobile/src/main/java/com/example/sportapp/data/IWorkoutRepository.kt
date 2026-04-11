@@ -4,6 +4,8 @@ import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutLap
+import com.example.sportapp.healthconnect.model.ExerciseSessionSyncDto
+import com.example.sportapp.healthconnect.model.SessionTimeSeries
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.flow.Flow
@@ -46,4 +48,23 @@ interface IWorkoutRepository {
     suspend fun insertWorkout(workout: WorkoutEntity): Long
     suspend fun insertPoints(points: List<WorkoutPointEntity>)
     suspend fun insertLaps(laps: List<WorkoutLap>)
+
+    suspend fun existsByHCSessionId(hcSessionId: String): Boolean
+    suspend fun saveImportedSession(session: ExerciseSessionSyncDto, timeSeries: SessionTimeSeries? = null): Long
+    
+    suspend fun saveImportedGpx(
+        definitionId: Long,
+        name: String,
+        startTime: Long,
+        endTime: Long,
+        durationSeconds: Long,
+        distanceGps: Double,
+        calories: Double,
+        avgBpm: Double?,
+        maxBpm: Int?,
+        totalAscent: Double,
+        totalDescent: Double,
+        points: List<WorkoutPointEntity>,
+        laps: List<WorkoutLap>
+    ): Long
 }
