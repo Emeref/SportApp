@@ -1,228 +1,173 @@
 package com.example.sportapp.data
 
-import android.location.Location
-import android.util.Xml
 import com.example.sportapp.MobileTexts
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.data.model.BaseType
+import com.example.sportapp.presentation.settings.HealthData
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.WorkoutSensor
-import com.example.sportapp.presentation.settings.HealthData
 import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
 import java.io.InputStream
 import java.text.SimpleDateFormat
-import java.util.*
+import java.time.Instant
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class GpxImporter @Inject constructor() {
-
-    private val iso8601Format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
-    
-    private val iso8601FormatWithMillis = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
 
     data class ImportResult(
         val workout: WorkoutEntity,
         val points: List<WorkoutPointEntity>,
         val laps: List<WorkoutLap>,
-        val warnings: List<String> = emptyList()
+        val warnings: List<String>
     )
 
-    fun importGpx(inputStream: InputStream, definition: WorkoutDefinition, healthData: HealthData, texts: MobileTexts): ImportResult {
-        val points = parseGpx(inputStream)
-        if (points.isEmpty()) throw Exception(texts.GPX_NO_POINTS)
+    fun importGpx(
+        inputStream: InputStream,
+        definition: WorkoutDefinition,
+        healthData: HealthData,
+        texts: MobileTexts
+    ): ImportResult {
+        val rawPoints = parseGpx(inputStream)
+        if (rawPoints.isEmpty()) throw Exception(texts.GPX_NO_POINTS)
 
-        val warnings = validateDefinition(points, definition, texts)
-        
-        val firstPoint = points.first()
-        val lastPoint = points.last()
-        val startTime = firstPoint.timestamp
-        val durationSeconds = (lastPoint.timestamp - firstPoint.timestamp) / 1000
-
-        var totalDistanceGps = 0.0
-        var totalAscent = 0.0
-        var totalDescent = 0.0
-        val bpms = mutableListOf<Int>()
-        val cadences = mutableListOf<Double>()
-        var maxSpeed = 0.0
-        var maxAltitude = -Double.MAX_VALUE
-        var minAltitude = Double.MAX_VALUE
-        
-        var totalCalories = 0.0
-        var maxCalorieMin = 0.0
+        val startTime = rawPoints.first().timestamp
+        val endTime = rawPoints.last().timestamp
+        val durationSeconds = (endTime - startTime) / 1000
 
         val workoutPoints = mutableListOf<WorkoutPointEntity>()
+        var totalDistance = 0.0
+        var totalAscent = 0.0
+        var totalDescent = 0.0
         
-        for (i in points.indices) {
-            val p = points[i]
+        var hasHr = false
+        var hasEle = false
+        var hasCadence = false
+
+        for (i in rawPoints.indices) {
+            val p = rawPoints[i]
+            var speedGpsVal = 0.0
             if (i > 0) {
-                val prev = points[i - 1]
-                val results = FloatArray(1)
-                Location.distanceBetween(prev.lat, prev.lon, p.lat, p.lon, results)
-                totalDistanceGps += results[0]
+                val prev = rawPoints[i - 1]
+                val dist = calculateDistance(prev.lat, prev.lon, p.lat, p.lon)
+                totalDistance += dist
                 
-                val dist = results[0]
+                val eleDiff = (p.ele ?: 0.0) - (prev.ele ?: 0.0)
+                if (eleDiff > 0) totalAscent += eleDiff else totalDescent += Math.abs(eleDiff)
+
                 val timeDiff = (p.timestamp - prev.timestamp) / 1000.0
-                if (timeDiff > 0) {
-                    val speed = (dist / timeDiff) * 3.6 // km/h
-                    if (speed > maxSpeed) maxSpeed = speed
-                }
-
-                p.ele?.let { ele ->
-                    prev.ele?.let { prevEle ->
-                        val diff = ele - prevEle
-                        if (diff > 0) totalAscent += diff else totalDescent += Math.abs(diff)
-                    }
-                }
+                if (timeDiff > 0) speedGpsVal = (dist / timeDiff) * 3.6
             }
             
-            p.ele?.let {
-                if (it > maxAltitude) maxAltitude = it
-                if (it < minAltitude) minAltitude = it
-            }
-            p.hr?.let { bpms.add(it) }
-            p.cadence?.let { cadences.add(it.toDouble()) }
+            if (p.hr != null) hasHr = true
+            if (p.ele != null) hasEle = true
+            if (p.cadence != null) hasCadence = true
 
-            val calorieMin = p.hr?.let { hr -> 
-                calculateHRR(hr.toFloat(), healthData)
-            }
-            
-            if (calorieMin != null) {
-                if (calorieMin > maxCalorieMin) maxCalorieMin = calorieMin
-                if (i > 0) {
-                    val timeDiffSeconds = (p.timestamp - points[i - 1].timestamp) / 1000.0
-                    totalCalories += (calorieMin / 60.0) * timeDiffSeconds
-                }
-            }
-
-            val elapsedSeconds = (p.timestamp - startTime) / 1000
-            val h = elapsedSeconds / 3600
-            val m = (elapsedSeconds % 3600) / 60
-            val s = elapsedSeconds % 60
-            val timeFormatted = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+            val seconds = (p.timestamp - startTime) / 1000
+            val h = seconds / 3600
+            val m = (seconds % 3600) / 60
+            val s = seconds % 60
+            val timeStr = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
 
             workoutPoints.add(WorkoutPointEntity(
                 workoutId = 0,
-                time = timeFormatted,
+                time = timeStr,
                 latitude = p.lat,
                 longitude = p.lon,
                 bpm = p.hr,
                 steps = null,
                 stepsMin = p.cadence?.toDouble(),
                 distanceSteps = null,
-                distanceGps = totalDistanceGps.toInt(),
-                speedGps = if (i > 0) {
-                    val timeDiff = (p.timestamp - points[i-1].timestamp) / 1000.0
-                    if (timeDiff > 0) {
-                        val dist = FloatArray(1)
-                        Location.distanceBetween(points[i-1].lat, points[i-1].lon, p.lat, p.lon, dist)
-                        (dist[0] / timeDiff) * 3.6
-                    } else 0.0
-                } else 0.0,
+                distanceGps = totalDistance.toInt(),
+                speedGps = speedGpsVal,
                 speedSteps = null,
                 altitude = p.ele,
                 totalAscent = totalAscent,
                 totalDescent = totalDescent,
-                calorieMin = calorieMin,
-                calorieSum = totalCalories
+                calorieMin = null,
+                calorieSum = null,
+                pressure = null
             ))
         }
 
-        val avgBpm = if (bpms.isNotEmpty()) bpms.average() else null
-        val maxBpm = if (bpms.isNotEmpty()) bpms.maxOrNull() else null
-        val avgCadence = if (cadences.isNotEmpty()) cadences.average() else null
-        val maxCadenceValue = if (cadences.isNotEmpty()) cadences.maxOrNull() else null
-        
-        val finalCalories = if (totalCalories > 0) totalCalories else estimateCalories(definition, durationSeconds, avgBpm)
+        val avgBpm = workoutPoints.mapNotNull { it.bpm }.average().takeIf { !it.isNaN() }
+        val maxBpm = workoutPoints.mapNotNull { it.bpm }.maxOrNull()
+        val calories = estimateCalories(definition, durationSeconds, avgBpm)
 
         val workout = WorkoutEntity(
             activityName = definition.name,
             startTime = startTime,
-            durationFormatted = formatDuration(durationSeconds),
             durationSeconds = durationSeconds,
-            steps = null,
-            distanceSteps = null,
-            distanceGps = totalDistanceGps,
-            avgSpeedSteps = null,
-            avgSpeedGps = if (durationSeconds > 0) (totalDistanceGps / durationSeconds) * 3.6 else 0.0,
-            totalAscent = totalAscent,
-            totalDescent = totalDescent,
+            durationFormatted = formatDuration(durationSeconds),
+            distanceGps = totalDistance,
+            totalCalories = calories,
             avgBpm = avgBpm,
             maxBpm = maxBpm,
-            totalCalories = finalCalories,
-            maxCalorieMin = if (maxCalorieMin > 0) maxCalorieMin else null,
-            maxSpeed = maxSpeed,
-            maxAltitude = if (maxAltitude == -Double.MAX_VALUE) null else maxAltitude,
-            minAltitude = if (minAltitude == Double.MAX_VALUE) null else minAltitude,
-            avgCadence = avgCadence,
-            maxCadence = maxCadenceValue,
-            avgPace = if (totalDistanceGps > 0) (durationSeconds / 60.0) / (totalDistanceGps / 1000.0) else null
+            totalAscent = totalAscent,
+            totalDescent = totalDescent,
+            avgSpeedGps = if (durationSeconds > 0) (totalDistance / durationSeconds) * 3.6 else 0.0,
+            maxSpeed = workoutPoints.mapNotNull { it.speedGps }.maxOrNull(),
+            maxAltitude = workoutPoints.mapNotNull { it.altitude }.maxOrNull(),
+            minAltitude = workoutPoints.mapNotNull { it.altitude }.minOrNull(),
+            autoLapDistance = definition.autoLapDistance
         )
 
         val laps = generateLaps(workoutPoints, definition.autoLapDistance ?: 1000.0)
+        val warnings = getCompatibilityWarnings(definition, hasHr, hasEle, hasCadence, texts)
 
         return ImportResult(workout, workoutPoints, laps, warnings)
     }
 
-    private fun calculateHRR(hr: Float, data: HealthData): Double {
-        if (hr <= 0 || hr < data.restingHR) return 0.0
-        val reserve = data.maxHR - data.restingHR
-        if (reserve <= 0) return 0.0
-        val intensity = (hr - data.restingHR) / reserve.toDouble()
-        val estimatedVO2 = (intensity * 40.0) + 3.5 
-        return (estimatedVO2 * data.weight / 1000.0) * 5.0
-    }
-
     private fun parseGpx(inputStream: InputStream): List<RawPoint> {
-        val parser = Xml.newPullParser()
-        parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true)
-        parser.setInput(inputStream, null)
-
         val points = mutableListOf<RawPoint>()
+        val factory = XmlPullParserFactory.newInstance()
+        val parser = factory.newPullParser()
+        parser.setInput(inputStream, "UTF-8")
+
         var eventType = parser.eventType
-        var currentPoint: RawPoint? = null
+        var currentLat: Double? = null
+        var currentLon: Double? = null
+        var currentEle: Double? = null
+        var currentTime: Long? = null
+        var currentHr: Int? = null
+        var currentCadence: Int? = null
         var text: String? = null
 
         while (eventType != XmlPullParser.END_DOCUMENT) {
-            val name = parser.name
+            val tagName = parser.name
             when (eventType) {
                 XmlPullParser.START_TAG -> {
-                    if (name == "trkpt") {
-                        val lat = try { parser.getAttributeValue(null, "lat").toDouble() } catch(e: Exception) { 0.0 }
-                        val lon = try { parser.getAttributeValue(null, "lon").toDouble() } catch(e: Exception) { 0.0 }
-                        currentPoint = RawPoint(lat, lon, 0, null, null, null)
+                    if (tagName == "trkpt") {
+                        currentLat = parser.getAttributeValue(null, "lat")?.toDoubleOrNull()
+                        currentLon = parser.getAttributeValue(null, "lon")?.toDoubleOrNull()
+                        currentEle = null
+                        currentTime = null
+                        currentHr = null
+                        currentCadence = null
                     }
                 }
                 XmlPullParser.TEXT -> {
                     text = parser.text
                 }
                 XmlPullParser.END_TAG -> {
-                    currentPoint?.let { cp ->
-                        when (name) {
-                            "ele" -> currentPoint = cp.copy(ele = text?.toDoubleOrNull())
-                            "time" -> {
-                                val date = try {
-                                    iso8601Format.parse(text ?: "")
-                                } catch (e: Exception) {
-                                    try {
-                                        iso8601FormatWithMillis.parse(text ?: "")
-                                    } catch (e2: Exception) {
-                                        null
-                                    }
-                                }
-                                currentPoint = cp.copy(timestamp = date?.time ?: 0)
+                    when (tagName) {
+                        "ele" -> currentEle = text?.toDoubleOrNull()
+                        "time" -> currentTime = text?.let { 
+                            try { Instant.parse(it).toEpochMilli() } 
+                            catch (e: Exception) { 
+                                try { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).parse(it)?.time }
+                                catch (e2: Exception) { null }
                             }
-                            "hr", "gpxtpx:hr" -> currentPoint = cp.copy(hr = text?.toIntOrNull())
-                            "cadence", "gpxtpx:cadence" -> currentPoint = cp.copy(cadence = text?.toIntOrNull())
-                            "trkpt" -> {
-                                points.add(cp)
-                                currentPoint = null
+                        }
+                        "hr", "gpxtpx:hr" -> currentHr = text?.toIntOrNull()
+                        "cad", "gpxtpx:cad" -> currentCadence = text?.toIntOrNull()
+                        "trkpt" -> {
+                            if (currentLat != null && currentLon != null && currentTime != null) {
+                                points.add(RawPoint(currentLat, currentLon, currentTime, currentEle, currentHr, currentCadence))
                             }
                         }
                     }
@@ -233,13 +178,20 @@ class GpxImporter @Inject constructor() {
         return points
     }
 
-    private fun validateDefinition(points: List<RawPoint>, definition: WorkoutDefinition, texts: MobileTexts): List<String> {
-        val warnings = mutableListOf<String>()
-        val hasHr = points.any { it.hr != null }
-        val hasEle = points.any { it.ele != null }
-        val hasCadence = points.any { it.cadence != null }
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371000.0 // Earth radius in meters
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return r * c
+    }
 
-        val supportedSensors = definition.sensors.map { it.sensorId }
+    private fun getCompatibilityWarnings(definition: WorkoutDefinition, hasHr: Boolean, hasEle: Boolean, hasCadence: Boolean, texts: MobileTexts): List<String> {
+        val warnings = mutableListOf<String>()
+        val supportedSensors = definition.sensors.filter { it.isRecording }.map { it.sensorId }
         
         if (hasHr && !supportedSensors.contains(WorkoutSensor.HEART_RATE.id)) {
             warnings.add(texts.GPX_WARN_HR)
@@ -256,10 +208,16 @@ class GpxImporter @Inject constructor() {
 
     private fun estimateCalories(definition: WorkoutDefinition, durationSeconds: Long, avgBpm: Double?): Double {
         val durationMinutes = durationSeconds / 60.0
-        val baseMet = when (definition.baseType.uppercase()) {
-            "RUNNING", "BIEGANIE" -> 10.0
-            "CYCLING", "ROWER" -> 8.0
-            "WALKING", "SPACER" -> 4.0
+        val baseMet = when (definition.baseType) {
+            BaseType.RUNNING, BaseType.TREADMILL_RUNNING -> 10.0
+            BaseType.CYCLING, BaseType.MOUNTAIN_BIKING, BaseType.ROAD_BIKING -> 8.0
+            BaseType.WALKING, BaseType.SPEED_WALKING -> 4.0
+            BaseType.HIKING -> 6.0
+            BaseType.SWIMMING_POOL, BaseType.SWIMMING_OPEN_WATER -> 8.0
+            BaseType.STRENGTH_TRAINING, BaseType.CALISTHENICS -> 5.0
+            BaseType.HIIT -> 12.0
+            BaseType.YOGA, BaseType.PILATES -> 3.0
+            BaseType.FOOTBALL, BaseType.BASKETBALL -> 8.0
             else -> 6.0
         }
         
@@ -287,7 +245,14 @@ class GpxImporter @Inject constructor() {
                 val firstP = lapPoints.first()
                 val lastP = lapPoints.last()
                 
-                val lapDurationSec = lapPoints.size.toLong() 
+                val sdf = SimpleDateFormat("HH:mm:ss", Locale.US)
+                val lapDurationSec = try {
+                    val start = sdf.parse(firstP.time)?.time ?: 0L
+                    val end = sdf.parse(lastP.time)?.time ?: 0L
+                    (end - start) / 1000
+                } catch (e: Exception) {
+                    lapPoints.size.toLong()
+                }
                 
                 val avgSpeed = if (lapDurationSec > 0) (lapDist / lapDurationSec) * 3.6 else 0.0
                 val avgHr = lapPoints.mapNotNull { it.bpm }.average().toInt().takeIf { it > 0 } ?: 0
@@ -319,11 +284,11 @@ class GpxImporter @Inject constructor() {
         val h = seconds / 3600
         val m = (seconds % 3600) / 60
         val s = seconds % 60
-        return if (h > 0) String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+        return if (h > 0) String.format(Locale.US, "%d:%02d:%02d", h, m, s)
         else String.format(Locale.US, "%02d:%02d", m, s)
     }
 
-    data class RawPoint(
+    private data class RawPoint(
         val lat: Double,
         val lon: Double,
         val timestamp: Long,

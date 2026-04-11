@@ -337,6 +337,45 @@ class WorkoutRepository @Inject constructor(
         workoutId
     }
 
+    override suspend fun saveImportedGpx(
+        definitionId: Long,
+        name: String,
+        startTime: Long,
+        endTime: Long,
+        durationSeconds: Long,
+        distanceGps: Double,
+        calories: Double,
+        avgBpm: Double?,
+        maxBpm: Int?,
+        totalAscent: Double,
+        totalDescent: Double,
+        points: List<WorkoutPointEntity>,
+        laps: List<WorkoutLap>
+    ): Long = withContext(Dispatchers.IO) {
+        val workout = WorkoutEntity(
+            activityName = name,
+            startTime = startTime,
+            durationFormatted = formatDuration(durationSeconds),
+            durationSeconds = durationSeconds,
+            distanceGps = distanceGps,
+            totalCalories = calories,
+            avgBpm = avgBpm,
+            maxBpm = maxBpm,
+            totalAscent = totalAscent,
+            totalDescent = totalDescent,
+            isSynced = false
+        )
+        val workoutId = workoutDao.insertWorkout(workout)
+        
+        val pointsToSave = points.map { it.copy(workoutId = workoutId) }
+        workoutDao.insertPoints(pointsToSave)
+        
+        val lapsToSave = laps.map { it.copy(workoutId = workoutId) }
+        workoutDao.insertLaps(lapsToSave)
+        
+        workoutId
+    }
+
     private fun createPointsFromTimeSeries(
         workoutId: Long,
         startTime: Instant,
@@ -348,7 +387,6 @@ class WorkoutRepository @Inject constructor(
 
         val points = mutableListOf<WorkoutPointEntity>()
         
-        // Map data by rounded seconds from start
         val hrMap = timeSeries.heartRates.associateBy { Duration.between(startTime, it.time).seconds }
         val speedMap = timeSeries.speeds.associateBy { Duration.between(startTime, it.time).seconds }
         val cadenceMap = timeSeries.cadences.associateBy { Duration.between(startTime, it.time).seconds }
@@ -359,7 +397,6 @@ class WorkoutRepository @Inject constructor(
         var currentDescent = 0.0
         var currentCalories = 0.0
         
-        // For distance, elevation and calories we have intervals. We'll simplify and assign to endTime of interval.
         val distanceBySec = timeSeries.distances.associateBy { Duration.between(startTime, it.endTime).seconds }
         val elevationBySec = timeSeries.elevations.associateBy { Duration.between(startTime, it.endTime).seconds }
         val caloriesBySec = timeSeries.calories.associateBy { Duration.between(startTime, it.endTime).seconds }
@@ -399,7 +436,7 @@ class WorkoutRepository @Inject constructor(
                 altitude = loc?.altitude,
                 totalAscent = currentAscent,
                 totalDescent = currentDescent,
-                calorieMin = calStep, // approximations
+                calorieMin = calStep,
                 calorieSum = currentCalories
             ))
         }

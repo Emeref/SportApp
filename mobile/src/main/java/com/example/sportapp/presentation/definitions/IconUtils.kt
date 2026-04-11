@@ -12,11 +12,13 @@ fun getIconForName(name: String): ImageVector {
         "DirectionsBike" -> Icons.AutoMirrored.Filled.DirectionsBike
         "Pool" -> Icons.Default.Pool
         "Mountain" -> Icons.Default.Terrain
+        "Hiking" -> Icons.Default.Hiking
         "Fitness" -> Icons.Default.FitnessCenter
         "SelfImprovement" -> Icons.Default.SelfImprovement
         "SportsTennis" -> Icons.Default.SportsTennis
         "Kayaking" -> Icons.Default.Kayaking
         "Snowboarding" -> Icons.Default.Snowboarding
+        "DownhillSkiing" -> Icons.Default.DownhillSkiing
         "Surfing" -> Icons.Default.Surfing
         "IceSkating" -> Icons.Default.IceSkating
         "Golf" -> Icons.Default.GolfCourse
@@ -26,6 +28,10 @@ fun getIconForName(name: String): ImageVector {
         "SportsBaseball" -> Icons.Default.SportsBaseball
         "Sailing" -> Icons.Default.Sailing
         "Skateboarding" -> Icons.Default.Skateboarding
+        "Rowing" -> Icons.Default.Rowing
+        "Stairs" -> Icons.Default.Stairs
+        "MusicNote" -> Icons.Default.MusicNote
+        "SportsMartialArts" -> Icons.Default.SportsMartialArts
         "Sports" -> Icons.Default.EmojiEvents
         "Timer" -> Icons.Default.Timer
         else -> Icons.AutoMirrored.Filled.DirectionsRun

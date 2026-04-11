@@ -216,24 +216,51 @@ interface MobileTexts {
     val DEF_BASE_TYPE: String
     val DEF_FINISH: String
     val DEF_SELECT_ICON_TITLE: String
+    
+    // Base Types
     val DEF_WALKING: String
+    val DEF_SPEED_WALKING: String
     val DEF_RUNNING: String
+    val DEF_TREADMILL_RUNNING: String
+    val DEF_STAIR_CLIMBING: String
+    val DEF_STAIR_CLIMBING_MACHINE: String
     val DEF_CYCLING: String
+    val DEF_CYCLING_STATIONARY: String
+    val DEF_MOUNTAIN_BIKING: String
+    val DEF_ROAD_BIKING: String
     val DEF_HIKING: String
-    val DEF_SWIMMING: String
-    val DEF_GYM: String
+    val DEF_ROCK_CLIMBING: String
+    val DEF_BOULDERING: String
+    val DEF_HIIT: String
+    val DEF_ELLIPTICAL: String
+    val DEF_ROWING_MACHINE: String
+    val DEF_STRENGTH_TRAINING: String
+    val DEF_CALISTHENICS: String
     val DEF_YOGA: String
-    val DEF_TENNIS: String
+    val DEF_PILATES: String
+    val DEF_AEROBICS: String
+    val DEF_DANCING: String
+    val DEF_SWIMMING: String
+    val DEF_SWIMMING_POOL: String
+    val DEF_SWIMMING_OPEN_WATER: String
     val DEF_KAYAKING: String
-    val DEF_SNOWBOARDING: String
+    val DEF_PADDLE_BOARDING: String
     val DEF_SURFING: String
-    val DEF_SKATING: String
-    val DEF_GOLF: String
+    val DEF_SAILING: String
     val DEF_FOOTBALL: String
     val DEF_BASKETBALL: String
+    val DEF_TENNIS: String
+    val DEF_SQUASH: String
     val DEF_VOLLEYBALL: String
+    val DEF_GOLF: String
+    val DEF_MARTIAL_ARTS: String
+    val DEF_SKIING: String
+    val DEF_SNOWBOARDING: String
+    val DEF_SKATING: String
+    val DEF_ICE_SKATING: String
+    
+    val DEF_GYM: String
     val DEF_BASEBALL: String
-    val DEF_SAILING: String
     val DEF_SKATEBOARDING: String
     val DEF_COMPETITION: String
     val DEF_STOPWATCH: String

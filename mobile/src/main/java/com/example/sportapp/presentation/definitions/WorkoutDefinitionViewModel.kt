@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -66,6 +67,10 @@ class WorkoutDefinitionViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun getDefinition(id: Long) = definitions.map { list ->
+        list.find { it.id == id }
     }
 
     fun saveDefinition(definition: WorkoutDefinition) {

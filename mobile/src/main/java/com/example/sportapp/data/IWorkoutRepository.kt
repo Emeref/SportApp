@@ -51,4 +51,20 @@ interface IWorkoutRepository {
 
     suspend fun existsByHCSessionId(hcSessionId: String): Boolean
     suspend fun saveImportedSession(session: ExerciseSessionSyncDto, timeSeries: SessionTimeSeries? = null): Long
+    
+    suspend fun saveImportedGpx(
+        definitionId: Long,
+        name: String,
+        startTime: Long,
+        endTime: Long,
+        durationSeconds: Long,
+        distanceGps: Double,
+        calories: Double,
+        avgBpm: Double?,
+        maxBpm: Int?,
+        totalAscent: Double,
+        totalDescent: Double,
+        points: List<WorkoutPointEntity>,
+        laps: List<WorkoutLap>
+    ): Long
 }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import com.example.sportapp.data.model.BaseType
 
 data class ExerciseImportUiState(
     val sessions: List<ExerciseSessionSyncDto> = emptyList(),
@@ -74,11 +75,51 @@ class ExerciseImportViewModel @Inject constructor(
 
     private fun mapHcToAppBaseType(hcType: Int): String {
         return when (hcType) {
-            ExerciseSessionRecord.EXERCISE_TYPE_RUNNING -> "Bieganie"
-            ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> "Chodzenie"
-            ExerciseSessionRecord.EXERCISE_TYPE_BIKING -> "Jazda na rowerze"
-            ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> "Wędrówka"
-            else -> "Inne"
+            ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> BaseType.WALKING
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_RUNNING -> BaseType.RUNNING
+            ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> BaseType.TREADMILL_RUNNING
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_STAIR_CLIMBING -> BaseType.STAIR_CLIMBING
+            ExerciseSessionRecord.EXERCISE_TYPE_STAIR_CLIMBING_MACHINE -> BaseType.STAIR_CLIMBING_MACHINE
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_BIKING -> BaseType.CYCLING
+            ExerciseSessionRecord.EXERCISE_TYPE_BIKING_STATIONARY -> BaseType.CYCLING_STATIONARY
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> BaseType.HIKING
+            ExerciseSessionRecord.EXERCISE_TYPE_ROCK_CLIMBING -> BaseType.ROCK_CLIMBING
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_ELLIPTICAL -> BaseType.ELLIPTICAL
+            ExerciseSessionRecord.EXERCISE_TYPE_ROWING_MACHINE -> BaseType.ROWING_MACHINE
+            ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING -> BaseType.STRENGTH_TRAINING
+            ExerciseSessionRecord.EXERCISE_TYPE_CALISTHENICS -> BaseType.CALISTHENICS
+            ExerciseSessionRecord.EXERCISE_TYPE_YOGA -> BaseType.YOGA
+            ExerciseSessionRecord.EXERCISE_TYPE_PILATES -> BaseType.PILATES
+            ExerciseSessionRecord.EXERCISE_TYPE_DANCING -> BaseType.DANCING
+            ExerciseSessionRecord.EXERCISE_TYPE_HIGH_INTENSITY_INTERVAL_TRAINING -> BaseType.HIIT
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL -> BaseType.SWIMMING_POOL
+            ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_OPEN_WATER -> BaseType.SWIMMING_OPEN_WATER
+            ExerciseSessionRecord.EXERCISE_TYPE_SURFING -> BaseType.SURFING
+            ExerciseSessionRecord.EXERCISE_TYPE_SAILING -> BaseType.SAILING
+            ExerciseSessionRecord.EXERCISE_TYPE_PADDLING -> BaseType.KAYAKING
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_FOOTBALL_AMERICAN,
+            ExerciseSessionRecord.EXERCISE_TYPE_FOOTBALL_AUSTRALIAN,
+            ExerciseSessionRecord.EXERCISE_TYPE_SOCCER -> BaseType.FOOTBALL
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_BASKETBALL -> BaseType.BASKETBALL
+            ExerciseSessionRecord.EXERCISE_TYPE_TENNIS -> BaseType.TENNIS
+            ExerciseSessionRecord.EXERCISE_TYPE_SQUASH -> BaseType.SQUASH
+            ExerciseSessionRecord.EXERCISE_TYPE_VOLLEYBALL -> BaseType.VOLLEYBALL
+            ExerciseSessionRecord.EXERCISE_TYPE_GOLF -> BaseType.GOLF
+            ExerciseSessionRecord.EXERCISE_TYPE_MARTIAL_ARTS -> BaseType.MARTIAL_ARTS
+            
+            ExerciseSessionRecord.EXERCISE_TYPE_SKIING -> BaseType.SKIING
+            ExerciseSessionRecord.EXERCISE_TYPE_SNOWBOARDING -> BaseType.SNOWBOARDING
+            ExerciseSessionRecord.EXERCISE_TYPE_ICE_SKATING -> BaseType.ICE_SKATING
+            
+            else -> BaseType.OTHER
         }
     }
 
