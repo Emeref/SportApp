@@ -3,7 +3,6 @@ package com.example.sportapp.presentation.settings
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -142,6 +141,23 @@ fun SettingsScreen(
                                 icon = Icons.Default.FitnessCenter,
                                 onClick = onNavigateToExerciseImport
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(texts.SETTINGS_HC_AUTO_EXPORT, style = MaterialTheme.typography.bodyLarge)
+                                    Text(texts.SETTINGS_HC_AUTO_EXPORT_DESC, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Switch(
+                                    checked = state.autoExportToHC,
+                                    onCheckedChange = { state = state.copy(autoExportToHC = it) }
+                                )
+                            }
 
                             Spacer(modifier = Modifier.height(8.dp))
 

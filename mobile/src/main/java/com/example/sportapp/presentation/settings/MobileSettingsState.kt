@@ -68,5 +68,6 @@ data class MobileSettingsState(
     val watchStatsCustomDays: Int = 7,
     val healthData: HealthData = HealthData(),
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val language: AppLanguage = AppLanguage.POLISH
+    val language: AppLanguage = AppLanguage.POLISH,
+    val autoExportToHC: Boolean = false
 )

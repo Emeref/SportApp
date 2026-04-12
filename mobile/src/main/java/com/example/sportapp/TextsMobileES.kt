@@ -99,6 +99,15 @@ object TextsMobileES : MobileTexts {
     override fun hcImportConfirmDesc(count: Int) = "¿Desea importar $count entrenamientos?"
     override fun hcImportProgress(current: Int, total: Int) = "Importando $current/$total entrenamientos..."
 
+    // Stage 5 - Export
+    override val HC_EXPORT_TO = "Exportar a Health Connect"
+    override val HC_EXPORTED_ON = "✓ Sincronizado con Health Connect"
+    override val HC_EXPORT_SUCCESS = "Exportación realizada con éxito"
+    override val HC_EXPORT_ERROR = "Error al exportar a Health Connect: "
+    override val HC_EXPORT_PERMISSION_DENIED = "Permiso denegado para Health Connect"
+    override val SETTINGS_HC_AUTO_EXPORT = "Exportación automática"
+    override val SETTINGS_HC_AUTO_EXPORT_DESC = "Exportar automáticamente los entrenamientos finalizados a Health Connect"
+
     // Health Data Screen
     override val HEALTH_TITLE = "Datos de salud"
     override val HEALTH_GENDER = "Género"

@@ -376,6 +376,14 @@ class WorkoutRepository @Inject constructor(
         workoutId
     }
 
+    override suspend fun updateHCSessionId(activityId: Long, hcSessionId: String) = withContext(Dispatchers.IO) {
+        workoutDao.updateHCSessionId(activityId, hcSessionId)
+    }
+
+    override suspend fun isExportedToHC(activityId: Long): Boolean = withContext(Dispatchers.IO) {
+        workoutDao.isExportedToHC(activityId)
+    }
+
     private fun createPointsFromTimeSeries(
         workoutId: Long,
         startTime: Instant,

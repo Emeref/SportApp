@@ -67,4 +67,7 @@ interface IWorkoutRepository {
         points: List<WorkoutPointEntity>,
         laps: List<WorkoutLap>
     ): Long
+
+    suspend fun updateHCSessionId(activityId: Long, hcSessionId: String)
+    suspend fun isExportedToHC(activityId: Long): Boolean
 }

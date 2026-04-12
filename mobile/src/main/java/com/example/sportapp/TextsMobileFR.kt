@@ -99,6 +99,15 @@ object TextsMobileFR : MobileTexts {
     override fun hcImportConfirmDesc(count: Int) = "Voulez-vous importer $count entraînements ?"
     override fun hcImportProgress(current: Int, total: Int) = "Importation de $current/$total entraînements..."
 
+    // Stage 5 - Export
+    override val HC_EXPORT_TO = "Exporter vers Health Connect"
+    override val HC_EXPORTED_ON = "✓ Synchronisé avec Health Connect"
+    override val HC_EXPORT_SUCCESS = "Exportation réussie"
+    override val HC_EXPORT_ERROR = "Erreur d'exportation : "
+    override val HC_EXPORT_PERMISSION_DENIED = "Pas de permission d'écriture Health Connect"
+    override val SETTINGS_HC_AUTO_EXPORT = "Exportation automatique"
+    override val SETTINGS_HC_AUTO_EXPORT_DESC = "Exporter automatiquement les nouveaux entraînements vers Health Connect"
+
     // Health Data Screen
     override val HEALTH_TITLE = "Données de santé"
     override val HEALTH_GENDER = "Genre"
@@ -376,6 +385,38 @@ object TextsMobileFR : MobileTexts {
     override val WIDGET_WATCH_ASCENT = "Total montée"
     override val WIDGET_WATCH_DESCENT = "Total descente"
 
+    // Sensors
+    override val SENSOR_HEART_RATE = "Fréquence cardiaque"
+    override val SENSOR_CALORIES_SUM = "Calories totales"
+    override val SENSOR_CALORIES_MIN = "Calories par minute"
+    override val SENSOR_STEPS = "Pas"
+    override val SENSOR_STEPS_MIN = "Cadence (pas/min)"
+    override val SENSOR_DISTANCE_STEPS = "Distance (pas)"
+    override val SENSOR_SPEED_GPS = "Vitesse"
+    override val SENSOR_SPEED_STEPS = "Vitesse (pas)"
+    override val SENSOR_DISTANCE_GPS = "Distance"
+    override val SENSOR_ALTITUDE = "Altitude"
+    override val SENSOR_TOTAL_ASCENT = "Ascension totale"
+    override val SENSOR_TOTAL_DESCENT = "Descente totale"
+    override val SENSOR_PRESSURE = "Pression atm."
+    override val SENSOR_MAP = "Données de localisation"
+    override val SENSOR_AVG_STEP_LENGTH = "Longueur de pas moyenne"
+
+    // Units
+    override val UNIT_KCAL = "kcal"
+    override val UNIT_M = "m"
+    override val UNIT_KM = "km"
+    override val UNIT_STEP_MIN = "pas/min"
+    override val UNIT_KM_H = "km/h"
+    override val UNIT_STEPS = "pas"
+    override val UNIT_HPA = "hPa"
+    override val UNIT_MIN_KM = "min/km"
+    override val UNIT_M_ASL = "m"
+    override val UNIT_MIN_KM_LABEL = "min/km"
+    override val UNIT_BPM = "bpm"
+    override val UNIT_KCAL_MIN = "kcal/min"
+    override val UNIT_VO2_MAX = "ml/kg/min"
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -459,40 +500,6 @@ object TextsMobileFR : MobileTexts {
             else -> id
         }
     }
-
-    // Sensors
-    override val SENSOR_HEART_RATE = "Fréquence cardiaque"
-    override val SENSOR_CALORIES_SUM = "Calories totales"
-    override val SENSOR_CALORIES_MIN = "Calories par minute"
-    override val SENSOR_STEPS = "Pas"
-    override val SENSOR_STEPS_MIN = "Cadence (pas/min)"
-    override val SENSOR_DISTANCE_STEPS = "Distance (pas)"
-    override val SENSOR_SPEED_GPS = "Vitesse"
-    override val SENSOR_SPEED_STEPS = "Vitesse (pas)"
-    override val SENSOR_DISTANCE_GPS = "Distance"
-    override val SENSOR_ALTITUDE = "Altitude"
-    override val SENSOR_TOTAL_ASCENT = "Ascension totale"
-    override val SENSOR_TOTAL_DESCENT = "Descente totale"
-    override val SENSOR_PRESSURE = "Pression atm."
-    override val SENSOR_MAP = "Données de localisation"
-
-    // Units
-    override val UNIT_KCAL = "kcal"
-    override val UNIT_M = "m"
-    override val UNIT_KM = "km"
-    override val UNIT_STEP_MIN = "pas/min"
-    override val UNIT_KM_H = "km/h"
-    override val UNIT_STEPS = "pas"
-    override val UNIT_HPA = "hPa"
-    override val UNIT_MIN_KM = "min/km"
-    override val UNIT_M_ASL = "m"
-    override val UNIT_MIN_KM_LABEL = "min/km"
-    override val UNIT_BPM = "bpm"
-    override val UNIT_KCAL_MIN = "kcal/min"
-    override val UNIT_VO2_MAX = "ml/kg/min"
-    
-    // New metric
-    override val SENSOR_AVG_STEP_LENGTH = "Longueur de pas moyenne"
 
     // Trim Screen
     override val TRIM_TITLE = "Modifier l'entraînement (Rognage)"

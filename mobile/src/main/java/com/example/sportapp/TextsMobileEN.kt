@@ -76,6 +76,8 @@ object TextsMobileEN : MobileTexts {
     override val HC_INSTALL = "Install"
     override val HC_SYNC_HEALTH_DATA = "Sync with Health Connect"
     override val HC_SYNC_WORKOUTS = "Import workouts from Health Connect"
+    override val SETTINGS_HC_AUTO_EXPORT = "Auto export"
+    override val SETTINGS_HC_AUTO_EXPORT_DESC = "Automatically export new workouts to Health Connect"
     override val HC_SYNC_CONFIRM_TITLE = "Data Synchronization"
     override val HC_SYNC_CONFIRM_DESC = "Do you want to update your profile with data found in Health Connect?"
     override val HC_SYNC_SUCCESS = "Synchronization successful"
@@ -98,6 +100,13 @@ object TextsMobileEN : MobileTexts {
     override fun hcImportSelected(count: Int) = "Import selected ($count)"
     override fun hcImportConfirmDesc(count: Int) = "Do you want to import $count workouts?"
     override fun hcImportProgress(current: Int, total: Int) = "Importing $current/$total workouts..."
+
+    // Stage 5 - Export
+    override val HC_EXPORT_TO = "Export to Health Connect"
+    override val HC_EXPORTED_ON = "✓ Synced with Health Connect"
+    override val HC_EXPORT_SUCCESS = "Export successful"
+    override val HC_EXPORT_ERROR = "Export error: "
+    override val HC_EXPORT_PERMISSION_DENIED = "No Health Connect write permission"
 
     // Health Data Screen
     override val HEALTH_TITLE = "Health Data"
@@ -210,7 +219,7 @@ object TextsMobileEN : MobileTexts {
     override val DEF_SENSORS = "Sensors"
     override val DEF_LIST_TITLE = "Activity Definition"
     override val DEF_SENSORS_DESC = "Manage sports list and sensors"
-    override val DEF_RECORDING = "Nagrywanie"
+    override val DEF_RECORDING = "Recording"
     override val DEF_SELECT_ICON = "Select Icon"
     override val DEF_SAVE = "Save"
     override val DEF_MOVE_UP = "Move up"
@@ -277,12 +286,6 @@ object TextsMobileEN : MobileTexts {
     override val DEF_STOPWATCH = "Stopwatch"
     override val DEF_OTHER = "Other"
     override val DEF_STANDARD_ACTIVITY = "Standard activity"
-
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Select activity to modify"
-    override val AD_SETTINGS_EDIT_TITLE = "Settings"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Section: Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Section: Charts"
 
     // Heart Rate Math
     override val HR_NO_DATA = "No HR data"
@@ -393,6 +396,22 @@ object TextsMobileEN : MobileTexts {
     override val SENSOR_MAP = "Location data"
     override val SENSOR_AVG_STEP_LENGTH = "Average step length"
 
+    // Trim Screen
+    override val TRIM_TITLE = "Edit Workout (Trimming)"
+    override val TRIM_CONFIRM_TITLE = "Confirm trimming"
+    override val TRIM_CONFIRM_DESC = "Are you sure you want to delete data outside selected range? This data will be permanently removed."
+    override val TRIM_SAVE_BTN = "Trim and save"
+    override val TRIM_CHART_HR = "Heart rate chart"
+    override val TRIM_RANGE_TITLE = "Select workout range"
+    override val TRIM_PREVIEW_TITLE = "New statistics preview"
+    override val TRIM_NEW_DURATION = "New duration:"
+    override val TRIM_DISTANCE_GPS = "Distance (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Distance (Steps):"
+    override val TRIM_CALORIES = "Calories burned:"
+    override val TRIM_AVG_BPM = "Average HR:"
+    override val TRIM_START = "Start"
+    override val TRIM_END = "Finish"
+
     // Units
     override val UNIT_KCAL = "kcal"
     override val UNIT_M = "m"
@@ -407,6 +426,12 @@ object TextsMobileEN : MobileTexts {
     override val UNIT_BPM = "bpm"
     override val UNIT_KCAL_MIN = "kcal/min"
     override val UNIT_VO2_MAX = "ml/kg/min"
+
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Select activity to modify"
+    override val AD_SETTINGS_EDIT_TITLE = "Settings"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Section: Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Section: Charts"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -490,20 +515,4 @@ object TextsMobileEN : MobileTexts {
             else -> id
         }
     }
-
-    // Trim Screen
-    override val TRIM_TITLE = "Edit Workout (Trimming)"
-    override val TRIM_CONFIRM_TITLE = "Confirm trimming"
-    override val TRIM_CONFIRM_DESC = "Are you sure you want to delete data outside selected range? This data will be permanently removed."
-    override val TRIM_SAVE_BTN = "Trim and save"
-    override val TRIM_CHART_HR = "Heart rate chart"
-    override val TRIM_RANGE_TITLE = "Select workout range"
-    override val TRIM_PREVIEW_TITLE = "New statistics preview"
-    override val TRIM_NEW_DURATION = "New duration:"
-    override val TRIM_DISTANCE_GPS = "Distance (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Distance (Steps):"
-    override val TRIM_CALORIES = "Calories burned:"
-    override val TRIM_AVG_BPM = "Average HR:"
-    override val TRIM_START = "Start"
-    override val TRIM_END = "Finish"
 }

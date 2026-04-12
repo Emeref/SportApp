@@ -37,6 +37,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         private val HEALTH_DATA_JSON = stringPreferencesKey("health_data_json")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val LANGUAGE = stringPreferencesKey("language")
+        private val AUTO_EXPORT_HC = booleanPreferencesKey("auto_export_hc")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -89,7 +90,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             watchStatsCustomDays = preferences[WATCH_CUSTOM_DAYS] ?: defaultState.watchStatsCustomDays,
             healthData = healthData,
             themeMode = ThemeMode.valueOf(preferences[THEME_MODE] ?: defaultState.themeMode.name),
-            language = language
+            language = language,
+            autoExportToHC = preferences[AUTO_EXPORT_HC] ?: defaultState.autoExportToHC
         )
     }
 
@@ -106,6 +108,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[HEALTH_DATA_JSON] = gson.toJson(state.healthData)
             preferences[THEME_MODE] = state.themeMode.name
             preferences[LANGUAGE] = state.language.code
+            preferences[AUTO_EXPORT_HC] = state.autoExportToHC
         }
         syncWatchStatsSettings(state)
         syncHealthData(state.healthData)

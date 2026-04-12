@@ -88,6 +88,15 @@ interface MobileTexts {
     fun hcImportConfirmDesc(count: Int): String
     fun hcImportProgress(current: Int, total: Int): String
 
+    // Stage 5 - Export
+    val HC_EXPORT_TO: String
+    val HC_EXPORTED_ON: String
+    val HC_EXPORT_SUCCESS: String
+    val HC_EXPORT_ERROR: String
+    val HC_EXPORT_PERMISSION_DENIED: String
+    val SETTINGS_HC_AUTO_EXPORT: String
+    val SETTINGS_HC_AUTO_EXPORT_DESC: String
+
     // Health Data Screen
     val HEALTH_TITLE: String
     val HEALTH_GENDER: String

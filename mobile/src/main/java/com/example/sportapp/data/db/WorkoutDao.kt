@@ -84,4 +84,10 @@ interface WorkoutDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM workouts WHERE hc_session_id = :hcSessionId LIMIT 1)")
     suspend fun existsByHCSessionId(hcSessionId: String): Boolean
+
+    @Query("UPDATE workouts SET hc_session_id = :hcSessionId WHERE id = :activityId")
+    suspend fun updateHCSessionId(activityId: Long, hcSessionId: String)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM workouts WHERE id = :activityId AND hc_session_id IS NOT NULL)")
+    suspend fun isExportedToHC(activityId: Long): Boolean
 }

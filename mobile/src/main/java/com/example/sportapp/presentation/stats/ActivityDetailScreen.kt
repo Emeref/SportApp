@@ -2,8 +2,7 @@ package com.example.sportapp.presentation.stats
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Paint
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -19,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Fullscreen
@@ -40,11 +41,11 @@ import com.example.sportapp.R
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
+import com.example.sportapp.healthconnect.ExportResult
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapsInitializer
-import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -67,6 +68,9 @@ fun ActivityDetailScreen(
     val hrZoneResult by viewModel.hrZoneResult.collectAsStateWithLifecycle()
     val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
     val autoLapDistance by viewModel.autoLapDistance.collectAsStateWithLifecycle()
+    val isExporting by viewModel.isExporting.collectAsStateWithLifecycle()
+    val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
+    val hcSessionId by viewModel.hcSessionId.collectAsStateWithLifecycle(null)
 
     var isIntervalsExpanded by remember { mutableStateOf(false) }
     var isHrZonesExpanded by remember { mutableStateOf(false) }
@@ -76,6 +80,23 @@ fun ActivityDetailScreen(
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         MapsInitializer.initialize(context)
+    }
+
+    LaunchedEffect(exportResult) {
+        exportResult?.let { result ->
+            when (result) {
+                is ExportResult.Success -> {
+                    Toast.makeText(context, texts.HC_EXPORT_SUCCESS, Toast.LENGTH_SHORT).show()
+                }
+                is ExportResult.Error -> {
+                    Toast.makeText(context, "${texts.HC_EXPORT_ERROR}${result.message}", Toast.LENGTH_LONG).show()
+                }
+                ExportResult.PermissionDenied -> {
+                    Toast.makeText(context, texts.HC_EXPORT_PERMISSION_DENIED, Toast.LENGTH_LONG).show()
+                }
+            }
+            viewModel.clearExportResult()
+        }
     }
 
     val isDarkTheme = when (mobileSettings.themeMode) {
@@ -108,7 +129,29 @@ fun ActivityDetailScreen(
             topBar = {
                 TopAppBar(
                     title = { Text(texts.DETAIL_TITLE) },
-                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE) } }
+                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE) } },
+                    actions = {
+                        if (hcSessionId != null) {
+                            AssistChip(
+                                onClick = { },
+                                label = { Text(texts.HC_EXPORTED_ON) },
+                                leadingIcon = { Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp)) },
+                                modifier = Modifier.padding(end = 8.dp),
+                                colors = AssistChipDefaults.assistChipColors(
+                                    labelColor = MaterialTheme.colorScheme.primary,
+                                    leadingIconContentColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        } else {
+                            if (isExporting) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 16.dp), strokeWidth = 2.dp)
+                            } else {
+                                IconButton(onClick = { viewModel.exportToHC() }) {
+                                    Icon(Icons.Default.CloudUpload, contentDescription = texts.HC_EXPORT_TO)
+                                }
+                            }
+                        }
+                    }
                 )
             }
         ) { padding ->
@@ -260,7 +303,7 @@ fun MapSection(
                     state = rememberMarkerState(position = data.route.last()),
                     icon = finishIcon,
                     title = texts.DETAIL_MAP_FINISH,
-                    anchor = Offset(0.0f, 1.0f) // Dolny lewy punkt obrazka na końcu trasy
+                    anchor = Offset(0.5f, 1.0f)
                 )
             }
 
@@ -352,7 +395,7 @@ fun FullScreenMap(
                     state = rememberMarkerState(position = data.route.last()),
                     icon = finishIcon,
                     title = texts.DETAIL_MAP_FINISH,
-                    anchor = Offset(0.0f, 1.0f) // Dolny lewy punkt obrazka na końcu trasy
+                    anchor = Offset(0.5f, 1.0f)
                 )
             }
 
