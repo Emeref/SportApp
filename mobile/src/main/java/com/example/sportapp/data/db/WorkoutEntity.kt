@@ -36,7 +36,8 @@ data class WorkoutEntity(
     val autoLapDistance: Double? = null, // m - dystans autolapa w momencie startu
     val isSynced: Boolean = false,
     @ColumnInfo(name = "hc_session_id")
-    val hcSessionId: String? = null
+    val hcSessionId: String? = null,
+    val isFinished: Boolean = true // Nowe pole dla kontroli synchronizacji
 )
 
 @Entity(tableName = "workout_points")

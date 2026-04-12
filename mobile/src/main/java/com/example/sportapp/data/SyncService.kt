@@ -71,7 +71,6 @@ class SyncService : WearableListenerService() {
                      val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
                      val json = dataMapItem.dataMap.getString("settings_json") ?: return@forEach
                      Log.d("SyncService", "Received wear settings update")
-                     // Tutaj można by zapisać te ustawienia lokalnie jeśli mobilka ma je wyświetlać
                 }
             }
         }
@@ -84,14 +83,12 @@ class SyncService : WearableListenerService() {
             
             val json = fd.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
             
-            // Parsowanie JSONa w sposób bezpieczny dla nowej struktury WorkoutEntity
             val type = object : TypeToken<Map<String, Any>>() {}.type
             val rawData: Map<String, Any> = gson.fromJson(json, type)
             
             val workoutMap = rawData["workout"] as Map<String, Any>
             val pointsJson = gson.toJson(rawData["points"])
 
-            // Ręczne mapowanie lub użycie GSON z obsługa brakujących pól
             val workout: WorkoutEntity = gson.fromJson(gson.toJson(workoutMap), WorkoutEntity::class.java)
             val points: List<WorkoutPointEntity> = gson.fromJson(pointsJson, object : TypeToken<List<WorkoutPointEntity>>() {}.type)
 
@@ -99,7 +96,6 @@ class SyncService : WearableListenerService() {
             val alreadyExists = existingWorkouts.find { it.startTime == workout.startTime && it.activityName == workout.activityName }
 
             val localId = if (alreadyExists != null) {
-                // Jeśli trening już istnieje, aktualizujemy go, ale zachowujemy autoLapDistance z nowej paczki jeśli tam jest
                 val updatedWorkout = workout.copy(id = alreadyExists.id)
                 workoutDao.updateWorkout(updatedWorkout)
                 alreadyExists.id
@@ -111,12 +107,12 @@ class SyncService : WearableListenerService() {
             workoutDao.deletePointsForWorkout(localId)
             workoutDao.insertPoints(updatedPoints)
 
-            Log.d("SyncService", "Successfully synced workout: ${workout.activityName} (ID: $localId) with ${points.size} points")
+            Log.d("SyncService", "Successfully synced workout: ${workout.activityName} (ID: $localId, finished: ${workout.isFinished})")
 
-            // Auto-eksport do Health Connect
+            // Auto-eksport do Health Connect tylko jeśli trening jest ZAKOŃCZONY
             val settings = mobileSettingsManager.settingsFlow.first()
-            if (settings.autoExportToHC) {
-                Log.d("SyncService", "Auto-exporting workout $localId to Health Connect")
+            if (settings.autoExportToHC && workout.isFinished) {
+                Log.d("SyncService", "Auto-exporting finished workout $localId to Health Connect")
                 exerciseExportUseCase.exportActivityToHC(localId)
             }
 

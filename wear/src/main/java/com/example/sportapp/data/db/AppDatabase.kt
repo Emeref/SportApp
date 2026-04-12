@@ -13,7 +13,7 @@ import com.example.sportapp.data.model.WorkoutDefinition
         WorkoutPointEntity::class, 
         WorkoutDefinition::class
     ], 
-    version = 15
+    version = 16
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -24,6 +24,11 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_14_15 = object : Migration(14, 15) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE workouts ADD COLUMN autoLapDistance REAL")
+            }
+        }
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE workouts ADD COLUMN isFinished INTEGER NOT NULL DEFAULT 1")
             }
         }
     }

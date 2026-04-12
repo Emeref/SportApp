@@ -33,7 +33,8 @@ data class WorkoutEntity(
     val minPressure: Double? = null, // hPa
     val bestPace1km: Double? = null, // min/km
     val autoLapDistance: Double? = null, // m - dystans autolapa w momencie startu
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    val isFinished: Boolean = true // Nowe pole
 )
 
 @Entity(tableName = "workout_points")

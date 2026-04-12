@@ -28,6 +28,9 @@ class ExerciseExportUseCase @Inject constructor(
             val allWorkouts = workoutRepository.getActivityItems()
             allWorkouts.forEach { item ->
                 if (!workoutRepository.isExportedToHC(item.id.toLong())) {
+                    // Tutaj moglibyśmy dodać check czy jest finished, 
+                    // ale getActivityItems może nie zwracać isFinished.
+                    // exportActivityToHC sam sprawdzi status encji.
                     exportActivityToHC(item.id.toLong())
                 }
             }
@@ -40,14 +43,23 @@ class ExerciseExportUseCase @Inject constructor(
                 val activity = workoutRepository.getWorkoutById(activityId)
                     ?: return@withContext ExportResult.Error("Aktywność nie znaleziona")
 
+                // BLOKADA: Nie eksportuj jeśli nie jest zakończona
+                if (!activity.isFinished) {
+                    return@withContext ExportResult.Error("Aktywność jeszcze trwa")
+                }
+
                 val points = workoutRepository.getPointsForWorkout(activityId)
                 val startTime = Instant.ofEpochMilli(activity.startTime)
-                val endTime = startTime.plusSeconds(activity.durationSeconds)
+                
+                // NAPRAWA BŁĘDU CZASU: Upewnij się, że endTime obejmuje ostatni punkt danych
+                val lastPointTimeOffset = points.lastOrNull()?.let { parseTimeToSeconds(it.time) } ?: activity.durationSeconds
+                val effectiveDuration = maxOf(activity.durationSeconds, lastPointTimeOffset)
+                val endTime = startTime.plusSeconds(effectiveDuration)
 
                 // Przygotuj trasę jeśli są punkty GPS
                 val locationPoints = points.filter { it.latitude != null && it.longitude != null }
                 val exerciseRoute = if (locationPoints.isNotEmpty()) {
-                    buildExerciseRoute(startTime, locationPoints)
+                    buildExerciseRoute(startTime, locationPoints, endTime)
                 } else null
 
                 // Zapisz sesję główną z opcjonalną trasą
@@ -68,9 +80,9 @@ class ExerciseExportUseCase @Inject constructor(
                 // Zapisz powiązane rekordy zbiorowo
                 val records = mutableListOf<Record>()
                 
-                records.addAll(buildHeartRateRecords(startTime, points))
-                records.addAll(buildSpeedRecords(startTime, points))
-                records.addAll(buildCadenceRecords(startTime, points))
+                records.addAll(buildHeartRateRecords(startTime, points, endTime))
+                records.addAll(buildSpeedRecords(startTime, points, endTime))
+                records.addAll(buildCadenceRecords(startTime, points, endTime))
                 
                 // Dystans całkowity
                 activity.distanceGps?.let { distance ->
@@ -107,7 +119,7 @@ class ExerciseExportUseCase @Inject constructor(
                 // Zapisz HC session ID w lokalnej bazie
                 workoutRepository.updateHCSessionId(activityId, hcSessionId)
 
-                // Zapisz metadane synchronizacji
+                // Zapisz metadane synchronizacji ze szczegółami aktywności
                 syncMetadataDao.insert(
                     SyncMetadataEntity(
                         hcRecordId = hcSessionId,
@@ -115,8 +127,10 @@ class ExerciseExportUseCase @Inject constructor(
                         recordType = "EXERCISE",
                         lastSyncTime = System.currentTimeMillis(),
                         syncDirection = "TO_HC",
-                        localModifiedTime = activity.startTime, // Uproszczenie
-                        hcModifiedTime = System.currentTimeMillis()
+                        localModifiedTime = activity.startTime,
+                        hcModifiedTime = System.currentTimeMillis(),
+                        activityName = activity.activityName,
+                        startTime = activity.startTime
                     )
                 )
 
@@ -132,15 +146,20 @@ class ExerciseExportUseCase @Inject constructor(
 
     private fun buildExerciseRoute(
         sessionStartTime: Instant,
-        locations: List<WorkoutPointEntity>
+        locations: List<WorkoutPointEntity>,
+        sessionEndTime: Instant
     ): ExerciseRoute {
-        val routeLocations = locations.map { loc ->
-            ExerciseRoute.Location(
-                time = sessionStartTime.plusSeconds(parseTimeToSeconds(loc.time)),
-                latitude = loc.latitude!!,
-                longitude = loc.longitude!!,
-                altitude = loc.altitude?.let { Length.meters(it) }
-            )
+        val routeLocations = locations.mapNotNull { loc ->
+            val pointTime = sessionStartTime.plusSeconds(parseTimeToSeconds(loc.time))
+            // Punkt musi być w zakresie (HC walidacja)
+            if (!pointTime.isAfter(sessionEndTime)) {
+                ExerciseRoute.Location(
+                    time = pointTime,
+                    latitude = loc.latitude!!,
+                    longitude = loc.longitude!!,
+                    altitude = loc.altitude?.let { Length.meters(it) }
+                )
+            } else null
         }
         return ExerciseRoute(routeLocations)
     }
@@ -158,14 +177,15 @@ class ExerciseExportUseCase @Inject constructor(
         }
     }
 
-    private fun buildHeartRateRecords(startTime: Instant, points: List<WorkoutPointEntity>): List<HeartRateRecord> {
+    private fun buildHeartRateRecords(startTime: Instant, points: List<WorkoutPointEntity>, endTime: Instant): List<HeartRateRecord> {
         val samples = points.mapNotNull { point ->
-            point.bpm?.let { bpm ->
+            val pointTime = startTime.plusSeconds(parseTimeToSeconds(point.time))
+            if (point.bpm != null && !pointTime.isAfter(endTime)) {
                 HeartRateRecord.Sample(
-                    time = startTime.plusSeconds(parseTimeToSeconds(point.time)),
-                    beatsPerMinute = bpm.toLong()
+                    time = pointTime,
+                    beatsPerMinute = point.bpm.toLong()
                 )
-            }
+            } else null
         }
         if (samples.isEmpty()) return emptyList()
         return listOf(HeartRateRecord(
@@ -178,14 +198,15 @@ class ExerciseExportUseCase @Inject constructor(
         ))
     }
 
-    private fun buildSpeedRecords(startTime: Instant, points: List<WorkoutPointEntity>): List<SpeedRecord> {
+    private fun buildSpeedRecords(startTime: Instant, points: List<WorkoutPointEntity>, endTime: Instant): List<SpeedRecord> {
         val samples = points.mapNotNull { point ->
-            point.speedGps?.let { speed ->
+            val pointTime = startTime.plusSeconds(parseTimeToSeconds(point.time))
+            if (point.speedGps != null && !pointTime.isAfter(endTime)) {
                 SpeedRecord.Sample(
-                    time = startTime.plusSeconds(parseTimeToSeconds(point.time)),
-                    speed = Velocity.metersPerSecond(speed)
+                    time = pointTime,
+                    speed = Velocity.metersPerSecond(point.speedGps)
                 )
-            }
+            } else null
         }
         if (samples.isEmpty()) return emptyList()
         return listOf(SpeedRecord(
@@ -198,14 +219,15 @@ class ExerciseExportUseCase @Inject constructor(
         ))
     }
 
-    private fun buildCadenceRecords(startTime: Instant, points: List<WorkoutPointEntity>): List<StepsCadenceRecord> {
+    private fun buildCadenceRecords(startTime: Instant, points: List<WorkoutPointEntity>, endTime: Instant): List<StepsCadenceRecord> {
         val samples = points.mapNotNull { point ->
-            point.stepsMin?.let { cadence ->
+            val pointTime = startTime.plusSeconds(parseTimeToSeconds(point.time))
+            if (point.stepsMin != null && !pointTime.isAfter(endTime)) {
                 StepsCadenceRecord.Sample(
-                    time = startTime.plusSeconds(parseTimeToSeconds(point.time)),
-                    rate = cadence
+                    time = pointTime,
+                    rate = point.stepsMin
                 )
-            }
+            } else null
         }
         if (samples.isEmpty()) return emptyList()
         return listOf(StepsCadenceRecord(

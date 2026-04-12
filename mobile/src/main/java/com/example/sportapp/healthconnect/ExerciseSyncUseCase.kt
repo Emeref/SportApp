@@ -30,7 +30,7 @@ class ExerciseSyncUseCase @Inject constructor(
                     val timeSeries = readSessionTimeSeries(sessionDto.hcSessionId)
                     val localId = activityRepository.saveImportedSession(sessionDto, timeSeries)
                     
-                    // Zapisz metadane
+                    // Zapisz metadane ze szczegółami aktywności
                     syncMetadataDao.insert(
                         SyncMetadataEntity(
                             hcRecordId = sessionDto.hcSessionId,
@@ -39,7 +39,9 @@ class ExerciseSyncUseCase @Inject constructor(
                             lastSyncTime = System.currentTimeMillis(),
                             syncDirection = "FROM_HC",
                             localModifiedTime = sessionDto.startTime.toEpochMilli(),
-                            hcModifiedTime = sessionDto.startTime.toEpochMilli()
+                            hcModifiedTime = sessionDto.startTime.toEpochMilli(),
+                            activityName = sessionDto.title,
+                            startTime = sessionDto.startTime.toEpochMilli()
                         )
                     )
                 }

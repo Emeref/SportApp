@@ -109,7 +109,7 @@ class WorkoutService : Service(), SensorEventListener {
                     lastTriggeredLevel = batteryPct
                     serviceScope.launch(Dispatchers.IO) {
                         Log.w("WorkoutService", "Emergency save and sync triggered at $batteryPct% battery")
-                        performSave()
+                        performSave(isFinal = true) // Oznaczamy jako zakończony przy awaryjnym zapisie
                         dataLayerManager.syncAll()
                     }
                 }
@@ -185,7 +185,8 @@ class WorkoutService : Service(), SensorEventListener {
                         totalCalories = 0.0,
                         maxCalorieMin = 0.0,
                         durationSeconds = 0,
-                        autoLapDistance = definition?.autoLapDistance
+                        autoLapDistance = definition?.autoLapDistance,
+                        isFinished = false // Startujemy z false
                     )
                     currentWorkoutId = workoutDao.insertWorkout(workout)
                     withContext(Dispatchers.Main) {
@@ -280,11 +281,10 @@ class WorkoutService : Service(), SensorEventListener {
         updateNotification()
         updateState(null)
 
-        // Po zapauzowaniu aktywności
+        // Po zapauzowaniu aktywności - tylko zapis, bez sync (aby nie wysyłać nieukończonych do HC)
         if (wasActive && status == WorkoutStatus.PAUSED) {
             serviceScope.launch {
-                performSave()
-                dataLayerManager.syncAll()
+                performSave(isFinal = false)
             }
         }
     }
@@ -309,9 +309,9 @@ class WorkoutService : Service(), SensorEventListener {
         stopForeground(STOP_FOREGROUND_REMOVE)
         
         serviceScope.launch {
-            // Wykonujemy ostatni zapis (Flush)
-            performSave(true)
-            dataLayerManager.syncAll() // Pełna synchronizacja po zakończeniu
+            // Wykonujemy ostatni zapis (Flush) z flagą isFinished = true
+            performSave(isFinal = true)
+            dataLayerManager.syncAll() // Pełna synchronizacja po zakończeniu (teraz wyśle trening na telefon)
             
             withContext(Dispatchers.Main) {
                 stopSelf()
@@ -367,7 +367,8 @@ class WorkoutService : Service(), SensorEventListener {
                 maxPressure = if (isRecording(WorkoutSensor.PRESSURE)) sessionStats.maxPressure else null,
                 minPressure = if (isRecording(WorkoutSensor.PRESSURE)) sessionStats.minPressure else null,
                 bestPace1km = sessionStats.bestPace1km,
-                isSynced = false // Reset flagi przy każdym zapisie w trakcie trwania
+                isSynced = false,
+                isFinished = isFinal // Ustawiamy flagę zakończenia
             )
             
             if (updatedWorkout != null) {
@@ -452,8 +453,8 @@ class WorkoutService : Service(), SensorEventListener {
             while (isActive) {
                 delay(60000) // 60 sekund
                 if (status == WorkoutStatus.ACTIVE) {
-                    performSave()
-                    dataLayerManager.syncAll() // Synchronizacja co minutę
+                    performSave(isFinal = false)
+                    // Usunięto syncAll() stąd - synchronizacja tylko po zakończeniu lub przy niskiej baterii
                 }
             }
         }
