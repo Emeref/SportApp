@@ -6,8 +6,9 @@ import androidx.health.connect.client.records.metadata.Device
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.units.*
 import com.example.sportapp.data.IWorkoutRepository
+import com.example.sportapp.data.db.SyncMetadataDao
+import com.example.sportapp.data.db.SyncMetadataEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
-import com.example.sportapp.data.model.BaseType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -16,9 +17,22 @@ import javax.inject.Inject
 
 class ExerciseExportUseCase @Inject constructor(
     private val healthConnectClient: HealthConnectClient,
-    private val workoutRepository: IWorkoutRepository
+    private val workoutRepository: IWorkoutRepository,
+    private val healthConnectManager: HealthConnectManager,
+    private val syncMetadataDao: SyncMetadataDao
 ) {
     private val exportDevice = Device(type = Device.TYPE_PHONE)
+
+    suspend fun exportAllUnsynced() {
+        withContext(Dispatchers.IO) {
+            val allWorkouts = workoutRepository.getActivityItems()
+            allWorkouts.forEach { item ->
+                if (!workoutRepository.isExportedToHC(item.id.toLong())) {
+                    exportActivityToHC(item.id.toLong())
+                }
+            }
+        }
+    }
 
     suspend fun exportActivityToHC(activityId: Long): ExportResult {
         return withContext(Dispatchers.IO) {
@@ -30,14 +44,21 @@ class ExerciseExportUseCase @Inject constructor(
                 val startTime = Instant.ofEpochMilli(activity.startTime)
                 val endTime = startTime.plusSeconds(activity.durationSeconds)
 
-                // Zapisz sesję główną
+                // Przygotuj trasę jeśli są punkty GPS
+                val locationPoints = points.filter { it.latitude != null && it.longitude != null }
+                val exerciseRoute = if (locationPoints.isNotEmpty()) {
+                    buildExerciseRoute(startTime, locationPoints)
+                } else null
+
+                // Zapisz sesję główną z opcjonalną trasą
                 val sessionRecord = ExerciseSessionRecord(
                     startTime = startTime,
                     startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(startTime),
                     endTime = endTime,
                     endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(endTime),
-                    exerciseType = mapActivityTypeToHC(activity.activityName),
+                    exerciseType = healthConnectManager.mapBaseTypeToHealthConnect(activity.activityName),
                     title = activity.activityName,
+                    exerciseRoute = exerciseRoute,
                     metadata = Metadata.activelyRecorded(exportDevice)
                 )
 
@@ -68,7 +89,7 @@ class ExerciseExportUseCase @Inject constructor(
                 // Kalorie
                 activity.totalCalories?.let { calories ->
                     if (calories > 0) {
-                        records.add(ActiveCaloriesBurnedRecord(
+                        records.add(TotalCaloriesBurnedRecord(
                             startTime = startTime,
                             startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(startTime),
                             endTime = endTime,
@@ -83,18 +104,21 @@ class ExerciseExportUseCase @Inject constructor(
                     healthConnectClient.insertRecords(records)
                 }
 
-                // Zapisz trasę GPS (osobny krok – wymaga osobnego uprawnienia)
-                val locationPoints = points.filter { it.latitude != null && it.longitude != null }
-                if (locationPoints.isNotEmpty()) {
-                    try {
-                        exportRouteToHC(hcSessionId, startTime, locationPoints)
-                    } catch (e: Exception) {
-                        // Może brakować uprawnienia do trasy, ignorujemy błąd zapisu samej trasy
-                    }
-                }
-
                 // Zapisz HC session ID w lokalnej bazie
                 workoutRepository.updateHCSessionId(activityId, hcSessionId)
+
+                // Zapisz metadane synchronizacji
+                syncMetadataDao.insert(
+                    SyncMetadataEntity(
+                        hcRecordId = hcSessionId,
+                        localRecordId = activityId,
+                        recordType = "EXERCISE",
+                        lastSyncTime = System.currentTimeMillis(),
+                        syncDirection = "TO_HC",
+                        localModifiedTime = activity.startTime, // Uproszczenie
+                        hcModifiedTime = System.currentTimeMillis()
+                    )
+                )
 
                 ExportResult.Success(hcSessionId)
 
@@ -106,11 +130,10 @@ class ExerciseExportUseCase @Inject constructor(
         }
     }
 
-    private suspend fun exportRouteToHC(
-        sessionId: String,
+    private fun buildExerciseRoute(
         sessionStartTime: Instant,
         locations: List<WorkoutPointEntity>
-    ) {
+    ): ExerciseRoute {
         val routeLocations = locations.map { loc ->
             ExerciseRoute.Location(
                 time = sessionStartTime.plusSeconds(parseTimeToSeconds(loc.time)),
@@ -119,22 +142,7 @@ class ExerciseExportUseCase @Inject constructor(
                 altitude = loc.altitude?.let { Length.meters(it) }
             )
         }
-        
-        val sessionResponse = healthConnectClient.readRecord(ExerciseSessionRecord::class, sessionId)
-        val old = sessionResponse.record
-        
-        val updatedSession = ExerciseSessionRecord(
-            startTime = old.startTime,
-            startZoneOffset = old.startZoneOffset,
-            endTime = old.endTime,
-            endZoneOffset = old.endZoneOffset,
-            exerciseType = old.exerciseType,
-            title = old.title,
-            notes = old.notes,
-            exerciseRoute = ExerciseRoute(routeLocations),
-            metadata = old.metadata
-        )
-        healthConnectClient.updateRecords(listOf(updatedSession))
+        return ExerciseRoute(routeLocations)
     }
 
     private fun parseTimeToSeconds(timeStr: String): Long {
@@ -147,20 +155,6 @@ class ExerciseExportUseCase @Inject constructor(
             }
         } catch (e: Exception) {
             0L
-        }
-    }
-
-    private fun mapActivityTypeToHC(appName: String): Int {
-        val name = appName.lowercase()
-        return when {
-            name.contains("bieganie") || name.contains("running") || name.contains(BaseType.RUNNING.lowercase()) -> ExerciseSessionRecord.EXERCISE_TYPE_RUNNING
-            name.contains("chodzenie") || name.contains("walking") || name.contains(BaseType.WALKING.lowercase()) -> ExerciseSessionRecord.EXERCISE_TYPE_WALKING
-            name.contains("rower") || name.contains("cycling") || name.contains("biking") || name.contains(BaseType.CYCLING.lowercase()) -> ExerciseSessionRecord.EXERCISE_TYPE_BIKING
-            name.contains("pływanie") || name.contains("swimming") || name.contains(BaseType.SWIMMING_POOL.lowercase()) -> ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL
-            name.contains("wędrówka") || name.contains("hiking") || name.contains(BaseType.HIKING.lowercase()) -> ExerciseSessionRecord.EXERCISE_TYPE_HIKING
-            name.contains("siłownia") || name.contains("gym") || name.contains("strength") || name.contains(BaseType.STRENGTH_TRAINING.lowercase()) -> ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING
-            name.contains("joga") || name.contains("yoga") || name.contains(BaseType.YOGA.lowercase()) -> ExerciseSessionRecord.EXERCISE_TYPE_YOGA
-            else -> ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT
         }
     }
 

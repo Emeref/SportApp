@@ -10,11 +10,11 @@ import com.example.sportapp.data.LapManager
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
-import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.healthconnect.ExerciseExportUseCase
 import com.example.sportapp.healthconnect.ExportResult
+import com.example.sportapp.healthconnect.HealthConnectManager
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -38,6 +38,7 @@ class ActivityDetailViewModel @Inject constructor(
     private val lapManager: LapManager,
     private val mobileSettingsManager: MobileSettingsManager,
     private val exerciseExportUseCase: ExerciseExportUseCase,
+    val healthConnectManager: HealthConnectManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val activityId: Long = (savedStateHandle.get<String>("activityId")?.toLongOrNull())
@@ -248,6 +249,18 @@ class ActivityDetailViewModel @Inject constructor(
             val result = exerciseExportUseCase.exportActivityToHC(activityId)
             _exportResult.value = result
             _isExporting.value = false
+        }
+    }
+
+    fun incrementHcDeniedCount() {
+        viewModelScope.launch {
+            mobileSettingsManager.incrementHcDeniedCount()
+        }
+    }
+
+    fun resetHcDeniedCount() {
+        viewModelScope.launch {
+            mobileSettingsManager.resetHcDeniedCount()
         }
     }
 

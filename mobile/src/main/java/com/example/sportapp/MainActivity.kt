@@ -79,7 +79,14 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToDefinitions = { navController.navigate("definitions") },
                                     onNavigateToHealthData = { navController.navigate("health_data") },
                                     onNavigateToLanguageSelection = { navController.navigate("language_selection") },
-                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") }
+                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") },
+                                    onNavigateToSyncStatus = { navController.navigate("sync_status") },
+                                    settingsManager = settingsManager
+                                )
+                            }
+                            composable("sync_status") {
+                                SyncStatusScreen(
+                                    onBack = { navController.popBackStack() }
                                 )
                             }
                             composable("exercise_import") {

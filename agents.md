@@ -22,7 +22,7 @@ Ponadto chcesz aby aplikacja działała szybko i była dobrze skonfigurowana.
 
 ## Tłumaczenia
 - Każdy nowy tekst w aplikacji jest zapisany jako zmienna w plikach WearTexts lub MobileTexts (zależnie od tego gdzie sie pojawia)
-- Każda nowa zmienna ma być uzupełniona w plikach tłumaczeń dla wszystkich języków
+
 
 ## Baza danych
 - każda zmiana bazy danych musi zawierać kod migracji, aby żadne dane nie zostały stracone.

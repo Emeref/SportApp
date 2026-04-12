@@ -3,6 +3,7 @@ package com.example.sportapp.di
 import android.content.Context
 import androidx.room.Room
 import com.example.sportapp.data.db.AppDatabase
+import com.example.sportapp.data.db.SyncMetadataDao
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import dagger.Module
@@ -24,7 +25,11 @@ object DatabaseModule {
             AppDatabase::class.java,
             "sportapp_db"
         )
-        .addMigrations(AppDatabase.MIGRATION_14_15, AppDatabase.MIGRATION_15_16)
+        .addMigrations(
+            AppDatabase.MIGRATION_14_15, 
+            AppDatabase.MIGRATION_15_16,
+            AppDatabase.MIGRATION_16_17
+        )
         .build()
     }
 
@@ -36,5 +41,10 @@ object DatabaseModule {
     @Provides
     fun provideWorkoutDefinitionDao(database: AppDatabase): WorkoutDefinitionDao {
         return database.workoutDefinitionDao()
+    }
+
+    @Provides
+    fun provideSyncMetadataDao(database: AppDatabase): SyncMetadataDao {
+        return database.syncMetadataDao()
     }
 }

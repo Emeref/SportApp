@@ -2,7 +2,9 @@ package com.example.sportapp.presentation.settings
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -19,9 +21,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.healthconnect.ConflictResolutionPolicy
 import com.example.sportapp.healthconnect.HealthConnectManager
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,12 +39,16 @@ fun SettingsScreen(
     onNavigateToDefinitions: () -> Unit,
     onNavigateToHealthData: () -> Unit,
     onNavigateToLanguageSelection: () -> Unit,
-    onNavigateToExerciseImport: () -> Unit
+    onNavigateToExerciseImport: () -> Unit,
+    onNavigateToSyncStatus: () -> Unit,
+    settingsManager: MobileSettingsManager
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
     val texts = LocalMobileTexts.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
     val healthConnectManager = remember { 
         val client = HealthConnectClient.getOrCreate(context)
         HealthConnectManager(context, client) 
@@ -52,6 +61,44 @@ fun SettingsScreen(
             HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "NOT_INSTALLED"
             else -> "UNAVAILABLE"
         }
+    }
+
+    var showPermissionRationale by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        scope.launch {
+            if (granted.containsAll(healthConnectManager.writePermissions)) {
+                state = state.copy(autoExportToHC = true)
+                settingsManager.resetHcDeniedCount()
+            } else {
+                state = state.copy(autoExportToHC = false)
+                settingsManager.incrementHcDeniedCount()
+                Toast.makeText(context, texts.HC_EXPORT_PERMISSION_DENIED, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    if (showPermissionRationale) {
+        AlertDialog(
+            onDismissRequest = { showPermissionRationale = false },
+            title = { Text(texts.HC_PERMISSIONS_DIALOG_TITLE) },
+            text = { Text(texts.HC_PERMISSIONS_DIALOG_DESC) },
+            confirmButton = {
+                Button(onClick = {
+                    showPermissionRationale = false
+                    healthConnectManager.openHealthConnectSettings()
+                }) {
+                    Text(texts.HC_OPEN_SETTINGS)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionRationale = false }) {
+                    Text(texts.SETTINGS_CANCEL)
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -89,13 +136,10 @@ fun SettingsScreen(
         ) {
             // Sekcja Wygląd
             SettingsSection(title = texts.SETTINGS_APPEARANCE) {
-                Text(text = texts.SETTINGS_THEME, style = MaterialTheme.typography.bodyMedium)
                 ThemeSelectionGrid(
                     selectedMode = state.themeMode,
                     onSelect = { state = state.copy(themeMode = it) }
                 )
-                
-                Spacer(modifier = Modifier.height(8.dp))
                 
                 SettingsRow(
                     title = texts.SETTINGS_LANGUAGE,
@@ -137,17 +181,33 @@ fun SettingsScreen(
                         
                         if (hcStatus == "AVAILABLE") {
                             SettingsRow(
+                                title = texts.SYNC_STATUS_TITLE,
+                                icon = Icons.Default.Sync,
+                                onClick = onNavigateToSyncStatus
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            SettingsRow(
                                 title = texts.HC_SYNC_WORKOUTS,
                                 icon = Icons.Default.FitnessCenter,
                                 onClick = onNavigateToExerciseImport
                             )
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(texts.SYNC_CONFLICT_POLICY, style = MaterialTheme.typography.labelMedium)
+                            ConflictPolicySelector(
+                                currentPolicy = state.conflictResolutionPolicy,
+                                onPolicySelected = { state = state.copy(conflictResolutionPolicy = it) }
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(texts.SETTINGS_HC_AUTO_EXPORT, style = MaterialTheme.typography.bodyLarge)
@@ -155,32 +215,24 @@ fun SettingsScreen(
                                 }
                                 Switch(
                                     checked = state.autoExportToHC,
-                                    onCheckedChange = { state = state.copy(autoExportToHC = it) }
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Button(
-                                onClick = {
-                                    try {
-                                        val intent = Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        try {
-                                            // Fallback to manage permissions if settings action fails
-                                            val intent = Intent("androidx.health.ACTION_MANAGE_HEALTH_PERMISSIONS").apply {
-                                                putExtra(Intent.EXTRA_PACKAGE_NAME, context.packageName)
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            scope.launch {
+                                                if (healthConnectManager.hasPermissions(healthConnectManager.writePermissions)) {
+                                                    state = state.copy(autoExportToHC = true)
+                                                } else {
+                                                    if (state.hcPermissionsDeniedCount >= 2) {
+                                                        showPermissionRationale = true
+                                                    } else {
+                                                        permissionLauncher.launch(healthConnectManager.writePermissions)
+                                                    }
+                                                }
                                             }
-                                            context.startActivity(intent)
-                                        } catch (e2: Exception) {
-                                            Toast.makeText(context, texts.HC_STATUS_UNAVAILABLE, Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            state = state.copy(autoExportToHC = false)
                                         }
                                     }
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(texts.SETTINGS_HC_MANAGE_PERMISSIONS)
+                                )
                             }
                         } else if (hcStatus == "NOT_INSTALLED") {
                             Button(
@@ -242,6 +294,34 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun ConflictPolicySelector(
+    currentPolicy: ConflictResolutionPolicy,
+    onPolicySelected: (ConflictResolutionPolicy) -> Unit
+) {
+    val texts = LocalMobileTexts.current
+    val policies = listOf(
+        ConflictResolutionPolicy.NEWER_WINS to texts.SYNC_CONFLICT_NEWER,
+        ConflictResolutionPolicy.LOCAL_WINS to texts.SYNC_CONFLICT_LOCAL,
+        ConflictResolutionPolicy.HC_WINS to texts.SYNC_CONFLICT_HC
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        policies.forEach { (policy, label) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onPolicySelected(policy) }
+            ) {
+                RadioButton(
+                    selected = currentPolicy == policy,
+                    onClick = { onPolicySelected(policy) }
+                )
+                Text(label, style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 }

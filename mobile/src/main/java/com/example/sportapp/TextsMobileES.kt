@@ -31,7 +31,7 @@ object TextsMobileES : MobileTexts {
         return "Resultados de $monthName:"
     }
     override fun homeResultsYear() = "Resultados de este año:"
-    override fun homeResultsCustom(days: Int) = if (days == 1) "Resultados del último día:" else "Resultados de los últimos $days días:"
+    override fun homeResultsCustom(days: Int) = if (days == 1) "Resultados del último día:" else "Resultados de los últimos $days dni:"
 
     // Settings Screen
     override val SETTINGS_TITLE = "Ajustes"
@@ -59,7 +59,7 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_PERIOD_HOME_DESC = "¿Para qué periodo mostrar widgets?"
     override val SETTINGS_PERIOD_WATCH_DESC = "¿Estadísticas de qué periodo?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Número de días"
-    override val SETTINGS_INTEGRATION = "Integración"
+    override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Guardar historial y resúmenes (Próximamente)"
     override val SETTINGS_APPEARANCE = "Apariencia"
@@ -92,7 +92,7 @@ object TextsMobileES : MobileTexts {
     // Stage 3 - Import Workouts
     override val HC_IMPORT_TITLE = "Importar entrenamientos"
     override val HC_IMPORT_ALREADY_IMPORTED = "Ya importado"
-    override val HC_IMPORT_EMPTY = "No se han encontrado entrenamientos en Health Connect de los últimos 30 días."
+    override val HC_IMPORT_EMPTY = "No se han encontrado entrenamientos en Health Connect de los últimos 30 dni."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "¿Está seguro de que desea importar los entrenamientos seleccionados?"
     override val HC_IMPORT_SELECT_ALL = "Seleccionar todos"
     override fun hcImportSelected(count: Int) = "Importar seleccionados ($count)"
@@ -107,6 +107,26 @@ object TextsMobileES : MobileTexts {
     override val HC_EXPORT_PERMISSION_DENIED = "Permiso denegado para Health Connect"
     override val SETTINGS_HC_AUTO_EXPORT = "Exportación automática"
     override val SETTINGS_HC_AUTO_EXPORT_DESC = "Exportar automáticamente los entrenamientos finalizados a Health Connect"
+
+    // Stage 6 - Sync Status
+    override val SYNC_STATUS_TITLE = "Estado de sincronización de HC"
+    override val SYNC_LAST_HEALTH = "Última sincronización de datos de salud"
+    override val SYNC_LAST_WORKOUT = "Última sincronización de entrenamientos"
+    override val SYNC_UNSYNCED_COUNT = "Registros no sincronizados"
+    override val SYNC_NOW = "Sincronizar ahora"
+    override val SYNC_HISTORY_TITLE = "Historial de sincronización"
+    override val SYNC_TYPE_IMPORT = "Importar"
+    override val SYNC_TYPE_EXPORT = "Exportar"
+    override val SYNC_NEVER = "Nunca"
+    override val SYNC_CONFLICT_POLICY = "Política de conflictos"
+    override val SYNC_CONFLICT_NEWER = "El más reciente gana"
+    override val SYNC_CONFLICT_LOCAL = "Los locales ganan"
+    override val SYNC_CONFLICT_HC = "Health Connect gana"
+
+    // Health Connect Permissions Dialog
+    override val HC_PERMISSIONS_DIALOG_TITLE = "Permisos Requeridos"
+    override val HC_PERMISSIONS_DIALOG_DESC = "Los permisos de escritura son necesarios para exportar entrenamientos a Health Connect. Puedes otorgarlos en los ajustes del sistema."
+    override val HC_OPEN_SETTINGS = "Abrir ajustes"
 
     // Health Data Screen
     override val HEALTH_TITLE = "Datos de salud"
@@ -210,7 +230,7 @@ object TextsMobileES : MobileTexts {
     override val CHART_STEPS = "Pasos"
 
     // Definitions
-    override val DEF_TITLE = "Definiciones de actividad"
+    override val DEF_TITLE = "Definicione de actividad"
     override val DEF_ADD = "Añadir definición"
     override val DEF_EDIT = "Editar definición"
     override val DEF_DELETE = "Eliminar definición"
@@ -231,7 +251,7 @@ object TextsMobileES : MobileTexts {
     override val DEF_NAME_LABEL = "Nombre de la actividad"
     override val DEF_AUTO_LAP_LABEL = "Vuelta automática (metros, opcional)"
     override val DEF_WIDGET_IN_ACTIVITY = "Widget en actividad"
-    override val DEF_VISIBILITY = "Visibilidad"
+    override val DEF_VISIBILITY = "Sichtbarkeit"
     override val DEF_RECORD = "Grabar"
     override val DEF_BASE_TYPE = "Tipo base"
     override val DEF_FINISH = "Finalizar"
@@ -249,7 +269,7 @@ object TextsMobileES : MobileTexts {
     override val DEF_MOUNTAIN_BIKING = "Ciclismo de montaña"
     override val DEF_ROAD_BIKING = "Ciclismo de carretera"
     override val DEF_HIKING = "Senderismo"
-    override val DEF_ROCK_CLIMBING = "Escalada"
+    override val DEF_ROCK_CLIMBING = "Arrampicata"
     override val DEF_BOULDERING = "Búlder"
     override val DEF_HIIT = "HIIT"
     override val DEF_ELLIPTICAL = "Elíptica"
@@ -283,15 +303,9 @@ object TextsMobileES : MobileTexts {
     override val DEF_BASEBALL = "Béisbol"
     override val DEF_SKATEBOARDING = "Skate"
     override val DEF_COMPETITION = "Competición"
-    override val DEF_STOPWATCH = "Cronómetro"
+    override val DEF_STOPWATCH = "Cronometro"
     override val DEF_OTHER = "Otro"
     override val DEF_STANDARD_ACTIVITY = "Actividad estándar"
-
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Seleccionar actividad para modificar"
-    override val AD_SETTINGS_EDIT_TITLE = "Ajustes"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Sección: Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Sección: Gráficos"
 
     // Heart Rate Math
     override val HR_NO_DATA = "Sin datos de FC"
@@ -313,6 +327,12 @@ object TextsMobileES : MobileTexts {
     override val ZONE_Z4 = "Pesado"
     override val ZONE_Z5 = "Máximo"
 
+    // Compare Screen
+    override val COMPARE_TITLE = "Comparación de actividad"
+    override val COMPARE_VS = "Comparación:"
+    override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
+    override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
+
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Inicializando exportación..."
     override fun vmExportGenerating(name: String, current: Int, total: Int) = "Generando: $name ($current/$total)"
@@ -327,8 +347,8 @@ object TextsMobileES : MobileTexts {
 
     // Gpx Importer
     override val GPX_NO_POINTS = "El archivo GPX no contiene puntos de track."
-    override val GPX_WARN_HR = "El archivo contiene datos de FC, pero la actividad seleccionada no los admite."
-    override val GPX_WARN_ELE = "El archivo contiene datos de altitud, pero la actividad seleccionada no los admite."
+    override val GPX_WARN_HR = "El archivo contiene datos de FC, ale la actividad seleccionada no los admite."
+    override val GPX_WARN_ELE = "El archivo contiene datos de altitud, ale la actividad seleccionada no los admite."
     override val GPX_WARN_CADENCE = "El archivo contiene datos de cadencia, ale la actividad seleccionada no los admite."
 
     // Periods
@@ -348,7 +368,7 @@ object TextsMobileES : MobileTexts {
     override val WIDGET_DESCENT = "Descenso total"
     override val WIDGET_STEPS = "Pasos"
     override val WIDGET_AVG_BPM = "FC media"
-    override val WIDGET_AVG_CADENCE = "Cadencia media"
+    override val WIDGET_AVG_CADENCE = "Cadenza media"
     override val WIDGET_MAX_SPEED = "Velocidad máxima"
     override val WIDGET_MAX_ALTITUDE = "Altitud máxima"
     override val WIDGET_MAX_ELEVATION_GAIN = "Mayor ganancia de elevación"
@@ -462,12 +482,6 @@ object TextsMobileES : MobileTexts {
         }
     }
 
-    // Compare Screen
-    override val COMPARE_TITLE = "Comparación de actividad"
-    override val COMPARE_VS = "Comparación:"
-    override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
-    override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
-
     // Sensors
     override val SENSOR_HEART_RATE = "Frecuencia cardíaca"
     override val SENSOR_CALORIES_SUM = "Calorías totales"
@@ -517,4 +531,10 @@ object TextsMobileES : MobileTexts {
     override val TRIM_AVG_BPM = "FC media:"
     override val TRIM_START = "Inicio"
     override val TRIM_END = "Fin"
+
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Seleccionar actividad para modificar"
+    override val AD_SETTINGS_EDIT_TITLE = "Ajustes"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Sección: Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Sección: Gráficos"
 }

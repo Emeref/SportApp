@@ -7,7 +7,10 @@ import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.example.sportapp.data.IUserHealthRepository
+import com.example.sportapp.data.SyncStatusManager
+import com.example.sportapp.presentation.settings.HealthData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -31,19 +34,36 @@ sealed class HealthDataSyncResult {
 
 class HealthDataSyncUseCase @Inject constructor(
     private val healthConnectClient: HealthConnectClient,
-    private val userHealthRepository: IUserHealthRepository
+    private val userHealthRepository: IUserHealthRepository,
+    private val syncStatusManager: SyncStatusManager
 ) {
+    suspend fun sync() {
+        val result = readHealthDataFromHC()
+        if (result is HealthDataSyncResult.Success) {
+            val current = userHealthRepository.getHealthData().first()
+            val updated = current.copy(
+                weight = result.weightKg ?: current.weight,
+                height = result.heightCm ?: current.height,
+                restingHR = result.restingHeartRate ?: current.restingHR,
+                maxHR = result.maxHeartRate ?: current.maxHR,
+                vo2Max = result.vo2max ?: current.vo2Max
+            )
+            userHealthRepository.updateHealthData(updated)
+            syncStatusManager.updateLastHealthSync(System.currentTimeMillis())
+        }
+    }
+
     suspend fun readHealthDataFromHC(): HealthDataSyncResult {
         return withContext(Dispatchers.IO) {
             try {
                 Log.d("HealthDataSync", "--- START SYNCHRONIZACJI ---")
                 
-                // 1. Waga (Ostatnie 5 lat) - zaokrąglamy do 2 miejsc
+                // 1. Waga (Ostatnie 5 lat)
                 val weightRecord = readLatestRecord(WeightRecord::class, 1825)
                 val weight = weightRecord?.weight?.inKilograms?.let { (it * 100.0).roundToInt() / 100.0 }
                 Log.d("HealthDataSync", "Wynik Waga: $weight kg")
 
-                // 2. Wzrost (Ostatnie 40 lat) - zaokrąglamy do 1 miejsca
+                // 2. Wzrost (Ostatnie 40 lat)
                 val heightRecord = readLatestRecord(HeightRecord::class, 15000)
                 val height = heightRecord?.height?.inMeters?.times(100)?.let { (it * 10.0).roundToInt() / 10.0 }
                 Log.d("HealthDataSync", "Wynik Wzrost: $height cm")
@@ -57,7 +77,7 @@ class HealthDataSyncUseCase @Inject constructor(
                 val maxHR = readMaxHeartRate()
                 Log.d("HealthDataSync", "Wynik Tętno max: $maxHR bpm")
 
-                // 5. VO2 Max (Ostatnie 10 lat) - zaokrąglamy do 2 miejsc
+                // 5. VO2 Max (Ostatnie 10 lat)
                 val vo2maxRecord = readLatestRecord(Vo2MaxRecord::class, 3650)
                 val vo2max = vo2maxRecord?.vo2MillilitersPerMinuteKilogram?.let { (it * 100.0).roundToInt() / 100.0 }
                 Log.d("HealthDataSync", "Wynik VO2 Max: $vo2max")
@@ -108,14 +128,13 @@ class HealthDataSyncUseCase @Inject constructor(
                     recordType = recordType,
                     timeRangeFilter = TimeRangeFilter.between(startTime, endTime),
                     ascendingOrder = false,
-                    pageSize = 10 // Pobieramy więcej, aby ręcznie wybrać najnowszy
+                    pageSize = 10 
                 )
             )
             
             val records = response.records
             if (records.isEmpty()) return null
             
-            // Sortujemy po czasie pomiaru
             records.maxByOrNull { record ->
                 when (record) {
                     is WeightRecord -> record.time

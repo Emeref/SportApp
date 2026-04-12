@@ -6,6 +6,9 @@ import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.example.sportapp.data.IWorkoutRepository
+import com.example.sportapp.data.SyncStatusManager
+import com.example.sportapp.data.db.SyncMetadataDao
+import com.example.sportapp.data.db.SyncMetadataEntity
 import com.example.sportapp.healthconnect.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,19 +18,48 @@ import javax.inject.Inject
 
 class ExerciseSyncUseCase @Inject constructor(
     private val healthConnectClient: HealthConnectClient,
-    private val activityRepository: IWorkoutRepository
+    private val activityRepository: IWorkoutRepository,
+    private val syncMetadataDao: SyncMetadataDao,
+    private val syncStatusManager: SyncStatusManager
 ) {
+    suspend fun sync(daysBack: Int = 30) {
+        withContext(Dispatchers.IO) {
+            val sessions = readExerciseSessions(daysBack)
+            sessions.forEach { sessionDto ->
+                if (!sessionDto.alreadyImported) {
+                    val timeSeries = readSessionTimeSeries(sessionDto.hcSessionId)
+                    val localId = activityRepository.saveImportedSession(sessionDto, timeSeries)
+                    
+                    // Zapisz metadane
+                    syncMetadataDao.insert(
+                        SyncMetadataEntity(
+                            hcRecordId = sessionDto.hcSessionId,
+                            localRecordId = localId,
+                            recordType = "EXERCISE",
+                            lastSyncTime = System.currentTimeMillis(),
+                            syncDirection = "FROM_HC",
+                            localModifiedTime = sessionDto.startTime.toEpochMilli(),
+                            hcModifiedTime = sessionDto.startTime.toEpochMilli()
+                        )
+                    )
+                }
+            }
+            syncStatusManager.updateLastWorkoutSync(System.currentTimeMillis())
+        }
+    }
+
     suspend fun readExerciseSessions(daysBack: Int = 30): List<ExerciseSessionSyncDto> {
         return withContext(Dispatchers.IO) {
             val endTime = Instant.now()
             val startTime = endTime.minus(daysBack.toLong(), ChronoUnit.DAYS)
 
-            val sessions = healthConnectClient.readRecords(
+            val sessions = healthConnectClient.readAllRecords(
+                ExerciseSessionRecord::class,
                 ReadRecordsRequest(
                     ExerciseSessionRecord::class,
                     TimeRangeFilter.between(startTime, endTime)
                 )
-            ).records
+            )
 
             sessions.mapNotNull { session ->
                 try {
@@ -85,9 +117,10 @@ class ExerciseSyncUseCase @Inject constructor(
             val timeFilter = TimeRangeFilter.between(sessionRecord.startTime, sessionRecord.endTime)
 
             val heartRates = try {
-                healthConnectClient.readRecords(
+                healthConnectClient.readAllRecords(
+                    HeartRateRecord::class,
                     ReadRecordsRequest(HeartRateRecord::class, timeFilter)
-                ).records.flatMap { record ->
+                ).flatMap { record ->
                     record.samples.map { sample ->
                         HeartRateSample(sample.time, sample.beatsPerMinute.toInt())
                     }
@@ -95,9 +128,10 @@ class ExerciseSyncUseCase @Inject constructor(
             } catch (e: Exception) { emptyList() }
 
             val speeds = try {
-                healthConnectClient.readRecords(
+                healthConnectClient.readAllRecords(
+                    SpeedRecord::class,
                     ReadRecordsRequest(SpeedRecord::class, timeFilter)
-                ).records.flatMap { record ->
+                ).flatMap { record ->
                     record.samples.map { sample ->
                         SpeedSample(sample.time, sample.speed.inMetersPerSecond)
                     }
@@ -105,9 +139,10 @@ class ExerciseSyncUseCase @Inject constructor(
             } catch (e: Exception) { emptyList() }
 
             val cadences = try {
-                healthConnectClient.readRecords(
+                healthConnectClient.readAllRecords(
+                    StepsCadenceRecord::class,
                     ReadRecordsRequest(StepsCadenceRecord::class, timeFilter)
-                ).records.flatMap { record ->
+                ).flatMap { record ->
                     record.samples.map { sample ->
                         CadenceSample(sample.time, sample.rate)
                     }
@@ -115,32 +150,34 @@ class ExerciseSyncUseCase @Inject constructor(
             } catch (e: Exception) { emptyList() }
 
             val distances = try {
-                healthConnectClient.readRecords(
+                healthConnectClient.readAllRecords(
+                    DistanceRecord::class,
                     ReadRecordsRequest(DistanceRecord::class, timeFilter)
-                ).records.map { record -> 
+                ).map { record -> 
                     DistanceSample(record.startTime, record.endTime, record.distance.inMeters) 
                 }
             } catch (e: Exception) { emptyList() }
 
             val elevations = try {
-                healthConnectClient.readRecords(
+                healthConnectClient.readAllRecords(
+                    ElevationGainedRecord::class,
                     ReadRecordsRequest(ElevationGainedRecord::class, timeFilter)
-                ).records.map { record -> 
+                ).map { record -> 
                     ElevationSample(record.startTime, record.endTime, record.elevation.inMeters) 
                 }
             } catch (e: Exception) { emptyList() }
 
             val calories = try {
-                healthConnectClient.readRecords(
+                healthConnectClient.readAllRecords(
+                    ActiveCaloriesBurnedRecord::class,
                     ReadRecordsRequest(ActiveCaloriesBurnedRecord::class, timeFilter)
-                ).records.map { record -> 
+                ).map { record -> 
                     CaloriesSample(record.startTime, record.endTime, record.energy.inKilocalories) 
                 }
             } catch (e: Exception) { emptyList() }
 
             // Trasa GPS z ExerciseRoute
             val route = try {
-                // Using reflection to safely access exerciseRoute which might be unresolved in some IDE states
                 val routeLocations = mutableListOf<LocationSample>()
                 try {
                     val getExerciseRoute = sessionRecord.javaClass.getMethod("getExerciseRoute")
@@ -162,7 +199,6 @@ class ExerciseSyncUseCase @Inject constructor(
                         }
                     }
                 } catch (e: Exception) {
-                    // Fallback or ignore if not available
                 }
                 routeLocations
             } catch (e: SecurityException) {
