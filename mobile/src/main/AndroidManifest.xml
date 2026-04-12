@@ -2,6 +2,51 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Uprawnienia systemowe Health Connect (Android 14+, API 34+) -->
+    <uses-permission android:name="android.permission.health.READ_HEIGHT"/>
+    <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
+    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE"/>
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
+    <uses-permission android:name="android.permission.health.READ_VO2_MAX"/>
+    <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
+    <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
+    <uses-permission android:name="android.permission.health.READ_SPEED"/>
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
+    <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED"/>
+    <!-- Uprawnienia do zapisu (wysyłania) treningów -->
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
+    <uses-permission android:name="android.permission.health.WRITE_DISTANCE" />
+    <uses-permission android:name="android.permission.health.WRITE_STEPS" />
+    <uses-permission android:name="android.permission.health.WRITE_TOTAL_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE_ROUTE" />
+    <uses-permission android:name="android.permission.health.WRITE_SPEED" />
+    <uses-permission android:name="android.permission.health.WRITE_ELEVATION_GAINED" />
+
+    <!-- Uprawnienie do odczytu danych starszych niż 30 dni -->
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
+
+    <!-- Uprawnienia wstecznej kompatybilności (Android 11-13) -->
+    <uses-permission android:name="androidx.health.permission.HEIGHT.READ"/>
+    <uses-permission android:name="androidx.health.permission.WEIGHT.READ"/>
+    <uses-permission android:name="androidx.health.permission.RESTING_HEART_RATE.READ"/>
+    <uses-permission android:name="androidx.health.permission.HEART_RATE.READ"/>
+    <uses-permission android:name="androidx.health.permission.VO2_MAX.READ"/>
+    <uses-permission android:name="androidx.health.permission.EXERCISE.READ"/>
+    <uses-permission android:name="androidx.health.permission.DISTANCE.READ"/>
+    <uses-permission android:name="androidx.health.permission.STEPS.READ"/>
+    <uses-permission android:name="androidx.health.permission.SPEED.READ"/>
+    <uses-permission android:name="androidx.health.permission.ACTIVE_CALORIES_BURNED.READ"/>
+    <uses-permission android:name="androidx.health.permission.TOTAL_CALORIES_BURNED.READ"/>
+    <uses-permission android:name="androidx.health.permission.ELEVATION_GAINED.READ"/>
+
+    <queries>
+        <package android:name="com.google.android.apps.healthdata"/>
+        <package android:name="com.google.android.healthconnect.controller"/>
+    </queries>
+
     <application
         android:name=".SportApp"
         android:allowBackup="true"
@@ -15,6 +60,8 @@
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="31">
 
+        <meta-data android:name="health_permissions_rationale" android:value="com.example.sportapp.healthconnect.PermissionsRationaleActivity" />
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
@@ -24,10 +71,31 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".healthconnect.PermissionsRationaleActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.health.connect.action.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+
+        <activity-alias
+            android:name="androidx.health.PermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".healthconnect.PermissionsRationaleActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
 
         <service
             android:name=".data.SyncService"

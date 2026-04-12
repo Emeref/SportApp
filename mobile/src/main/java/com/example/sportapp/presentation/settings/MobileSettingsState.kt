@@ -35,7 +35,6 @@ data class WidgetItem(
 
 data class MobileSettingsState(
     val widgets: List<WidgetItem> = listOf(
-
         WidgetItem("count", TextsMobilePL.WIDGET_COUNT),
         WidgetItem("calories", TextsMobilePL.WIDGET_CALORIES),
         WidgetItem("distanceGps", TextsMobilePL.WIDGET_DISTANCE_GPS),
@@ -68,5 +67,7 @@ data class MobileSettingsState(
     val watchStatsCustomDays: Int = 7,
     val healthData: HealthData = HealthData(),
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val language: AppLanguage = AppLanguage.POLISH
+    val language: AppLanguage = AppLanguage.POLISH,
+    val autoExportToHC: Boolean = false,
+    val hcPermissionsDeniedCount: Int = 0
 )

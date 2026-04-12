@@ -1,23 +1,30 @@
 package com.example.sportapp.presentation.settings
 
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.healthconnect.HealthConnectManager
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,16 +36,66 @@ fun SettingsScreen(
     onNavigateToWatchWidgetSelection: () -> Unit,
     onNavigateToDefinitions: () -> Unit,
     onNavigateToHealthData: () -> Unit,
-    onNavigateToLanguageSelection: () -> Unit
+    onNavigateToLanguageSelection: () -> Unit,
+    onNavigateToExerciseImport: () -> Unit,
+    settingsManager: MobileSettingsManager // Added to handle denied count updates
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
     val texts = LocalMobileTexts.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    val healthConnectManager = remember { 
+        val client = HealthConnectClient.getOrCreate(context)
+        HealthConnectManager(context, client) 
+    }
+    
+    val hcStatus = remember {
+        val status = HealthConnectClient.getSdkStatus(context)
+        when (status) {
+            HealthConnectClient.SDK_AVAILABLE -> "AVAILABLE"
+            HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "NOT_INSTALLED"
+            else -> "UNAVAILABLE"
+        }
+    }
 
-    val isDark = when (state.themeMode) {
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    var showPermissionRationale by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        scope.launch {
+            if (granted.containsAll(healthConnectManager.writePermissions)) {
+                state = state.copy(autoExportToHC = true)
+                settingsManager.resetHcDeniedCount()
+            } else {
+                state = state.copy(autoExportToHC = false)
+                settingsManager.incrementHcDeniedCount()
+                Toast.makeText(context, texts.HC_EXPORT_PERMISSION_DENIED, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    if (showPermissionRationale) {
+        AlertDialog(
+            onDismissRequest = { showPermissionRationale = false },
+            title = { Text(texts.HC_PERMISSIONS_DIALOG_TITLE) },
+            text = { Text(texts.HC_PERMISSIONS_DIALOG_DESC) },
+            confirmButton = {
+                Button(onClick = {
+                    showPermissionRationale = false
+                    healthConnectManager.openHealthConnectSettings()
+                }) {
+                    Text(texts.HC_OPEN_SETTINGS)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionRationale = false }) {
+                    Text(texts.SETTINGS_CANCEL)
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -74,7 +131,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 0. Sekcja Wygląd
+            // Sekcja Wygląd
             SettingsSection(title = texts.SETTINGS_APPEARANCE) {
                 Text(text = texts.SETTINGS_THEME, style = MaterialTheme.typography.bodyMedium)
                 ThemeSelectionGrid(
@@ -84,186 +141,211 @@ fun SettingsScreen(
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                OutlinedCard(
-                    onClick = onNavigateToLanguageSelection,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ListItem(
-                        headlineContent = { Text(texts.SETTINGS_LANGUAGE) },
-                        supportingContent = { Text(state.language.label) },
-                        leadingContent = { Icon(Icons.Default.Language, null) },
-                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
-                    )
-                }
-            }
-
-            // 0. Sekcja Profil
-            SettingsSection(title = texts.SETTINGS_MY_PROFILE) {
-                OutlinedCard(
-                    onClick = onNavigateToHealthData,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ListItem(
-                        headlineContent = { Text(texts.SETTINGS_HEALTH_DATA) },
-                        supportingContent = { Text(texts.SETTINGS_HEALTH_DATA_DESC) },
-                        leadingContent = { Icon(Icons.Default.Favorite, null) },
-                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
-                    )
-                }
-            }
-
-            // 1. Sekcja Aktywności
-            SettingsSection(title = texts.NAV_ACTIVITIES) {
-                OutlinedCard(
-                    onClick = onNavigateToDefinitions,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ListItem(
-                        headlineContent = { Text(texts.SETTINGS_DEFINITIONS) },
-                        supportingContent = { Text(texts.SETTINGS_DEFINITIONS_DESC) },
-                        leadingContent = { Icon(Icons.Default.SettingsAccessibility, null) },
-                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
-                    )
-                }
-            }
-
-            // 2. Sekcja Widgety na stronie głównej
-            SettingsSection(title = texts.SETTINGS_WIDGETS_HOME_TITLE) {
-                OutlinedCard(
-                    onClick = onNavigateToWidgetSelection,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ListItem(
-                        headlineContent = { Text(texts.SETTINGS_WIDGETS_HOME) },
-                        supportingContent = { Text(texts.SETTINGS_WIDGETS_HOME_DESC) },
-                        leadingContent = { Icon(Icons.Default.Dashboard, null) },
-                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(text = texts.SETTINGS_PERIOD_HOME_DESC, style = MaterialTheme.typography.bodyMedium)
-                PeriodSelectionGrid(
-                    selectedPeriod = state.period,
-                    onSelect = { state = state.copy(period = it) }
+                SettingsRow(
+                    title = texts.SETTINGS_LANGUAGE,
+                    icon = Icons.Default.Language,
+                    onClick = onNavigateToLanguageSelection
                 )
+            }
 
-                if (state.period == ReportingPeriod.CUSTOM) {
-                    OutlinedTextField(
-                        value = state.customDays.toString(),
-                        onValueChange = { 
-                            val days = it.toIntOrNull() ?: 0
-                            if (days in 1..35000) {
-                                state = state.copy(customDays = days)
+            // Sekcja Health Connect
+            SettingsSection(title = "Health Connect") {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.HealthAndSafety,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(texts.SETTINGS_HC_STATUS, style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    text = when(hcStatus) {
+                                        "AVAILABLE" -> texts.HC_STATUS_AVAILABLE
+                                        "NOT_INSTALLED" -> texts.HC_STATUS_NOT_INSTALLED
+                                        else -> texts.HC_STATUS_UNAVAILABLE
+                                    },
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                             }
-                        },
-                        label = { Text(texts.SETTINGS_CUSTOM_DAYS_LABEL) },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                        )
-                    )
-                }
-            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        if (hcStatus == "AVAILABLE") {
+                            SettingsRow(
+                                title = texts.HC_SYNC_WORKOUTS,
+                                icon = Icons.Default.FitnessCenter,
+                                onClick = onNavigateToExerciseImport
+                            )
 
-            // 3. Sekcja Statystyki na zegarku
-            SettingsSection(title = texts.SETTINGS_WIDGETS_WATCH) {
-                OutlinedCard(
-                    onClick = onNavigateToWatchWidgetSelection,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ListItem(
-                        headlineContent = { Text(texts.SETTINGS_WIDGETS_WATCH_TITLE) },
-                        supportingContent = { Text(texts.SETTINGS_WIDGETS_WATCH_DESC) },
-                        leadingContent = { Icon(Icons.Default.Watch, null) },
-                        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
-                    )
-                }
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(text = texts.SETTINGS_PERIOD_WATCH_DESC, style = MaterialTheme.typography.bodyMedium)
-                PeriodSelectionGrid(
-                    selectedPeriod = state.watchStatsPeriod,
-                    onSelect = { state = state.copy(watchStatsPeriod = it) }
-                )
-
-                if (state.watchStatsPeriod == ReportingPeriod.CUSTOM) {
-                    OutlinedTextField(
-                        value = state.watchStatsCustomDays.toString(),
-                        onValueChange = { 
-                            val days = it.toIntOrNull() ?: 0
-                            if (days in 1..35000) {
-                                state = state.copy(watchStatsCustomDays = days)
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(texts.SETTINGS_HC_AUTO_EXPORT, style = MaterialTheme.typography.bodyLarge)
+                                    Text(texts.SETTINGS_HC_AUTO_EXPORT_DESC, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Switch(
+                                    checked = state.autoExportToHC,
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            scope.launch {
+                                                if (healthConnectManager.hasPermissions(healthConnectManager.writePermissions)) {
+                                                    state = state.copy(autoExportToHC = true)
+                                                } else {
+                                                    if (state.hcPermissionsDeniedCount >= 2) {
+                                                        showPermissionRationale = true
+                                                    } else {
+                                                        permissionLauncher.launch(healthConnectManager.writePermissions)
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            state = state.copy(autoExportToHC = false)
+                                        }
+                                    }
+                                )
                             }
-                        },
-                        label = { Text(texts.SETTINGS_CUSTOM_DAYS_LABEL) },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                        )
-                    )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = {
+                                    healthConnectManager.openHealthConnectSettings()
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(texts.SETTINGS_HC_MANAGE_PERMISSIONS)
+                            }
+                        } else if (hcStatus == "NOT_INSTALLED") {
+                            Button(
+                                onClick = { healthConnectManager.openHealthConnectInstallPage() },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(texts.HC_INSTALL)
+                            }
+                        }
+                    }
                 }
             }
 
-            // 4. Sekcja Integracja
-            SettingsSection(title = texts.SETTINGS_INTEGRATION) {
-                ListItem(
-                    headlineContent = { Text(texts.SETTINGS_GOOGLE_DRIVE) },
-                    supportingContent = { Text(texts.SETTINGS_GOOGLE_DRIVE_DESC) },
-                    leadingContent = { Icon(Icons.Default.CloudQueue, null) },
-                    trailingContent = { Switch(checked = false, onCheckedChange = null, enabled = false) }
+            // Sekcja Aktywności
+            SettingsSection(title = texts.SETTINGS_GENERAL) {
+                SettingsRow(
+                    title = texts.SETTINGS_HEALTH_DATA,
+                    subtitle = texts.SETTINGS_HEALTH_DATA_DESC,
+                    icon = Icons.Default.Favorite,
+                    onClick = onNavigateToHealthData
+                )
+                
+                SettingsRow(
+                    title = texts.SETTINGS_DEFINITIONS,
+                    subtitle = texts.SETTINGS_DEFINITIONS_DESC,
+                    icon = Icons.AutoMirrored.Filled.List,
+                    onClick = onNavigateToDefinitions
+                )
+                
+                SettingsRow(
+                    title = texts.SETTINGS_WIDGETS_HOME,
+                    subtitle = texts.SETTINGS_WIDGETS_HOME_DESC,
+                    icon = Icons.Default.Dashboard,
+                    onClick = onNavigateToWidgetSelection
+                )
+
+                SettingsRow(
+                    title = texts.SETTINGS_WIDGETS_WATCH,
+                    subtitle = texts.SETTINGS_WIDGETS_WATCH_DESC,
+                    icon = Icons.Default.Watch,
+                    onClick = onNavigateToWatchWidgetSelection
                 )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // PRZYCISKI ZAPISZ / ZAMKNIJ
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Button(
+                onClick = { onSave(state) },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = { onSave(state) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text(texts.SETTINGS_SAVE, color = MaterialTheme.colorScheme.onPrimary)
-                }
-                Button(
-                    onClick = onCancel,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text(texts.SETTINGS_CLOSE, color = MaterialTheme.colorScheme.onError)
-                }
+                Text(texts.SETTINGS_SAVE)
+            }
+            
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(texts.SETTINGS_CANCEL)
             }
 
-            // Stopka autorska
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(id = if (isDark) R.drawable.logo_mrf_dark_mode else R.drawable.logo_mrf),
-                        contentDescription = "Logo MRF",
-                        modifier = Modifier.height(40.dp).width(80.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Image(
-                        painter = painterResource(id = if (isDark) R.drawable.logo_emeref_dark_mode else R.drawable.logo_emeref),
-                        contentDescription = "Logo Emeref",
-                        modifier = Modifier.height(40.dp).width(80.dp)
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun SettingsSection(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        content()
+    }
+}
+
+@Composable
+fun SettingsRow(
+    title: String,
+    subtitle: String? = null,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1.0f)) {
+                Text(text = title, style = MaterialTheme.typography.bodyLarge)
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Spacer(modifier = Modifier.height(32.dp))
             }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -273,76 +355,58 @@ fun ThemeSelectionGrid(
     selectedMode: ThemeMode,
     onSelect: (ThemeMode) -> Unit
 ) {
-    val texts = LocalMobileTexts.current
-    Row(modifier = Modifier.fillMaxWidth()) {
-        ThemeOptionChip(texts.SETTINGS_THEME_SYSTEM, ThemeMode.SYSTEM, selectedMode, onSelect, Modifier.weight(1f))
-        ThemeOptionChip(texts.SETTINGS_THEME_LIGHT, ThemeMode.LIGHT, selectedMode, onSelect, Modifier.weight(1f))
-        ThemeOptionChip(texts.SETTINGS_THEME_DARK, ThemeMode.DARK, selectedMode, onSelect, Modifier.weight(1f))
-    }
-}
-
-@Composable
-fun ThemeOptionChip(
-    label: String,
-    mode: ThemeMode,
-    selectedMode: ThemeMode,
-    onSelect: (ThemeMode) -> Unit,
-    modifier: Modifier = Modifier
-) {
     Row(
-        modifier = modifier
-            .clickable { onSelect(mode) }
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        RadioButton(selected = mode == selectedMode, onClick = { onSelect(mode) })
-        Text(text = label, style = MaterialTheme.typography.bodySmall)
+        ThemeOption(
+            modifier = Modifier.weight(1f),
+            title = LocalMobileTexts.current.SETTINGS_THEME_LIGHT,
+            icon = Icons.Default.LightMode,
+            selected = selectedMode == ThemeMode.LIGHT,
+            onClick = { onSelect(ThemeMode.LIGHT) }
+        )
+        ThemeOption(
+            modifier = Modifier.weight(1f),
+            title = LocalMobileTexts.current.SETTINGS_THEME_DARK,
+            icon = Icons.Default.DarkMode,
+            selected = selectedMode == ThemeMode.DARK,
+            onClick = { onSelect(ThemeMode.DARK) }
+        )
+        ThemeOption(
+            modifier = Modifier.weight(1f),
+            title = LocalMobileTexts.current.SETTINGS_THEME_SYSTEM,
+            icon = Icons.Default.SettingsSuggest,
+            selected = selectedMode == ThemeMode.SYSTEM,
+            onClick = { onSelect(ThemeMode.SYSTEM) }
+        )
     }
 }
 
 @Composable
-fun PeriodSelectionGrid(
-    selectedPeriod: ReportingPeriod,
-    onSelect: (ReportingPeriod) -> Unit
+fun ThemeOption(
+    modifier: Modifier = Modifier,
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit
 ) {
-    val texts = LocalMobileTexts.current
-    Column {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            PeriodOptionChip(texts.PERIOD_TODAY, ReportingPeriod.TODAY, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip(texts.PERIOD_WEEK, ReportingPeriod.WEEK, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip(texts.PERIOD_MONTH, ReportingPeriod.MONTH, selectedPeriod, onSelect, Modifier.weight(1f))
+    OutlinedCard(
+        onClick = onClick,
+        modifier = modifier,
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+        ),
+        border = CardDefaults.outlinedCardBorder(enabled = true).let { 
+            if (selected) it.copy(brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary)) else it
         }
-        Row(modifier = Modifier.fillMaxWidth()) {
-            PeriodOptionChip(texts.PERIOD_YEAR, ReportingPeriod.YEAR, selectedPeriod, onSelect, Modifier.weight(1f))
-            PeriodOptionChip(texts.PERIOD_CUSTOM, ReportingPeriod.CUSTOM, selectedPeriod, onSelect, Modifier.weight(1f))
-            Spacer(modifier = Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-fun PeriodOptionChip(
-    label: String,
-    period: ReportingPeriod,
-    selectedPeriod: ReportingPeriod,
-    onSelect: (ReportingPeriod) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .clickable { onSelect(period) }
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        RadioButton(selected = period == selectedPeriod, onClick = { onSelect(period) })
-        Text(text = label, style = MaterialTheme.typography.bodySmall)
-    }
-}
-
-@Composable
-fun SettingsSection(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        content()
+        Column(
+            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(icon, contentDescription = null)
+            Text(text = title, style = MaterialTheme.typography.labelSmall)
+        }
     }
 }

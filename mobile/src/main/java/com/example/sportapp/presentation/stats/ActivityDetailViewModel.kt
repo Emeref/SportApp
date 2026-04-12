@@ -10,9 +10,11 @@ import com.example.sportapp.data.LapManager
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
-import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
+import com.example.sportapp.healthconnect.ExerciseExportUseCase
+import com.example.sportapp.healthconnect.ExportResult
+import com.example.sportapp.healthconnect.HealthConnectManager
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -35,9 +37,11 @@ class ActivityDetailViewModel @Inject constructor(
     private val workoutDao: WorkoutDao,
     private val lapManager: LapManager,
     private val mobileSettingsManager: MobileSettingsManager,
+    private val exerciseExportUseCase: ExerciseExportUseCase,
+    val healthConnectManager: HealthConnectManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val activityId: Long = (savedStateHandle.get<String>("activityId")?.toLongOrNull())
+    val activityId: Long = (savedStateHandle.get<String>("activityId")?.toLongOrNull())
         ?: (savedStateHandle.get<Long>("activityId"))
         ?: -1L
 
@@ -57,6 +61,21 @@ class ActivityDetailViewModel @Inject constructor(
 
     private val _autoLapDistance = MutableStateFlow<Double?>(null)
     val autoLapDistance = _autoLapDistance.asStateFlow()
+
+    private val _isExporting = MutableStateFlow(false)
+    val isExporting = _isExporting.asStateFlow()
+
+    private val _exportResult = MutableStateFlow<ExportResult?>(null)
+    val exportResult = _exportResult.asStateFlow()
+
+    val hcSessionId: StateFlow<String?> = workoutDao.getWorkoutFlowById(activityId)
+        .map { it?.hcSessionId }
+        .distinctUntilChanged()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     val settings: StateFlow<ActivityDetailSettings> = _sessionData
         .filterNotNull()
@@ -221,6 +240,32 @@ class ActivityDetailViewModel @Inject constructor(
         } else {
             _selectedLap.value = lap
         }
+    }
+
+    fun exportToHC() {
+        if (activityId == -1L || _isExporting.value) return
+        viewModelScope.launch {
+            _isExporting.value = true
+            val result = exerciseExportUseCase.exportActivityToHC(activityId)
+            _exportResult.value = result
+            _isExporting.value = false
+        }
+    }
+
+    fun incrementHcDeniedCount() {
+        viewModelScope.launch {
+            mobileSettingsManager.incrementHcDeniedCount()
+        }
+    }
+
+    fun resetHcDeniedCount() {
+        viewModelScope.launch {
+            mobileSettingsManager.resetHcDeniedCount()
+        }
+    }
+
+    fun clearExportResult() {
+        _exportResult.value = null
     }
 
     fun clearError() {

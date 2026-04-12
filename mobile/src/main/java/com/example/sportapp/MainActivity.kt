@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -15,24 +15,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.sportapp.presentation.activities.ActivityCompareScreen
-import com.example.sportapp.presentation.activities.ActivityCompareViewModel
-import com.example.sportapp.presentation.activities.ActivityListScreen
-import com.example.sportapp.presentation.activities.ActivityListViewModel
-import com.example.sportapp.presentation.activities.ActivityTrimScreen
-import com.example.sportapp.presentation.activities.ActivityTrimViewModel
+import com.example.sportapp.presentation.navigation.Screen
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionEditScreen
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionListScreen
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionViewModel
 import com.example.sportapp.presentation.home.HomeScreen
 import com.example.sportapp.presentation.home.HomeViewModel
-import com.example.sportapp.presentation.navigation.Screen
 import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.stats.*
 import com.example.sportapp.presentation.theme.SportAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.example.sportapp.presentation.activities.*
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -83,7 +78,14 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToWatchWidgetSelection = { navController.navigate("watch_widget_selection") },
                                     onNavigateToDefinitions = { navController.navigate("definitions") },
                                     onNavigateToHealthData = { navController.navigate("health_data") },
-                                    onNavigateToLanguageSelection = { navController.navigate("language_selection") }
+                                    onNavigateToLanguageSelection = { navController.navigate("language_selection") },
+                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") },
+                                    settingsManager = settingsManager
+                                )
+                            }
+                            composable("exercise_import") {
+                                ExerciseImportScreen(
+                                    onNavigateBack = { navController.popBackStack() }
                                 )
                             }
                             composable("language_selection") {
@@ -124,7 +126,7 @@ class MainActivity : ComponentActivity() {
                                 WorkoutDefinitionEditScreen(
                                     viewModel = viewModel,
                                     definitionId = id,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onBack = { navController.popBackStack() }
                                 )
                             }
                             composable("widget_selection") {

@@ -1,7 +1,9 @@
 package com.example.sportapp.di
 
 import android.content.Context
+import com.example.sportapp.data.IUserHealthRepository
 import com.example.sportapp.data.IWorkoutRepository
+import com.example.sportapp.data.UserHealthRepository
 import com.example.sportapp.data.WorkoutRepository
 import dagger.Binds
 import dagger.Module
@@ -20,6 +22,12 @@ abstract class DataModule {
     abstract fun bindWorkoutRepository(
         workoutRepository: WorkoutRepository
     ): IWorkoutRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserHealthRepository(
+        userHealthRepository: UserHealthRepository
+    ): IUserHealthRepository
 
     companion object {
         @Provides

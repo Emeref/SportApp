@@ -5,6 +5,8 @@ import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.healthconnect.ExerciseExportUseCase
+import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
@@ -17,6 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -28,6 +31,8 @@ class SyncService : WearableListenerService() {
     @Inject lateinit var workoutDefinitionDao: WorkoutDefinitionDao
     @Inject lateinit var syncManager: WorkoutDefinitionSyncManager
     @Inject lateinit var syncStatusManager: SyncStatusManager
+    @Inject lateinit var mobileSettingsManager: MobileSettingsManager
+    @Inject lateinit var exerciseExportUseCase: ExerciseExportUseCase
     
     private val gson = Gson()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -107,6 +112,14 @@ class SyncService : WearableListenerService() {
             workoutDao.insertPoints(updatedPoints)
 
             Log.d("SyncService", "Successfully synced workout: ${workout.activityName} (ID: $localId) with ${points.size} points")
+
+            // Auto-eksport do Health Connect
+            val settings = mobileSettingsManager.settingsFlow.first()
+            if (settings.autoExportToHC) {
+                Log.d("SyncService", "Auto-exporting workout $localId to Health Connect")
+                exerciseExportUseCase.exportActivityToHC(localId)
+            }
+
         } catch (e: Exception) {
             Log.e("SyncService", "Error processing workout asset", e)
         }
