@@ -108,6 +108,11 @@ object TextsMobileEN : MobileTexts {
     override val HC_EXPORT_ERROR = "Export error: "
     override val HC_EXPORT_PERMISSION_DENIED = "No Health Connect write permission"
 
+    // Health Connect Permissions Dialog
+    override val HC_PERMISSIONS_DIALOG_TITLE = "Required Permissions"
+    override val HC_PERMISSIONS_DIALOG_DESC = "Write permissions are necessary to export workouts to Health Connect. You can grant them in system settings."
+    override val HC_OPEN_SETTINGS = "Open settings"
+
     // Health Data Screen
     override val HEALTH_TITLE = "Health Data"
     override val HEALTH_GENDER = "Gender"

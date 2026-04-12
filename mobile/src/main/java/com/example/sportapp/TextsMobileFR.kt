@@ -25,7 +25,7 @@ object TextsMobileFR : MobileTexts {
     override val HOME_CLOSE = "Fermer"
 
     override fun homeResultsToday() = "Résultats d'aujourd'hui :"
-    override fun homeResultsWeek() = "Résultats de la semaine :"
+    override fun homeResultsWeek() = "Résultats de la week :"
     override fun homeResultsMonth(): String {
         val monthName = Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.FRENCH)
         return "Résultats de $monthName :"
@@ -107,6 +107,11 @@ object TextsMobileFR : MobileTexts {
     override val HC_EXPORT_PERMISSION_DENIED = "Pas de permission d'écriture Health Connect"
     override val SETTINGS_HC_AUTO_EXPORT = "Exportation automatique"
     override val SETTINGS_HC_AUTO_EXPORT_DESC = "Exporter automatiquement les nouveaux entraînements vers Health Connect"
+
+    // Health Connect Permissions Dialog
+    override val HC_PERMISSIONS_DIALOG_TITLE = "Permissions requises"
+    override val HC_PERMISSIONS_DIALOG_DESC = "Les permissions d'écriture sont nécessaires pour exporter les entraînements vers Health Connect. Vous pouvez les accorder dans les paramètres du système."
+    override val HC_OPEN_SETTINGS = "Ouvrir les paramètres"
 
     // Health Data Screen
     override val HEALTH_TITLE = "Données de santé"
@@ -286,12 +291,6 @@ object TextsMobileFR : MobileTexts {
     override val DEF_STOPWATCH = "Chronomètre"
     override val DEF_OTHER = "Autre"
     override val DEF_STANDARD_ACTIVITY = "Activité standard"
-
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Choisir l'activité à modifier"
-    override val AD_SETTINGS_EDIT_TITLE = "Paramètres"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Section : Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Section : Graphiques"
 
     // Heart Rate Math
     override val HR_NO_DATA = "Pas de données FC"
@@ -516,4 +515,10 @@ object TextsMobileFR : MobileTexts {
     override val TRIM_AVG_BPM = "FC moy. :"
     override val TRIM_START = "Début"
     override val TRIM_END = "Fin"
+
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Choisir l'activité à modifier"
+    override val AD_SETTINGS_EDIT_TITLE = "Paramètres"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Section : Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Section : Graphiques"
 }

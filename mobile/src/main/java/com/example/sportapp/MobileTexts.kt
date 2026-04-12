@@ -97,6 +97,11 @@ interface MobileTexts {
     val SETTINGS_HC_AUTO_EXPORT: String
     val SETTINGS_HC_AUTO_EXPORT_DESC: String
 
+    // Health Connect Permissions Dialog
+    val HC_PERMISSIONS_DIALOG_TITLE: String
+    val HC_PERMISSIONS_DIALOG_DESC: String
+    val HC_OPEN_SETTINGS: String
+
     // Health Data Screen
     val HEALTH_TITLE: String
     val HEALTH_GENDER: String

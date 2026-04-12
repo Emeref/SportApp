@@ -31,7 +31,7 @@ object TextsMobileES : MobileTexts {
         return "Resultados de $monthName:"
     }
     override fun homeResultsYear() = "Resultados de este año:"
-    override fun homeResultsCustom(days: Int) = if (days == 1) "Resultados del último día:" else "Resultados de los últimos $days días:"
+    override fun homeResultsCustom(days: Int) = if (days == 1) "Resultados del último día:" else "Resultados de los últimos $days dni:"
 
     // Settings Screen
     override val SETTINGS_TITLE = "Ajustes"
@@ -107,6 +107,11 @@ object TextsMobileES : MobileTexts {
     override val HC_EXPORT_PERMISSION_DENIED = "Permiso denegado para Health Connect"
     override val SETTINGS_HC_AUTO_EXPORT = "Exportación automática"
     override val SETTINGS_HC_AUTO_EXPORT_DESC = "Exportar automáticamente los entrenamientos finalizados a Health Connect"
+
+    // Health Connect Permissions Dialog
+    override val HC_PERMISSIONS_DIALOG_TITLE = "Permisos Requeridos"
+    override val HC_PERMISSIONS_DIALOG_DESC = "Los permisos de escritura son necesarios para exportar entrenamientos a Health Connect. Puedes otorgarlos en los ajustes del sistema."
+    override val HC_OPEN_SETTINGS = "Abrir ajustes"
 
     // Health Data Screen
     override val HEALTH_TITLE = "Datos de salud"
@@ -249,7 +254,7 @@ object TextsMobileES : MobileTexts {
     override val DEF_MOUNTAIN_BIKING = "Ciclismo de montaña"
     override val DEF_ROAD_BIKING = "Ciclismo de carretera"
     override val DEF_HIKING = "Senderismo"
-    override val DEF_ROCK_CLIMBING = "Escalada"
+    override val DEF_ROCK_CLIMBING = "Arrampicata"
     override val DEF_BOULDERING = "Búlder"
     override val DEF_HIIT = "HIIT"
     override val DEF_ELLIPTICAL = "Elíptica"
@@ -283,15 +288,9 @@ object TextsMobileES : MobileTexts {
     override val DEF_BASEBALL = "Béisbol"
     override val DEF_SKATEBOARDING = "Skate"
     override val DEF_COMPETITION = "Competición"
-    override val DEF_STOPWATCH = "Cronómetro"
+    override val DEF_STOPWATCH = "Cronometro"
     override val DEF_OTHER = "Otro"
     override val DEF_STANDARD_ACTIVITY = "Actividad estándar"
-
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Seleccionar actividad para modificar"
-    override val AD_SETTINGS_EDIT_TITLE = "Ajustes"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Sección: Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Sección: Gráficos"
 
     // Heart Rate Math
     override val HR_NO_DATA = "Sin datos de FC"
@@ -312,6 +311,12 @@ object TextsMobileES : MobileTexts {
     override val ZONE_Z3 = "Moderado"
     override val ZONE_Z4 = "Pesado"
     override val ZONE_Z5 = "Máximo"
+
+    // Compare Screen
+    override val COMPARE_TITLE = "Comparación de actividad"
+    override val COMPARE_VS = "Comparación:"
+    override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
+    override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Inicializando exportación..."
@@ -348,7 +353,7 @@ object TextsMobileES : MobileTexts {
     override val WIDGET_DESCENT = "Descenso total"
     override val WIDGET_STEPS = "Pasos"
     override val WIDGET_AVG_BPM = "FC media"
-    override val WIDGET_AVG_CADENCE = "Cadencia media"
+    override val WIDGET_AVG_CADENCE = "Cadenza media"
     override val WIDGET_MAX_SPEED = "Velocidad máxima"
     override val WIDGET_MAX_ALTITUDE = "Altitud máxima"
     override val WIDGET_MAX_ELEVATION_GAIN = "Mayor ganancia de elevación"
@@ -462,12 +467,6 @@ object TextsMobileES : MobileTexts {
         }
     }
 
-    // Compare Screen
-    override val COMPARE_TITLE = "Comparación de actividad"
-    override val COMPARE_VS = "Comparación:"
-    override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
-    override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
-
     // Sensors
     override val SENSOR_HEART_RATE = "Frecuencia cardíaca"
     override val SENSOR_CALORIES_SUM = "Calorías totales"
@@ -517,4 +516,10 @@ object TextsMobileES : MobileTexts {
     override val TRIM_AVG_BPM = "FC media:"
     override val TRIM_START = "Inicio"
     override val TRIM_END = "Fin"
+
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Seleccionar actividad para modificar"
+    override val AD_SETTINGS_EDIT_TITLE = "Ajustes"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Sección: Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Sección: Gráficos"
 }

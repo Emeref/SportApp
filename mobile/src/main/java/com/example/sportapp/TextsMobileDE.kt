@@ -108,6 +108,11 @@ object TextsMobileDE : MobileTexts {
     override val HC_EXPORT_ERROR = "Exportfehler: "
     override val HC_EXPORT_PERMISSION_DENIED = "Keine Berechtigung zum Schreiben in Health Connect"
 
+    // Health Connect Permissions Dialog
+    override val HC_PERMISSIONS_DIALOG_TITLE = "Erforderliche Berechtigungen"
+    override val HC_PERMISSIONS_DIALOG_DESC = "Schreibberechtigungen sind erforderlich, um Workouts nach Health Connect zu exportieren. Sie können diese in den Systemeinstellungen erteilen."
+    override val HC_OPEN_SETTINGS = "Einstellungen öffnen"
+
     // Health Data Screen
     override val HEALTH_TITLE = "Gesundheitsdaten"
     override val HEALTH_GENDER = "Geschlecht"
@@ -281,17 +286,11 @@ object TextsMobileDE : MobileTexts {
     
     override val DEF_GYM = "Fitnessstudio"
     override val DEF_BASEBALL = "Baseball"
-    override val DEF_SKATEBOARDING = "Skateboarden"
+    override val DEF_SKATEBOARDING = "Skateboarding"
     override val DEF_COMPETITION = "Wettkampf"
     override val DEF_STOPWATCH = "Stoppuhr"
     override val DEF_OTHER = "Andere"
     override val DEF_STANDARD_ACTIVITY = "Standardaktivität"
-
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Aktivität zum Ändern auswählen"
-    override val AD_SETTINGS_EDIT_TITLE = "Einstellungen"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Bereich: Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Bereich: Diagramme"
 
     // Heart Rate Math
     override val HR_NO_DATA = "Keine HF-Daten"
@@ -432,6 +431,12 @@ object TextsMobileDE : MobileTexts {
     override val UNIT_BPM = "bpm"
     override val UNIT_KCAL_MIN = "kcal/min"
     override val UNIT_VO2_MAX = "ml/kg/min"
+
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Aktivität zum Ändern auswählen"
+    override val AD_SETTINGS_EDIT_TITLE = "Einstellungen"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Bereich: Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Bereich: Diagramme"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {

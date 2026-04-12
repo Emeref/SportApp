@@ -108,6 +108,11 @@ object TextsMobilePT : MobileTexts {
     override val SETTINGS_HC_AUTO_EXPORT = "Exportação automática"
     override val SETTINGS_HC_AUTO_EXPORT_DESC = "Exportar automaticamente novos treinos para o Health Connect"
 
+    // Health Connect Permissions Dialog
+    override val HC_PERMISSIONS_DIALOG_TITLE = "Permissões necessárias"
+    override val HC_PERMISSIONS_DIALOG_DESC = "As permissões de escrita são necessárias para exportar treinos para o Health Connect. Você pode concedê-las nas configurações do sistema."
+    override val HC_OPEN_SETTINGS = "Abrir configurações"
+
     // Health Data Screen
     override val HEALTH_TITLE = "Dados de saúde"
     override val HEALTH_GENDER = "Gênero"
@@ -274,11 +279,11 @@ object TextsMobilePT : MobileTexts {
     override val DEF_VOLLEYBALL = "Vôlei"
     override val DEF_GOLF = "Golfe"
     override val DEF_MARTIAL_ARTS = "Artes marciais"
-    override val DEF_SKIING = "Esqui"
+    override val DEF_SKIING = "Sci"
     override val DEF_SNOWBOARDING = "Snowboard"
     override val DEF_SKATING = "Patinação"
     override val DEF_ICE_SKATING = "Patinação no gelo"
-
+    
     override val DEF_GYM = "Academia"
     override val DEF_BASEBALL = "Beisebol"
     override val DEF_SKATEBOARDING = "Skate"
@@ -300,7 +305,7 @@ object TextsMobilePT : MobileTexts {
     override val HR_EFFECT_Z0 = "Baixa intensidade / Aquecimento"
     override val HR_EFFECT_Z1 = "Base aeróbica e recuperação"
     override val HR_EFFECT_Z2 = "Queima de gordura eficiente"
-    override val HR_EFFECT_Z3 = "Melhoria da capacidade aeróbica"
+    override val HR_EFFECT_Z3 = "Melhoria da capacidade aerobica"
     override val HR_EFFECT_Z4 = "Aumento do limiar de lactato"
     override val HR_EFFECT_Z5 = "Treino anaeróbico e VO2 Máx"
     override val HR_EFFECT_NONE = "Nenhuma zona dominante"
@@ -312,6 +317,12 @@ object TextsMobilePT : MobileTexts {
     override val ZONE_Z3 = "Moderado"
     override val ZONE_Z4 = "Pesado"
     override val ZONE_Z5 = "Máximo"
+
+    // Compare Screen
+    override val COMPARE_TITLE = "Comparação de atividade"
+    override val COMPARE_VS = "Comparação:"
+    override val COMPARE_HIGHER_IS_BETTER = "Um resultado maior é melhor"
+    override val COMPARE_LOWER_IS_BETTER = "Um resultado menor é melhor"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Inicializando exportação..."
@@ -329,7 +340,7 @@ object TextsMobilePT : MobileTexts {
     override val GPX_NO_POINTS = "O arquivo GPX não contém pontos de trilha."
     override val GPX_WARN_HR = "O arquivo contém dados de FC, mas a atividade selecionada não os suporta."
     override val GPX_WARN_ELE = "O arquivo contém dados de altitude, mas a atividade selecionada não os suporta."
-    override val GPX_WARN_CADENCE = "O arquivo contém dados de cadência, mas a atividade selecionada não os suporta."
+    override val GPX_WARN_CADENCE = "O arquivo contém dados de cadência, mas a atividade selecionada não a suporta."
 
     // Periods
     override val PERIOD_TODAY = "Hoje"
@@ -347,7 +358,8 @@ object TextsMobilePT : MobileTexts {
     override val WIDGET_ASCENT = "Subida total"
     override val WIDGET_DESCENT = "Descida total"
     override val WIDGET_STEPS = "Passos"
-    override val WIDGET_AVG_CADENCE = "Cadência media"
+    override val WIDGET_AVG_BPM = "FC média"
+    override val WIDGET_AVG_CADENCE = "Cadência média"
     override val WIDGET_MAX_SPEED = "Velocidade máxima"
     override val WIDGET_MAX_ALTITUDE = "Altitude máxima"
     override val WIDGET_MAX_ELEVATION_GAIN = "Maior ganho de elevação"
@@ -358,7 +370,6 @@ object TextsMobilePT : MobileTexts {
     override val WIDGET_MAX_AVG_SPEED = "Maior velocidade média"
     override val WIDGET_DURATION = "Duração"
     override val WIDGET_MAX_BPM = "FC máxima"
-    override val WIDGET_AVG_BPM = "FC média"
     override val WIDGET_TOTAL_CALORIES = "Calorias totais"
     override val WIDGET_MAX_CALORIES_MIN = "Taxa máx. de queima de calorias"
     override val WIDGET_AVG_PACE = "Ritmo médio"
@@ -449,7 +460,7 @@ object TextsMobilePT : MobileTexts {
             "przewyzszenia_gora" -> SENSOR_TOTAL_ASCENT
             "ascent" -> WIDGET_ASCENT
             "totalDescent" -> SENSOR_TOTAL_DESCENT
-            "przewyzszenia_dol" -> SENSOR_TOTAL_DESCENT
+            "przewyzszenia_dol" -> SENSOR_TOTAL_ASCENT
             "descent" -> WIDGET_DESCENT
             "pressure" -> SENSOR_PRESSURE
             "map" -> SENSOR_MAP
@@ -462,12 +473,6 @@ object TextsMobilePT : MobileTexts {
         }
     }
 
-    // Compare Screen
-    override val COMPARE_TITLE = "Comparação de atividade"
-    override val COMPARE_VS = "Comparação:"
-    override val COMPARE_HIGHER_IS_BETTER = "Um resultado maior é melhor"
-    override val COMPARE_LOWER_IS_BETTER = "Um resultado menor é melhor"
-
     // Sensors
     override val SENSOR_HEART_RATE = "Frequência cardíaca"
     override val SENSOR_CALORIES_SUM = "Calorias totais"
@@ -478,7 +483,7 @@ object TextsMobilePT : MobileTexts {
     override val SENSOR_SPEED_GPS = "Velocidade"
     override val SENSOR_SPEED_STEPS = "Velocidade (passos)"
     override val SENSOR_DISTANCE_GPS = "Distância"
-    override val SENSOR_ALTITUDE = "Altitude"
+    override val SENSOR_ALTITUDE = "Altitudine"
     override val SENSOR_TOTAL_ASCENT = "Subida total"
     override val SENSOR_TOTAL_DESCENT = "Descida total"
     override val SENSOR_PRESSURE = "Pressão atm."

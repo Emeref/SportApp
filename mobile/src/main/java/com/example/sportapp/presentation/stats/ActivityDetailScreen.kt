@@ -4,7 +4,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -35,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
@@ -50,6 +53,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.pow
 
@@ -72,14 +77,29 @@ fun ActivityDetailScreen(
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val hcSessionId by viewModel.hcSessionId.collectAsStateWithLifecycle(null)
 
+    val scope = rememberCoroutineScope()
     var isIntervalsExpanded by remember { mutableStateOf(false) }
     var isHrZonesExpanded by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
     var isMapFullScreen by remember { mutableStateOf(false) }
+    var showPermissionRationale by remember { mutableStateOf(false) }
+    var showExportedText by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         MapsInitializer.initialize(context)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        if (granted.containsAll(viewModel.healthConnectManager.writePermissions)) {
+            viewModel.resetHcDeniedCount()
+            viewModel.exportToHC()
+        } else {
+            viewModel.incrementHcDeniedCount()
+            Toast.makeText(context, texts.HC_EXPORT_PERMISSION_DENIED, Toast.LENGTH_SHORT).show()
+        }
     }
 
     LaunchedEffect(exportResult) {
@@ -87,6 +107,7 @@ fun ActivityDetailScreen(
             when (result) {
                 is ExportResult.Success -> {
                     Toast.makeText(context, texts.HC_EXPORT_SUCCESS, Toast.LENGTH_SHORT).show()
+                    showExportedText = true
                 }
                 is ExportResult.Error -> {
                     Toast.makeText(context, "${texts.HC_EXPORT_ERROR}${result.message}", Toast.LENGTH_LONG).show()
@@ -96,6 +117,13 @@ fun ActivityDetailScreen(
                 }
             }
             viewModel.clearExportResult()
+        }
+    }
+
+    LaunchedEffect(showExportedText) {
+        if (showExportedText) {
+            delay(3000)
+            showExportedText = false
         }
     }
 
@@ -111,6 +139,27 @@ fun ActivityDetailScreen(
             title = { Text(texts.DETAIL_DATA_ERROR_TITLE) },
             text = { Text(error ?: "") },
             confirmButton = { Button(onClick = { viewModel.clearError(); onNavigateBack() }) { Text(texts.DETAIL_ERROR_OK) } }
+        )
+    }
+
+    if (showPermissionRationale) {
+        AlertDialog(
+            onDismissRequest = { showPermissionRationale = false },
+            title = { Text(texts.HC_PERMISSIONS_DIALOG_TITLE) },
+            text = { Text(texts.HC_PERMISSIONS_DIALOG_DESC) },
+            confirmButton = {
+                Button(onClick = {
+                    showPermissionRationale = false
+                    viewModel.healthConnectManager.openHealthConnectSettings()
+                }) {
+                    Text(texts.HC_OPEN_SETTINGS)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionRationale = false }) {
+                    Text(texts.SETTINGS_CANCEL)
+                }
+            }
         )
     }
 
@@ -132,21 +181,50 @@ fun ActivityDetailScreen(
                     navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE) } },
                     actions = {
                         if (hcSessionId != null) {
-                            AssistChip(
-                                onClick = { },
-                                label = { Text(texts.HC_EXPORTED_ON) },
-                                leadingIcon = { Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp)) },
-                                modifier = Modifier.padding(end = 8.dp),
-                                colors = AssistChipDefaults.assistChipColors(
-                                    labelColor = MaterialTheme.colorScheme.primary,
-                                    leadingIconContentColor = MaterialTheme.colorScheme.primary
-                                )
-                            )
+                            Surface(
+                                onClick = { showExportedText = true },
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.Transparent,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                                modifier = Modifier.padding(end = 8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color(0xFF4CAF50)
+                                    )
+                                    AnimatedVisibility(visible = showExportedText) {
+                                        Text(
+                                            text = texts.HC_EXPORTED_ON,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color(0xFF4CAF50),
+                                            modifier = Modifier.padding(start = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
                         } else {
                             if (isExporting) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 16.dp), strokeWidth = 2.dp)
                             } else {
-                                IconButton(onClick = { viewModel.exportToHC() }) {
+                                IconButton(onClick = {
+                                    scope.launch {
+                                        if (viewModel.healthConnectManager.hasPermissions(viewModel.healthConnectManager.writePermissions)) {
+                                            viewModel.exportToHC()
+                                        } else {
+                                            if (mobileSettings.hcPermissionsDeniedCount >= 2) {
+                                                showPermissionRationale = true
+                                            } else {
+                                                permissionLauncher.launch(viewModel.healthConnectManager.writePermissions)
+                                            }
+                                        }
+                                    }
+                                }) {
                                     Icon(Icons.Default.CloudUpload, contentDescription = texts.HC_EXPORT_TO)
                                 }
                             }
@@ -623,9 +701,8 @@ private fun formatSeconds(seconds: Long): String {
 @Composable
 fun LapsTable(laps: List<WorkoutLap>, selectedLap: WorkoutLap?, onLapClick: (WorkoutLap) -> Unit) {
     val texts = LocalMobileTexts.current
-    val validLapsForPace = laps.filter { it.avgPaceSecondsPerKm > 0 }
-    val fastestPace = validLapsForPace.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
-    val slowestPace = validLapsForPace.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    val fastestPace = laps.filter { it.avgPaceSecondsPerKm > 0 }.minOfOrNull { it.avgPaceSecondsPerKm } ?: 0
+    val slowestPace = laps.filter { it.avgPaceSecondsPerKm > 0 }.maxOfOrNull { it.avgPaceSecondsPerKm } ?: 0
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberScrollState()
 

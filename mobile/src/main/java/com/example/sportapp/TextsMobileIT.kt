@@ -63,7 +63,7 @@ object TextsMobileIT : MobileTexts {
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Salva cronologia e riepiloghi (Presto)"
     override val SETTINGS_APPEARANCE = "Aspetto"
-    override val SETTINGS_MY_PROFILE = "Il mio profilo"
+    override val SETTINGS_MY_PROFILE = "Il mio profil"
     override val LANG_PL = "Polacco"
     override val LANG_EN = "Inglese"
 
@@ -107,6 +107,11 @@ object TextsMobileIT : MobileTexts {
     override val HC_EXPORT_PERMISSION_DENIED = "Permesso di scrittura in Health Connect negato"
     override val SETTINGS_HC_AUTO_EXPORT = "Esportazione automatica"
     override val SETTINGS_HC_AUTO_EXPORT_DESC = "Esporta automaticamente i nuovi allenamenti in Health Connect"
+
+    // Health Connect Permissions Dialog
+    override val HC_PERMISSIONS_DIALOG_TITLE = "Permessi richiesti"
+    override val HC_PERMISSIONS_DIALOG_DESC = "I permessi di scrittura sono necessari per esportare gli allenamenti su Health Connect. Puoi concederli nelle impostazioni di sistema."
+    override val HC_OPEN_SETTINGS = "Apri impostazioni"
 
     // Health Data Screen
     override val HEALTH_TITLE = "Dati sanitari"

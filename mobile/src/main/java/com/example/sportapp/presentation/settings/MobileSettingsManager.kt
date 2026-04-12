@@ -38,6 +38,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val LANGUAGE = stringPreferencesKey("language")
         private val AUTO_EXPORT_HC = booleanPreferencesKey("auto_export_hc")
+        private val HC_PERMISSIONS_DENIED_COUNT = intPreferencesKey("hc_permissions_denied_count")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -91,7 +92,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             healthData = healthData,
             themeMode = ThemeMode.valueOf(preferences[THEME_MODE] ?: defaultState.themeMode.name),
             language = language,
-            autoExportToHC = preferences[AUTO_EXPORT_HC] ?: defaultState.autoExportToHC
+            autoExportToHC = preferences[AUTO_EXPORT_HC] ?: defaultState.autoExportToHC,
+            hcPermissionsDeniedCount = preferences[HC_PERMISSIONS_DENIED_COUNT] ?: defaultState.hcPermissionsDeniedCount
         )
     }
 
@@ -109,10 +111,30 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[THEME_MODE] = state.themeMode.name
             preferences[LANGUAGE] = state.language.code
             preferences[AUTO_EXPORT_HC] = state.autoExportToHC
+            preferences[HC_PERMISSIONS_DENIED_COUNT] = state.hcPermissionsDeniedCount
         }
         syncWatchStatsSettings(state)
         syncHealthData(state.healthData)
         requestFullSyncFromWatch()
+    }
+
+    suspend fun updateAutoExport(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_EXPORT_HC] = enabled
+        }
+    }
+
+    suspend fun incrementHcDeniedCount() {
+        context.dataStore.edit { preferences ->
+            val current = preferences[HC_PERMISSIONS_DENIED_COUNT] ?: 0
+            preferences[HC_PERMISSIONS_DENIED_COUNT] = current + 1
+        }
+    }
+
+    suspend fun resetHcDeniedCount() {
+        context.dataStore.edit { preferences ->
+            preferences[HC_PERMISSIONS_DENIED_COUNT] = 0
+        }
     }
 
     private suspend fun requestFullSyncFromWatch() {

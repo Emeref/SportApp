@@ -79,7 +79,8 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToDefinitions = { navController.navigate("definitions") },
                                     onNavigateToHealthData = { navController.navigate("health_data") },
                                     onNavigateToLanguageSelection = { navController.navigate("language_selection") },
-                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") }
+                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") },
+                                    settingsManager = settingsManager
                                 )
                             }
                             composable("exercise_import") {
