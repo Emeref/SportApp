@@ -69,7 +69,7 @@ class ExerciseExportUseCase @Inject constructor(
                     startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionStartTime),
                     endTime = sessionEndTime,
                     endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionEndTime),
-                    exerciseType = healthConnectManager.mapBaseTypeToHealthConnect(activity.activityName),
+                    exerciseType = healthConnectManager.mapBaseTypeToHealthConnect(activity.baseType),
                     title = activity.activityName,
                     exerciseRoute = exerciseRoute,
                     metadata = Metadata.activelyRecorded(exportDevice)

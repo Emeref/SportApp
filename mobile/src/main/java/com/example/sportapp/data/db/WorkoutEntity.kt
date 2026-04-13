@@ -3,11 +3,13 @@ package com.example.sportapp.data.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
+import com.example.sportapp.data.model.BaseType
 
 @Entity(tableName = "workouts")
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val activityName: String,
+    val baseType: String = BaseType.OTHER,
     val startTime: Long,
     val durationFormatted: String,
     val steps: Int? = null,

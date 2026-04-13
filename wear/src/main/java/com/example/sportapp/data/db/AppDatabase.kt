@@ -13,7 +13,7 @@ import com.example.sportapp.data.model.WorkoutDefinition
         WorkoutPointEntity::class, 
         WorkoutDefinition::class
     ], 
-    version = 17
+    version = 18
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +34,11 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_16_17 = object : Migration(16, 17) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE workout_points ADD COLUMN horizontalAccuracy REAL")
+            }
+        }
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE workouts ADD COLUMN baseType TEXT NOT NULL DEFAULT 'Other'")
             }
         }
     }

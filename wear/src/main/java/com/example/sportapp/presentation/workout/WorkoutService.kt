@@ -171,6 +171,7 @@ class WorkoutService : Service(), SensorEventListener {
                     
                     val workout = WorkoutEntity(
                         activityName = definition?.name ?: fallbackActivityName,
+                        baseType = definition?.baseType ?: "Other",
                         startTime = System.currentTimeMillis(),
                         durationFormatted = "00:00",
                         steps = 0,
