@@ -136,13 +136,19 @@ fun CommonChartSection(
     hrZoneResult: HeartRateZoneResult? = null,
     lineColors: List<Color>? = null,
     isTimestampX: Boolean = false,
-    onMarkerShown: ((Int?) -> Unit)? = null
+    onMarkerShown: ((Int?) -> Unit)? = null,
+    useDataYRange: Boolean = false
 ) {
     val totalPoints = detailTimes?.size ?: overallRawData?.size ?: 0
-    val axisValuesOverrider = remember(hrZoneResult, unit, totalPoints, title) {
+    val axisValuesOverrider = remember(hrZoneResult, unit, totalPoints, title, useDataYRange) {
         object : AxisValuesOverrider<ChartEntryModel> {
             override fun getMaxY(model: ChartEntryModel): Float {
                 val max = if (model.maxY.isNaN()) 0f else model.maxY
+                
+                if (useDataYRange && max > 0f) {
+                    return ceil(max.toDouble()).toFloat() + 1f
+                }
+
                 if (max <= 0f) return if (unit == "bpm") 180f else if (unit == "hPa") 1025f else 1f
                 
                 if (hrZoneResult != null) {
@@ -158,9 +164,14 @@ fun CommonChartSection(
                 return max
             }
             override fun getMinY(model: ChartEntryModel): Float {
+                val min = if (model.minY.isNaN()) 0f else model.minY
+                
+                if (useDataYRange) {
+                    return min
+                }
+
                 if (unit == "hPa") {
-                    val minDataValue = if (model.minY.isNaN()) 0f else model.minY
-                    return floor(minDataValue.toDouble()).toFloat() - 1f
+                    return floor(min.toDouble()).toFloat() - 1f
                 }
                 // Ograniczenie od dołu do 0
                 return 0f
