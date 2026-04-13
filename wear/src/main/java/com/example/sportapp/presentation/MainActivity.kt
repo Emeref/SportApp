@@ -18,7 +18,6 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.example.sportapp.LocalWearTexts
-import com.example.sportapp.TextsWearPL
 import com.example.sportapp.presentation.menu.ChooseSportScreen
 import com.example.sportapp.presentation.menu.MainMenuScreen
 import com.example.sportapp.presentation.menu.StatisticsScreen
@@ -239,24 +238,11 @@ class MainActivity : ComponentActivity() {
                                     onDone = { navController.popBackStack() }
                                 )
                             }
-                            composable("health_step_length") {
-                                NumericInputScreen(
-                                    label = texts.HEALTH_STEP_LENGTH,
-                                    value = healthData.stepLength,
-                                    range = 30..130,
-                                    unit = texts.UNIT_CM,
-                                    onValueChange = { 
-                                        healthData = healthData.copy(stepLength = it)
-                                        scope.launch { settingsManager.saveHealthData(healthData) }
-                                    },
-                                    onDone = { navController.popBackStack() }
-                                )
-                            }
                             composable("health_resting_hr") {
                                 NumericInputScreen(
                                     label = texts.HEALTH_RESTING_HR,
                                     value = healthData.restingHR,
-                                    range = 30..200,
+                                    range = 30..120,
                                     unit = texts.UNIT_BPM,
                                     onValueChange = { 
                                         healthData = healthData.copy(restingHR = it)
@@ -269,7 +255,7 @@ class MainActivity : ComponentActivity() {
                                 NumericInputScreen(
                                     label = texts.HEALTH_MAX_HR,
                                     value = healthData.maxHR,
-                                    range = 100..240,
+                                    range = 80..240,
                                     unit = texts.UNIT_BPM,
                                     onValueChange = { 
                                         healthData = healthData.copy(maxHR = it)
@@ -278,19 +264,18 @@ class MainActivity : ComponentActivity() {
                                     onDone = { navController.popBackStack() }
                                 )
                             }
-                            
-                            composable("workout_summary") {
-                                currentSummaryData?.let { (title, data) ->
-                                    WorkoutSummaryScreen(
-                                        title = title,
-                                        summaryData = data,
-                                        onConfirm = {
-                                            navController.navigate("choose_sport") {
-                                                popUpTo("main_menu") { inclusive = false }
-                                            }
-                                        }
-                                    )
-                                }
+                            composable("health_step_length") {
+                                NumericInputScreen(
+                                    label = texts.HEALTH_STEP_LENGTH,
+                                    value = healthData.stepLength,
+                                    range = 30..150,
+                                    unit = texts.UNIT_CM,
+                                    onValueChange = { 
+                                        healthData = healthData.copy(stepLength = it)
+                                        scope.launch { settingsManager.saveHealthData(healthData) }
+                                    },
+                                    onDone = { navController.popBackStack() }
+                                )
                             }
 
                             composable(
@@ -312,6 +297,20 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
+
+                            composable("workout_summary") {
+                                val data = currentSummaryData
+                                if (data != null) {
+                                    WorkoutSummaryScreen(
+                                        title = data.first,
+                                        summaryData = data.second,
+                                        onConfirm = {
+                                            currentSummaryData = null
+                                            navController.popBackStack("main_menu", inclusive = false)
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -325,9 +324,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        val id = intent?.getLongExtra("EXTRA_DEFINITION_ID", -1L) ?: -1L
-        if (id != -1L) {
-            navigationIntentId.value = id
+        intent?.let {
+            if (it.action == "com.example.sportapp.ACTION_NAVIGATE_TO_WORKOUT") {
+                val definitionId = it.getLongExtra("definitionId", -1L)
+                if (definitionId != -1L) {
+                    navigationIntentId.value = definitionId
+                }
+            }
         }
     }
 }

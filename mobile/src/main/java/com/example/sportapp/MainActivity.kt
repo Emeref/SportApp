@@ -152,9 +152,17 @@ class MainActivity : ComponentActivity() {
                                 WidgetSelectionScreen(
                                     widgets = settingsState.widgets,
                                     title = texts.SETTINGS_WIDGETS_HOME,
-                                    onSave = { updatedWidgets ->
+                                    initialDays = settingsState.customDays,
+                                    daysLabel = texts.SETTINGS_WATCH_STATS_DAYS_LABEL,
+                                    onSave = { updatedWidgets, updatedDays ->
                                         scope.launch {
-                                            settingsManager.saveSettings(settingsState.copy(widgets = updatedWidgets))
+                                            settingsManager.saveSettings(
+                                                settingsState.copy(
+                                                    widgets = updatedWidgets,
+                                                    customDays = updatedDays ?: settingsState.customDays,
+                                                    period = ReportingPeriod.CUSTOM
+                                                )
+                                            )
                                             navController.popBackStack()
                                         }
                                     },
@@ -165,9 +173,17 @@ class MainActivity : ComponentActivity() {
                                 WidgetSelectionScreen(
                                     widgets = settingsState.watchStatsWidgets,
                                     title = texts.SETTINGS_WIDGETS_WATCH,
-                                    onSave = { updatedWidgets ->
+                                    initialDays = settingsState.watchStatsCustomDays,
+                                    daysLabel = texts.SETTINGS_WATCH_STATS_DAYS_LABEL,
+                                    onSave = { updatedWidgets, updatedDays ->
                                         scope.launch {
-                                            settingsManager.saveSettings(settingsState.copy(watchStatsWidgets = updatedWidgets))
+                                            settingsManager.saveSettings(
+                                                settingsState.copy(
+                                                    watchStatsWidgets = updatedWidgets,
+                                                    watchStatsCustomDays = updatedDays ?: settingsState.watchStatsCustomDays,
+                                                    watchStatsPeriod = ReportingPeriod.CUSTOM
+                                                )
+                                            )
                                             navController.popBackStack()
                                         }
                                     },
