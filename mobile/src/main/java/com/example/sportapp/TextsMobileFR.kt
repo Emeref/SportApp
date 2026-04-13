@@ -63,7 +63,7 @@ object TextsMobileFR : MobileTexts {
     override val SETTINGS_INTEGRATION = "Intégration"
     override val SETTINGS_SYNC = "Synchronisation"
     override val SETTINGS_STRAVA = "Strava"
-    override val SETTINGS_STRAVA_DESC = "Synchronisez vos entraînements avec Strava"
+    override val SETTINGS_STRAVA_DESC = "Synchronisez vos entraînements with Strava"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Sauvegarder l'historique et les résumés (Bientôt)"
     override val SETTINGS_APPEARANCE = "Apparence"
@@ -82,10 +82,10 @@ object TextsMobileFR : MobileTexts {
     override val HC_SYNC_HEALTH_DATA = "Synchroniser avec Health Connect"
     override val HC_SYNC_WORKOUTS = "Importer les entraînements de Health Connect"
     override val HC_SYNC_CONFIRM_TITLE = "Synchronisation des données"
-    override val HC_SYNC_CONFIRM_DESC = "Voulez-vous mettre à jour votre profil avec les données trouvées dans Health Connect ?"
+    override val HC_SYNC_CONFIRM_DESC = "Voulez-vous mettre à jour votre profil avec les données trouvées in Health Connect ?"
     override val HC_SYNC_SUCCESS = "Synchronisation réussie"
     override val HC_SYNC_ERROR = "Erreur de synchronisation"
-    override val HC_SYNC_NO_DATA = "Aucune nouvelle donnée trouvée"
+    override val HC_SYNC_NO_DATA = "Aucuna nouvelle donnée trouvée"
     override fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String {
         val parts = mutableListOf<String>()
         weight?.let { parts.add("poids $it kg") }
@@ -97,7 +97,7 @@ object TextsMobileFR : MobileTexts {
     // Stage 3 - Import Workouts
     override val HC_IMPORT_TITLE = "Importer les entraînements"
     override val HC_IMPORT_ALREADY_IMPORTED = "Déjà importé"
-    override val HC_IMPORT_EMPTY = "Aucun entraînement trouvé dans Health Connect au cours des 30 derniers jours."
+    override val HC_IMPORT_EMPTY = "Aucun entraînement trouvé in Health Connect au cours des 30 derniers jours."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Êtes-vous sûr de vouloir importer les entraînements sélectionnés ?"
     override val HC_IMPORT_SELECT_ALL = "Sélectionner tout"
     override fun hcImportSelected(count: Int) = "Importer la sélection ($count)"
@@ -130,7 +130,7 @@ object TextsMobileFR : MobileTexts {
 
     // Health Connect Permissions Dialog
     override val HC_PERMISSIONS_DIALOG_TITLE = "Permissions requises"
-    override val HC_PERMISSIONS_DIALOG_DESC = "Les permissions d'écriture sont nécessaires pour exporter les entraînements vers Health Connect. Vous pouvez les accorder dans les paramètres du système."
+    override val HC_PERMISSIONS_DIALOG_DESC = "Les permissions d'écriture sont nécessaires pour exporter les entraînements vers Health Connect. Vous pouvez les accorder in les paramètres du système."
     override val HC_OPEN_SETTINGS = "Ouvrir les paramètres"
 
     // Health Data Screen
@@ -225,7 +225,7 @@ object TextsMobileFR : MobileTexts {
     override val STATS_ALL_TYPES = "Tous les types"
     override val STATS_FROM = "De"
     override val STATS_TO = "À"
-    override val STATS_NO_WIDGETS = "Aucun widget actif. Activez-les dans les options."
+    override val STATS_NO_WIDGETS = "Aucun widget actif. Activez-les in les options."
     override val STATS_SETTINGS_TITLE = "Paramètres des stats générales"
     override val STATS_SECTION_WIDGETS = "Section : Widgets"
     override val STATS_SECTION_CHARTS = "Section : Graphiques de tendance"
@@ -404,6 +404,8 @@ object TextsMobileFR : MobileTexts {
     override val WIDGET_MAX_CADENCE = "Cadence max"
     override val WIDGET_TOTAL_STEPS = "Nombre de pas"
     override val WIDGET_PRESSURE_START = "Pression atm. (départ)"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportation automatique"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Exporter automatiquement les nouveaux entraînements vers Strava"
     override val WIDGET_PRESSURE_END = "Pression atm. (fin)"
     override val WIDGET_MAX_PRESSURE = "Pression atm. maximale"
     override val WIDGET_MIN_PRESSURE = "Pression atm. minimale"

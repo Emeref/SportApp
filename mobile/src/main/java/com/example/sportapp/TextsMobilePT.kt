@@ -115,7 +115,7 @@ object TextsMobilePT : MobileTexts {
 
     // Stage 6 - Sync Status
     override val SYNC_STATUS_TITLE = "Status de sincronização HC"
-    override val SYNC_LAST_HEALTH = "Última sync dados de saúde"
+    override val SYNC_LAST_HEALTH = "Última sync danych de saúde"
     override val SYNC_LAST_WORKOUT = "Última sync treinos"
     override val SYNC_UNSYNCED_COUNT = "Registros não sincronizados"
     override val SYNC_NOW = "Sincronizar agora"
@@ -242,7 +242,7 @@ object TextsMobilePT : MobileTexts {
     override val DEF_DELETE = "Excluir definición"
     override val DEF_NAME = "Nome"
     override val DEF_ICON = "Ícone"
-    override val DEF_SENSORS = "Sensori"
+    override val DEF_SENSORS = "Sensores"
     override val DEF_LIST_TITLE = "Definição de atividade"
     override val DEF_SENSORS_DESC = "Gerenciar lista de esportes e sensores"
     override val DEF_RECORDING = "Gravação"
@@ -312,6 +312,12 @@ object TextsMobilePT : MobileTexts {
     override val DEF_STOPWATCH = "Cronometro"
     override val DEF_OTHER = "Otro"
     override val DEF_STANDARD_ACTIVITY = "Actividad estándar"
+
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Selecionar atividade para modificar"
+    override val AD_SETTINGS_EDIT_TITLE = "Configurações"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Seção: Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Seção: Gráficos"
 
     // Heart Rate Math
     override val HR_NO_DATA = "Sin datos de FC"
@@ -538,11 +544,6 @@ object TextsMobilePT : MobileTexts {
     override val TRIM_START = "Início"
     override val TRIM_END = "Fim"
 
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Selecionar atividade para modificar"
-    override val AD_SETTINGS_EDIT_TITLE = "Configurações"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Seção: Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Seção: Gráficos"
 
     // Strava Strings
     override val STRAVA_TITLE = "Sincronização com Strava"
@@ -555,6 +556,8 @@ object TextsMobilePT : MobileTexts {
     override val STRAVA_SYNC_FAILED = "Falha no envio"
     override val STRAVA_SYNCING = "Enviando..."
     override val STRAVA_AUTH_ERROR = "Erro de autenticação"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportação automática"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Exportar automaticamente novos treinos para o Strava"
     override val SETTINGS_CUSTOM_DAYS_DESC = "Número de dias para o período 'Outro'"
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Número de dias para as estatísticas do relógio"
 }

@@ -82,7 +82,7 @@ object TextsMobileIT : MobileTexts {
     override val HC_SYNC_HEALTH_DATA = "Sincronizza con Health Connect"
     override val HC_SYNC_WORKOUTS = "Importa allenamenti da Health Connect"
     override val HC_SYNC_CONFIRM_TITLE = "Sincronizzazione dati"
-    override val HC_SYNC_CONFIRM_DESC = "Vuoi aggiornare il tuo profilo with i dati trovati in Health Connect?"
+    override val HC_SYNC_CONFIRM_DESC = "Vuoi aggiornare il tuo profil with i dati trovati in Health Connect?"
     override val HC_SYNC_SUCCESS = "Sincronizzazione riuscita"
     override val HC_SYNC_ERROR = "Errore di sincronizzazione"
     override val HC_SYNC_NO_DATA = "Nessun nuovo dato trovato"
@@ -555,6 +555,8 @@ object TextsMobileIT : MobileTexts {
     override val STRAVA_SYNC_FAILED = "Invio fallito"
     override val STRAVA_SYNCING = "Invio in corso..."
     override val STRAVA_AUTH_ERROR = "Errore di autenticazione"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Esportazione automatica"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Esporta automaticamente i nuovi allenamenti su Strava"
     override val SETTINGS_CUSTOM_DAYS_DESC = "Numero di giorni per il periodo 'Altro'"
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Numero di giorni per le statistiche dell'orologio"
 }

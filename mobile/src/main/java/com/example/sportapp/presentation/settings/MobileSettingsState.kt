@@ -70,6 +70,7 @@ data class MobileSettingsState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val language: AppLanguage = AppLanguage.POLISH,
     val autoExportToHC: Boolean = false,
+    val autoExportToStrava: Boolean = false,
     val hcPermissionsDeniedCount: Int = 0,
     val conflictResolutionPolicy: ConflictResolutionPolicy = ConflictResolutionPolicy.NEWER_WINS
 )

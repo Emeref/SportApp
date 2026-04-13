@@ -555,4 +555,6 @@ object TextsMobileEN : MobileTexts {
     override val STRAVA_SYNC_FAILED = "Upload failed"
     override val STRAVA_SYNCING = "Uploading..."
     override val STRAVA_AUTH_ERROR = "Authorization error"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Auto export"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Automatically upload new workouts to Strava"
 }

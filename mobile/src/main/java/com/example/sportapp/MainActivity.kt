@@ -105,6 +105,7 @@ class MainActivity : ComponentActivity() {
                             composable("strava_settings") {
                                 StravaSettingsScreen(
                                     stravaStorage = stravaStorage,
+                                    settingsManager = settingsManager,
                                     onBack = { navController.popBackStack() }
                                 )
                             }
@@ -323,8 +324,8 @@ class MainActivity : ComponentActivity() {
     private fun exchangeStravaToken(code: String) {
         activityScope.launch(Dispatchers.IO) {
             try {
-                val clientId = "224679"
-                val clientSecret = "9727c9a8bab91d5ef598d94baee374668998dde3" // TODO: Secure this
+                val clientId = BuildConfig.STRAVA_CLIENT_ID
+                val clientSecret = BuildConfig.STRAVA_CLIENT_SECRET
                 val response = stravaAuthApi.exchangeToken(clientId, clientSecret, code)
                 
                 if (response.isSuccessful && response.body() != null) {

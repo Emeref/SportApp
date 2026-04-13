@@ -555,4 +555,6 @@ object TextsMobilePL : MobileTexts {
     override val STRAVA_SYNC_FAILED = "Błąd wysyłki"
     override val STRAVA_SYNCING = "Wysyłanie..."
     override val STRAVA_AUTH_ERROR = "Błąd autoryzacji"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Automatyczny eksport"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Automatycznie wysyłaj nowe treningi do Strava"
 }
