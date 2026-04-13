@@ -30,7 +30,6 @@ class ExerciseSyncUseCase @Inject constructor(
                     val timeSeries = readSessionTimeSeries(sessionDto.hcSessionId)
                     val localId = activityRepository.saveImportedSession(sessionDto, timeSeries)
                     
-                    // Zapisz metadane ze szczegółami aktywności
                     syncMetadataDao.insert(
                         SyncMetadataEntity(
                             hcRecordId = sessionDto.hcSessionId,
@@ -82,7 +81,7 @@ class ExerciseSyncUseCase @Inject constructor(
                         alreadyImported = alreadyImported
                     )
                 } catch (e: Exception) {
-                    null // pomiń sesje z błędami
+                    null
                 }
             }
         }
@@ -97,7 +96,6 @@ class ExerciseSyncUseCase @Inject constructor(
                     ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL,
                     HeartRateRecord.BPM_AVG,
                     HeartRateRecord.BPM_MAX,
-                    SpeedRecord.SPEED_AVG,
                     SpeedRecord.SPEED_MAX
                 ),
                 timeRangeFilter = timeFilter
@@ -108,7 +106,7 @@ class ExerciseSyncUseCase @Inject constructor(
             calories = response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories,
             avgHR = response[HeartRateRecord.BPM_AVG]?.toInt(),
             maxHR = response[HeartRateRecord.BPM_MAX]?.toInt(),
-            avgSpeed = response[SpeedRecord.SPEED_AVG]?.inMetersPerSecond,
+            avgSpeed = null, // speed_avg can be unstable
             maxSpeed = response[SpeedRecord.SPEED_MAX]?.inMetersPerSecond
         )
     }
@@ -196,15 +194,17 @@ class ExerciseSyncUseCase @Inject constructor(
                                 val altMeters = alt?.let { 
                                     it.javaClass.getMethod("getInMeters").invoke(it) as Double
                                 }
-                                routeLocations.add(LocationSample(time, lat, lon, altMeters))
+                                val acc = try { loc.javaClass.getMethod("getHorizontalAccuracy").invoke(loc) } catch (e: Exception) { null }
+                                val accMeters = acc?.let {
+                                    it.javaClass.getMethod("getInMeters").invoke(it) as Double
+                                }
+                                routeLocations.add(LocationSample(time, lat, lon, altMeters, accMeters))
                             }
                         }
                     }
                 } catch (e: Exception) {
                 }
                 routeLocations
-            } catch (e: SecurityException) {
-                emptyList()
             } catch (e: Exception) {
                 emptyList()
             }

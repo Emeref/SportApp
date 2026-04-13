@@ -86,6 +86,7 @@ class GpxImporter @Inject constructor() {
                 speedGps = speedGpsVal,
                 speedSteps = null,
                 altitude = p.ele,
+                horizontalAccuracy = null,
                 totalAscent = totalAscent,
                 totalDescent = totalDescent,
                 calorieMin = null,

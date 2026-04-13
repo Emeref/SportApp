@@ -55,6 +55,7 @@ data class WorkoutPointEntity(
     val speedGps: Double?,
     val speedSteps: Double?,
     val altitude: Double?,
+    val horizontalAccuracy: Double? = null,
     val totalAscent: Double?,
     val totalDescent: Double?,
     val calorieMin: Double?,

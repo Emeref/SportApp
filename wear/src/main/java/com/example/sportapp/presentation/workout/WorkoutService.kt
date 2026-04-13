@@ -422,7 +422,8 @@ class WorkoutService : Service(), SensorEventListener {
                         wysokosc = altitude,
                         calorieMin = calorieMinNow,
                         calorieSum = totalCaloriesAcc,
-                        pressure = if (pressureValue > 0) pressureValue else null
+                        pressure = if (pressureValue > 0) pressureValue else null,
+                        accuracy = lastLocation?.accuracy
                     )
                     
                     if (lastPoint != null) {
