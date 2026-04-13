@@ -3,11 +3,13 @@ package com.example.sportapp.data.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
+import com.example.sportapp.data.model.BaseType
 
 @Entity(tableName = "workouts")
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val activityName: String,
+    val baseType: String = BaseType.OTHER,
     val startTime: Long,
     val durationFormatted: String,
     val steps: Int? = null,
@@ -36,7 +38,8 @@ data class WorkoutEntity(
     val autoLapDistance: Double? = null, // m - dystans autolapa w momencie startu
     val isSynced: Boolean = false,
     @ColumnInfo(name = "hc_session_id")
-    val hcSessionId: String? = null
+    val hcSessionId: String? = null,
+    val isFinished: Boolean = true // Nowe pole dla kontroli synchronizacji
 )
 
 @Entity(tableName = "workout_points")
@@ -54,6 +57,7 @@ data class WorkoutPointEntity(
     val speedGps: Double?,
     val speedSteps: Double?,
     val altitude: Double?,
+    val horizontalAccuracy: Double? = null,
     val totalAscent: Double?,
     val totalDescent: Double?,
     val calorieMin: Double?,

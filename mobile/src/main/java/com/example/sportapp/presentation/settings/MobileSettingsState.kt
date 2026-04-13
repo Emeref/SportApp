@@ -8,6 +8,7 @@ import com.example.sportapp.TextsMobileFR
 import com.example.sportapp.TextsMobileES
 import com.example.sportapp.TextsMobileIT
 import com.example.sportapp.TextsMobilePT
+import com.example.sportapp.healthconnect.ConflictResolutionPolicy
 
 enum class ReportingPeriod {
     TODAY, WEEK, MONTH, YEAR, CUSTOM
@@ -69,5 +70,6 @@ data class MobileSettingsState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val language: AppLanguage = AppLanguage.POLISH,
     val autoExportToHC: Boolean = false,
-    val hcPermissionsDeniedCount: Int = 0
+    val hcPermissionsDeniedCount: Int = 0,
+    val conflictResolutionPolicy: ConflictResolutionPolicy = ConflictResolutionPolicy.NEWER_WINS
 )

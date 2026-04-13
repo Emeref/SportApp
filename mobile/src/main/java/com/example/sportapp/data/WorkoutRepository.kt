@@ -442,6 +442,7 @@ class WorkoutRepository @Inject constructor(
                 speedGps = speed,
                 speedSteps = null,
                 altitude = loc?.altitude,
+                horizontalAccuracy = loc?.horizontalAccuracy,
                 totalAscent = currentAscent,
                 totalDescent = currentDescent,
                 calorieMin = calStep,

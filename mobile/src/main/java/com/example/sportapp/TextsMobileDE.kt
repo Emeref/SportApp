@@ -108,6 +108,21 @@ object TextsMobileDE : MobileTexts {
     override val HC_EXPORT_ERROR = "Exportfehler: "
     override val HC_EXPORT_PERMISSION_DENIED = "Keine Berechtigung zum Schreiben in Health Connect"
 
+    // Stage 6 - Sync Status
+    override val SYNC_STATUS_TITLE = "HC-Synchronisierungsstatus"
+    override val SYNC_LAST_HEALTH = "Letzte Gesundheitsdaten-Sync"
+    override val SYNC_LAST_WORKOUT = "Letzte Workout-Sync"
+    override val SYNC_UNSYNCED_COUNT = "Nicht synchronisierte Datensätze"
+    override val SYNC_NOW = "Jetzt synchronisieren"
+    override val SYNC_HISTORY_TITLE = "Synchronisierungsverlauf"
+    override val SYNC_TYPE_IMPORT = "Import"
+    override val SYNC_TYPE_EXPORT = "Export"
+    override val SYNC_NEVER = "Nie"
+    override val SYNC_CONFLICT_POLICY = "Konfliktlösungsrichtlinie"
+    override val SYNC_CONFLICT_NEWER = "Neuere gewinnt"
+    override val SYNC_CONFLICT_LOCAL = "Lokale gewinnt"
+    override val SYNC_CONFLICT_HC = "Health Connect gewinnt"
+
     // Health Connect Permissions Dialog
     override val HC_PERMISSIONS_DIALOG_TITLE = "Erforderliche Berechtigungen"
     override val HC_PERMISSIONS_DIALOG_DESC = "Schreibberechtigungen sind erforderlich, um Workouts nach Health Connect zu exportieren. Sie können diese in den Systemeinstellungen erteilen."
@@ -260,7 +275,7 @@ object TextsMobileDE : MobileTexts {
     override val DEF_ELLIPTICAL = "Crosstrainer"
     override val DEF_ROWING_MACHINE = "Rudermaschine"
     override val DEF_STRENGTH_TRAINING = "Krafttraining"
-    override val DEF_CALISTHENICS = "Calisthenics"
+    override val DEF_CALISTHENICS = "Calistenia"
     override val DEF_YOGA = "Yoga"
     override val DEF_PILATES = "Pilates"
     override val DEF_AEROBICS = "Aerobic"

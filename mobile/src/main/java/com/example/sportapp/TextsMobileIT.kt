@@ -108,6 +108,21 @@ object TextsMobileIT : MobileTexts {
     override val SETTINGS_HC_AUTO_EXPORT = "Esportazione automatica"
     override val SETTINGS_HC_AUTO_EXPORT_DESC = "Esporta automaticamente i nuovi allenamenti in Health Connect"
 
+    // Stage 6 - Sync Status
+    override val SYNC_STATUS_TITLE = "Stato sincronizzazione HC"
+    override val SYNC_LAST_HEALTH = "Ultima sync dati sanitari"
+    override val SYNC_LAST_WORKOUT = "Ultima sync allenamenti"
+    override val SYNC_UNSYNCED_COUNT = "Record non sincronizzati"
+    override val SYNC_NOW = "Sincronizza ora"
+    override val SYNC_HISTORY_TITLE = "Cronologia sincronizzazione"
+    override val SYNC_TYPE_IMPORT = "Importa"
+    override val SYNC_TYPE_EXPORT = "Esporta"
+    override val SYNC_NEVER = "Mai"
+    override val SYNC_CONFLICT_POLICY = "Politica di conflitto"
+    override val SYNC_CONFLICT_NEWER = "Il più recente vince"
+    override val SYNC_CONFLICT_LOCAL = "I locali vincono"
+    override val SYNC_CONFLICT_HC = "Health Connect vince"
+
     // Health Connect Permissions Dialog
     override val HC_PERMISSIONS_DIALOG_TITLE = "Permessi richiesti"
     override val HC_PERMISSIONS_DIALOG_DESC = "I permessi di scrittura sono necessari per esportare gli allenamenti su Health Connect. Puoi concederli nelle impostazioni di sistema."
@@ -133,7 +148,7 @@ object TextsMobileIT : MobileTexts {
     // Activity List
     override val ACTIVITY_LIST_TITLE = "Elenco attività"
     override val ACTIVITY_EMPTY = "Nessuna attività"
-    override val ACTIVITY_DELETE_CONFIRM = "Sei sicuro di voler eliminare permanentemente le attività selezionate dal database?"
+    override val ACTIVITY_DELETE_CONFIRM = "Sei sicuro di voler eliminare permanentemente las actividades seleccionadas dal database?"
     override val ACTIVITY_COMPARE = "Confronta"
     override val ACTIVITY_TRIM = "Taglia"
     override val ACTIVITY_DETAIL = "Dettagli"
@@ -182,7 +197,7 @@ object TextsMobileIT : MobileTexts {
     override val DETAIL_LAP_TIME = "Tempo"
     override val DETAIL_LAP_AVG_PACE = "Pace medio"
     override val DETAIL_LAP_AVG_SPEED = "Velocità media"
-    override val DETAIL_LAP_MAX_SPEED = "Velocità massima"
+    override val DETAIL_LAP_MAX_SPEED = "Velocidad máxima"
     override val DETAIL_LAP_AVG_HR = "FC media"
     override val DETAIL_LAP_MAX_HR = "FC massima"
     override val DETAIL_LAP_ASCENT_DESCENT = "Salita/Discesa"
@@ -234,7 +249,7 @@ object TextsMobileIT : MobileTexts {
     override val DEF_NEW_ACTIVITY = "Nuova attività"
     override val DEF_EDIT_ACTIVITY = "Modifica attività"
     override val DEF_NAME_LABEL = "Nome attività"
-    override val DEF_AUTO_LAP_LABEL = "Giro automatico (metri, opcjonalnie)"
+    override val DEF_AUTO_LAP_LABEL = "Giro automatico (metri, opcionalmente)"
     override val DEF_WIDGET_IN_ACTIVITY = "Widget in attività"
     override val DEF_VISIBILITY = "Visibilità"
     override val DEF_RECORD = "Registra"

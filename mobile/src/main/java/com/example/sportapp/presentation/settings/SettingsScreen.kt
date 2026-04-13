@@ -4,6 +4,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,6 +24,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.healthconnect.ConflictResolutionPolicy
 import com.example.sportapp.healthconnect.HealthConnectManager
 import kotlinx.coroutines.launch
 
@@ -38,7 +40,8 @@ fun SettingsScreen(
     onNavigateToHealthData: () -> Unit,
     onNavigateToLanguageSelection: () -> Unit,
     onNavigateToExerciseImport: () -> Unit,
-    settingsManager: MobileSettingsManager // Added to handle denied count updates
+    onNavigateToSyncStatus: () -> Unit,
+    settingsManager: MobileSettingsManager
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
@@ -133,13 +136,10 @@ fun SettingsScreen(
         ) {
             // Sekcja Wygląd
             SettingsSection(title = texts.SETTINGS_APPEARANCE) {
-                Text(text = texts.SETTINGS_THEME, style = MaterialTheme.typography.bodyMedium)
                 ThemeSelectionGrid(
                     selectedMode = state.themeMode,
                     onSelect = { state = state.copy(themeMode = it) }
                 )
-                
-                Spacer(modifier = Modifier.height(8.dp))
                 
                 SettingsRow(
                     title = texts.SETTINGS_LANGUAGE,
@@ -181,17 +181,33 @@ fun SettingsScreen(
                         
                         if (hcStatus == "AVAILABLE") {
                             SettingsRow(
+                                title = texts.SYNC_STATUS_TITLE,
+                                icon = Icons.Default.Sync,
+                                onClick = onNavigateToSyncStatus
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            SettingsRow(
                                 title = texts.HC_SYNC_WORKOUTS,
                                 icon = Icons.Default.FitnessCenter,
                                 onClick = onNavigateToExerciseImport
                             )
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(texts.SYNC_CONFLICT_POLICY, style = MaterialTheme.typography.labelMedium)
+                            ConflictPolicySelector(
+                                currentPolicy = state.conflictResolutionPolicy,
+                                onPolicySelected = { state = state.copy(conflictResolutionPolicy = it) }
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(texts.SETTINGS_HC_AUTO_EXPORT, style = MaterialTheme.typography.bodyLarge)
@@ -217,17 +233,6 @@ fun SettingsScreen(
                                         }
                                     }
                                 )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Button(
-                                onClick = {
-                                    healthConnectManager.openHealthConnectSettings()
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(texts.SETTINGS_HC_MANAGE_PERMISSIONS)
                             }
                         } else if (hcStatus == "NOT_INSTALLED") {
                             Button(
@@ -289,6 +294,34 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun ConflictPolicySelector(
+    currentPolicy: ConflictResolutionPolicy,
+    onPolicySelected: (ConflictResolutionPolicy) -> Unit
+) {
+    val texts = LocalMobileTexts.current
+    val policies = listOf(
+        ConflictResolutionPolicy.NEWER_WINS to texts.SYNC_CONFLICT_NEWER,
+        ConflictResolutionPolicy.LOCAL_WINS to texts.SYNC_CONFLICT_LOCAL,
+        ConflictResolutionPolicy.HC_WINS to texts.SYNC_CONFLICT_HC
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        policies.forEach { (policy, label) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onPolicySelected(policy) }
+            ) {
+                RadioButton(
+                    selected = currentPolicy == policy,
+                    onClick = { onPolicySelected(policy) }
+                )
+                Text(label, style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 }

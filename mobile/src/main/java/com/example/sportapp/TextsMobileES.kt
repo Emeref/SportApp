@@ -59,7 +59,7 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_PERIOD_HOME_DESC = "¿Para qué periodo mostrar widgets?"
     override val SETTINGS_PERIOD_WATCH_DESC = "¿Estadísticas de qué periodo?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Número de días"
-    override val SETTINGS_INTEGRATION = "Integración"
+    override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Guardar historial y resúmenes (Próximamente)"
     override val SETTINGS_APPEARANCE = "Apariencia"
@@ -92,7 +92,7 @@ object TextsMobileES : MobileTexts {
     // Stage 3 - Import Workouts
     override val HC_IMPORT_TITLE = "Importar entrenamientos"
     override val HC_IMPORT_ALREADY_IMPORTED = "Ya importado"
-    override val HC_IMPORT_EMPTY = "No se han encontrado entrenamientos en Health Connect de los últimos 30 días."
+    override val HC_IMPORT_EMPTY = "No se han encontrado entrenamientos en Health Connect de los últimos 30 dni."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "¿Está seguro de que desea importar los entrenamientos seleccionados?"
     override val HC_IMPORT_SELECT_ALL = "Seleccionar todos"
     override fun hcImportSelected(count: Int) = "Importar seleccionados ($count)"
@@ -107,6 +107,21 @@ object TextsMobileES : MobileTexts {
     override val HC_EXPORT_PERMISSION_DENIED = "Permiso denegado para Health Connect"
     override val SETTINGS_HC_AUTO_EXPORT = "Exportación automática"
     override val SETTINGS_HC_AUTO_EXPORT_DESC = "Exportar automáticamente los entrenamientos finalizados a Health Connect"
+
+    // Stage 6 - Sync Status
+    override val SYNC_STATUS_TITLE = "Estado de sincronización de HC"
+    override val SYNC_LAST_HEALTH = "Última sincronización de datos de salud"
+    override val SYNC_LAST_WORKOUT = "Última sincronización de entrenamientos"
+    override val SYNC_UNSYNCED_COUNT = "Registros no sincronizados"
+    override val SYNC_NOW = "Sincronizar ahora"
+    override val SYNC_HISTORY_TITLE = "Historial de sincronización"
+    override val SYNC_TYPE_IMPORT = "Importar"
+    override val SYNC_TYPE_EXPORT = "Exportar"
+    override val SYNC_NEVER = "Nunca"
+    override val SYNC_CONFLICT_POLICY = "Política de conflictos"
+    override val SYNC_CONFLICT_NEWER = "El más reciente gana"
+    override val SYNC_CONFLICT_LOCAL = "Los locales ganan"
+    override val SYNC_CONFLICT_HC = "Health Connect gana"
 
     // Health Connect Permissions Dialog
     override val HC_PERMISSIONS_DIALOG_TITLE = "Permisos Requeridos"
@@ -215,7 +230,7 @@ object TextsMobileES : MobileTexts {
     override val CHART_STEPS = "Pasos"
 
     // Definitions
-    override val DEF_TITLE = "Definiciones de actividad"
+    override val DEF_TITLE = "Definicione de actividad"
     override val DEF_ADD = "Añadir definición"
     override val DEF_EDIT = "Editar definición"
     override val DEF_DELETE = "Eliminar definición"
@@ -236,7 +251,7 @@ object TextsMobileES : MobileTexts {
     override val DEF_NAME_LABEL = "Nombre de la actividad"
     override val DEF_AUTO_LAP_LABEL = "Vuelta automática (metros, opcional)"
     override val DEF_WIDGET_IN_ACTIVITY = "Widget en actividad"
-    override val DEF_VISIBILITY = "Visibilidad"
+    override val DEF_VISIBILITY = "Sichtbarkeit"
     override val DEF_RECORD = "Grabar"
     override val DEF_BASE_TYPE = "Tipo base"
     override val DEF_FINISH = "Finalizar"
@@ -332,8 +347,8 @@ object TextsMobileES : MobileTexts {
 
     // Gpx Importer
     override val GPX_NO_POINTS = "El archivo GPX no contiene puntos de track."
-    override val GPX_WARN_HR = "El archivo contiene datos de FC, pero la actividad seleccionada no los admite."
-    override val GPX_WARN_ELE = "El archivo contiene datos de altitud, pero la actividad seleccionada no los admite."
+    override val GPX_WARN_HR = "El archivo contiene datos de FC, ale la actividad seleccionada no los admite."
+    override val GPX_WARN_ELE = "El archivo contiene datos de altitud, ale la actividad seleccionada no los admite."
     override val GPX_WARN_CADENCE = "El archivo contiene datos de cadencia, ale la actividad seleccionada no los admite."
 
     // Periods

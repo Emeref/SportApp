@@ -61,15 +61,16 @@ class HealthConnectManager @Inject constructor(
         HealthPermission.getReadPermission(StepsRecord::class)
     )
 
+    // Zaktualizowana lista uprawnień do zapisu - musi być identyczna z tym co wysyłamy w ExerciseExportUseCase
     val writePermissions = setOf(
         HealthPermission.getWritePermission(ExerciseSessionRecord::class),
         HealthPermission.PERMISSION_WRITE_EXERCISE_ROUTE,
         HealthPermission.getWritePermission(DistanceRecord::class),
         HealthPermission.getWritePermission(StepsRecord::class),
-        HealthPermission.getWritePermission(TotalCaloriesBurnedRecord::class),
+        HealthPermission.getWritePermission(StepsCadenceRecord::class),
+        HealthPermission.getWritePermission(ActiveCaloriesBurnedRecord::class),
         HealthPermission.getWritePermission(HeartRateRecord::class),
-        HealthPermission.getWritePermission(SpeedRecord::class),
-        HealthPermission.getWritePermission(ElevationGainedRecord::class)
+        HealthPermission.getWritePermission(SpeedRecord::class)
     )
 
     suspend fun hasPermissions(permissions: Set<String>): Boolean {

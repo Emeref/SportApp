@@ -59,7 +59,8 @@ class WorkoutLogger(
         wysokosc: Double? = null,
         calorieMin: Double? = null,
         calorieSum: Double? = null,
-        pressure: Double? = null
+        pressure: Double? = null,
+        accuracy: Float? = null
     ): WorkoutPointEntity = withContext(Dispatchers.Default) {
         val h = durationSeconds / 3600
         val m = (durationSeconds % 3600) / 60
@@ -126,6 +127,7 @@ class WorkoutLogger(
             speedGps = if (isRecording(WorkoutSensor.SPEED_GPS)) predkoscGps?.toDouble().round(2) else null,
             speedSteps = if (isRecording(WorkoutSensor.SPEED_STEPS)) predkoscKroki.round(2) else null,
             altitude = if (isRecording(WorkoutSensor.ALTITUDE)) wysokosc.round(2) else null,
+            horizontalAccuracy = if (isRecording(WorkoutSensor.MAP)) accuracy?.toDouble().round(2) else null,
             totalAscent = if (isRecording(WorkoutSensor.TOTAL_ASCENT)) totalAscent.round(2) else null,
             totalDescent = if (isRecording(WorkoutSensor.TOTAL_DESCENT)) totalDescent.round(2) else null,
             calorieMin = if (isRecording(WorkoutSensor.CALORIES_PER_MINUTE)) calorieMin.round(2) else null,

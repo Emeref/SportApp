@@ -17,5 +17,11 @@ data class SpeedSample(val time: Instant, val speedMps: Double)
 data class CadenceSample(val time: Instant, val rate: Double)
 data class DistanceSample(val startTime: Instant, val endTime: Instant, val distanceMeters: Double)
 data class ElevationSample(val startTime: Instant, val endTime: Instant, val elevationMeters: Double)
-data class LocationSample(val time: Instant, val latitude: Double, val longitude: Double, val altitude: Double?)
+data class LocationSample(
+    val time: Instant, 
+    val latitude: Double, 
+    val longitude: Double, 
+    val altitude: Double?,
+    val horizontalAccuracy: Double? = null
+)
 data class CaloriesSample(val startTime: Instant, val endTime: Instant, val kilocalories: Double)

@@ -108,6 +108,21 @@ object TextsMobilePL : MobileTexts {
     override val SETTINGS_HC_AUTO_EXPORT = "Automatyczny eksport"
     override val SETTINGS_HC_AUTO_EXPORT_DESC = "Automatycznie eksportuj nowe treningi do Health Connect"
 
+    // Stage 6 - Sync Status
+    override val SYNC_STATUS_TITLE = "Status synchronizacji HC"
+    override val SYNC_LAST_HEALTH = "Ostatnia sync danych zdrowotnych"
+    override val SYNC_LAST_WORKOUT = "Ostatnia sync treningów"
+    override val SYNC_UNSYNCED_COUNT = "Niezsynchronizowane rekordy"
+    override val SYNC_NOW = "Synchronizuj teraz"
+    override val SYNC_HISTORY_TITLE = "Historia synchronizacji"
+    override val SYNC_TYPE_IMPORT = "Import"
+    override val SYNC_TYPE_EXPORT = "Eksport"
+    override val SYNC_NEVER = "Nigdy"
+    override val SYNC_CONFLICT_POLICY = "Polityka konfliktów"
+    override val SYNC_CONFLICT_NEWER = "Nowszy wygrywa"
+    override val SYNC_CONFLICT_LOCAL = "Lokalne wygrywają"
+    override val SYNC_CONFLICT_HC = "Health Connect wygrywa"
+
     // Health Connect Permissions Dialog
     override val HC_PERMISSIONS_DIALOG_TITLE = "Wymagane uprawnienia"
     override val HC_PERMISSIONS_DIALOG_DESC = "Uprawnienia do zapisu są niezbędne, aby eksportować treningi do Health Connect. Możesz je nadać w ustawieniach systemowych."

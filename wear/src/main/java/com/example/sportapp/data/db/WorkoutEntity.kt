@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val activityName: String,
+    val baseType: String = "Other",
     val startTime: Long,
     val durationFormatted: String,
     val steps: Int?,
@@ -33,7 +34,8 @@ data class WorkoutEntity(
     val minPressure: Double? = null, // hPa
     val bestPace1km: Double? = null, // min/km
     val autoLapDistance: Double? = null, // m - dystans autolapa w momencie startu
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    val isFinished: Boolean = true // Nowe pole
 )
 
 @Entity(tableName = "workout_points")
@@ -51,6 +53,7 @@ data class WorkoutPointEntity(
     val speedGps: Double?,
     val speedSteps: Double?,
     val altitude: Double?,
+    val horizontalAccuracy: Double? = null,
     val totalAscent: Double?,
     val totalDescent: Double?,
     val calorieMin: Double?,

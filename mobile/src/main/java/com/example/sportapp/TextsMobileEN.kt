@@ -108,6 +108,21 @@ object TextsMobileEN : MobileTexts {
     override val HC_EXPORT_ERROR = "Export error: "
     override val HC_EXPORT_PERMISSION_DENIED = "No Health Connect write permission"
 
+    // Stage 6 - Sync Status
+    override val SYNC_STATUS_TITLE = "HC Sync Status"
+    override val SYNC_LAST_HEALTH = "Last health data sync"
+    override val SYNC_LAST_WORKOUT = "Last workout sync"
+    override val SYNC_UNSYNCED_COUNT = "Unsynced records"
+    override val SYNC_NOW = "Sync now"
+    override val SYNC_HISTORY_TITLE = "Sync History"
+    override val SYNC_TYPE_IMPORT = "Import"
+    override val SYNC_TYPE_EXPORT = "Export"
+    override val SYNC_NEVER = "Never"
+    override val SYNC_CONFLICT_POLICY = "Conflict Policy"
+    override val SYNC_CONFLICT_NEWER = "Newer wins"
+    override val SYNC_CONFLICT_LOCAL = "Local wins"
+    override val SYNC_CONFLICT_HC = "Health Connect wins"
+
     // Health Connect Permissions Dialog
     override val HC_PERMISSIONS_DIALOG_TITLE = "Required Permissions"
     override val HC_PERMISSIONS_DIALOG_DESC = "Write permissions are necessary to export workouts to Health Connect. You can grant them in system settings."

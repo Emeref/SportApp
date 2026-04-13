@@ -97,6 +97,21 @@ interface MobileTexts {
     val SETTINGS_HC_AUTO_EXPORT: String
     val SETTINGS_HC_AUTO_EXPORT_DESC: String
 
+    // Stage 6 - Sync Status
+    val SYNC_STATUS_TITLE: String
+    val SYNC_LAST_HEALTH: String
+    val SYNC_LAST_WORKOUT: String
+    val SYNC_UNSYNCED_COUNT: String
+    val SYNC_NOW: String
+    val SYNC_HISTORY_TITLE: String
+    val SYNC_TYPE_IMPORT: String
+    val SYNC_TYPE_EXPORT: String
+    val SYNC_NEVER: String
+    val SYNC_CONFLICT_POLICY: String
+    val SYNC_CONFLICT_NEWER: String
+    val SYNC_CONFLICT_LOCAL: String
+    val SYNC_CONFLICT_HC: String
+
     // Health Connect Permissions Dialog
     val HC_PERMISSIONS_DIALOG_TITLE: String
     val HC_PERMISSIONS_DIALOG_DESC: String
