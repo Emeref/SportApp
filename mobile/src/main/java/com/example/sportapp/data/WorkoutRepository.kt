@@ -143,22 +143,22 @@ class WorkoutRepository @Inject constructor(
     }
 
     override fun getFilteredStatsFlow(
-        activityType: String?,
+        activityTypes: List<String>?,
         startDate: Date?,
         endDate: Date?
     ): Flow<Map<String, Any>> {
         return getAllWorkouts().map { list ->
-            calculateStats(list, activityType, startDate, endDate)
+            calculateStats(list, activityTypes, startDate, endDate)
         }
     }
 
     override suspend fun getFilteredStats(
-        activityType: String?,
+        activityTypes: List<String>?,
         startDate: Date?,
         endDate: Date?
     ): Map<String, Any> = withContext(Dispatchers.IO) {
         val all = workoutDao.getWorkoutsSince(0)
-        calculateStats(all, activityType, startDate, endDate)
+        calculateStats(all, activityTypes, startDate, endDate)
     }
 
     override suspend fun getStatsForPeriod(
@@ -184,12 +184,12 @@ class WorkoutRepository @Inject constructor(
 
     private fun calculateStats(
         list: List<WorkoutEntity>,
-        activityType: String?,
+        activityTypes: List<String>?,
         startDate: Date?,
         endDate: Date?
     ): Map<String, Any> {
         val filtered = list.filter { w ->
-            val typeMatch = activityType == null || w.activityName == activityType
+            val typeMatch = activityTypes == null || activityTypes.contains(w.activityName)
             val startMatch = startDate == null || w.startTime >= startDate.time
             val endMatch = endDate == null || w.startTime <= endDate.time
             typeMatch && startMatch && endMatch

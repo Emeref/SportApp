@@ -283,7 +283,7 @@ fun ActivityDetailScreen(
                                 val producer = viewModel.chartProducers["bpm"]
                                 if (producer != null && (data.charts["bpm"]?.filterNotNull()?.isNotEmpty() == true)) {
                                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                                        HeartRateChartSection(texts.DETAIL_HEART_RATE, producer, data.times, hrZoneResult) { selectedIndex = it }
+                                        HeartRateChartSection(texts.DETAIL_HEART_RATE, producer, data.times, hrZoneResult, useDataYRange = true) { selectedIndex = it }
                                     }
                                     hrZoneResult?.let { result ->
                                         Spacer(modifier = Modifier.height(24.dp))
@@ -305,7 +305,8 @@ fun ActivityDetailScreen(
                                             producer = producer, 
                                             unit = getUnitForWidget(widget.id, texts), 
                                             detailTimes = data.times,
-                                            onMarkerShown = { selectedIndex = it }
+                                            onMarkerShown = { selectedIndex = it },
+                                            useDataYRange = widget.id == "wysokosc"
                                         )
                                     }
                                     Spacer(modifier = Modifier.height(24.dp))
@@ -574,6 +575,7 @@ fun HeartRateChartSection(
     producer: com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer,
     detailTimes: List<String>,
     hrZoneResult: HeartRateZoneResult?,
+    useDataYRange: Boolean = false,
     onMarkerShown: (Int?) -> Unit
 ) {
     val texts = LocalMobileTexts.current
@@ -583,7 +585,8 @@ fun HeartRateChartSection(
         unit = texts.UNIT_BPM, 
         detailTimes = detailTimes, 
         hrZoneResult = hrZoneResult,
-        onMarkerShown = onMarkerShown
+        onMarkerShown = onMarkerShown,
+        useDataYRange = useDataYRange
     )
 }
 

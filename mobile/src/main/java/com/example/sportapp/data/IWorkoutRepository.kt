@@ -22,13 +22,13 @@ interface IWorkoutRepository {
     suspend fun getUniqueActivityTypes(): List<String>
     
     fun getFilteredStatsFlow(
-        activityType: String? = null,
+        activityTypes: List<String>? = null,
         startDate: Date? = null,
         endDate: Date? = null
     ): Flow<Map<String, Any>>
 
     suspend fun getFilteredStats(
-        activityType: String? = null,
+        activityTypes: List<String>? = null,
         startDate: Date? = null,
         endDate: Date? = null
     ): Map<String, Any>

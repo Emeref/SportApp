@@ -55,6 +55,9 @@ interface MobileTexts {
     val SETTINGS_PERIOD_WATCH_DESC: String
     val SETTINGS_CUSTOM_DAYS_LABEL: String
     val SETTINGS_INTEGRATION: String
+    val SETTINGS_SYNC: String
+    val SETTINGS_STRAVA: String
+    val SETTINGS_STRAVA_DESC: String
     val SETTINGS_GOOGLE_DRIVE: String
     val SETTINGS_GOOGLE_DRIVE_DESC: String
     val SETTINGS_APPEARANCE: String
@@ -63,6 +66,7 @@ interface MobileTexts {
     val LANG_EN: String
 
     // Health Connect Strings
+    val SETTINGS_HC_TITLE: String
     val SETTINGS_HC_MANAGE_PERMISSIONS: String
     val SETTINGS_HC_STATUS: String
     val HC_STATUS_AVAILABLE: String
@@ -166,6 +170,7 @@ interface MobileTexts {
     val ACTIVITY_OK: String
     val ACTIVITY_CONFIRM_DELETE_TITLE: String
     val ACTIVITY_ALL: String
+    val ACTIVITY_NONE: String
 
     // Activity Detail
     val DETAIL_TITLE: String

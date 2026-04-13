@@ -60,6 +60,9 @@ object TextsMobileIT : MobileTexts {
     override val SETTINGS_PERIOD_WATCH_DESC = "Statistiche di quale periodo?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Numero di giorni"
     override val SETTINGS_INTEGRATION = "Integrazione"
+    override val SETTINGS_SYNC = "Sincronizzazione"
+    override val SETTINGS_STRAVA = "Strava"
+    override val SETTINGS_STRAVA_DESC = "Sincronizza i tuoi allenamenti con Strava (Presto)"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Salva cronologia e riepiloghi (Presto)"
     override val SETTINGS_APPEARANCE = "Aspetto"
@@ -68,6 +71,7 @@ object TextsMobileIT : MobileTexts {
     override val LANG_EN = "Inglese"
 
     // Health Connect Strings
+    override val SETTINGS_HC_TITLE = "Health Connect"
     override val SETTINGS_HC_MANAGE_PERMISSIONS = "Gestisci i permessi di Health Connect"
     override val SETTINGS_HC_STATUS = "Stato di Health Connect"
     override val HC_STATUS_AVAILABLE = "Disponibile"
@@ -151,7 +155,7 @@ object TextsMobileIT : MobileTexts {
     override val ACTIVITY_DELETE_CONFIRM = "Sei sicuro di voler eliminare permanentemente las actividades seleccionadas dal database?"
     override val ACTIVITY_COMPARE = "Confronta"
     override val ACTIVITY_TRIM = "Taglia"
-    override val ACTIVITY_DETAIL = "Dettagli"
+    override val ACTIVITY_DETAIL = "Modifica"
     override val ACTIVITY_EDIT = "Modifica"
     override val ACTIVITY_IMPORT_GPX = "Importa GPX"
     override val ACTIVITY_EXPORT_GPX = "Esporta GPX"
@@ -177,6 +181,7 @@ object TextsMobileIT : MobileTexts {
     override val ACTIVITY_OK = "OK"
     override val ACTIVITY_CONFIRM_DELETE_TITLE = "Elimina attività"
     override val ACTIVITY_ALL = "Tutto"
+    override val ACTIVITY_NONE = "None"
 
     // Activity Detail
     override val DETAIL_TITLE = "Dettagli attività"

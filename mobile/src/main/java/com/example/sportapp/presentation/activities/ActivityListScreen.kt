@@ -51,7 +51,7 @@ fun ActivityListScreen(
     val activities by viewModel.activities.collectAsState()
     val activityTypes by viewModel.activityTypes.collectAsState()
     val definitions by viewModel.definitions.collectAsState()
-    val selectedType by viewModel.selectedType.collectAsState()
+    val selectedTypes by viewModel.selectedTypes.collectAsState()
     val startDate by viewModel.startDate.collectAsState()
     val endDate by viewModel.endDate.collectAsState()
     val sortColumn by viewModel.sortColumn.collectAsState()
@@ -312,13 +312,42 @@ fun ActivityListScreen(
                             onClick = { showTypeMenu = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(selectedType ?: texts.ACTIVITY_ALL_TYPES)
+                            Text(
+                                text = when {
+                                    selectedTypes == null -> texts.ACTIVITY_ALL_TYPES
+                                    selectedTypes!!.isEmpty() -> texts.ACTIVITY_NONE
+                                    selectedTypes!!.size == 1 -> selectedTypes!!.first()
+                                    else -> "${texts.ACTIVITY_FILTERS}: ${selectedTypes!!.size}"
+                                }
+                            )
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
-                        DropdownMenu(expanded = showTypeMenu, onDismissRequest = { showTypeMenu = false }) {
-                            DropdownMenuItem(text = { Text(texts.ACTIVITY_ALL) }, onClick = { viewModel.onTypeSelected(null); showTypeMenu = false })
+                        DropdownMenu(
+                            expanded = showTypeMenu,
+                            onDismissRequest = { showTypeMenu = false },
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ) {
+                            DropdownMenuItem(
+                                text = { 
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Checkbox(checked = selectedTypes == null, onCheckedChange = null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(texts.ACTIVITY_ALL)
+                                    }
+                                },
+                                onClick = { viewModel.toggleAllTypes() }
+                            )
                             activityTypes.forEach { type ->
-                                DropdownMenuItem(text = { Text(type) }, onClick = { viewModel.onTypeSelected(type); showTypeMenu = false })
+                                DropdownMenuItem(
+                                    text = { 
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Checkbox(checked = selectedTypes?.contains(type) ?: true, onCheckedChange = null)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(type)
+                                        }
+                                    },
+                                    onClick = { viewModel.toggleTypeSelection(type) }
+                                )
                             }
                         }
                     }
@@ -327,6 +356,7 @@ fun ActivityListScreen(
                         OutlinedButton(
                             onClick = {
                                 val cal = Calendar.getInstance()
+                                startDate?.let { cal.time = it }
                                 DatePickerDialog(context, { _, y, m, d ->
                                     val date = Calendar.getInstance().apply { 
                                         set(y, m, d, 0, 0, 0)
@@ -345,6 +375,7 @@ fun ActivityListScreen(
                         OutlinedButton(
                             onClick = {
                                 val cal = Calendar.getInstance()
+                                endDate?.let { cal.time = it }
                                 DatePickerDialog(context, { _, y, m, d ->
                                     val date = Calendar.getInstance().apply { 
                                         set(y, m, d, 23, 59, 59)

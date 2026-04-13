@@ -163,7 +163,8 @@ fun ActivityCompareScreen(
                                                 unit = texts.UNIT_BPM, 
                                                 times = if (s1.times.size >= s2.times.size) s1.times else s2.times,
                                                 hrZoneResult = hrZones1,
-                                                onMarkerShown = { selectedIndex = it }
+                                                onMarkerShown = { selectedIndex = it },
+                                                useDataYRange = true
                                             )
                                             if (hrZones1 != null && hrZones2 != null && hrZones1!!.zones.isNotEmpty() && hrZones2!!.zones.isNotEmpty()) {
                                                 CompareHeartRateZones(
@@ -185,7 +186,8 @@ fun ActivityCompareScreen(
                                                 producer = producer,
                                                 unit = getUnitForWidget(widget.id, texts),
                                                 times = if (s1.times.size >= s2.times.size) s1.times else s2.times,
-                                                onMarkerShown = { selectedIndex = it }
+                                                onMarkerShown = { selectedIndex = it },
+                                                useDataYRange = widget.id == "wysokosc"
                                             )
                                             Spacer(modifier = Modifier.height(16.dp))
                                         }
@@ -322,7 +324,8 @@ fun CompareChart(
     unit: String, 
     times: List<String>, 
     hrZoneResult: HeartRateZoneResult? = null,
-    onMarkerShown: (Int?) -> Unit
+    onMarkerShown: (Int?) -> Unit,
+    useDataYRange: Boolean = false
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -333,7 +336,8 @@ fun CompareChart(
             detailTimes = times, 
             hrZoneResult = hrZoneResult, 
             lineColors = listOf(Color1, Color2),
-            onMarkerShown = onMarkerShown
+            onMarkerShown = onMarkerShown,
+            useDataYRange = useDataYRange
         )
     }
 }
