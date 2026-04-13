@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.Collator
 import java.util.*
 import javax.inject.Inject
 
@@ -40,8 +41,8 @@ class OverallStatsViewModel @Inject constructor(
     private val _activityTypes = MutableStateFlow<List<String>>(emptyList())
     val activityTypes = _activityTypes.asStateFlow()
 
-    private val _selectedType = MutableStateFlow<String?>(null)
-    val selectedType = _selectedType.asStateFlow()
+    private val _selectedTypes = MutableStateFlow<Set<String>>(emptySet())
+    val selectedTypes = _selectedTypes.asStateFlow()
 
     private val _startDate = MutableStateFlow<Date?>(null)
     val startDate = _startDate.asStateFlow()
@@ -111,8 +112,9 @@ class OverallStatsViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
-            combine(_selectedType, _startDate, _endDate, repository.getAllWorkouts()) { type, start, end, _ ->
-                val statsMap = repository.getFilteredStats(type, start, end)
+            combine(_selectedTypes, _startDate, _endDate, repository.getAllWorkouts()) { types, start, end, _ ->
+                val typesList = if (types.isEmpty()) null else types.toList()
+                val statsMap = repository.getFilteredStats(typesList, start, end)
                 Triple(statsMap, start, end)
             }.collect { (statsMap, start, end) ->
                 @Suppress("UNCHECKED_CAST")
@@ -129,7 +131,9 @@ class OverallStatsViewModel @Inject constructor(
 
     fun refreshActivityTypes() {
         viewModelScope.launch {
-            _activityTypes.value = repository.getUniqueActivityTypes()
+            val types = repository.getUniqueActivityTypes()
+            val collator = Collator.getInstance(Locale.getDefault())
+            _activityTypes.value = types.sortedWith { a, b -> collator.compare(a, b) }
         }
     }
 
@@ -256,8 +260,17 @@ class OverallStatsViewModel @Inject constructor(
         val avgCadence: Double
     )
 
-    fun onTypeSelected(type: String?) {
-        _selectedType.value = if (type == "Wszystkie") null else type
+    fun toggleTypeSelection(type: String) {
+        val current = _selectedTypes.value
+        _selectedTypes.value = if (current.contains(type)) {
+            current - type
+        } else {
+            current + type
+        }
+    }
+
+    fun clearTypeSelection() {
+        _selectedTypes.value = emptySet()
     }
 
     fun onDateRangeSelected(start: Date?, end: Date?) {
