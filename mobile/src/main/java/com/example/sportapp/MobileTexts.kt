@@ -54,6 +54,7 @@ interface MobileTexts {
     val SETTINGS_PERIOD_HOME_DESC: String
     val SETTINGS_PERIOD_WATCH_DESC: String
     val SETTINGS_CUSTOM_DAYS_LABEL: String
+    val SETTINGS_WATCH_STATS_DAYS_LABEL: String
     val SETTINGS_INTEGRATION: String
     val SETTINGS_SYNC: String
     val SETTINGS_STRAVA: String

@@ -59,6 +59,7 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_PERIOD_HOME_DESC = "¿Para qué periodo mostrar widgets?"
     override val SETTINGS_PERIOD_WATCH_DESC = "¿Estadísticas de qué periodo?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Número de días"
+    override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Número de días"
     override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_SYNC = "Sincronización"
     override val SETTINGS_STRAVA = "Strava"

@@ -3,6 +3,7 @@ package com.example.sportapp.presentation.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
 
@@ -20,12 +22,15 @@ import com.example.sportapp.LocalMobileTexts
 fun WidgetSelectionScreen(
     widgets: List<WidgetItem>,
     title: String,
-    onSave: (List<WidgetItem>) -> Unit,
+    initialDays: Int? = null,
+    daysLabel: String? = null,
+    onSave: (List<WidgetItem>, Int?) -> Unit,
     onCancel: () -> Unit
 ) {
     val texts = LocalMobileTexts.current
     // Używamy remember(widgets), aby zaktualizować listę, gdy dane zostaną załadowane z DataStore
     var internalWidgets by remember(widgets) { mutableStateOf(widgets) }
+    var customDays by remember(initialDays) { mutableStateOf(initialDays?.toString() ?: "") }
 
     Scaffold(
         topBar = {
@@ -84,6 +89,20 @@ fun WidgetSelectionScreen(
                         }
                     )
                 }
+
+                if (initialDays != null && daysLabel != null) {
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = customDays,
+                            onValueChange = { if (it.all { char -> char.isDigit() }) customDays = it },
+                            label = { Text(daysLabel) },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -94,7 +113,9 @@ fun WidgetSelectionScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
-                    onClick = { onSave(internalWidgets) },
+                    onClick = { 
+                        onSave(internalWidgets, customDays.toIntOrNull()) 
+                    },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
