@@ -47,23 +47,23 @@ class ExerciseExportUseCase @Inject constructor(
                 val points = workoutRepository.getPointsForWorkout(activityId)
                 val startTime = Instant.ofEpochMilli(activity.startTime)
                 
-                // Precyzyjne wyliczanie czasu trwania na podstawie punktów
                 val lastPointOffset = points.lastOrNull()?.let { parseTimeToSeconds(it.time) } ?: activity.durationSeconds
                 val effectiveDuration = maxOf(activity.durationSeconds, lastPointOffset)
                 
-                // POPRAWKA: Rozszerzamy okno sesji o 1s w obie strony.
-                // Google Fit i inne aplikacje bywają restrykcyjne i odrzucają trasę,
-                // jeśli punkty GPS znajdują się dokładnie na granicy startTime/endTime sesji.
-                val sessionStartTime = startTime.minusSeconds(1)
-                val sessionEndTime = startTime.plusSeconds(effectiveDuration).plusSeconds(1)
+                val sessionStartTime = startTime.minusSeconds(2)
+                val sessionEndTime = startTime.plusSeconds(effectiveDuration).plusSeconds(2)
 
-                // Przygotuj trasę GPS (ExerciseRoute) - to jest kluczowe dla widoczności mapy
-                val locationPoints = points.filter { it.latitude != null && it.longitude != null }
-                val exerciseRoute = if (locationPoints.isNotEmpty()) {
+                // 1. Walidacja punktów GPS (minimum 2 punkty, brak 0,0)
+                val locationPoints = points.filter { 
+                    it.latitude != null && it.longitude != null && 
+                    it.latitude != 0.0 && it.longitude != 0.0 &&
+                    it.latitude in -90.0..90.0 && it.longitude in -180.0..180.0
+                }
+                val exerciseRoute = if (locationPoints.size >= 2) {
                     buildExerciseRoute(startTime, locationPoints, sessionEndTime)
                 } else null
 
-                // Przygotuj główny obiekt sesji ćwiczeń
+                // 2. Główny rekord sesji
                 val sessionRecord = ExerciseSessionRecord(
                     startTime = sessionStartTime,
                     startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionStartTime),
@@ -75,36 +75,25 @@ class ExerciseExportUseCase @Inject constructor(
                     metadata = Metadata.activelyRecorded(exportDevice)
                 )
 
-                // Kolekcjonujemy wszystkie rekordy do jednego zapisu dla lepszej atomowości
                 val allRecords = mutableListOf<Record>()
                 allRecords.add(sessionRecord)
                 
-                // Dodaj serie próbek (Tętno, Prędkość, Kadencja) - muszą być idealnie wewnątrz okna czasowego
+                // 3. Serie danych z fail-checkami
                 allRecords.addAll(buildHeartRateRecords(startTime, points, sessionEndTime))
                 allRecords.addAll(buildSpeedRecords(startTime, points, sessionEndTime))
                 allRecords.addAll(buildCadenceRecords(startTime, points, sessionEndTime))
                 
-                // Dystans całkowity
-                activity.distanceGps?.let { distance ->
-                    if (distance > 0) {
-                        allRecords.add(DistanceRecord(
-                            startTime = sessionStartTime,
-                            startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionStartTime),
-                            endTime = sessionEndTime,
-                            endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionEndTime),
-                            distance = Length.meters(distance),
-                            metadata = Metadata.activelyRecorded(exportDevice)
-                        ))
-                    }
-                }
+                // 4. Dystans jako interwały (lepiej przyswajane przez Google Fit i Stravę przez bridge)
+                allRecords.addAll(buildDistanceRecords(startTime, points, sessionEndTime))
 
-                // Kalorie - Używamy ActiveCaloriesBurnedRecord (preferowane przez Google Fit dla sesji ćwiczeń)
+                // 5. Kalorie (> 0)
                 activity.totalCalories?.let { calories ->
-                    if (calories > 0) {
+                    if (calories > 0.1) {
+                        val cTime = sessionStartTime.plusMillis(500)
                         allRecords.add(ActiveCaloriesBurnedRecord(
-                            startTime = sessionStartTime,
+                            startTime = cTime,
+                            endTime = sessionEndTime.minusMillis(500),
                             startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionStartTime),
-                            endTime = sessionEndTime,
                             endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionEndTime),
                             energy = Energy.kilocalories(calories),
                             metadata = Metadata.activelyRecorded(exportDevice)
@@ -112,25 +101,39 @@ class ExerciseExportUseCase @Inject constructor(
                     }
                 }
 
-                // Kroki (ważne dla Google Fit, nawet jeśli aktywność to rower - wysyłamy dla spójności)
-                val stepsCount = activity.steps ?: 0
-                allRecords.add(StepsRecord(
-                    startTime = sessionStartTime,
-                    startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionStartTime),
-                    endTime = sessionEndTime,
-                    endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionEndTime),
-                    count = stepsCount.toLong(),
-                    metadata = Metadata.activelyRecorded(exportDevice)
-                ))
+                // 6. Przewyższenia
+                activity.totalAscent?.let { ascent ->
+                    if (ascent > 0.1) {
+                        allRecords.add(ElevationGainedRecord(
+                            startTime = sessionStartTime.plusMillis(500),
+                            endTime = sessionEndTime.minusMillis(500),
+                            startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionStartTime),
+                            endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionEndTime),
+                            elevation = Length.meters(ascent),
+                            metadata = Metadata.activelyRecorded(exportDevice)
+                        ))
+                    }
+                }
 
-                // Zapisujemy wszystko naraz
+                // 7. Kroki (> 0)
+                val stepsCount = activity.steps ?: 0
+                if (stepsCount > 0) {
+                    allRecords.add(StepsRecord(
+                        startTime = sessionStartTime.plusMillis(500),
+                        endTime = sessionEndTime.minusMillis(500),
+                        startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionStartTime),
+                        endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(sessionEndTime),
+                        count = stepsCount.toLong(),
+                        metadata = Metadata.activelyRecorded(exportDevice)
+                    ))
+                }
+
+                // Zapisz wszystko naraz
                 val response = healthConnectClient.insertRecords(allRecords)
                 val hcSessionId = response.recordIdsList.first()
 
-                // Zapisz HC session ID w lokalnej bazie
                 workoutRepository.updateHCSessionId(activityId, hcSessionId)
 
-                // Zapisz metadane synchronizacji
                 syncMetadataDao.insert(
                     SyncMetadataEntity(
                         hcRecordId = hcSessionId,
@@ -162,20 +165,44 @@ class ExerciseExportUseCase @Inject constructor(
     ): ExerciseRoute {
         val routeLocations = locations.mapNotNull { loc ->
             val pointTime = activityStartTime.plusSeconds(parseTimeToSeconds(loc.time))
-            
-            // Punkt musi zawierać się w zakresie sesji. 
-            // Dzięki rozszerzeniu okna sesji, punkty na samym początku i końcu są bezpieczne.
-            if (!pointTime.isBefore(activityStartTime.minusSeconds(1)) && !pointTime.isAfter(sessionEndTime)) {
+            if (!pointTime.isBefore(activityStartTime) && !pointTime.isAfter(sessionEndTime.minusSeconds(1))) {
                 ExerciseRoute.Location(
                     time = pointTime,
                     latitude = loc.latitude!!,
                     longitude = loc.longitude!!,
-                    horizontalAccuracy = loc.horizontalAccuracy?.let { Length.meters(it) },
+                    horizontalAccuracy = Length.meters(loc.horizontalAccuracy?.coerceAtLeast(0.1) ?: 10.0),
                     altitude = loc.altitude?.let { Length.meters(it) }
                 )
             } else null
         }
         return ExerciseRoute(routeLocations)
+    }
+
+    private fun buildDistanceRecords(startTime: Instant, points: List<WorkoutPointEntity>, sessionEndTime: Instant): List<DistanceRecord> {
+        val records = mutableListOf<DistanceRecord>()
+        var lastDist = 0.0
+        var lastTime = startTime.plusMillis(100)
+
+        // Grupowanie dystansu w 10-sekundowe interwały dla lepszej czytelności w Google Fit
+        points.chunked(10).forEach { chunk ->
+            val point = chunk.last()
+            val pointTime = startTime.plusSeconds(parseTimeToSeconds(point.time))
+            val currentDist = point.distanceGps?.toDouble() ?: lastDist
+            
+            if (currentDist > lastDist && pointTime.isAfter(lastTime) && !pointTime.isAfter(sessionEndTime.minusMillis(100))) {
+                records.add(DistanceRecord(
+                    startTime = lastTime,
+                    endTime = pointTime,
+                    startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(lastTime),
+                    endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(pointTime),
+                    distance = Length.meters(currentDist - lastDist),
+                    metadata = Metadata.activelyRecorded(exportDevice)
+                ))
+                lastDist = currentDist
+                lastTime = pointTime
+            }
+        }
+        return records
     }
 
     private fun parseTimeToSeconds(timeStr: String): Long {
@@ -194,18 +221,15 @@ class ExerciseExportUseCase @Inject constructor(
     private fun buildHeartRateRecords(startTime: Instant, points: List<WorkoutPointEntity>, sessionEndTime: Instant): List<HeartRateRecord> {
         val samples = points.mapNotNull { point ->
             val pointTime = startTime.plusSeconds(parseTimeToSeconds(point.time))
-            if (point.bpm != null && !pointTime.isAfter(sessionEndTime.minusMillis(100))) {
-                HeartRateRecord.Sample(
-                    time = pointTime,
-                    beatsPerMinute = point.bpm.toLong()
-                )
+            if (point.bpm != null && point.bpm >= 1 && !pointTime.isAfter(sessionEndTime.minusSeconds(1))) {
+                HeartRateRecord.Sample(time = pointTime, beatsPerMinute = point.bpm.toLong())
             } else null
         }
         if (samples.isEmpty()) return emptyList()
         return listOf(HeartRateRecord(
             startTime = samples.first().time,
-            startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.first().time),
             endTime = samples.last().time,
+            startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.first().time),
             endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.last().time),
             samples = samples,
             metadata = Metadata.activelyRecorded(exportDevice)
@@ -215,18 +239,15 @@ class ExerciseExportUseCase @Inject constructor(
     private fun buildSpeedRecords(startTime: Instant, points: List<WorkoutPointEntity>, sessionEndTime: Instant): List<SpeedRecord> {
         val samples = points.mapNotNull { point ->
             val pointTime = startTime.plusSeconds(parseTimeToSeconds(point.time))
-            if (point.speedGps != null && !pointTime.isAfter(sessionEndTime.minusMillis(100))) {
-                SpeedRecord.Sample(
-                    time = pointTime,
-                    speed = Velocity.metersPerSecond(point.speedGps)
-                )
+            if (point.speedGps != null && point.speedGps >= 0 && !pointTime.isAfter(sessionEndTime.minusSeconds(1))) {
+                SpeedRecord.Sample(time = pointTime, speed = Velocity.metersPerSecond(point.speedGps / 3.6))
             } else null
         }
         if (samples.isEmpty()) return emptyList()
         return listOf(SpeedRecord(
             startTime = samples.first().time,
-            startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.first().time),
             endTime = samples.last().time,
+            startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.first().time),
             endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.last().time),
             samples = samples,
             metadata = Metadata.activelyRecorded(exportDevice)
@@ -236,18 +257,15 @@ class ExerciseExportUseCase @Inject constructor(
     private fun buildCadenceRecords(startTime: Instant, points: List<WorkoutPointEntity>, sessionEndTime: Instant): List<StepsCadenceRecord> {
         val samples = points.mapNotNull { point ->
             val pointTime = startTime.plusSeconds(parseTimeToSeconds(point.time))
-            if (point.stepsMin != null && !pointTime.isAfter(sessionEndTime.minusMillis(100))) {
-                StepsCadenceRecord.Sample(
-                    time = pointTime,
-                    rate = point.stepsMin
-                )
+            if (point.stepsMin != null && point.stepsMin >= 0 && !pointTime.isAfter(sessionEndTime.minusSeconds(1))) {
+                StepsCadenceRecord.Sample(time = pointTime, rate = point.stepsMin)
             } else null
         }
         if (samples.isEmpty()) return emptyList()
         return listOf(StepsCadenceRecord(
             startTime = samples.first().time,
-            startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.first().time),
             endTime = samples.last().time,
+            startZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.first().time),
             endZoneOffset = ZoneOffset.systemDefault().rules.getOffset(samples.last().time),
             samples = samples,
             metadata = Metadata.activelyRecorded(exportDevice)
