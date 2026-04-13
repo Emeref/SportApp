@@ -79,8 +79,21 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToDefinitions = { navController.navigate("definitions") },
                                     onNavigateToHealthData = { navController.navigate("health_data") },
                                     onNavigateToLanguageSelection = { navController.navigate("language_selection") },
-                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") },
+                                    onNavigateToSync = { navController.navigate("sync_settings") }
+                                )
+                            }
+                            composable("sync_settings") {
+                                HealthConnectSettingsScreen(
+                                    initialState = settingsState,
+                                    onSave = { updatedSettings ->
+                                        scope.launch {
+                                            settingsManager.saveSettings(updatedSettings)
+                                            navController.popBackStack()
+                                        }
+                                    },
+                                    onCancel = { navController.popBackStack() },
                                     onNavigateToSyncStatus = { navController.navigate("sync_status") },
+                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") },
                                     settingsManager = settingsManager
                                 )
                             }

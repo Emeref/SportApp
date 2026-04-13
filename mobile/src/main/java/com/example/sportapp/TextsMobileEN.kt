@@ -60,6 +60,9 @@ object TextsMobileEN : MobileTexts {
     override val SETTINGS_PERIOD_WATCH_DESC = "Stats from which period?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Number of days"
     override val SETTINGS_INTEGRATION = "Integration"
+    override val SETTINGS_SYNC = "Sync"
+    override val SETTINGS_STRAVA = "Strava"
+    override val SETTINGS_STRAVA_DESC = "Sync your workouts with Strava (Soon)"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Save history and summaries (Soon)"
     override val SETTINGS_APPEARANCE = "Appearance"
@@ -68,6 +71,7 @@ object TextsMobileEN : MobileTexts {
     override val LANG_EN = "English"
 
     // Health Connect Strings
+    override val SETTINGS_HC_TITLE = "Health Connect"
     override val SETTINGS_HC_MANAGE_PERMISSIONS = "Manage Health Connect permissions"
     override val SETTINGS_HC_STATUS = "Health Connect Status"
     override val HC_STATUS_AVAILABLE = "Available"

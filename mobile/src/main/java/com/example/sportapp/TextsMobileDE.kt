@@ -60,6 +60,9 @@ object TextsMobileDE : MobileTexts {
     override val SETTINGS_PERIOD_WATCH_DESC = "Statistiken aus welchem Zeitraum?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Anzahl der Tage"
     override val SETTINGS_INTEGRATION = "Integration"
+    override val SETTINGS_SYNC = "Synchronisation"
+    override val SETTINGS_STRAVA = "Strava"
+    override val SETTINGS_STRAVA_DESC = "Synchronisiere deine Workouts mit Strava (Bald)"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Verlauf und Zusammenfassungen speichern (Bald)"
     override val SETTINGS_APPEARANCE = "Aussehen"
@@ -68,14 +71,13 @@ object TextsMobileDE : MobileTexts {
     override val LANG_EN = "Englisch"
 
     // Health Connect Strings
+    override val SETTINGS_HC_TITLE = "Health Connect"
     override val SETTINGS_HC_MANAGE_PERMISSIONS = "Health Connect Berechtigungen verwalten"
     override val SETTINGS_HC_STATUS = "Health Connect Status"
     override val HC_STATUS_AVAILABLE = "Verfügbar"
     override val HC_STATUS_UNAVAILABLE = "Nicht verfügbar"
     override val HC_STATUS_NOT_INSTALLED = "Nicht installiert"
     override val HC_INSTALL = "Installieren"
-    override val SETTINGS_HC_AUTO_EXPORT = "Automatischer Export"
-    override val SETTINGS_HC_AUTO_EXPORT_DESC = "Neue Workouts automatisch nach Health Connect exportieren"
     override val HC_SYNC_HEALTH_DATA = "Mit Health Connect synchronisieren"
     override val HC_SYNC_WORKOUTS = "Workouts aus Health Connect importieren"
     override val HC_SYNC_CONFIRM_TITLE = "Datensynchronisation"
@@ -107,6 +109,8 @@ object TextsMobileDE : MobileTexts {
     override val HC_EXPORT_SUCCESS = "Export erfolgreich abgeschlossen"
     override val HC_EXPORT_ERROR = "Exportfehler: "
     override val HC_EXPORT_PERMISSION_DENIED = "Keine Berechtigung zum Schreiben in Health Connect"
+    override val SETTINGS_HC_AUTO_EXPORT = "Automatischer Export"
+    override val SETTINGS_HC_AUTO_EXPORT_DESC = "Neue Workouts automatisch nach Health Connect exportieren"
 
     // Stage 6 - Sync Status
     override val SYNC_STATUS_TITLE = "HC-Synchronisierungsstatus"
@@ -307,6 +311,12 @@ object TextsMobileDE : MobileTexts {
     override val DEF_OTHER = "Andere"
     override val DEF_STANDARD_ACTIVITY = "Standardaktivität"
 
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Aktivität zum Ändern auswählen"
+    override val AD_SETTINGS_EDIT_TITLE = "Einstellungen"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Bereich: Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Bereich: Diagramme"
+
     // Heart Rate Math
     override val HR_NO_DATA = "Keine HF-Daten"
     override val HR_TOO_LITTLE_DATA = "Zu wenig Daten"
@@ -326,12 +336,6 @@ object TextsMobileDE : MobileTexts {
     override val ZONE_Z3 = "Moderat"
     override val ZONE_Z4 = "Hart"
     override val ZONE_Z5 = "Maximum"
-
-    // Compare Screen
-    override val COMPARE_TITLE = "Aktivitätsvergleich"
-    override val COMPARE_VS = "Vergleich:"
-    override val COMPARE_HIGHER_IS_BETTER = "Höheres Ergebnis ist besser"
-    override val COMPARE_LOWER_IS_BETTER = "Niedrigeres Ergebnis ist besser"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Export wird initialisiert..."
@@ -432,6 +436,12 @@ object TextsMobileDE : MobileTexts {
     override val TRIM_START = "Start"
     override val TRIM_END = "Ende"
 
+    // Compare Screen
+    override val COMPARE_TITLE = "Aktivitätsvergleich"
+    override val COMPARE_VS = "Vergleich:"
+    override val COMPARE_HIGHER_IS_BETTER = "Höheres Ergebnis ist besser"
+    override val COMPARE_LOWER_IS_BETTER = "Niedrigeres Ergebnis ist besser"
+
     // Units
     override val UNIT_KCAL = "kcal"
     override val UNIT_M = "m"
@@ -446,12 +456,6 @@ object TextsMobileDE : MobileTexts {
     override val UNIT_BPM = "bpm"
     override val UNIT_KCAL_MIN = "kcal/min"
     override val UNIT_VO2_MAX = "ml/kg/min"
-
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Aktivität zum Ändern auswählen"
-    override val AD_SETTINGS_EDIT_TITLE = "Einstellungen"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Bereich: Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Bereich: Diagramme"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
