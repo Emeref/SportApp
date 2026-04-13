@@ -62,7 +62,7 @@ class ActivityListViewModel @Inject constructor(
     private val _definitions = MutableStateFlow<List<WorkoutDefinition>>(emptyList())
     val definitions = _definitions.asStateFlow()
 
-    private val _selectedTypes = MutableStateFlow<Set<String>>(emptySet())
+    private val _selectedTypes = MutableStateFlow<Set<String>?>(null)
     val selectedTypes = _selectedTypes.asStateFlow()
 
     private val _startDate = MutableStateFlow<Date?>(null)
@@ -88,7 +88,7 @@ class ActivityListViewModel @Inject constructor(
 
     val activities: StateFlow<List<ActivityItem>> = repository.getActivityItemsFlow()
         .combine(_selectedTypes) { all, types ->
-            if (types.isEmpty()) all else all.filter { it.type in types }
+            if (types == null) all else all.filter { it.type in types }
         }
         .combine(_startDate) { filtered, start ->
             if (start == null) filtered else filtered.filter { 
@@ -150,21 +150,43 @@ class ActivityListViewModel @Inject constructor(
     }
 
     fun toggleTypeSelection(type: String) {
-        val current = _selectedTypes.value
-        _selectedTypes.value = if (current.contains(type)) {
-            current - type
+        val all = _activityTypes.value.toSet()
+        val current = _selectedTypes.value ?: all
+        val newSet = if (current.contains(type)) current - type else current + type
+        
+        if (newSet.size == all.size) {
+            _selectedTypes.value = null
         } else {
-            current + type
+            _selectedTypes.value = newSet
+        }
+    }
+
+    fun toggleAllTypes() {
+        if (_selectedTypes.value == null) {
+            _selectedTypes.value = emptySet()
+        } else {
+            _selectedTypes.value = null
         }
     }
 
     fun clearTypeSelection() {
-        _selectedTypes.value = emptySet()
+        _selectedTypes.value = null
     }
 
     fun onDateRangeSelected(start: Date?, end: Date?) {
-        _startDate.value = start
-        _endDate.value = end
+        var finalStart = start
+        var finalEnd = end
+        
+        if (finalStart != null && finalEnd != null && finalStart.after(finalEnd)) {
+            if (_startDate.value != start) {
+                finalEnd = finalStart
+            } else {
+                finalStart = finalEnd
+            }
+        }
+        
+        _startDate.value = finalStart
+        _endDate.value = finalEnd
     }
 
     fun onSortChanged(column: SortColumn) {

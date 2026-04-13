@@ -314,9 +314,10 @@ fun ActivityListScreen(
                         ) {
                             Text(
                                 text = when {
-                                    selectedTypes.isEmpty() -> texts.ACTIVITY_ALL_TYPES
-                                    selectedTypes.size == 1 -> selectedTypes.first()
-                                    else -> "${texts.ACTIVITY_FILTERS}: ${selectedTypes.size}"
+                                    selectedTypes == null -> texts.ACTIVITY_ALL_TYPES
+                                    selectedTypes!!.isEmpty() -> texts.ACTIVITY_NONE
+                                    selectedTypes!!.size == 1 -> selectedTypes!!.first()
+                                    else -> "${texts.ACTIVITY_FILTERS}: ${selectedTypes!!.size}"
                                 }
                             )
                             Icon(Icons.Default.ArrowDropDown, null)
@@ -329,18 +330,18 @@ fun ActivityListScreen(
                             DropdownMenuItem(
                                 text = { 
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(checked = selectedTypes.isEmpty(), onCheckedChange = null)
+                                        Checkbox(checked = selectedTypes == null, onCheckedChange = null)
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(texts.ACTIVITY_ALL)
                                     }
                                 },
-                                onClick = { viewModel.clearTypeSelection() }
+                                onClick = { viewModel.toggleAllTypes() }
                             )
                             activityTypes.forEach { type ->
                                 DropdownMenuItem(
                                     text = { 
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Checkbox(checked = selectedTypes.contains(type), onCheckedChange = null)
+                                            Checkbox(checked = selectedTypes?.contains(type) ?: true, onCheckedChange = null)
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(type)
                                         }
@@ -355,6 +356,7 @@ fun ActivityListScreen(
                         OutlinedButton(
                             onClick = {
                                 val cal = Calendar.getInstance()
+                                startDate?.let { cal.time = it }
                                 DatePickerDialog(context, { _, y, m, d ->
                                     val date = Calendar.getInstance().apply { 
                                         set(y, m, d, 0, 0, 0)
@@ -373,6 +375,7 @@ fun ActivityListScreen(
                         OutlinedButton(
                             onClick = {
                                 val cal = Calendar.getInstance()
+                                endDate?.let { cal.time = it }
                                 DatePickerDialog(context, { _, y, m, d ->
                                     val date = Calendar.getInstance().apply { 
                                         set(y, m, d, 23, 59, 59)

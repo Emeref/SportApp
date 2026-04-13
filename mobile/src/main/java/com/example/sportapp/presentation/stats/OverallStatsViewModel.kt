@@ -41,7 +41,7 @@ class OverallStatsViewModel @Inject constructor(
     private val _activityTypes = MutableStateFlow<List<String>>(emptyList())
     val activityTypes = _activityTypes.asStateFlow()
 
-    private val _selectedTypes = MutableStateFlow<Set<String>>(emptySet())
+    private val _selectedTypes = MutableStateFlow<Set<String>?>(null)
     val selectedTypes = _selectedTypes.asStateFlow()
 
     private val _startDate = MutableStateFlow<Date?>(null)
@@ -113,7 +113,7 @@ class OverallStatsViewModel @Inject constructor(
         
         viewModelScope.launch {
             combine(_selectedTypes, _startDate, _endDate, repository.getAllWorkouts()) { types, start, end, _ ->
-                val typesList = if (types.isEmpty()) null else types.toList()
+                val typesList = types?.toList()
                 val statsMap = repository.getFilteredStats(typesList, start, end)
                 Triple(statsMap, start, end)
             }.collect { (statsMap, start, end) ->
@@ -261,21 +261,39 @@ class OverallStatsViewModel @Inject constructor(
     )
 
     fun toggleTypeSelection(type: String) {
-        val current = _selectedTypes.value
-        _selectedTypes.value = if (current.contains(type)) {
-            current - type
+        val all = _activityTypes.value.toSet()
+        val current = _selectedTypes.value ?: all
+        val newSet = if (current.contains(type)) current - type else current + type
+        
+        if (newSet.size == all.size) {
+            _selectedTypes.value = null
         } else {
-            current + type
+            _selectedTypes.value = newSet
         }
     }
 
-    fun clearTypeSelection() {
-        _selectedTypes.value = emptySet()
+    fun toggleAllTypes() {
+        if (_selectedTypes.value == null) {
+            _selectedTypes.value = emptySet()
+        } else {
+            _selectedTypes.value = null
+        }
     }
 
     fun onDateRangeSelected(start: Date?, end: Date?) {
-        _startDate.value = start
-        _endDate.value = end
+        var finalStart = start
+        var finalEnd = end
+        
+        if (finalStart != null && finalEnd != null && finalStart.after(finalEnd)) {
+            if (_startDate.value != start) {
+                finalEnd = finalStart
+            } else {
+                finalStart = finalEnd
+            }
+        }
+        
+        _startDate.value = finalStart
+        _endDate.value = finalEnd
     }
     
     fun saveWidgets(widgets: List<WidgetItem>) {

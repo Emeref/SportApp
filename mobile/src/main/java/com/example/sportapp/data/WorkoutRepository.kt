@@ -189,7 +189,7 @@ class WorkoutRepository @Inject constructor(
         endDate: Date?
     ): Map<String, Any> {
         val filtered = list.filter { w ->
-            val typeMatch = activityTypes.isNullOrEmpty() || activityTypes.contains(w.activityName)
+            val typeMatch = activityTypes == null || activityTypes.contains(w.activityName)
             val startMatch = startDate == null || w.startTime >= startDate.time
             val endMatch = endDate == null || w.startTime <= endDate.time
             typeMatch && startMatch && endMatch

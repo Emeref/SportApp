@@ -53,7 +53,7 @@ fun OverallStatsScreen(
         chartProducers = viewModel.chartProducers,
         chartMaxValues = chartMaxValues,
         onTypeToggle = { viewModel.toggleTypeSelection(it) },
-        onClearTypes = { viewModel.clearTypeSelection() },
+        onToggleAllTypes = { viewModel.toggleAllTypes() },
         onDateRangeSelected = { start, end -> viewModel.onDateRangeSelected(start, end) },
         onNavigateBack = onNavigateBack,
         onNavigateToOptions = onNavigateToOptions
@@ -67,13 +67,13 @@ fun OverallStatsContent(
     widgets: List<WidgetItem>,
     charts: List<WidgetItem>,
     activityTypes: List<String>,
-    selectedTypes: Set<String>,
+    selectedTypes: Set<String>?,
     startDate: Date?,
     endDate: Date?,
     chartProducers: Map<String, ChartEntryModelProducer>,
     chartMaxValues: Map<String, Double>,
     onTypeToggle: (String) -> Unit,
-    onClearTypes: () -> Unit,
+    onToggleAllTypes: () -> Unit,
     onDateRangeSelected: (Date?, Date?) -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToOptions: () -> Unit
@@ -134,7 +134,8 @@ fun OverallStatsContent(
                         ) {
                             Text(
                                 text = when {
-                                    selectedTypes.isEmpty() -> texts.STATS_ALL_TYPES
+                                    selectedTypes == null -> texts.STATS_ALL_TYPES
+                                    selectedTypes.isEmpty() -> texts.STATS_ALL_TYPES // Should not happen with null logic but for safety
                                     selectedTypes.size == 1 -> selectedTypes.first()
                                     else -> "${texts.ACTIVITY_FILTERS}: ${selectedTypes.size}"
                                 }
@@ -149,18 +150,18 @@ fun OverallStatsContent(
                             DropdownMenuItem(
                                 text = { 
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(checked = selectedTypes.isEmpty(), onCheckedChange = null)
+                                        Checkbox(checked = selectedTypes == null, onCheckedChange = null)
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(texts.ACTIVITY_ALL)
                                     }
                                 },
-                                onClick = { onClearTypes() }
+                                onClick = { onToggleAllTypes() }
                             )
                             activityTypes.forEach { type ->
                                 DropdownMenuItem(
                                     text = { 
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Checkbox(checked = selectedTypes.contains(type), onCheckedChange = null)
+                                            Checkbox(checked = selectedTypes?.contains(type) ?: true, onCheckedChange = null)
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(type)
                                         }
@@ -175,8 +176,12 @@ fun OverallStatsContent(
                         OutlinedButton(
                             onClick = {
                                 val cal = Calendar.getInstance()
+                                startDate?.let { cal.time = it }
                                 DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }.time
+                                    val date = Calendar.getInstance().apply { 
+                                        set(y, m, d, 0, 0, 0)
+                                        set(Calendar.MILLISECOND, 0)
+                                    }.time
                                     onDateRangeSelected(date, endDate)
                                 }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
                             },
@@ -190,8 +195,12 @@ fun OverallStatsContent(
                         OutlinedButton(
                             onClick = {
                                 val cal = Calendar.getInstance()
+                                endDate?.let { cal.time = it }
                                 DatePickerDialog(context, { _, y, m, d ->
-                                    val date = Calendar.getInstance().apply { set(y, m, d, 23, 59, 59) }.time
+                                    val date = Calendar.getInstance().apply { 
+                                        set(y, m, d, 23, 59, 59)
+                                        set(Calendar.MILLISECOND, 999)
+                                    }.time
                                     onDateRangeSelected(startDate, date)
                                 }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
                             },

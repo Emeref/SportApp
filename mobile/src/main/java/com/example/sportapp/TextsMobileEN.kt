@@ -181,6 +181,7 @@ object TextsMobileEN : MobileTexts {
     override val ACTIVITY_OK = "OK"
     override val ACTIVITY_CONFIRM_DELETE_TITLE = "Delete activities"
     override val ACTIVITY_ALL = "All"
+    override val ACTIVITY_NONE = "None"
 
     // Activity Detail
     override val DETAIL_TITLE = "Activity Details"

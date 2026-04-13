@@ -170,6 +170,7 @@ interface MobileTexts {
     val ACTIVITY_OK: String
     val ACTIVITY_CONFIRM_DELETE_TITLE: String
     val ACTIVITY_ALL: String
+    val ACTIVITY_NONE: String
 
     // Activity Detail
     val DETAIL_TITLE: String
