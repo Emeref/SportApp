@@ -63,7 +63,7 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_SYNC = "Sincronización"
     override val SETTINGS_STRAVA = "Strava"
-    override val SETTINGS_STRAVA_DESC = "Sincroniza tus entrenamientos con Strava (Próximamente)"
+    override val SETTINGS_STRAVA_DESC = "Sincroniza tus entrenamientos con Strava"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Guardar historial y resúmenes (Próximamente)"
     override val SETTINGS_APPEARANCE = "Apariencia"
@@ -543,4 +543,18 @@ object TextsMobileES : MobileTexts {
     override val AD_SETTINGS_EDIT_TITLE = "Ajustes"
     override val AD_SETTINGS_SECTION_WIDGETS = "Sección: Widgets"
     override val AD_SETTINGS_SECTION_CHARTS = "Sección: Gráficos"
+
+    // Strava Strings
+    override val STRAVA_TITLE = "Sincronización con Strava"
+    override val STRAVA_CONNECT = "Conectar con cuenta de Strava"
+    override val STRAVA_DISCONNECT = "Desconectar Strava"
+    override val STRAVA_CONNECTED = "Conectado a Strava"
+    override val STRAVA_NOT_CONNECTED = "No conectado"
+    override val STRAVA_SYNC_NOW = "Sincronizar ahora"
+    override val STRAVA_SYNC_SUCCESS = "¡Entrenamiento enviado!"
+    override val STRAVA_SYNC_FAILED = "Error de envío"
+    override val STRAVA_SYNCING = "Enviando..."
+    override val STRAVA_AUTH_ERROR = "Error de autorización"
+    override val SETTINGS_CUSTOM_DAYS_DESC = "Número de días para el periodo 'Otro'"
+    override val SETTINGS_WATCH_STATS_DAYS_DESC = "Número de días para las estadísticas del reloj"
 }

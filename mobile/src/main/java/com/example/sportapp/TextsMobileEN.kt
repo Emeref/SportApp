@@ -60,10 +60,12 @@ object TextsMobileEN : MobileTexts {
     override val SETTINGS_PERIOD_WATCH_DESC = "Stats from which period?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Number of days"
     override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Show stats from how many days?"
+    override val SETTINGS_CUSTOM_DAYS_DESC = "Number of days for 'Custom' period"
+    override val SETTINGS_WATCH_STATS_DAYS_DESC = "Number of days for watch stats"
     override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_SYNC = "Sync"
     override val SETTINGS_STRAVA = "Strava"
-    override val SETTINGS_STRAVA_DESC = "Sync your workouts with Strava (Soon)"
+    override val SETTINGS_STRAVA_DESC = "Sync your workouts with Strava"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Save history and summaries (Soon)"
     override val SETTINGS_APPEARANCE = "Appearance"
@@ -541,4 +543,16 @@ object TextsMobileEN : MobileTexts {
             else -> id
         }
     }
+
+    // Strava Strings
+    override val STRAVA_TITLE = "Strava Synchronization"
+    override val STRAVA_CONNECT = "Connect to Strava"
+    override val STRAVA_DISCONNECT = "Disconnect Strava"
+    override val STRAVA_CONNECTED = "Connected to Strava"
+    override val STRAVA_NOT_CONNECTED = "Not connected"
+    override val STRAVA_SYNC_NOW = "Sync now"
+    override val STRAVA_SYNC_SUCCESS = "Workout uploaded!"
+    override val STRAVA_SYNC_FAILED = "Upload failed"
+    override val STRAVA_SYNCING = "Uploading..."
+    override val STRAVA_AUTH_ERROR = "Authorization error"
 }

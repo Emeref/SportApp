@@ -1,8 +1,8 @@
 package com.example.sportapp.data.strava.network
 
-import com.example.sportapp.BuildConfig
 import com.example.sportapp.data.strava.StravaStorage
 import com.example.sportapp.data.strava.api.StravaAuthApi
+import com.example.sportapp.data.strava.model.StravaTokenResponse
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
@@ -24,8 +24,9 @@ class StravaAuthenticator @Inject constructor(
         return runBlocking {
             val refreshToken = storage.refreshToken.firstOrNull() ?: return@runBlocking null
             
-            val clientId = BuildConfig.STRAVA_CLIENT_ID
-            val clientSecret = BuildConfig.STRAVA_CLIENT_SECRET
+            // Strava Client ID and Secret
+            val clientId = "224679"
+            val clientSecret = "9727c9a8bab91d5ef598d94baee374668998dde3"
 
             val authResponse = authApiProvider.get().refreshToken(
                 clientId = clientId,

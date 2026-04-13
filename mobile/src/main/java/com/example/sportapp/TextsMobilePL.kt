@@ -60,10 +60,12 @@ object TextsMobilePL : MobileTexts {
     override val SETTINGS_PERIOD_WATCH_DESC = "Statystyki z jakiego okresu?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Liczba dni"
     override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Pokazuj statystyki z ilu dni?"
+    override val SETTINGS_CUSTOM_DAYS_DESC = "Liczba dni dla okresu 'Inne'"
+    override val SETTINGS_WATCH_STATS_DAYS_DESC = "Liczba dni statystyk na zegarku"
     override val SETTINGS_INTEGRATION = "Integracja"
     override val SETTINGS_SYNC = "Synchronizacja"
     override val SETTINGS_STRAVA = "Strava"
-    override val SETTINGS_STRAVA_DESC = "Synchronizuj swoje treningi ze Strava (Wkrótce)"
+    override val SETTINGS_STRAVA_DESC = "Synchronizuj swoje treningi ze Strava"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Zapisuj historię i podsumowania (Wkrótce)"
     override val SETTINGS_APPEARANCE = "Wygląd"
@@ -303,7 +305,7 @@ object TextsMobilePL : MobileTexts {
     override val DEF_SKIING = "Narciarstwo"
     override val DEF_SNOWBOARDING = "Snowboarding"
     override val DEF_SKATING = "Łyżwiarstwo"
-    override val DEF_ICE_SKATING = "Łyżwiarstwo figurowe"
+    override val DEF_ICE_SKATING = "Łyżwiarstwa figurowe"
     
     override val DEF_GYM = "Siłownia"
     override val DEF_BASEBALL = "Baseball"
@@ -541,4 +543,16 @@ object TextsMobilePL : MobileTexts {
             else -> id
         }
     }
+
+    // Strava Strings
+    override val STRAVA_TITLE = "Synchronizacja ze Stravą"
+    override val STRAVA_CONNECT = "Połącz z kontem Strava"
+    override val STRAVA_DISCONNECT = "Odłącz konto Strava"
+    override val STRAVA_CONNECTED = "Połączono ze Stravą"
+    override val STRAVA_NOT_CONNECTED = "Nie połączono"
+    override val STRAVA_SYNC_NOW = "Synchronizuj teraz"
+    override val STRAVA_SYNC_SUCCESS = "Trening został wysłany!"
+    override val STRAVA_SYNC_FAILED = "Błąd wysyłki"
+    override val STRAVA_SYNCING = "Wysyłanie..."
+    override val STRAVA_AUTH_ERROR = "Błąd autoryzacji"
 }

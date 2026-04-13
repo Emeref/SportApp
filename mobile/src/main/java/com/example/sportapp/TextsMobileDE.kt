@@ -21,7 +21,7 @@ object TextsMobileDE : MobileTexts {
     override val HOME_GENERAL_STATS = "Allgemeine Statistiken"
     override val HOME_WORKOUT_DETAILS = "Workout-Details"
     override val HOME_LOGO_DESC = "App-Logo"
-    override val HOME_SECRET_TITLE = "Schön, dass du klickst, ale hier gibt es nichts"
+    override val HOME_SECRET_TITLE = "Schön, że klikasz, ale tutaj nic nie ma"
     override val HOME_CLOSE = "Schließen"
 
     override fun homeResultsToday() = "Heutige Ergebnisse:"
@@ -60,10 +60,12 @@ object TextsMobileDE : MobileTexts {
     override val SETTINGS_PERIOD_WATCH_DESC = "Statistiken aus welchem Zeitraum?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Anzahl der Tage"
     override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Anzahl der Tage"
+    override val SETTINGS_CUSTOM_DAYS_DESC = "Anzahl der Tage für den Zeitraum 'Benutzerdefiniert'"
+    override val SETTINGS_WATCH_STATS_DAYS_DESC = "Anzahl der Tage für Uhrenstatistiken"
     override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_SYNC = "Synchronisation"
     override val SETTINGS_STRAVA = "Strava"
-    override val SETTINGS_STRAVA_DESC = "Synchronisiere deine Workouts mit Strava (Bald)"
+    override val SETTINGS_STRAVA_DESC = "Synchronisiere deine Workouts mit Strava"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Verlauf und Zusammenfassungen speichern (Bald)"
     override val SETTINGS_APPEARANCE = "Aussehen"
@@ -429,7 +431,7 @@ object TextsMobileDE : MobileTexts {
     override val TRIM_SAVE_BTN = "Zuschneiden und speichern"
     override val TRIM_CHART_HR = "HF-Diagramm"
     override val TRIM_RANGE_TITLE = "Workout-Bereich wählen"
-    override val TRIM_PREVIEW_TITLE = "Vorschau der neuen Statistiken"
+    override val TRIM_PREVIEW_TITLE = "Vorschau der nowych Statistiken"
     override val TRIM_NEW_DURATION = "Neue Dauer:"
     override val TRIM_DISTANCE_GPS = "Distanz (GPS):"
     override val TRIM_DISTANCE_STEPS = "Distanz (Schritte):"
@@ -541,4 +543,16 @@ object TextsMobileDE : MobileTexts {
             else -> id
         }
     }
+
+    // Strava Strings
+    override val STRAVA_TITLE = "Strava-Synchronisierung"
+    override val STRAVA_CONNECT = "Mit Strava-Konto verbinden"
+    override val STRAVA_DISCONNECT = "Strava-Konto trennen"
+    override val STRAVA_CONNECTED = "Mit Strava verbunden"
+    override val STRAVA_NOT_CONNECTED = "Nicht verbunden"
+    override val STRAVA_SYNC_NOW = "Jetzt synchronisieren"
+    override val STRAVA_SYNC_SUCCESS = "Workout wurde gesendet!"
+    override val STRAVA_SYNC_FAILED = "Sende-Fehler"
+    override val STRAVA_SYNCING = "Senden..."
+    override val STRAVA_AUTH_ERROR = "Authentifizierungsfehler"
 }

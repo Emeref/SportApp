@@ -1,6 +1,9 @@
 package com.example.sportapp
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +31,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.sportapp.presentation.activities.*
+import com.example.sportapp.data.strava.StravaStorage
+import com.example.sportapp.data.strava.api.StravaAuthApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -35,8 +43,19 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsManager: MobileSettingsManager
 
+    @Inject
+    lateinit var stravaStorage: StravaStorage
+
+    @Inject
+    lateinit var stravaAuthApi: StravaAuthApi
+
+    private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        handleStravaCallback(intent)
+
         setContent {
             val settingsState by settingsManager.settingsFlow.collectAsStateWithLifecycle(initialValue = MobileSettingsState())
             val texts = settingsState.language.texts
@@ -79,7 +98,14 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToDefinitions = { navController.navigate("definitions") },
                                     onNavigateToHealthData = { navController.navigate("health_data") },
                                     onNavigateToLanguageSelection = { navController.navigate("language_selection") },
-                                    onNavigateToSync = { navController.navigate("sync_settings") }
+                                    onNavigateToSync = { navController.navigate("sync_settings") },
+                                    onNavigateToStrava = { navController.navigate("strava_settings") }
+                                )
+                            }
+                            composable("strava_settings") {
+                                StravaSettingsScreen(
+                                    stravaStorage = stravaStorage,
+                                    onBack = { navController.popBackStack() }
                                 )
                             }
                             composable("sync_settings") {
@@ -274,6 +300,48 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleStravaCallback(intent)
+    }
+
+    private fun handleStravaCallback(intent: Intent) {
+        val data = intent.data
+        if (data != null && data.scheme == "sportapp" && data.host == "strava") {
+            val code = data.getQueryParameter("code")
+            if (code != null) {
+                Log.d("MainActivity", "Strava auth code received: $code")
+                exchangeStravaToken(code)
+            }
+        }
+    }
+
+    private fun exchangeStravaToken(code: String) {
+        activityScope.launch(Dispatchers.IO) {
+            try {
+                val clientId = "224679"
+                val clientSecret = "9727c9a8bab91d5ef598d94baee374668998dde3" // TODO: Secure this
+                val response = stravaAuthApi.exchangeToken(clientId, clientSecret, code)
+                
+                if (response.isSuccessful && response.body() != null) {
+                    val tokenData = response.body()!!
+                    val athleteName = tokenData.athlete?.let { "${it.firstname} ${it.lastname}" }
+                    stravaStorage.saveTokens(
+                        accessToken = tokenData.accessToken,
+                        refreshToken = tokenData.refreshToken,
+                        expiresAt = tokenData.expiresAt,
+                        athleteName = athleteName
+                    )
+                    Log.d("MainActivity", "Strava token exchange successful")
+                } else {
+                    Log.e("MainActivity", "Strava token exchange failed: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error exchanging Strava token", e)
             }
         }
     }

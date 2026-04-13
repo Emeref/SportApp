@@ -55,6 +55,8 @@ interface MobileTexts {
     val SETTINGS_PERIOD_WATCH_DESC: String
     val SETTINGS_CUSTOM_DAYS_LABEL: String
     val SETTINGS_WATCH_STATS_DAYS_LABEL: String
+    val SETTINGS_CUSTOM_DAYS_DESC: String
+    val SETTINGS_WATCH_STATS_DAYS_DESC: String
     val SETTINGS_INTEGRATION: String
     val SETTINGS_SYNC: String
     val SETTINGS_STRAVA: String
@@ -452,6 +454,18 @@ interface MobileTexts {
     
     fun getWidgetLabel(id: String): String
     fun getSensorLabel(id: String): String
+
+    // Strava Strings
+    val STRAVA_TITLE: String
+    val STRAVA_CONNECT: String
+    val STRAVA_DISCONNECT: String
+    val STRAVA_CONNECTED: String
+    val STRAVA_NOT_CONNECTED: String
+    val STRAVA_SYNC_NOW: String
+    val STRAVA_SYNC_SUCCESS: String
+    val STRAVA_SYNC_FAILED: String
+    val STRAVA_SYNCING: String
+    val STRAVA_AUTH_ERROR: String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {
