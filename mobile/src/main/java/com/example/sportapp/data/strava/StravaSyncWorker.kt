@@ -62,30 +62,22 @@ class StravaSyncWorker @AssistedInject constructor(
                 val uploadResponse = response.body()!!
                 Log.d("StravaSyncWorker", "Upload successful, uploadId: ${uploadResponse.id}")
                 
-                val existingMetadata = syncMetadataDao.getByLocalId(workoutId, "EXERCISE")
-                val metadata = if (existingMetadata != null) {
-                    existingMetadata.copy(
-                        stravaUploadId = uploadResponse.id,
-                        stravaSyncStatus = "SUCCESS",
-                        lastSyncTime = System.currentTimeMillis(),
-                        activityName = workout.activityName,
-                        startTime = workout.startTime
-                    )
-                } else {
-                    SyncMetadataEntity(
-                        hcRecordId = "strava_${uploadResponse.id}",
-                        localRecordId = workoutId,
-                        recordType = "EXERCISE",
-                        lastSyncTime = System.currentTimeMillis(),
-                        syncDirection = "TO_STRAVA",
-                        localModifiedTime = System.currentTimeMillis(),
-                        hcModifiedTime = 0L,
-                        activityName = workout.activityName,
-                        startTime = workout.startTime,
-                        stravaUploadId = uploadResponse.id,
-                        stravaSyncStatus = "SUCCESS"
-                    )
-                }
+                // Klucz główny dla Stravy musi być unikalny i nie kolidować z Health Connect
+                val stravaMetadataId = "strava_${uploadResponse.id}"
+                
+                val metadata = SyncMetadataEntity(
+                    hcRecordId = stravaMetadataId,
+                    localRecordId = workoutId,
+                    recordType = "EXERCISE",
+                    lastSyncTime = System.currentTimeMillis(),
+                    syncDirection = "TO_STRAVA",
+                    localModifiedTime = System.currentTimeMillis(),
+                    hcModifiedTime = 0L,
+                    activityName = workout.activityName,
+                    startTime = workout.startTime,
+                    stravaUploadId = uploadResponse.id,
+                    stravaSyncStatus = "SUCCESS"
+                )
                 syncMetadataDao.insert(metadata)
                 
                 tempFile.delete()
@@ -104,28 +96,18 @@ class StravaSyncWorker @AssistedInject constructor(
     }
 
     private suspend fun recordFailure(workoutId: Long, activityName: String, startTime: Long) {
-        val existingMetadata = syncMetadataDao.getByLocalId(workoutId, "EXERCISE")
-        val metadata = if (existingMetadata != null) {
-            existingMetadata.copy(
-                stravaSyncStatus = "FAILED",
-                lastSyncTime = System.currentTimeMillis(),
-                activityName = activityName,
-                startTime = startTime
-            )
-        } else {
-            SyncMetadataEntity(
-                hcRecordId = "strava_failed_${workoutId}_${System.currentTimeMillis()}",
-                localRecordId = workoutId,
-                recordType = "EXERCISE",
-                lastSyncTime = System.currentTimeMillis(),
-                syncDirection = "TO_STRAVA",
-                localModifiedTime = System.currentTimeMillis(),
-                hcModifiedTime = 0L,
-                activityName = activityName,
-                startTime = startTime,
-                stravaSyncStatus = "FAILED"
-            )
-        }
+        val metadata = SyncMetadataEntity(
+            hcRecordId = "strava_failed_${workoutId}_${System.currentTimeMillis()}",
+            localRecordId = workoutId,
+            recordType = "EXERCISE",
+            lastSyncTime = System.currentTimeMillis(),
+            syncDirection = "TO_STRAVA",
+            localModifiedTime = System.currentTimeMillis(),
+            hcModifiedTime = 0L,
+            activityName = activityName,
+            startTime = startTime,
+            stravaSyncStatus = "FAILED"
+        )
         syncMetadataDao.insert(metadata)
     }
 
