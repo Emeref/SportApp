@@ -117,9 +117,9 @@ object TextsMobilePL : MobileTexts {
 
     // Stage 6 - Sync Status
     override val SYNC_STATUS_TITLE = "Status synchronizacji HC"
-    override val SYNC_LAST_HEALTH = "Ostatnia sync danych zdrowotnych"
-    override val SYNC_LAST_WORKOUT = "Ostatnia sync treningów"
-    override val SYNC_UNSYNCED_COUNT = "Niezsynchronizowane rekordy"
+    override val SYNC_LAST_HEALTH = "Last health sync"
+    override val SYNC_LAST_WORKOUT = "Last workout sync"
+    override val SYNC_UNSYNCED_COUNT = "Unsynced records"
     override val SYNC_NOW = "Synchronizuj teraz"
     override val SYNC_HISTORY_TITLE = "Historia synchronizacji"
     override val SYNC_TYPE_IMPORT = "Import"
@@ -140,7 +140,7 @@ object TextsMobilePL : MobileTexts {
     override val HEALTH_GENDER = "Płeć"
     override val HEALTH_GENDER_MALE = "Mężczyzna"
     override val HEALTH_GENDER_FEMALE = "Kobieta"
-    override val HEALTH_AGE = "Wiek"
+    override val HEALTH_AGE = "Awiek"
     override val HEALTH_WEIGHT = "Waga"
     override val HEALTH_WEIGHT_KG = "Waga (kg)"
     override val HEALTH_HEIGHT = "Wzrost"
@@ -160,7 +160,7 @@ object TextsMobilePL : MobileTexts {
     override val ACTIVITY_TRIM = "Przytnij"
     override val ACTIVITY_DETAIL = "Szczegóły"
     override val ACTIVITY_EDIT = "Edytuj"
-    override val ACTIVITY_IMPORT_GPX = "Importuj GPX"
+    override val ACTIVITY_IMPORT_GPX = "Import GPX"
     override val ACTIVITY_EXPORT_GPX = "Eksportuj GPX"
     override val ACTIVITY_CHART_SETTINGS = "Ustawienia wykresów"
     override val ACTIVITY_FILTERS = "Filtry"
@@ -168,7 +168,7 @@ object TextsMobilePL : MobileTexts {
     override val ACTIVITY_FROM = "Od"
     override val ACTIVITY_TO = "Do"
     override val ACTIVITY_TYPE = "Typ"
-    override val ACTIVITY_DATE = "Data"
+    override val ACTIVITY_DATE = "Date"
     override val ACTIVITY_DURATION = "Czas trwania"
     override val ACTIVITY_CALORIES = "Kalorie"
     override val ACTIVITY_DISTANCE_GPS = "Dystans (GPS)"
@@ -312,7 +312,7 @@ object TextsMobilePL : MobileTexts {
     override val DEF_SKATEBOARDING = "Deskorolka"
     override val DEF_COMPETITION = "Zawody"
     override val DEF_STOPWATCH = "Stoper"
-    override val DEF_OTHER = "Inne"
+    override val DEF_OTHER = "Other"
     override val DEF_STANDARD_ACTIVITY = "Standardowa aktywność"
 
     // Activity Detail Settings
@@ -557,4 +557,5 @@ object TextsMobilePL : MobileTexts {
     override val STRAVA_AUTH_ERROR = "Błąd autoryzacji"
     override val SETTINGS_STRAVA_AUTO_EXPORT = "Automatyczny eksport"
     override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Automatycznie wysyłaj nowe treningi do Strava"
+    override val STRAVA_SYNC_LOG = "Historia synchronizacji"
 }

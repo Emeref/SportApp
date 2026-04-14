@@ -34,8 +34,9 @@ class StravaSyncWorker @AssistedInject constructor(
 
         Log.d("StravaSyncWorker", "Starting sync for workout $workoutId")
 
+        val workout = workoutDao.getWorkoutById(workoutId) ?: return Result.failure()
+
         try {
-            val workout = workoutDao.getWorkoutById(workoutId) ?: return Result.failure()
             val points = workoutDao.getPointsForWorkout(workoutId)
             
             val gpxGenerator = GpxGenerator()
@@ -66,7 +67,9 @@ class StravaSyncWorker @AssistedInject constructor(
                     existingMetadata.copy(
                         stravaUploadId = uploadResponse.id,
                         stravaSyncStatus = "SUCCESS",
-                        lastSyncTime = System.currentTimeMillis()
+                        lastSyncTime = System.currentTimeMillis(),
+                        activityName = workout.activityName,
+                        startTime = workout.startTime
                     )
                 } else {
                     SyncMetadataEntity(
@@ -88,13 +91,42 @@ class StravaSyncWorker @AssistedInject constructor(
                 tempFile.delete()
                 return Result.success()
             } else {
-                Log.e("StravaSyncWorker", "Upload failed: ${response.errorBody()?.string()}")
-                return Result.retry()
+                val errorMsg = response.errorBody()?.string() ?: "Unknown error"
+                Log.e("StravaSyncWorker", "Upload failed: $errorMsg")
+                recordFailure(workoutId, workout.activityName, workout.startTime)
+                return if (response.code() in 400..499) Result.failure() else Result.retry()
             }
         } catch (e: Exception) {
             Log.e("StravaSyncWorker", "Error during sync", e)
+            recordFailure(workoutId, workout.activityName, workout.startTime)
             return Result.retry()
         }
+    }
+
+    private suspend fun recordFailure(workoutId: Long, activityName: String, startTime: Long) {
+        val existingMetadata = syncMetadataDao.getByLocalId(workoutId, "EXERCISE")
+        val metadata = if (existingMetadata != null) {
+            existingMetadata.copy(
+                stravaSyncStatus = "FAILED",
+                lastSyncTime = System.currentTimeMillis(),
+                activityName = activityName,
+                startTime = startTime
+            )
+        } else {
+            SyncMetadataEntity(
+                hcRecordId = "strava_failed_${workoutId}_${System.currentTimeMillis()}",
+                localRecordId = workoutId,
+                recordType = "EXERCISE",
+                lastSyncTime = System.currentTimeMillis(),
+                syncDirection = "TO_STRAVA",
+                localModifiedTime = System.currentTimeMillis(),
+                hcModifiedTime = 0L,
+                activityName = activityName,
+                startTime = startTime,
+                stravaSyncStatus = "FAILED"
+            )
+        }
+        syncMetadataDao.insert(metadata)
     }
 
     private fun mapToBaseStravaType(baseType: String): String {

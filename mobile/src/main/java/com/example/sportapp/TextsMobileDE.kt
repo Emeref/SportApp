@@ -557,4 +557,5 @@ object TextsMobileDE : MobileTexts {
     override val STRAVA_SYNC_FAILED = "Sende-Fehler"
     override val STRAVA_SYNCING = "Senden..."
     override val STRAVA_AUTH_ERROR = "Authentifizierungsfehler"
+    override val STRAVA_SYNC_LOG = "history"
 }

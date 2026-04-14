@@ -315,6 +315,12 @@ object TextsMobileEN : MobileTexts {
     override val DEF_OTHER = "Other"
     override val DEF_STANDARD_ACTIVITY = "Standard activity"
 
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Select activity to modify"
+    override val AD_SETTINGS_EDIT_TITLE = "Settings"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Section: Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Section: Charts"
+
     // Heart Rate Math
     override val HR_NO_DATA = "No HR data"
     override val HR_TOO_LITTLE_DATA = "Too little data"
@@ -455,12 +461,6 @@ object TextsMobileEN : MobileTexts {
     override val UNIT_KCAL_MIN = "kcal/min"
     override val UNIT_VO2_MAX = "ml/kg/min"
 
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Select activity to modify"
-    override val AD_SETTINGS_EDIT_TITLE = "Settings"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Section: Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Section: Charts"
-
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -557,4 +557,5 @@ object TextsMobileEN : MobileTexts {
     override val STRAVA_AUTH_ERROR = "Authorization error"
     override val SETTINGS_STRAVA_AUTO_EXPORT = "Auto export"
     override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Automatically upload new workouts to Strava"
+    override val STRAVA_SYNC_LOG = "Sync History"
 }

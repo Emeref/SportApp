@@ -468,6 +468,7 @@ interface MobileTexts {
     val STRAVA_AUTH_ERROR: String
     val SETTINGS_STRAVA_AUTO_EXPORT: String
     val SETTINGS_STRAVA_AUTO_EXPORT_DESC: String
+    val STRAVA_SYNC_LOG: String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

@@ -559,4 +559,5 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Exportar automáticamente nuevos entrenamientos a Strava"
     override val SETTINGS_CUSTOM_DAYS_DESC = "Número de días para el periodo 'Otro'"
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Número de días para las estadísticas del reloj"
+    override val STRAVA_SYNC_LOG = "history"
 }
