@@ -60,10 +60,12 @@ object TextsMobileEN : MobileTexts {
     override val SETTINGS_PERIOD_WATCH_DESC = "Stats from which period?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Number of days"
     override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Show stats from how many days?"
+    override val SETTINGS_CUSTOM_DAYS_DESC = "Number of days for 'Custom' period"
+    override val SETTINGS_WATCH_STATS_DAYS_DESC = "Number of days for watch stats"
     override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_SYNC = "Sync"
     override val SETTINGS_STRAVA = "Strava"
-    override val SETTINGS_STRAVA_DESC = "Sync your workouts with Strava (Soon)"
+    override val SETTINGS_STRAVA_DESC = "Sync your workouts with Strava"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Save history and summaries (Soon)"
     override val SETTINGS_APPEARANCE = "Appearance"
@@ -313,6 +315,12 @@ object TextsMobileEN : MobileTexts {
     override val DEF_OTHER = "Other"
     override val DEF_STANDARD_ACTIVITY = "Standard activity"
 
+    // Activity Detail Settings
+    override val AD_SETTINGS_LIST_TITLE = "Select activity to modify"
+    override val AD_SETTINGS_EDIT_TITLE = "Settings"
+    override val AD_SETTINGS_SECTION_WIDGETS = "Section: Widgets"
+    override val AD_SETTINGS_SECTION_CHARTS = "Section: Charts"
+
     // Heart Rate Math
     override val HR_NO_DATA = "No HR data"
     override val HR_TOO_LITTLE_DATA = "Too little data"
@@ -453,12 +461,6 @@ object TextsMobileEN : MobileTexts {
     override val UNIT_KCAL_MIN = "kcal/min"
     override val UNIT_VO2_MAX = "ml/kg/min"
 
-    // Activity Detail Settings
-    override val AD_SETTINGS_LIST_TITLE = "Select activity to modify"
-    override val AD_SETTINGS_EDIT_TITLE = "Settings"
-    override val AD_SETTINGS_SECTION_WIDGETS = "Section: Widgets"
-    override val AD_SETTINGS_SECTION_CHARTS = "Section: Charts"
-
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -541,4 +543,20 @@ object TextsMobileEN : MobileTexts {
             else -> id
         }
     }
+
+    // Strava Strings
+    override val STRAVA_TITLE = "Strava Synchronization"
+    override val STRAVA_CONNECT = "Connect to Strava"
+    override val STRAVA_DISCONNECT = "Disconnect Strava"
+    override val STRAVA_CONNECTED = "Connected to Strava"
+    override val STRAVA_NOT_CONNECTED = "Not connected"
+    override val STRAVA_SYNC_NOW = "Sync now"
+    override val STRAVA_SYNC_SUCCESS = "Workout uploaded!"
+    override val STRAVA_SYNC_FAILED = "Upload failed"
+    override val STRAVA_SYNCING = "Uploading..."
+    override val STRAVA_AUTH_ERROR = "Authorization error"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Auto export"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Automatically upload new workouts to Strava"
+    override val STRAVA_SYNC_LOG = "Sync History"
+    override val STRAVA_SYNC_LOG_EMPTY = "No sync history"
 }

@@ -90,4 +90,11 @@ interface WorkoutDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM workouts WHERE id = :activityId AND hc_session_id IS NOT NULL)")
     suspend fun isExportedToHC(activityId: Long): Boolean
+
+    @Query("""
+        SELECT * FROM workouts 
+        WHERE isFinished = 1 
+        AND id NOT IN (SELECT localRecordId FROM sync_metadata WHERE stravaUploadId IS NOT NULL)
+    """)
+    suspend fun getWorkoutsToStravaSync(): List<WorkoutEntity>
 }

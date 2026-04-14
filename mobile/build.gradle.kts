@@ -25,6 +25,9 @@ android {
             localProperties.load(localPropertiesFile.inputStream())
         }
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
+        
+        buildConfigField("String", "STRAVA_CLIENT_ID", "\"${localProperties.getProperty("clientId") ?: ""}\"")
+        buildConfigField("String", "STRAVA_CLIENT_SECRET", "\"${localProperties.getProperty("clientSecret") ?: ""}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -109,6 +112,16 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Network
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+
+    // Browser (Custom Tabs)
+    implementation(libs.androidx.browser)
 
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.11.1")

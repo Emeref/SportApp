@@ -17,6 +17,9 @@ interface SyncMetadataDao {
     @Query("SELECT * FROM sync_metadata")
     fun getAllFlow(): Flow<List<SyncMetadataEntity>>
 
+    @Query("SELECT * FROM sync_metadata WHERE syncDirection = 'TO_STRAVA' ORDER BY lastSyncTime DESC LIMIT 10")
+    fun getStravaSyncHistoryFlow(): Flow<List<SyncMetadataEntity>>
+
     @Query("SELECT COUNT(*) FROM workouts WHERE hc_session_id IS NULL")
     fun getUnsyncedWorkoutsCountFlow(): Flow<Int>
 

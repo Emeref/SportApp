@@ -13,5 +13,7 @@ data class SyncMetadataEntity(
     val localModifiedTime: Long,
     val hcModifiedTime: Long,
     val activityName: String? = null, // Nowe pole dla szczegółów
-    val startTime: Long? = null      // Nowe pole dla czasu rozpoczęcia
+    val startTime: Long? = null,      // Nowe pole dla czasu rozpoczęcia
+    val stravaUploadId: Long? = null,
+    val stravaSyncStatus: String = "PENDING" // PENDING, SUCCESS, FAILED
 )

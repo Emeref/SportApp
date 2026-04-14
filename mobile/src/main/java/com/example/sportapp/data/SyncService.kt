@@ -1,10 +1,18 @@
 package com.example.sportapp.data
 
 import android.util.Log
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
+import androidx.work.workDataOf
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.data.strava.StravaSyncWorker
 import com.example.sportapp.healthconnect.ExerciseExportUseCase
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.google.android.gms.wearable.DataEvent
@@ -22,6 +30,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -109,15 +118,53 @@ class SyncService : WearableListenerService() {
 
             Log.d("SyncService", "Successfully synced workout: ${workout.activityName} (ID: $localId, finished: ${workout.isFinished})")
 
-            // Auto-eksport do Health Connect tylko jeśli trening jest ZAKOŃCZONY
-            val settings = mobileSettingsManager.settingsFlow.first()
-            if (settings.autoExportToHC && workout.isFinished) {
-                Log.d("SyncService", "Auto-exporting finished workout $localId to Health Connect")
-                exerciseExportUseCase.exportActivityToHC(localId)
+            // Auto-eksport do Health Connect i Stravy tylko jeśli trening jest ZAKOŃCZONY
+            if (workout.isFinished) {
+                // Walidacja: Czas trwania > 60s i Dystans GPS > 10m
+                val durationOk = workout.durationSeconds >= 60
+                val distanceGpsOk = (workout.distanceGps ?: 0.0) >= 10.0
+                
+                if (durationOk && distanceGpsOk) {
+                    val settings = mobileSettingsManager.settingsFlow.first()
+                    
+                    if (settings.autoExportToHC) {
+                        Log.d("SyncService", "Auto-exporting finished workout $localId to Health Connect")
+                        exerciseExportUseCase.exportActivityToHC(localId)
+                    }
+                    
+                    if (settings.autoExportToStrava) {
+                        Log.d("SyncService", "Auto-exporting finished workout $localId to Strava")
+                        enqueueStravaSync(localId)
+                    }
+                } else {
+                    Log.d("SyncService", "Skipping auto-export for workout $localId: Too short or no distance (Duration: ${workout.durationSeconds}s, Dist: ${workout.distanceGps}m)")
+                }
+            } else {
+                Log.d("SyncService", "Workout $localId is not finished yet, skipping auto-export")
             }
 
         } catch (e: Exception) {
             Log.e("SyncService", "Error processing workout asset", e)
         }
+    }
+
+    private fun enqueueStravaSync(workoutId: Long) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val syncRequest = OneTimeWorkRequestBuilder<StravaSyncWorker>()
+            .setConstraints(constraints)
+            .setInputData(workDataOf(StravaSyncWorker.EXTRA_WORKOUT_ID to workoutId))
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .addTag("StravaSync_$workoutId")
+            .build()
+
+        WorkManager.getInstance(this).enqueue(syncRequest)
+        Log.d("SyncService", "Enqueued StravaSyncWorker for workout $workoutId")
     }
 }

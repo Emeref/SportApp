@@ -1,6 +1,9 @@
 package com.example.sportapp
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +31,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.sportapp.presentation.activities.*
+import com.example.sportapp.data.strava.StravaStorage
+import com.example.sportapp.data.strava.api.StravaAuthApi
+import com.example.sportapp.data.db.SyncMetadataDao
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -35,8 +44,22 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsManager: MobileSettingsManager
 
+    @Inject
+    lateinit var stravaStorage: StravaStorage
+
+    @Inject
+    lateinit var stravaAuthApi: StravaAuthApi
+
+    @Inject
+    lateinit var syncMetadataDao: SyncMetadataDao
+
+    private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        handleStravaCallback(intent)
+
         setContent {
             val settingsState by settingsManager.settingsFlow.collectAsStateWithLifecycle(initialValue = MobileSettingsState())
             val texts = settingsState.language.texts
@@ -49,13 +72,9 @@ class MainActivity : ComponentActivity() {
                     ) {
                         val navController = rememberNavController()
                         val scope = rememberCoroutineScope()
-                        val statsViewModel: OverallStatsViewModel = hiltViewModel()
 
-                        NavHost(
-                            navController = navController,
-                            startDestination = Screen.Home.route
-                        ) {
-                            composable(Screen.Home.route) {
+                        NavHost(navController = navController, startDestination = "home") {
+                            composable("home") {
                                 val homeViewModel: HomeViewModel = hiltViewModel()
                                 HomeScreen(
                                     viewModel = homeViewModel,
@@ -79,7 +98,16 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToDefinitions = { navController.navigate("definitions") },
                                     onNavigateToHealthData = { navController.navigate("health_data") },
                                     onNavigateToLanguageSelection = { navController.navigate("language_selection") },
-                                    onNavigateToSync = { navController.navigate("sync_settings") }
+                                    onNavigateToSync = { navController.navigate("sync_settings") },
+                                    onNavigateToStrava = { navController.navigate("strava_settings") }
+                                )
+                            }
+                            composable("strava_settings") {
+                                StravaSettingsScreen(
+                                    stravaStorage = stravaStorage,
+                                    settingsManager = settingsManager,
+                                    syncMetadataDao = syncMetadataDao,
+                                    onBack = { navController.popBackStack() }
                                 )
                             }
                             composable("sync_settings") {
@@ -102,67 +130,87 @@ class MainActivity : ComponentActivity() {
                                     onBack = { navController.popBackStack() }
                                 )
                             }
+                            composable("sync_history") {
+                                SyncHistoryScreen(
+                                    syncMetadataDao = syncMetadataDao,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
                             composable("exercise_import") {
                                 ExerciseImportScreen(
                                     onNavigateBack = { navController.popBackStack() }
-                                )
-                            }
-                            composable("language_selection") {
-                                LanguageSelectionScreen(
-                                    currentLanguage = settingsState.language,
-                                    onLanguageSelected = { language ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(settingsState.copy(language = language))
-                                            navController.popBackStack()
-                                        }
-                                    },
-                                    onNavigateBack = { navController.popBackStack() }
-                                )
-                            }
-                            composable("health_data") {
-                                HealthDataScreen(
-                                    initialData = settingsState.healthData,
-                                    onSave = { updatedHealthData ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(settingsState.copy(healthData = updatedHealthData))
-                                            navController.popBackStack()
-                                        }
-                                    },
-                                    onCancel = { navController.popBackStack() }
                                 )
                             }
                             composable("definitions") {
                                 val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
                                 WorkoutDefinitionListScreen(
                                     viewModel = viewModel,
-                                    onNavigateToEdit = { id -> navController.navigate("definition_edit/$id") },
+                                    onNavigateToEdit = { id -> 
+                                        navController.navigate("definition_edit/$id")
+                                    },
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
-                            composable("definition_edit/{definitionId}") { backStackEntry ->
-                                val id = backStackEntry.arguments?.getString("definitionId")?.toLongOrNull() ?: 0L
+                            composable("definition_edit/{id}") { backStackEntry ->
+                                val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: -1L
                                 val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
                                 WorkoutDefinitionEditScreen(
-                                    viewModel = viewModel,
                                     definitionId = id,
+                                    onBack = { navController.popBackStack() },
+                                    viewModel = viewModel
+                                )
+                            }
+                            composable("health_data") {
+                                HealthDataScreen(
+                                    initialData = settingsState.healthData,
+                                    onSave = { updatedData ->
+                                        scope.launch {
+                                            settingsManager.saveSettings(settingsState.copy(healthData = updatedData))
+                                            navController.popBackStack()
+                                        }
+                                    },
+                                    onCancel = { navController.popBackStack() }
+                                )
+                            }
+                            composable("language_selection") {
+                                LanguageSelectionScreen(
+                                    currentLanguage = settingsState.language,
+                                    onLanguageSelected = { newLanguage ->
+                                        scope.launch {
+                                            settingsManager.saveSettings(settingsState.copy(language = newLanguage))
+                                            navController.popBackStack()
+                                        }
+                                    },
+                                    onNavigateBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(Screen.OverallStats.route) {
+                                val viewModel: OverallStatsViewModel = hiltViewModel()
+                                OverallStatsScreen(
+                                    viewModel = viewModel,
+                                    onNavigateBack = { navController.popBackStack() },
+                                    onNavigateToOptions = { navController.navigate("stats_settings") }
+                                )
+                            }
+                            composable("stats_settings") {
+                                val viewModel: OverallStatsSettingsViewModel = hiltViewModel()
+                                OverallStatsSettingsScreen(
+                                    viewModel = viewModel,
                                     onBack = { navController.popBackStack() }
                                 )
                             }
                             composable("widget_selection") {
                                 WidgetSelectionScreen(
                                     widgets = settingsState.widgets,
-                                    title = texts.SETTINGS_WIDGETS_HOME,
+                                    title = texts.SETTINGS_WIDGETS_HOME_TITLE,
                                     initialDays = settingsState.customDays,
-                                    daysLabel = texts.SETTINGS_WATCH_STATS_DAYS_LABEL,
-                                    onSave = { updatedWidgets, updatedDays ->
+                                    daysLabel = texts.SETTINGS_CUSTOM_DAYS_LABEL,
+                                    onSave = { updatedWidgets, days ->
                                         scope.launch {
-                                            settingsManager.saveSettings(
-                                                settingsState.copy(
-                                                    widgets = updatedWidgets,
-                                                    customDays = updatedDays ?: settingsState.customDays,
-                                                    period = ReportingPeriod.CUSTOM
-                                                )
-                                            )
+                                            settingsManager.saveSettings(settingsState.copy(
+                                                widgets = updatedWidgets,
+                                                customDays = days ?: settingsState.customDays
+                                            ))
                                             navController.popBackStack()
                                         }
                                     },
@@ -172,102 +220,78 @@ class MainActivity : ComponentActivity() {
                             composable("watch_widget_selection") {
                                 WidgetSelectionScreen(
                                     widgets = settingsState.watchStatsWidgets,
-                                    title = texts.SETTINGS_WIDGETS_WATCH,
+                                    title = texts.SETTINGS_WIDGETS_WATCH_TITLE,
                                     initialDays = settingsState.watchStatsCustomDays,
                                     daysLabel = texts.SETTINGS_WATCH_STATS_DAYS_LABEL,
-                                    onSave = { updatedWidgets, updatedDays ->
+                                    onSave = { updatedWidgets, days ->
                                         scope.launch {
-                                            settingsManager.saveSettings(
-                                                settingsState.copy(
-                                                    watchStatsWidgets = updatedWidgets,
-                                                    watchStatsCustomDays = updatedDays ?: settingsState.watchStatsCustomDays,
-                                                    watchStatsPeriod = ReportingPeriod.CUSTOM
-                                                )
-                                            )
+                                            settingsManager.saveSettings(settingsState.copy(
+                                                watchStatsWidgets = updatedWidgets,
+                                                watchStatsCustomDays = days ?: settingsState.watchStatsCustomDays
+                                            ))
                                             navController.popBackStack()
                                         }
                                     },
                                     onCancel = { navController.popBackStack() }
                                 )
                             }
-                            composable(Screen.OverallStats.route) {
-                                OverallStatsScreen(
-                                    viewModel = statsViewModel,
-                                    onNavigateBack = { navController.popBackStack() },
-                                    onNavigateToOptions = { navController.navigate("stats_widget_selection") }
-                                )
-                            }
-                            composable("stats_widget_selection") {
-                                val statsWidgets by statsViewModel.widgets.collectAsStateWithLifecycle()
-                                val statsCharts by statsViewModel.charts.collectAsStateWithLifecycle()
-                                
-                                OverallStatsWidgetScreen(
-                                    widgets = statsWidgets,
-                                    charts = statsCharts,
-                                    onSave = { updatedWidgets, updatedCharts ->
-                                        statsViewModel.saveWidgets(updatedWidgets)
-                                        statsViewModel.saveCharts(updatedCharts)
-                                        navController.popBackStack()
-                                    },
-                                    onCancel = { navController.popBackStack() }
-                                )
-                            }
                             composable(Screen.ActivityList.route) {
-                                val activityListViewModel: ActivityListViewModel = hiltViewModel()
+                                val viewModel: ActivityListViewModel = hiltViewModel()
                                 ActivityListScreen(
-                                    viewModel = activityListViewModel,
+                                    viewModel = viewModel,
                                     onNavigateBack = { navController.popBackStack() },
                                     onNavigateToDetail = { id -> 
-                                        navController.navigate(Screen.ActivityDetail.createRoute(id))
+                                        navController.navigate("activity_detail/$id")
                                     },
                                     onNavigateToTrim = { id ->
-                                        navController.navigate(Screen.ActivityTrim.createRoute(id))
+                                        navController.navigate("activity_trim/$id")
                                     },
                                     onNavigateToCompare = { id1, id2 ->
-                                        navController.navigate(Screen.ActivityCompare.createRoute(id1, id2))
+                                        navController.navigate("compare/$id1,$id2")
                                     },
-                                    onNavigateToSettings = { navController.navigate(Screen.ActivityDetailSettingsList.route) }
+                                    onNavigateToSettings = { navController.navigate("activity_detail_settings_list") }
                                 )
                             }
-                            composable(Screen.ActivityDetailSettingsList.route) {
+                            composable("activity_detail_settings_list") {
                                 val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
                                 ActivityDetailSettingsListScreen(
                                     viewModel = viewModel,
                                     onNavigateToEdit = { typeName ->
-                                        navController.navigate(Screen.ActivityDetailSettingsEdit.createRoute(typeName))
+                                        navController.navigate("activity_detail_settings_edit/$typeName")
                                     },
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
-                            composable(Screen.ActivityDetailSettingsEdit.route) {
-                                val detailSettingsViewModel: ActivityDetailSettingsViewModel = hiltViewModel()
-                                val detailSettings by detailSettingsViewModel.settings.collectAsStateWithLifecycle()
-
+                            composable("activity_detail_settings_edit/{typeName}") { backStackEntry ->
+                                val typeName = backStackEntry.arguments?.getString("typeName") ?: ""
+                                val viewModel: ActivityDetailSettingsViewModel = hiltViewModel()
+                                val settings by viewModel.settings.collectAsStateWithLifecycle()
+                                
                                 ActivityDetailSettingsEditScreen(
-                                    viewModel = detailSettingsViewModel,
-                                    initialWidgets = detailSettings.visibleWidgets,
-                                    initialCharts = detailSettings.visibleCharts,
+                                    viewModel = viewModel,
+                                    initialWidgets = settings.visibleWidgets,
+                                    initialCharts = settings.visibleCharts,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
-                            composable(Screen.ActivityDetail.route) {
-                                val detailViewModel: ActivityDetailViewModel = hiltViewModel()
+                            composable("activity_detail/{activityId}") { backStackEntry ->
+                                val viewModel: ActivityDetailViewModel = hiltViewModel()
                                 ActivityDetailScreen(
-                                    viewModel = detailViewModel,
+                                    viewModel = viewModel,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
-                            composable(Screen.ActivityTrim.route) {
-                                val trimViewModel: ActivityTrimViewModel = hiltViewModel()
+                            composable("activity_trim/{activityId}") { backStackEntry ->
+                                val viewModel: ActivityTrimViewModel = hiltViewModel()
                                 ActivityTrimScreen(
-                                    viewModel = trimViewModel,
+                                    viewModel = viewModel,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
-                            composable(Screen.ActivityCompare.route) {
-                                val compareViewModel: ActivityCompareViewModel = hiltViewModel()
+                            composable("compare/{id1},{id2}") { backStackEntry ->
+                                val viewModel: ActivityCompareViewModel = hiltViewModel()
                                 ActivityCompareScreen(
-                                    viewModel = compareViewModel,
+                                    viewModel = viewModel,
                                     onNavigateBack = { navController.popBackStack() }
                                 )
                             }
@@ -276,5 +300,41 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun handleStravaCallback(intent: Intent?) {
+        val data: Uri? = intent?.data
+        if (data != null && data.scheme == "sportapp" && data.host == "strava") {
+            val code = data.getQueryParameter("code")
+            if (code != null) {
+                activityScope.launch {
+                    try {
+                        val response = stravaAuthApi.exchangeToken(
+                            clientId = BuildConfig.STRAVA_CLIENT_ID,
+                            clientSecret = BuildConfig.STRAVA_CLIENT_SECRET,
+                            code = code,
+                            grantType = "authorization_code"
+                        )
+                        if (response.isSuccessful && response.body() != null) {
+                            val tokenData = response.body()!!
+                            stravaStorage.saveTokens(
+                                accessToken = tokenData.accessToken,
+                                refreshToken = tokenData.refreshToken,
+                                expiresAt = tokenData.expiresAt,
+                                athleteName = if (tokenData.athlete != null) "${tokenData.athlete.firstname} ${tokenData.athlete.lastname}" else null
+                            )
+                            Log.d("StravaAuth", "Success")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("StravaAuth", "Error", e)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleStravaCallback(intent)
     }
 }

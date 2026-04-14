@@ -31,7 +31,8 @@ fun SettingsScreen(
     onNavigateToDefinitions: () -> Unit,
     onNavigateToHealthData: () -> Unit,
     onNavigateToLanguageSelection: () -> Unit,
-    onNavigateToSync: () -> Unit
+    onNavigateToSync: () -> Unit,
+    onNavigateToStrava: () -> Unit
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
@@ -96,7 +97,7 @@ fun SettingsScreen(
                     title = texts.SETTINGS_STRAVA,
                     subtitle = texts.SETTINGS_STRAVA_DESC,
                     icon = Icons.Default.DirectionsRun,
-                    onClick = { /* Placeholder */ }
+                    onClick = onNavigateToStrava
                 )
             }
 
