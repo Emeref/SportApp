@@ -558,4 +558,5 @@ object TextsMobileFR : MobileTexts {
     override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportation automatique"
     override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Télécharger automatiquement les nouveaux entraînements vers Strava"
     override val STRAVA_SYNC_LOG = "Historique de synchronisation"
+    override val STRAVA_SYNC_LOG_EMPTY = "Aucun entraînement téléchargé"
 }

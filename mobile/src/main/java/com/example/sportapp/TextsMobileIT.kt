@@ -560,4 +560,5 @@ object TextsMobileIT : MobileTexts {
     override val SETTINGS_CUSTOM_DAYS_DESC = "Numero di giorni per il periodo 'Altro'"
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Numero di giorni per le statistiche dell'orologio"
     override val STRAVA_SYNC_LOG = "history"
+    override val STRAVA_SYNC_LOG_EMPTY = "Nessun sync"
 }

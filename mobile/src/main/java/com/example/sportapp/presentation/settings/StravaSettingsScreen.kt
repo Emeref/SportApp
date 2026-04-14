@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.strava.StravaStorage
@@ -181,21 +182,33 @@ fun StravaSettingsScreen(
                 Text(
                     text = texts.SETTINGS_STRAVA_DESC,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
                 )
             }
 
-            if (syncHistory.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(
+                    text = texts.STRAVA_SYNC_LOG,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (syncHistory.isEmpty()) {
                 item {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     Text(
-                        text = texts.STRAVA_SYNC_LOG,
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold
+                        text = texts.STRAVA_SYNC_LOG_EMPTY,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        textAlign = TextAlign.Center
                     )
                 }
-
+            } else {
                 items(syncHistory) { entry ->
                     SyncLogItem(entry)
                 }

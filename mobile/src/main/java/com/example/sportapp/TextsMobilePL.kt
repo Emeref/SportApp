@@ -48,7 +48,7 @@ object TextsMobilePL : MobileTexts {
     override val SETTINGS_DEFINITIONS_DESC = "Zarządzaj listą sportów i sensorami"
     override val SETTINGS_WIDGETS_HOME = "Widgety ekranu głównego"
     override val SETTINGS_WIDGETS_HOME_TITLE = "Widok startowy"
-    override val SETTINGS_WIDGETS_HOME_DESC = "Wybierz i ustal kolejność"
+    override val SETTINGS_WIDGETS_HOME_DESC = "Wierz i ustal kolejność"
     override val SETTINGS_WIDGETS_WATCH = "Statystyki na zegarku"
     override val SETTINGS_WIDGETS_WATCH_TITLE = "Pola statystyk"
     override val SETTINGS_WIDGETS_WATCH_DESC = "Wybierz i ustal kolejność na zegarku"
@@ -312,7 +312,7 @@ object TextsMobilePL : MobileTexts {
     override val DEF_SKATEBOARDING = "Deskorolka"
     override val DEF_COMPETITION = "Zawody"
     override val DEF_STOPWATCH = "Stoper"
-    override val DEF_OTHER = "Other"
+    override val DEF_OTHER = "Andere"
     override val DEF_STANDARD_ACTIVITY = "Standardowa aktywność"
 
     // Activity Detail Settings
@@ -558,4 +558,5 @@ object TextsMobilePL : MobileTexts {
     override val SETTINGS_STRAVA_AUTO_EXPORT = "Automatyczny eksport"
     override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Automatycznie wysyłaj nowe treningi do Strava"
     override val STRAVA_SYNC_LOG = "Historia synchronizacji"
+    override val STRAVA_SYNC_LOG_EMPTY = "Brak historii synchronizacji"
 }
