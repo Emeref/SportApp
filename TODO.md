@@ -49,7 +49,7 @@
         - [x] **Widgety per aktywność**: Możliwość wyboru i ustawienia kolejności kafelków podsumowania niezależnie dla każdego sportu.
         - [x] **Rozbudowa metryk sesji**: Dodanie Max HR, Max Speed, średniego tempa, przewyższeń i kadencji.
         - [x] **Pełna synchronizacja wykresów**: Wszystkie kolumny z `workout_points` are teraz poprawnie mapowane i wyświetlane na wykresach.
-        - [ ] **Najlepsze tempo na km (Best Split)**: Automatyczne wykrywanie najszybszego odcinka 1km.
+        - [x] **Najlepsze tempo na km (Best Split)**: Automatyczne wykrywanie najszybszego odcinka 1km.
         - [x] **Wykres 'Średnia długość kroku w czasie'**: Nowa wizualizacja techniki biegu (z logiką fail-safe, wygładzaniem i ograniczeniem osi Y).
         - [ ] **Optymalizacja wykresów**: Implementacja próbkowania (np. LTTB) do max 500 punktów.
         - [x] **Przerób wykres 'kroki na min'**: Optymalizacja i czytelność wykresu kadencji (wdrożono wygładzanie).
@@ -84,8 +84,9 @@
 - [ ] **Integracja z Google**:
     - [ ] Dodanie logowania przez konto Google.
     - [ ] **Integracja z Google Drive**: Zapis historii aktywności i podsumowań w chmurze (backup/sync).
-    - [ ] **Health Connect**: Synchronizacja danych treningowych z Google Health Connect.
--
+    - [x] **Health Connect**: Synchronizacja danych treningowych z Google Health Connect.
+    - [x] **Integracja ze Strava**: Automatyczny i ręczny eksport aktywności do serwisu Strava.
+
 ### Ustawienia i Personalizacja (Mobile)
 - [x] Implementacja dynamicznego Dark Mode (Material 3)
     - [x] Zarządzanie motywem in `MobileSettingsManager` (DataStore)
@@ -101,7 +102,7 @@
 ## 6. Jakość i Testy
 - [x] **Unit testy**:
     - [x] Testy logiki biznesowej (Kalkulatory, Repozytoria, ViewModele).
-    - [x] **Testy edycji treningu**: Weryfikacja logiki przycinania i przeliczania statystyk w `ActivityTrimViewModel`.
+    - [x] **Testy edycji treningu**: Weryfikacja logiki przycinania i przeliczania statystyk in `ActivityTrimViewModel`.
 - [ ] **Testy komponentów UI**:
     - [x] Weryfikacja wyświetlania wykresów i filtrowania (OverallStats).
     - [ ] **Testy ekranu szczegółów**: Weryfikacja interakcji z wykresami i mapą.
@@ -135,6 +136,18 @@ Co ma się dziać:
 - chce aby na zegarku pokazywalo sie info, jakby zaczal sie trening i wskazywaly sie wszystkie zbierane dane.
 - chce aby dalo sie wystartowac na komorce bez podpietego zegarka (i aby taka aktywnosc sie dobrze zapisala, tylko w takim wypadku bez czujnikow ktore sa tylko w zegarku)
 - Dodatkowo chcę aby dało się wybrać na mapie cel, który bedzie zaznaczony na mapie na komorce razem z trasa do przebycia.
+- [ ] **Główne funkcje śledzenia**:
+  - [ ] Przycisk "+" na ekranie głównym otwierający ekran startowy.
+  - [ ] Ekran "Start" z listą zdefiniowanych sportów.
+  - [ ] Pobieranie tętna z zegarka podczas treningu na telefonie.
+  - [ ] Pobieranie pozostałych danych (GPS, kroki) z telefonu (fallback na zegarek).
+  - [ ] Mapa jako główny ekran, jeśli sport ją obsługuje.
+  - [ ] Wyświetlanie dwóch pierwszych widgetów pod mapą, reszta na kolejnej stronie.
+  - [ ] Boczny pasek (Hamburger) z opcjami: Zakończ, Pauza, Ekran zawsze włączony, Tryb Ambient.
+  - [ ] Wyświetlanie trasy z ostatnich 60 sekund na mapie.
+  - [ ] Synchronizacja statusu treningu na zegarek (info o trwającym treningu).
+  - [ ] Możliwość startu bez zegarka (wykorzystanie tylko czujników telefonu).
+  - [ ] Wybór celu na mapie i estymacja czasu dotarcia.
 - [ ] po wybtraniu aktywnosci powinien odpalic sie ekran z mapa i widgetami, ale nie wystartowac aktywnosci.
   - Na tym ekranie powinny byc przeniesione przyciski: na poczatku widoczny zielony 'start' jak sie go kliknie to wyswietla sie duzy 'stop' na srodku i mniejsze 'pauza' i 'zablokuj' po bokacz
   - Przyciski powinny byc widoczne na dole jesli jest mapa to miedzy mapa a widgetami, jesli sa same widgety to pod widgetami
@@ -150,12 +163,17 @@ Co ma się dziać:
 - [ ] Jak wejdziemy w tryb ambient to wyswietlamy w tym trybie do momentu odznaczenia w opcjach
 - [ ] tryb ambient ma w opcjach miec checkbox pokazujacy czy jest wlaczony czy nie
 - [ ] dane ze sportu maja sie zapisywac w bazie
-- [ ] upewnic sie ze puls jest sczytywany
+- [ ] upewnic se ze puls jest sczytywany
 - [ ] wybór celu na mapie z pokazywaniem czasu dojazdu
 
 
 ## PRIORYTETY
-1. **Najlepsze tempo na km (Best Split)** - PRIORYTET: WYSOKI - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
+1. **Aktywność na komórce** - PRIORYTET: BARDZO WYSOKI - Implementacja startu i śledzenia treningu bezpośrednio z telefonu.
 2. **Sprawdź działanie aplikacji na 'pauzie'** - PRIORYTET: WYSOKI - Dokładna weryfikacja zliczania danych (kroki/dystans) podczas wstrzymania treningu.
-3. **Integracja z Google Drive / Health Connect** - PRIORYTET: ŚREDNI - Synchronizacja danych z ekosystemem Google.
-4. **Widgety na ekranie głównym (Glance)** - PRIORYTET: NISKI - Dodanie wsparcia dla widgetów systemowych Androida.
+3. **Integracja z Google Drive** - PRIORYTET: ŚREDNI - Backup danych w chmurze (historyczne treningi i ustawienia).
+4. **Optymalizacja wykresów (LTTB)** - PRIORYTET: ŚREDNI - Implementacja próbkowania punktów dla płynniejszego działania przy długich sesjach.
+5. **Widgety na ekranie głównym (Glance)** - PRIORYTET: NISKI - Dodanie wsparcia dla widgetów systemowych Androida.
+
+### ZREALIZOWANE PRIORYTETY
+- [x] **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
+- [x] **Integracja z Health Connect / Strava** - Synchronizacja danych z ekosystemem Google i serwisem Strava.
