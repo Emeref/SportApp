@@ -120,19 +120,24 @@ class SyncService : WearableListenerService() {
 
             // Auto-eksport do Health Connect i Stravy tylko jeśli trening jest ZAKOŃCZONY
             if (workout.isFinished) {
-                val settings = mobileSettingsManager.settingsFlow.first()
+                // Walidacja: Czas trwania > 60s i Dystans GPS > 10m
+                val durationOk = workout.durationSeconds >= 60
+                val distanceGpsOk = (workout.distanceGps ?: 0.0) >= 10.0
                 
-                if (settings.autoExportToHC) {
-                    Log.d("SyncService", "Auto-exporting finished workout $localId to Health Connect")
-                    exerciseExportUseCase.exportActivityToHC(localId)
-                }
-                
-                // Wyzwalanie StravaSyncWorker tylko jeśli auto-eksport jest włączony
-                if (settings.autoExportToStrava) {
-                    Log.d("SyncService", "Auto-exporting finished workout $localId to Strava")
-                    enqueueStravaSync(localId)
+                if (durationOk && distanceGpsOk) {
+                    val settings = mobileSettingsManager.settingsFlow.first()
+                    
+                    if (settings.autoExportToHC) {
+                        Log.d("SyncService", "Auto-exporting finished workout $localId to Health Connect")
+                        exerciseExportUseCase.exportActivityToHC(localId)
+                    }
+                    
+                    if (settings.autoExportToStrava) {
+                        Log.d("SyncService", "Auto-exporting finished workout $localId to Strava")
+                        enqueueStravaSync(localId)
+                    }
                 } else {
-                    Log.d("SyncService", "Auto-export to Strava is disabled in settings")
+                    Log.d("SyncService", "Skipping auto-export for workout $localId: Too short or no distance (Duration: ${workout.durationSeconds}s, Dist: ${workout.distanceGps}m)")
                 }
             } else {
                 Log.d("SyncService", "Workout $localId is not finished yet, skipping auto-export")
