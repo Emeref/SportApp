@@ -127,8 +127,15 @@ class SyncService : WearableListenerService() {
                     exerciseExportUseCase.exportActivityToHC(localId)
                 }
                 
-                // Wyzwalanie StravaSyncWorker
-                enqueueStravaSync(localId)
+                // Wyzwalanie StravaSyncWorker tylko jeśli auto-eksport jest włączony
+                if (settings.autoExportToStrava) {
+                    Log.d("SyncService", "Auto-exporting finished workout $localId to Strava")
+                    enqueueStravaSync(localId)
+                } else {
+                    Log.d("SyncService", "Auto-export to Strava is disabled in settings")
+                }
+            } else {
+                Log.d("SyncService", "Workout $localId is not finished yet, skipping auto-export")
             }
 
         } catch (e: Exception) {
