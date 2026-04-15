@@ -39,7 +39,9 @@ data class WorkoutEntity(
     val isSynced: Boolean = false,
     @ColumnInfo(name = "hc_session_id")
     val hcSessionId: String? = null,
-    val isFinished: Boolean = true // Nowe pole dla kontroli synchronizacji
+    val isFinished: Boolean = true, // Nowe pole dla kontroli synchronizacji
+    val destinationLatitude: Double? = null,
+    val destinationLongitude: Double? = null
 )
 
 @Entity(tableName = "workout_points")

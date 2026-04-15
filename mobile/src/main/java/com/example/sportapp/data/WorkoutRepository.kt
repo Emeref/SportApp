@@ -384,6 +384,15 @@ class WorkoutRepository @Inject constructor(
         workoutDao.isExportedToHC(activityId)
     }
 
+    override suspend fun setDestination(workoutId: Long, latitude: Double, longitude: Double) {
+        withContext(Dispatchers.IO) {
+            val workout = workoutDao.getWorkoutById(workoutId)
+            workout?.let {
+                workoutDao.updateWorkout(it.copy(destinationLatitude = latitude, destinationLongitude = longitude))
+            }
+        }
+    }
+
     private fun createPointsFromTimeSeries(
         workoutId: Long,
         startTime: Instant,

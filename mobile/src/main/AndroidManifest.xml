@@ -46,6 +46,15 @@
     <uses-permission android:name="androidx.health.permission.TOTAL_CALORIES_BURNED.READ"/>
     <uses-permission android:name="androidx.health.permission.ELEVATION_GAINED.READ"/>
 
+    <!-- Uprawnienia do śledzenia aktywności -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <queries>
         <package android:name="com.google.android.apps.healthdata"/>
         <package android:name="com.google.android.healthconnect.controller"/>
@@ -117,6 +126,11 @@
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/db_workouts/" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".data.WorkoutTrackingService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

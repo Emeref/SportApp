@@ -16,7 +16,7 @@ import com.example.sportapp.data.model.WorkoutLap
         WorkoutLap::class,
         SyncMetadataEntity::class
     ], 
-    version = 22
+    version = 23
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -76,6 +76,12 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE sync_metadata ADD COLUMN stravaUploadId INTEGER")
                 db.execSQL("ALTER TABLE sync_metadata ADD COLUMN stravaSyncStatus TEXT NOT NULL DEFAULT 'PENDING'")
+            }
+        }
+        val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workouts ADD COLUMN destinationLatitude REAL")
+                db.execSQL("ALTER TABLE workouts ADD COLUMN destinationLongitude REAL")
             }
         }
     }

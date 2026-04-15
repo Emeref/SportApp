@@ -70,4 +70,6 @@ interface IWorkoutRepository {
 
     suspend fun updateHCSessionId(activityId: Long, hcSessionId: String)
     suspend fun isExportedToHC(activityId: Long): Boolean
+
+    suspend fun setDestination(workoutId: Long, latitude: Double, longitude: Double)
 }
