@@ -173,7 +173,7 @@ object TextsMobileIT : MobileTexts {
     override val ACTIVITY_DISTANCE_STEPS = "Distanza (passi)"
     override val ACTIVITY_DELETE = "Elimina"
     override val ACTIVITY_IMPORT_SELECT_TYPE = "Seleziona tipo attività"
-    override val ACTIVITY_IMPORT_SELECT_DESC = "Seleziona il tipo di allenamento per il file GPX importato:"
+    override val ACTIVITY_IMPORT_SELECT_DESC = "Seleziona il tipo di allenamento per il file GPX importado:"
     override val ACTIVITY_IMPORT_WARNING = "Avviso"
     override val ACTIVITY_IMPORT_CONTINUE = "Continua"
     override val ACTIVITY_IMPORT_PROGRESS = "Importazione dati..."
@@ -561,4 +561,11 @@ object TextsMobileIT : MobileTexts {
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Numero di giorni per le statistiche dell'orologio"
     override val STRAVA_SYNC_LOG = "history"
     override val STRAVA_SYNC_LOG_EMPTY = "Nessun sync"
+
+    // Workout Controls
+    override val WORKOUT_START = "Avvia"
+    override val WORKOUT_PAUSE = "Pausa"
+    override val WORKOUT_RESUME = "Riprendi"
+    override val WORKOUT_STOP = "Stop"
+    override val WORKOUT_LOCK = "Blocca"
 }

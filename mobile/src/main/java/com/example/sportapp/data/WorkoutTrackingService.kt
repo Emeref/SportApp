@@ -66,6 +66,7 @@ class WorkoutTrackingService : Service() {
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         createNotificationChannel()
+        startLocationUpdates() // Start listening for location immediately
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -101,7 +102,6 @@ class WorkoutTrackingService : Service() {
                 acquireWakeLock()
                 startForegroundService()
                 startTimer()
-                startLocationUpdates()
             }
         }
     }
@@ -209,15 +209,17 @@ class WorkoutTrackingService : Service() {
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
-                if (status != WorkoutStatus.ACTIVE) return
                 for (location in result.locations) {
-                    lastLocation?.let { totalDistance += it.distanceTo(location) }
-                    lastLocation = location
                     _currentLocation.value = location
-                    _trackingState.value = _trackingState.value.copy(
-                        currentSpeedKmH = location.speed * 3.6,
-                        currentAltitude = if (location.hasAltitude()) location.altitude else null
-                    )
+                    
+                    if (status == WorkoutStatus.ACTIVE) {
+                        lastLocation?.let { totalDistance += it.distanceTo(location) }
+                        lastLocation = location
+                        _trackingState.value = _trackingState.value.copy(
+                            currentSpeedKmH = location.speed * 3.6,
+                            currentAltitude = if (location.hasAltitude()) location.altitude else null
+                        )
+                    }
                 }
             }
         }

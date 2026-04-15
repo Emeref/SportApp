@@ -3,9 +3,12 @@ package com.example.sportapp.presentation.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
@@ -19,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -30,13 +34,16 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToStats: () -> Unit,
     onNavigateToActivityList: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onStartActivity: (Long) -> Unit,
+    definitions: List<WorkoutDefinition>
 ) {
     val texts = LocalMobileTexts.current
     val stats by viewModel.stats.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val settings by viewModel.settings.collectAsState()
     var showSecretPopup by remember { mutableStateOf(false) }
+    var showActivityPicker by remember { mutableStateOf(false) }
 
     val activeWidgets = settings.widgets.filter { it.isEnabled }
 
@@ -65,6 +72,31 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    if (showActivityPicker) {
+        AlertDialog(
+            onDismissRequest = { showActivityPicker = false },
+            title = { Text(texts.ACTIVITY_IMPORT_SELECT_TYPE) },
+            text = {
+                LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+                    items(definitions) { def ->
+                        ListItem(
+                            headlineContent = { Text(def.name) },
+                            modifier = Modifier.clickable {
+                                showActivityPicker = false
+                                onStartActivity(def.id)
+                            }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showActivityPicker = false }) {
+                    Text(texts.SETTINGS_CANCEL)
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -97,6 +129,11 @@ fun HomeScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showActivityPicker = true }) {
+                Icon(Icons.Default.Add, contentDescription = null)
+            }
         }
     ) { padding ->
         Column(

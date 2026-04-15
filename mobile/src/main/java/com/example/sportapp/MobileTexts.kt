@@ -470,6 +470,13 @@ interface MobileTexts {
     val SETTINGS_STRAVA_AUTO_EXPORT_DESC: String
     val STRAVA_SYNC_LOG: String
     val STRAVA_SYNC_LOG_EMPTY: String
+
+    // Workout Controls
+    val WORKOUT_START: String
+    val WORKOUT_PAUSE: String
+    val WORKOUT_RESUME: String
+    val WORKOUT_STOP: String
+    val WORKOUT_LOCK: String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

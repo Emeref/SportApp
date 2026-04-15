@@ -1,17 +1,19 @@
 package com.example.sportapp
 
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.net.Uri
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +36,9 @@ import com.example.sportapp.presentation.activities.*
 import com.example.sportapp.data.strava.StravaStorage
 import com.example.sportapp.data.strava.api.StravaAuthApi
 import com.example.sportapp.data.db.SyncMetadataDao
+import com.example.sportapp.data.WorkoutTrackingService
+import com.example.sportapp.presentation.workout.WorkoutScreen
+import com.example.sportapp.presentation.workout.WorkoutViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,6 +59,22 @@ class MainActivity : ComponentActivity() {
     lateinit var syncMetadataDao: SyncMetadataDao
 
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    private var trackingService by mutableStateOf<WorkoutTrackingService?>(null)
+    private var isBound by mutableStateOf(false)
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as WorkoutTrackingService.LocalBinder
+            trackingService = binder.getService()
+            isBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            trackingService = null
+            isBound = false
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,11 +97,43 @@ class MainActivity : ComponentActivity() {
                         NavHost(navController = navController, startDestination = "home") {
                             composable("home") {
                                 val homeViewModel: HomeViewModel = hiltViewModel()
+                                val workoutViewModel: WorkoutViewModel = hiltViewModel()
+                                val definitions by workoutViewModel.definitions.collectAsStateWithLifecycle()
+                                
                                 HomeScreen(
                                     viewModel = homeViewModel,
                                     onNavigateToStats = { navController.navigate(Screen.OverallStats.route) },
                                     onNavigateToActivityList = { navController.navigate(Screen.ActivityList.route) },
-                                    onSettingsClick = { navController.navigate("settings") }
+                                    onSettingsClick = { navController.navigate("settings") },
+                                    onStartActivity = { defId ->
+                                        navController.navigate("workout/$defId")
+                                    },
+                                    definitions = definitions
+                                )
+                            }
+                            composable("workout/{definitionId}") { backStackEntry ->
+                                val definitionId = backStackEntry.arguments?.getString("definitionId")?.toLongOrNull() ?: -1L
+                                val workoutViewModel: WorkoutViewModel = hiltViewModel()
+                                
+                                LaunchedEffect(definitionId) {
+                                    workoutViewModel.loadDefinition(definitionId)
+                                }
+
+                                DisposableEffect(Unit) {
+                                    val intent = Intent(this@MainActivity, WorkoutTrackingService::class.java)
+                                    bindService(intent, connection, Context.BIND_AUTO_CREATE)
+                                    onDispose {
+                                        if (isBound) {
+                                            unbindService(connection)
+                                            isBound = false
+                                        }
+                                    }
+                                }
+
+                                WorkoutScreen(
+                                    viewModel = workoutViewModel,
+                                    trackingService = trackingService,
+                                    onBack = { navController.popBackStack() }
                                 )
                             }
                             composable("settings") {

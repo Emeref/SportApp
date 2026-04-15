@@ -556,4 +556,11 @@ object TextsMobileES : MobileTexts {
             else -> id
         }
     }
+
+    // Workout Controls
+    override val WORKOUT_START = "Iniciar"
+    override val WORKOUT_PAUSE = "Pausa"
+    override val WORKOUT_RESUME = "Reanudar"
+    override val WORKOUT_STOP = "Detener"
+    override val WORKOUT_LOCK = "Bloquear"
 }

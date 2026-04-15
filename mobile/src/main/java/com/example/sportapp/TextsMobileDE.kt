@@ -559,4 +559,11 @@ object TextsMobileDE : MobileTexts {
     override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Neue Workouts automatisch nach Strava senden"
     override val STRAVA_SYNC_LOG = "Synchronisierungsverlauf"
     override val STRAVA_SYNC_LOG_EMPTY = "Kein Synchronisierungsverlauf"
+
+    // Workout Controls
+    override val WORKOUT_START = "Start"
+    override val WORKOUT_PAUSE = "Pause"
+    override val WORKOUT_RESUME = "Fortsetzen"
+    override val WORKOUT_STOP = "Stopp"
+    override val WORKOUT_LOCK = "Sperren"
 }

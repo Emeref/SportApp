@@ -82,7 +82,7 @@ object TextsMobilePT : MobileTexts {
     override val HC_SYNC_HEALTH_DATA = "Sincronizar com Health Connect"
     override val HC_SYNC_WORKOUTS = "Importar treinos do Health Connect"
     override val HC_SYNC_CONFIRM_TITLE = "Sincronização de danych"
-    override val HC_SYNC_CONFIRM_DESC = "Deseja atualizar seu perfil com os danych encontrados no Health Connect?"
+    override val HC_SYNC_CONFIRM_DESC = "Deseja atualizar seu perfil with os danych encontrados no Health Connect?"
     override val HC_SYNC_SUCCESS = "Sincronização bem-sucedida"
     override val HC_SYNC_ERROR = "Erro de sincronização"
     override val HC_SYNC_NO_DATA = "Nenhum dado novo encontrado"
@@ -280,7 +280,7 @@ object TextsMobilePT : MobileTexts {
     override val DEF_HIIT = "HIIT"
     override val DEF_ELLIPTICAL = "Elíptico"
     override val DEF_ROWING_MACHINE = "Remo indoor"
-    override val DEF_STRENGTH_TRAINING = "Musculação"
+    override val DEF_STRENGTH_TRAINING = "Musculation"
     override val DEF_CALISTHENICS = "Calistenia"
     override val DEF_YOGA = "Ioga"
     override val DEF_PILATES = "Pilates"
@@ -359,9 +359,9 @@ object TextsMobilePT : MobileTexts {
 
     // Gpx Importer
     override val GPX_NO_POINTS = "O arquivo GPX não contém pontos de trilha."
-    override val GPX_WARN_HR = "O arquivo contém dados de FC, mas a atividade selecionada não os suporta."
-    override val GPX_WARN_ELE = "O arquivo contém dados de altitude, mas a atividade selecionada não os suporta."
-    override val GPX_WARN_CADENCE = "O arquivo contém dados de cadência, mas a atividade selecionada não os suporta."
+    override val GPX_WARN_HR = "O arquivo zawiera dane de FC, ale a atividade selecionada não os suporta."
+    override val GPX_WARN_ELE = "O arquivo zawiera dane de altitude, ale a atividade selecionada não os suporta."
+    override val GPX_WARN_CADENCE = "O arquivo zawiera dane de cadência, ale a atividade selecionada não os suporta."
 
     // Periods
     override val PERIOD_TODAY = "Hoje"
@@ -531,7 +531,7 @@ object TextsMobilePT : MobileTexts {
     // Trim Screen
     override val TRIM_TITLE = "Editar treino (Cortar)"
     override val TRIM_CONFIRM_TITLE = "Confirmar corte"
-    override val TRIM_CONFIRM_DESC = "Tem certeza de que deseja excluir os dados fora do intervalo selecionado? Esses dados serão excluídos permanentemente."
+    override val TRIM_CONFIRM_DESC = "Tem certeza de que deseja excluir os danych fora do intervalo selecionado? Esses danych serão excluídos permanentemente."
     override val TRIM_SAVE_BTN = "Cortar e salvar"
     override val TRIM_CHART_HR = "Gráfico de FC"
     override val TRIM_RANGE_TITLE = "Selecionar intervalo de treino"
@@ -562,4 +562,11 @@ object TextsMobilePT : MobileTexts {
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Número de dias para as estatísticas do relógio"
     override val STRAVA_SYNC_LOG = "history"
     override val STRAVA_SYNC_LOG_EMPTY = "Nenhum dado para sincronizar"
+
+    // Workout Controls
+    override val WORKOUT_START = "Iniciar"
+    override val WORKOUT_PAUSE = "Pausar"
+    override val WORKOUT_RESUME = "Retomar"
+    override val WORKOUT_STOP = "Parar"
+    override val WORKOUT_LOCK = "Bloquear"
 }
