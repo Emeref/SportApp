@@ -22,6 +22,7 @@ interface MobileTexts {
     val HOME_LOGO_DESC: String
     val HOME_SECRET_TITLE: String
     val HOME_CLOSE: String
+    val HOME_START_LIVE: String
     fun homeResultsToday(): String
     fun homeResultsWeek(): String
     fun homeResultsMonth(): String
@@ -470,6 +471,15 @@ interface MobileTexts {
     val SETTINGS_STRAVA_AUTO_EXPORT_DESC: String
     val STRAVA_SYNC_LOG: String
     val STRAVA_SYNC_LOG_EMPTY: String
+
+    // Live Tracking
+    val LIVE_TRACKING_TITLE: String
+    val LIVE_TRACKING_SELECT_ACTIVITY: String
+    val LIVE_TRACKING_LOCK: String
+    val LIVE_TRACKING_UNLOCK_SWIPE: String
+    val LIVE_TRACKING_MAP_NORTH: String
+    val LIVE_TRACKING_MAP_DIRECTION: String
+    val LIVE_TRACKING_WAITING_FOR_WATCH: String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

@@ -6,12 +6,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.SyncStatusManager
+import com.example.sportapp.data.db.LiveLocationDao
+import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -19,10 +23,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val context: Context,
     private val repository: IWorkoutRepository,
-    private val syncStatusManager: SyncStatusManager
-) : ViewModel() {
+    private val syncStatusManager: SyncStatusManager,
+    private val liveLocationDao: LiveLocationDao
+) : ViewModel(), MessageClient.OnMessageReceivedListener {
     private val settingsManager = MobileSettingsManager(context)
     private val messageClient by lazy { Wearable.getMessageClient(context) }
     private val nodeClient by lazy { Wearable.getNodeClient(context) }
@@ -34,7 +39,6 @@ class HomeViewModel @Inject constructor(
     )
     val settings = _settings
 
-    // Zmieniamy na Flow, który obserwuje bazę danych
     val stats: StateFlow<Map<String, Any>> = combine(_settings, repository.getAllWorkouts()) { currentSettings, _ ->
         repository.getStatsForPeriod(currentSettings.period, currentSettings.customDays)
     }.stateIn(
@@ -44,6 +48,38 @@ class HomeViewModel @Inject constructor(
     )
 
     val isSyncing = syncStatusManager.isSyncing
+
+    val locationDefinitions: StateFlow<List<WorkoutDefinition>> = repository.getAllDefinitions()
+        .map { definitions ->
+            definitions.filter { def ->
+                def.sensors.any { it.isRecording && (it.sensorId == WorkoutSensor.SPEED_GPS.id || it.sensorId == WorkoutSensor.DISTANCE_GPS.id || it.sensorId == WorkoutSensor.MAP.id) }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    private val _navigationEvent = MutableSharedFlow<String>()
+    val navigationEvent = _navigationEvent.asSharedFlow()
+
+    init {
+        messageClient.addListener(this)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        messageClient.removeListener(this)
+    }
+
+    override fun onMessageReceived(event: MessageEvent) {
+        if (event.path == "/activity_started") {
+            viewModelScope.launch {
+                liveLocationDao.clear() // Clear old data before starting new session
+                _navigationEvent.emit("live_tracking")
+            }
+        }
+    }
 
     fun triggerSync() {
         if (isSyncing.value) {
@@ -64,6 +100,21 @@ class HomeViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "triggerSync: Error", e)
+            }
+        }
+    }
+
+    fun startActivityOnWatch(definition: WorkoutDefinition) {
+        viewModelScope.launch {
+            try {
+                val nodes = nodeClient.connectedNodes.await()
+                if (nodes.isNotEmpty()) {
+                    nodes.forEach { node ->
+                        messageClient.sendMessage(node.id, "/start_activity", definition.id.toString().toByteArray()).await()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "startActivityOnWatch: Error", e)
             }
         }
     }

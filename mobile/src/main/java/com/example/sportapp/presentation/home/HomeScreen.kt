@@ -3,16 +3,19 @@ package com.example.sportapp.presentation.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,13 +33,18 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToStats: () -> Unit,
     onNavigateToActivityList: () -> Unit,
+    onNavigateToLiveTracking: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     val texts = LocalMobileTexts.current
     val stats by viewModel.stats.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val locationDefinitions by viewModel.locationDefinitions.collectAsState()
+    
     var showSecretPopup by remember { mutableStateOf(false) }
+    var showActivitySelection by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     val activeWidgets = settings.widgets.filter { it.isEnabled }
 
@@ -52,6 +60,14 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
+            if (event == "live_tracking") {
+                onNavigateToLiveTracking()
+            }
+        }
+    }
+
     if (showSecretPopup) {
         Dialog(onDismissRequest = { showSecretPopup = false }) {
             Card {
@@ -62,6 +78,44 @@ fun HomeScreen(
                         }
                     }
                     Text(texts.HOME_SECRET_TITLE, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
+    }
+
+    if (showActivitySelection) {
+        ModalBottomSheet(
+            onDismissRequest = { showActivitySelection = false },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    text = texts.LIVE_TRACKING_SELECT_ACTIVITY,
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                LazyColumn {
+                    items(locationDefinitions) { definition ->
+                        ListItem(
+                            headlineContent = { Text(definition.name) },
+                            leadingContent = {
+                                Icon(
+                                    imageVector = getIconVector(definition.iconName),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            modifier = Modifier.clickable {
+                                viewModel.startActivityOnWatch(definition)
+                                showActivitySelection = false
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -97,6 +151,11 @@ fun HomeScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showActivitySelection = true }) {
+                Icon(Icons.Default.Add, contentDescription = texts.HOME_START_LIVE)
+            }
         }
     ) { padding ->
         Column(
@@ -147,6 +206,19 @@ fun HomeScreen(
                     .clickable { showSecretPopup = true }
             )
         }
+    }
+}
+
+fun getIconVector(iconName: String): ImageVector {
+    return when (iconName) {
+        "directions_run" -> Icons.AutoMirrored.Filled.DirectionsRun
+        "directions_walk" -> Icons.AutoMirrored.Filled.DirectionsWalk
+        "directions_bike" -> Icons.Default.DirectionsBike
+        "hiking" -> Icons.Default.Hiking
+        "pool" -> Icons.Default.Pool
+        "fitness_center" -> Icons.Default.FitnessCenter
+        "timer" -> Icons.Default.Timer
+        else -> Icons.Default.FitnessCenter
     }
 }
 

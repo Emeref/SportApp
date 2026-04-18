@@ -15,4 +15,10 @@ object AppConstants {
      * w celu wyświetlenia ich na jednej mapie w ekranie porównania.
      */
     const val MAP_COMPARISON_RADIUS_KM = 3.0
+
+    /**
+     * Próg obrotu mapy (w stopniach).
+     * Zmiana orientacji mapy następuje tylko, gdy różnica kąta przekroczy tę wartość.
+     */
+    const val MAP_ROTATION_THRESHOLD_DEGREES = 15.0
 }

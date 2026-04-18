@@ -23,6 +23,7 @@ object TextsMobilePL : MobileTexts {
     override val HOME_LOGO_DESC = "Logo aplikacji"
     override val HOME_SECRET_TITLE = "Fajnie, że klikasz, ale tutaj nic nie ma"
     override val HOME_CLOSE = "Zamknij"
+    override val HOME_START_LIVE = "Rozpocznij Live Tracking"
 
     override fun homeResultsToday() = "Dzisiejsze wyniki:"
     override fun homeResultsWeek() = "Wyniki z tygodnia:"
@@ -559,4 +560,13 @@ object TextsMobilePL : MobileTexts {
     override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Automatycznie wysyłaj nowe treningi do Strava"
     override val STRAVA_SYNC_LOG = "Historia synchronizacji"
     override val STRAVA_SYNC_LOG_EMPTY = "Brak historii synchronizacji"
+
+    // Live Tracking
+    override val LIVE_TRACKING_TITLE = "Live Tracking"
+    override val LIVE_TRACKING_SELECT_ACTIVITY = "Wybierz aktywność"
+    override val LIVE_TRACKING_LOCK = "Zablokuj"
+    override val LIVE_TRACKING_UNLOCK_SWIPE = "Przesuń w górę, aby odblokować"
+    override val LIVE_TRACKING_MAP_NORTH = "Północ"
+    override val LIVE_TRACKING_MAP_DIRECTION = "Kierunek"
+    override val LIVE_TRACKING_WAITING_FOR_WATCH = "Oczekiwanie na sygnał z zegarka..."
 }

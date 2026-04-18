@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.workout
 
+import android.content.Intent
 import android.util.Log
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.WorkoutDefinition
@@ -10,6 +11,7 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -17,7 +19,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -36,10 +40,39 @@ class WearSyncService : WearableListenerService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        if (messageEvent.path == "/request_sync") {
-            Log.d("WearSyncService", "Sync request received from mobile")
-            scope.launch {
-                dataLayerManager.syncAll()
+        when (messageEvent.path) {
+            "/request_sync" -> {
+                Log.d("WearSyncService", "Sync request received from mobile")
+                scope.launch {
+                    dataLayerManager.syncAll()
+                }
+            }
+            "/start_activity" -> {
+                val definitionId = String(messageEvent.data).toLong()
+                Log.d("WearSyncService", "Start activity request received: $definitionId")
+                
+                scope.launch {
+                    try {
+                        val settings = settingsManager.settingsFlow.first()
+                        val hData = settings.healthData
+                        val intent = Intent(this@WearSyncService, WorkoutService::class.java).apply {
+                            action = WorkoutService.ACTION_START
+                            putExtra(WorkoutService.EXTRA_DEFINITION_ID, definitionId)
+                            putExtra(WorkoutService.EXTRA_HEALTH_DATA_JSON, gson.toJson(hData))
+                        }
+                        startForegroundService(intent)
+                        
+                        // Send confirmation back
+                        val nodeClient = Wearable.getNodeClient(this@WearSyncService)
+                        val messageClient = Wearable.getMessageClient(this@WearSyncService)
+                        val nodes = nodeClient.connectedNodes.await()
+                        nodes.forEach { node ->
+                            messageClient.sendMessage(node.id, "/activity_started", null).await()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("WearSyncService", "Failed to handle start_activity request", e)
+                    }
+                }
             }
         }
     }

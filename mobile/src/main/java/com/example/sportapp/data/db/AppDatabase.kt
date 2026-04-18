@@ -14,15 +14,17 @@ import com.example.sportapp.data.model.WorkoutLap
         WorkoutPointEntity::class, 
         WorkoutDefinition::class,
         WorkoutLap::class,
-        SyncMetadataEntity::class
+        SyncMetadataEntity::class,
+        LiveLocationPoint::class
     ], 
-    version = 22
+    version = 23
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
     abstract fun workoutDefinitionDao(): WorkoutDefinitionDao
     abstract fun syncMetadataDao(): SyncMetadataDao
+    abstract fun liveLocationDao(): LiveLocationDao
 
     companion object {
         val MIGRATION_14_15 = object : Migration(14, 15) {
@@ -76,6 +78,21 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE sync_metadata ADD COLUMN stravaUploadId INTEGER")
                 db.execSQL("ALTER TABLE sync_metadata ADD COLUMN stravaSyncStatus TEXT NOT NULL DEFAULT 'PENDING'")
+            }
+        }
+        val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS live_location_points (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                        latitude REAL NOT NULL, 
+                        longitude REAL NOT NULL, 
+                        timestamp INTEGER NOT NULL, 
+                        bearing REAL, 
+                        altitude REAL, 
+                        accuracy REAL
+                    )
+                """.trimIndent())
             }
         }
     }

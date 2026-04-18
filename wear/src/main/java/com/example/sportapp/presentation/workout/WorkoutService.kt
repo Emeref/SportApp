@@ -27,11 +27,14 @@ import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
 import com.google.android.gms.location.*
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.tasks.await
 import java.util.*
 import javax.inject.Inject
 
@@ -399,6 +402,7 @@ class WorkoutService : Service(), SensorEventListener {
         timerJob = serviceScope.launch {
             var lastUpdateMillis = System.currentTimeMillis()
             var lastNotificationUpdateMillis = 0L
+            var lastLiveDataUpdateMillis = 0L
             while (isActive) {
                 if (status == WorkoutStatus.ACTIVE) {
                     delay(1000)
@@ -442,10 +446,45 @@ class WorkoutService : Service(), SensorEventListener {
                         updateNotification()
                         lastNotificationUpdateMillis = now
                     }
+
+                    if (now - lastLiveDataUpdateMillis > 5000) {
+                        sendLiveData(lastPoint)
+                        lastLiveDataUpdateMillis = now
+                    }
                 } else {
                     delay(500)
                     lastUpdateMillis = System.currentTimeMillis()
                 }
+            }
+        }
+    }
+
+    private fun sendLiveData(lastPoint: WorkoutPointEntity?) {
+        serviceScope.launch {
+            try {
+                val dataClient = Wearable.getDataClient(this@WorkoutService)
+                val request = PutDataMapRequest.create("/workout_data").apply {
+                    dataMap.putLong("timestamp", System.currentTimeMillis())
+                    dataMap.putLong("definitionId", currentDefinitionId)
+                    dataMap.putString("duration", formatTime(totalSeconds))
+                    
+                    lastPoint?.let {
+                        if (it.bpm != null) dataMap.putString(WorkoutSensor.HEART_RATE.id, it.bpm.toString())
+                        if (it.distanceGps != null) dataMap.putString(WorkoutSensor.DISTANCE_GPS.id, String.format(Locale.US, "%.2f km", it.distanceGps / 1000.0))
+                        if (it.speedGps != null) dataMap.putString(WorkoutSensor.SPEED_GPS.id, String.format(Locale.US, "%.1f km/h", it.speedGps))
+                        if (it.altitude != null) dataMap.putString(WorkoutSensor.ALTITUDE.id, String.format(Locale.US, "%.0f m", it.altitude))
+                        if (it.calorieSum != null) dataMap.putString(WorkoutSensor.CALORIES_SUM.id, it.calorieSum.toInt().toString())
+                        if (it.steps != null) dataMap.putString(WorkoutSensor.STEPS.id, it.steps.toString())
+                        if (it.stepsMin != null) dataMap.putString(WorkoutSensor.STEPS_PER_MINUTE.id, it.stepsMin.toInt().toString())
+                        if (it.totalAscent != null) dataMap.putString(WorkoutSensor.TOTAL_ASCENT.id, String.format(Locale.US, "+%.0f m", it.totalAscent))
+                        if (it.totalDescent != null) dataMap.putString(WorkoutSensor.TOTAL_DESCENT.id, String.format(Locale.US, "-%.0f m", it.totalDescent))
+                        if (it.pressure != null) dataMap.putString(WorkoutSensor.PRESSURE.id, String.format(Locale.US, "%.1f hPa", it.pressure))
+                    }
+                }.asPutDataRequest().setUrgent()
+                
+                dataClient.putDataItem(request).await()
+            } catch (e: Exception) {
+                Log.e("WorkoutService", "Failed to send live data", e)
             }
         }
     }

@@ -24,6 +24,8 @@ import com.example.sportapp.presentation.definitions.WorkoutDefinitionListScreen
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionViewModel
 import com.example.sportapp.presentation.home.HomeScreen
 import com.example.sportapp.presentation.home.HomeViewModel
+import com.example.sportapp.presentation.livetracking.LiveTrackingScreen
+import com.example.sportapp.presentation.livetracking.LiveTrackingViewModel
 import com.example.sportapp.presentation.settings.*
 import com.example.sportapp.presentation.stats.*
 import com.example.sportapp.presentation.theme.SportAppTheme
@@ -80,7 +82,15 @@ class MainActivity : ComponentActivity() {
                                     viewModel = homeViewModel,
                                     onNavigateToStats = { navController.navigate(Screen.OverallStats.route) },
                                     onNavigateToActivityList = { navController.navigate(Screen.ActivityList.route) },
+                                    onNavigateToLiveTracking = { navController.navigate("live_tracking") },
                                     onSettingsClick = { navController.navigate("settings") }
+                                )
+                            }
+                            composable("live_tracking") {
+                                val liveTrackingViewModel: LiveTrackingViewModel = hiltViewModel()
+                                LiveTrackingScreen(
+                                    viewModel = liveTrackingViewModel,
+                                    onBack = { navController.popBackStack() }
                                 )
                             }
                             composable("settings") {
