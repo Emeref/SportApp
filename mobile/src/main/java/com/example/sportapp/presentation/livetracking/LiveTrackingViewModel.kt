@@ -20,9 +20,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 @HiltViewModel
 class LiveTrackingViewModel @Inject constructor(
@@ -40,7 +38,7 @@ class LiveTrackingViewModel @Inject constructor(
     private val _routePoints = liveLocationDao.getAllPoints().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
+        initialValue = emptyList<LiveLocationPoint>()
     )
     val routePoints = _routePoints
 
@@ -128,7 +126,7 @@ class LiveTrackingViewModel @Inject constructor(
                 val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
                 val newData = mutableMapOf<String, String>()
                 dataMap.keySet().forEach { key ->
-                    newData[key] = dataMap.get(key).toString()
+                    newData[key] = dataMap.get<Any>(key).toString()
                 }
                 _sensorData.value = newData
                 
@@ -155,7 +153,7 @@ class LiveTrackingViewModel @Inject constructor(
             lastPoint.latitude, lastPoint.longitude
         )
 
-        if (Math.abs(bearing - lastBearing) > AppConstants.MAP_ROTATION_THRESHOLD_DEGREES) {
+        if (abs(bearing - lastBearing) > AppConstants.MAP_ROTATION_THRESHOLD_DEGREES) {
             _mapRotation.value = -bearing // Map rotation is opposite to bearing
             lastBearing = bearing
         }
