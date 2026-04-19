@@ -23,6 +23,7 @@ object TextsMobileIT : MobileTexts {
     override val HOME_LOGO_DESC = "Logo dell'app"
     override val HOME_SECRET_TITLE = "Bello che tu stia cliccando, ma non c'è niente qui"
     override val HOME_CLOSE = "Chiudi"
+    override val HOME_START_LIVE = "Avvia Live Tracking"
 
     override fun homeResultsToday() = "Risultati di oggi:"
     override fun homeResultsWeek() = "Risultati della settimana:"
@@ -158,7 +159,7 @@ object TextsMobileIT : MobileTexts {
     override val ACTIVITY_TRIM = "Taglia"
     override val ACTIVITY_DETAIL = "Modifica"
     override val ACTIVITY_EDIT = "Modifica"
-    override val ACTIVITY_IMPORT_GPX = "Importa GPX"
+    override val ACTIVITY_IMPORT_GPX = "Import GPX"
     override val ACTIVITY_EXPORT_GPX = "Esporta GPX"
     override val ACTIVITY_CHART_SETTINGS = "Impostazioni grafico"
     override val ACTIVITY_FILTERS = "Filtri"
@@ -182,7 +183,7 @@ object TextsMobileIT : MobileTexts {
     override val ACTIVITY_OK = "OK"
     override val ACTIVITY_CONFIRM_DELETE_TITLE = "Elimina attività"
     override val ACTIVITY_ALL = "Tutto"
-    override val ACTIVITY_NONE = "None"
+    override val ACTIVITY_NONE = "Nessuno"
 
     // Activity Detail
     override val DETAIL_TITLE = "Dettagli attività"
@@ -328,7 +329,7 @@ object TextsMobileIT : MobileTexts {
     override val HR_EFFECT_Z2 = "Brucia grassi efficiente"
     override val HR_EFFECT_Z3 = "Miglioramento capacità aerobica"
     override val HR_EFFECT_Z4 = "Aumento soglia lattacida"
-    override val HR_EFFECT_Z5 = "Allenamento anaerobico e VO2 Max"
+    override val HR_EFFECT_Z5 = "Allenamento anaeróbico e VO2 Max"
     override val HR_EFFECT_NONE = "Nessuna zona dominante"
 
     // HR Zones Names
@@ -561,4 +562,17 @@ object TextsMobileIT : MobileTexts {
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Numero di giorni per le statistiche dell'orologio"
     override val STRAVA_SYNC_LOG = "history"
     override val STRAVA_SYNC_LOG_EMPTY = "Nessun sync"
+
+    // Live Tracking
+    override val LIVE_TRACKING_TITLE = "Live Tracking"
+    override val LIVE_TRACKING_SELECT_ACTIVITY = "Seleziona attività"
+    override val LIVE_TRACKING_LOCK = "Blocca"
+    override val LIVE_TRACKING_UNLOCK_SWIPE = "Scorri verso l'alto per sbloccare"
+    override val LIVE_TRACKING_MAP_NORTH = "Nord"
+    override val LIVE_TRACKING_MAP_DIRECTION = "Direzione"
+    override val LIVE_TRACKING_WAITING_FOR_WATCH = "In attesa del segnale dall'orologio..."
+    
+    // Errors
+    override val ERROR_WEARABLE_NOT_AVAILABLE = "Le API Wearable non sono disponibili su questo dispositivo"
+    override val ERROR_NO_WATCH_CONNECTED = "Nessun orologio collegato"
 }

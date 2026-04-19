@@ -9,6 +9,7 @@ import com.example.sportapp.data.model.BaseType
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val activityName: String,
+    @ColumnInfo(defaultValue = "Other")
     val baseType: String = BaseType.OTHER,
     val startTime: Long,
     val durationFormatted: String,
@@ -39,7 +40,12 @@ data class WorkoutEntity(
     val isSynced: Boolean = false,
     @ColumnInfo(name = "hc_session_id")
     val hcSessionId: String? = null,
-    val isFinished: Boolean = true // Nowe pole dla kontroli synchronizacji
+    @ColumnInfo(defaultValue = "1")
+    val isFinished: Boolean = true, // Nowe pole dla kontroli synchronizacji
+    
+    // Pola przywrócone dla zgodności z fizyczną strukturą bazy danych
+    val destinationLatitude: Double? = null,
+    val destinationLongitude: Double? = null
 )
 
 @Entity(tableName = "workout_points")

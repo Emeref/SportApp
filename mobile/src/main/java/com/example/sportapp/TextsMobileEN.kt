@@ -569,4 +569,8 @@ object TextsMobileEN : MobileTexts {
     override val LIVE_TRACKING_MAP_NORTH = "North"
     override val LIVE_TRACKING_MAP_DIRECTION = "Direction"
     override val LIVE_TRACKING_WAITING_FOR_WATCH = "Waiting for watch signal..."
+    
+    // Errors
+    override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable API is not available on this device"
+    override val ERROR_NO_WATCH_CONNECTED = "No watch connected"
 }

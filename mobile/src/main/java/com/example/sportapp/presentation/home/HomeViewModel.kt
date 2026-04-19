@@ -11,6 +11,7 @@ import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
@@ -63,13 +64,24 @@ class HomeViewModel @Inject constructor(
     private val _navigationEvent = MutableSharedFlow<String>()
     val navigationEvent = _navigationEvent.asSharedFlow()
 
+    private val _errorEvent = MutableSharedFlow<String>()
+    val errorEvent = _errorEvent.asSharedFlow()
+
     init {
-        messageClient.addListener(this)
+        try {
+            messageClient.addListener(this)
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "init: Error adding listener", e)
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-        messageClient.removeListener(this)
+        try {
+            messageClient.removeListener(this)
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "onCleared: Error removing listener", e)
+        }
     }
 
     override fun onMessageReceived(event: MessageEvent) {
@@ -98,6 +110,11 @@ class HomeViewModel @Inject constructor(
                 } else {
                     Log.w("HomeViewModel", "No connected nodes found for sync")
                 }
+            } catch (e: ApiException) {
+                Log.e("HomeViewModel", "triggerSync: Wearable API error", e)
+                if (e.statusCode == 17) {
+                    _errorEvent.emit("ERROR_WEARABLE_NOT_AVAILABLE")
+                }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "triggerSync: Error", e)
             }
@@ -112,6 +129,13 @@ class HomeViewModel @Inject constructor(
                     nodes.forEach { node ->
                         messageClient.sendMessage(node.id, "/start_activity", definition.id.toString().toByteArray()).await()
                     }
+                } else {
+                    _errorEvent.emit("ERROR_NO_WATCH_CONNECTED")
+                }
+            } catch (e: ApiException) {
+                Log.e("HomeViewModel", "startActivityOnWatch: Wearable API error", e)
+                if (e.statusCode == 17) {
+                    _errorEvent.emit("ERROR_WEARABLE_NOT_AVAILABLE")
                 }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "startActivityOnWatch: Error", e)

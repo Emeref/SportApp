@@ -17,7 +17,7 @@ import com.example.sportapp.data.model.WorkoutLap
         SyncMetadataEntity::class,
         LiveLocationPoint::class
     ], 
-    version = 23
+    version = 24
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -93,6 +93,88 @@ abstract class AppDatabase : RoomDatabase() {
                         accuracy REAL
                     )
                 """.trimIndent())
+            }
+        }
+        val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Table workout_laps
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `workout_laps` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                        `workoutId` INTEGER NOT NULL, 
+                        `lapNumber` INTEGER NOT NULL, 
+                        `durationMillis` INTEGER NOT NULL, 
+                        `distanceMeters` REAL NOT NULL, 
+                        `avgPaceSecondsPerKm` INTEGER NOT NULL, 
+                        `avgSpeed` REAL NOT NULL, 
+                        `maxSpeed` REAL NOT NULL, 
+                        `avgHeartRate` INTEGER NOT NULL, 
+                        `maxHeartRate` INTEGER NOT NULL, 
+                        `totalAscent` REAL NOT NULL, 
+                        `totalDescent` REAL NOT NULL, 
+                        `startLocationIndex` INTEGER NOT NULL, 
+                        `endLocationIndex` INTEGER NOT NULL, 
+                        FOREIGN KEY(`workoutId`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE 
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_laps_workoutId` ON `workout_laps` (`workoutId`)")
+                
+                // Table live_location_points fix (ensure it exists and has columns)
+                val liveLocCursor = db.query("PRAGMA table_info(live_location_points)")
+                val hasColumns = liveLocCursor.count > 0
+                liveLocCursor.close()
+                if (!hasColumns) {
+                    db.execSQL("DROP TABLE IF EXISTS live_location_points")
+                    db.execSQL("""
+                        CREATE TABLE live_location_points (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                            latitude REAL NOT NULL, 
+                            longitude REAL NOT NULL, 
+                            timestamp INTEGER NOT NULL, 
+                            bearing REAL, 
+                            altitude REAL, 
+                            accuracy REAL
+                        )
+                    """.trimIndent())
+                }
+
+                // Helper to safely add columns if they don't exist
+                fun addColumnIfNotExists(table: String, column: String, definition: String) {
+                    val cursor = db.query("PRAGMA table_info($table)")
+                    var exists = false
+                    try {
+                        val nameIndex = cursor.getColumnIndex("name")
+                        if (nameIndex != -1) {
+                            while (cursor.moveToNext()) {
+                                if (cursor.getString(nameIndex) == column) {
+                                    exists = true
+                                    break
+                                }
+                            }
+                        }
+                    } finally {
+                        cursor.close()
+                    }
+                    if (!exists) {
+                        db.execSQL("ALTER TABLE $table ADD COLUMN $column $definition")
+                    }
+                }
+
+                // Add missing columns to workouts table
+                addColumnIfNotExists("workouts", "isSynced", "INTEGER NOT NULL DEFAULT 0")
+                addColumnIfNotExists("workouts", "avgPace", "REAL")
+                addColumnIfNotExists("workouts", "maxSpeed", "REAL")
+                addColumnIfNotExists("workouts", "maxAltitude", "REAL")
+                addColumnIfNotExists("workouts", "minAltitude", "REAL")
+                addColumnIfNotExists("workouts", "avgStepLength", "REAL")
+                addColumnIfNotExists("workouts", "avgCadence", "REAL")
+                addColumnIfNotExists("workouts", "maxCadence", "REAL")
+                addColumnIfNotExists("workouts", "maxPressure", "REAL")
+                addColumnIfNotExists("workouts", "minPressure", "REAL")
+                addColumnIfNotExists("workouts", "bestPace1km", "REAL")
+                
+                // Add missing columns to workout_points table
+                addColumnIfNotExists("workout_points", "pressure", "REAL")
             }
         }
     }

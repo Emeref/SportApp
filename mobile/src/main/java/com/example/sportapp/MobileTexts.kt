@@ -480,6 +480,10 @@ interface MobileTexts {
     val LIVE_TRACKING_MAP_NORTH: String
     val LIVE_TRACKING_MAP_DIRECTION: String
     val LIVE_TRACKING_WAITING_FOR_WATCH: String
+    
+    // Errors
+    val ERROR_WEARABLE_NOT_AVAILABLE: String
+    val ERROR_NO_WATCH_CONNECTED: String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

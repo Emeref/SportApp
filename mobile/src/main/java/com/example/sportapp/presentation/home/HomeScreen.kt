@@ -42,6 +42,7 @@ fun HomeScreen(
     val settings by viewModel.settings.collectAsState()
     val locationDefinitions by viewModel.locationDefinitions.collectAsState()
     
+    val snackbarHostState = remember { SnackbarHostState() }
     var showSecretPopup by remember { mutableStateOf(false) }
     var showActivitySelection by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
@@ -65,6 +66,17 @@ fun HomeScreen(
             if (event == "live_tracking") {
                 onNavigateToLiveTracking()
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.errorEvent.collect { errorCode ->
+            val message = when (errorCode) {
+                "ERROR_WEARABLE_NOT_AVAILABLE" -> texts.ERROR_WEARABLE_NOT_AVAILABLE
+                "ERROR_NO_WATCH_CONNECTED" -> texts.ERROR_NO_WATCH_CONNECTED
+                else -> errorCode
+            }
+            snackbarHostState.showSnackbar(message)
         }
     }
 
@@ -156,7 +168,8 @@ fun HomeScreen(
             FloatingActionButton(onClick = { showActivitySelection = true }) {
                 Icon(Icons.Default.Add, contentDescription = texts.HOME_START_LIVE)
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier

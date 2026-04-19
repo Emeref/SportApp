@@ -569,4 +569,8 @@ object TextsMobilePL : MobileTexts {
     override val LIVE_TRACKING_MAP_NORTH = "Północ"
     override val LIVE_TRACKING_MAP_DIRECTION = "Kierunek"
     override val LIVE_TRACKING_WAITING_FOR_WATCH = "Oczekiwanie na sygnał z zegarka..."
+    
+    // Errors
+    override val ERROR_WEARABLE_NOT_AVAILABLE = "Usługi Wearable są niedostępne na tym urządzeniu"
+    override val ERROR_NO_WATCH_CONNECTED = "Nie znaleziono połączonego zegarka"
 }

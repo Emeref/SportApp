@@ -1,5 +1,6 @@
 package com.example.sportapp.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -7,6 +8,7 @@ import androidx.room.PrimaryKey
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val activityName: String,
+    @ColumnInfo(defaultValue = "Other")
     val baseType: String = "Other",
     val startTime: Long,
     val durationFormatted: String,
@@ -35,6 +37,7 @@ data class WorkoutEntity(
     val bestPace1km: Double? = null, // min/km
     val autoLapDistance: Double? = null, // m - dystans autolapa w momencie startu
     val isSynced: Boolean = false,
+    @ColumnInfo(defaultValue = "1")
     val isFinished: Boolean = true // Nowe pole
 )
 
