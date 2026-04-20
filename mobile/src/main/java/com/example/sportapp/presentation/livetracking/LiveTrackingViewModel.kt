@@ -8,17 +8,17 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.AppConstants
+import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.db.LiveLocationDao
 import com.example.sportapp.data.db.LiveLocationPoint
-import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.WorkoutDefinition
-import com.example.sportapp.data.model.WorkoutSensor
 import com.google.android.gms.location.*
 import com.google.android.gms.wearable.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import kotlin.math.*
 
@@ -26,7 +26,7 @@ import kotlin.math.*
 class LiveTrackingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val liveLocationDao: LiveLocationDao,
-    private val workoutDefinitionDao: WorkoutDefinitionDao
+    private val repository: IWorkoutRepository
 ) : ViewModel(), DataClient.OnDataChangedListener {
 
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -48,6 +48,9 @@ class LiveTrackingViewModel @Inject constructor(
     private val _activeDefinition = MutableStateFlow<WorkoutDefinition?>(null)
     val activeDefinition = _activeDefinition.asStateFlow()
 
+    private val _isFinished = MutableStateFlow(false)
+    val isFinished = _isFinished.asStateFlow()
+
     private val _mapRotation = MutableStateFlow(0f)
     val mapRotation = _mapRotation.asStateFlow()
 
@@ -61,6 +64,7 @@ class LiveTrackingViewModel @Inject constructor(
     val isNorthOriented = _isNorthOriented.asStateFlow()
 
     private var lastBearing = 0f
+    private var sessionStartTime: Long = 0L
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -89,11 +93,42 @@ class LiveTrackingViewModel @Inject constructor(
     init {
         dataClient.addListener(this)
         startLocationUpdates()
+        
+        // Obserwuj bazę danych w poszukiwaniu zakończenia AKTUALNEJ aktywności
+        viewModelScope.launch {
+            repository.getAllWorkouts().collect { workouts ->
+                if (sessionStartTime != 0L) {
+                    val currentWorkout = workouts.find { it.startTime == sessionStartTime }
+                    if (currentWorkout?.isFinished == true && !_isFinished.value) {
+                        Log.d("LiveTrackingVM", "Detected current workout finished in DB, triggering popup")
+                        _isFinished.value = true
+                    }
+                }
+            }
+        }
+
+        // Check for existing data and initial finish state via Wear Data Layer
+        viewModelScope.launch {
+            try {
+                val dataItemBuffer = dataClient.dataItems.await()
+                try {
+                    dataItemBuffer.forEach { item ->
+                        if (item.uri.path == "/workout_data") {
+                            processDataMap(DataMapItem.fromDataItem(item).dataMap)
+                        }
+                    }
+                } finally {
+                    dataItemBuffer.release()
+                }
+            } catch (e: Exception) {
+                Log.e("LiveTrackingViewModel", "Error fetching initial state", e)
+            }
+        }
     }
 
     fun setActiveDefinition(definitionId: Long) {
         viewModelScope.launch {
-            _activeDefinition.value = workoutDefinitionDao.getDefinitionById(definitionId)
+            _activeDefinition.value = repository.getDefinitionById(definitionId)
         }
     }
 
@@ -128,24 +163,39 @@ class LiveTrackingViewModel @Inject constructor(
         try {
             dataEvents.forEach { event ->
                 if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/workout_data") {
-                    val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
-                    val newData = mutableMapOf<String, String>()
-                    dataMap.keySet().forEach { key ->
-                        newData[key] = dataMap.get<Any>(key).toString()
-                    }
-                    _sensorData.value = newData
-                    
-                    // If definition ID is sent in data map, we can update it
-                    if (dataMap.containsKey("definitionId")) {
-                        val defId = dataMap.getLong("definitionId")
-                        if (_activeDefinition.value?.id != defId) {
-                            setActiveDefinition(defId)
-                        }
-                    }
+                    processDataMap(DataMapItem.fromDataItem(event.dataItem).dataMap)
                 }
             }
         } finally {
             dataEvents.release()
+        }
+    }
+
+    private fun processDataMap(dataMap: DataMap) {
+        val newData = mutableMapOf<String, String>()
+        dataMap.keySet().forEach { key ->
+            val value = dataMap.get<Any>(key)
+            if (value != null) {
+                newData[key] = value.toString()
+            }
+        }
+        _sensorData.value = newData
+        
+        if (dataMap.containsKey("startTime")) {
+            sessionStartTime = dataMap.getLong("startTime")
+        }
+
+        val finished = dataMap.getBoolean("isFinished", false)
+        if (finished && !_isFinished.value) {
+            Log.d("LiveTrackingVM", "Detected isFinished flag from Wear, triggering popup")
+            _isFinished.value = true
+        }
+
+        if (dataMap.containsKey("definitionId")) {
+            val defId = dataMap.getLong("definitionId")
+            if (_activeDefinition.value?.id != defId) {
+                setActiveDefinition(defId)
+            }
         }
     }
 
@@ -197,6 +247,7 @@ class LiveTrackingViewModel @Inject constructor(
     fun clearLiveTrackingData() {
         viewModelScope.launch {
             liveLocationDao.clear()
+            _isFinished.value = false // Reset state for next session
         }
     }
 }

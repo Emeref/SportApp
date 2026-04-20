@@ -24,8 +24,8 @@ object TextsMobileFR : MobileTexts {
     override val HOME_SECRET_TITLE = "C'est super de cliquer, mais il n'y a rien ici"
     override val HOME_CLOSE = "Fermer"
     override val HOME_START_LIVE = "Démarrer le Live Tracking"
-    override val HOME_ACTIVE_WORKOUT = "Trwa aktywność"
-    override val HOME_RESUME_TRACKING = "Wróć do śledzenia"
+    override val HOME_ACTIVE_WORKOUT = "Entraînement en cours"
+    override val HOME_RESUME_TRACKING = "Reprendre le suivi"
 
     override fun homeResultsToday() = "Résultats d'aujourd'hui :"
     override fun homeResultsWeek() = "Résultats de la semaine :"
@@ -236,8 +236,8 @@ object TextsMobileFR : MobileTexts {
     override val STATS_SECTION_CHARTS = "Section : Graphiques de tendance"
     override val STATS_MOVE_UP = "Monter"
     override val STATS_MOVE_DOWN = "Descendre"
-    override fun chartDistanceGps(km: Boolean) = if (km) "Distance (GPS) en km" else "Distance (GPS) en m"
-    override fun chartDistanceSteps(km: Boolean) = if (km) "Distance (pas) en km" else "Distance (pas) en m"
+    override fun chartDistanceGps(km: Boolean) = if (km) "Distance (GPS) en km" else "Distance (GPS) in m"
+    override fun chartDistanceSteps(km: Boolean) = if (km) "Distance (pas) en km" else "Distance (pas) in m"
     override val CHART_STEPS = "Pas"
 
     // Definitions
@@ -247,7 +247,7 @@ object TextsMobileFR : MobileTexts {
     override val DEF_DELETE = "Supprimer la définition"
     override val DEF_NAME = "Nom"
     override val DEF_ICON = "Icône"
-    override val DEF_SENSORS = "Capteurs"
+    override val DEF_SENSORS = "Sensors"
     override val DEF_LIST_TITLE = "Définition d'activité"
     override val DEF_SENSORS_DESC = "Gérer la liste des sports et capteurs"
     override val DEF_RECORDING = "Enregistrement"
@@ -291,7 +291,7 @@ object TextsMobileFR : MobileTexts {
     override val DEF_PILATES = "Pilates"
     override val DEF_AEROBICS = "Aérobic"
     override val DEF_DANCING = "Danse"
-    override val DEF_SWIMMING = "Natación"
+    override val DEF_SWIMMING = "Natation"
     override val DEF_SWIMMING_POOL = "Natation (piscine)"
     override val DEF_SWIMMING_OPEN_WATER = "Natation (eau libre)"
     override val DEF_KAYAKING = "Kayak"
@@ -308,7 +308,7 @@ object TextsMobileFR : MobileTexts {
     override val DEF_SKIING = "Ski"
     override val DEF_SNOWBOARDING = "Snowboard"
     override val DEF_SKATING = "Pattinage"
-    override val DEF_ICE_SKATING = "Pattinage su ghiaccio"
+    override val DEF_ICE_SKATING = "Pattinage sur glace"
     
     override val DEF_GYM = "Gym"
     override val DEF_BASEBALL = "Baseball"
@@ -488,6 +488,10 @@ object TextsMobileFR : MobileTexts {
     override val LIVE_TRACKING_MAP_NORTH = "Nord"
     override val LIVE_TRACKING_MAP_DIRECTION = "Direction"
     override val LIVE_TRACKING_WAITING_FOR_WATCH = "En attente du signal de la montre..."
+    override val LIVE_TRACKING_FINISHED_TITLE = "Activité terminée"
+    override val LIVE_TRACKING_FINISHED_DESC = "L'activité a été enregistrée avec succès."
+    override val LIVE_TRACKING_BTN_FINISH = "Terminer"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Voir la carte"
     
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "L'API Wearable n'est pas disponible sur cet appareil"

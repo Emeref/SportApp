@@ -571,6 +571,10 @@ object TextsMobileDE : MobileTexts {
     override val LIVE_TRACKING_MAP_NORTH = "Norden"
     override val LIVE_TRACKING_MAP_DIRECTION = "Richtung"
     override val LIVE_TRACKING_WAITING_FOR_WATCH = "Warten auf Signal von der Uhr..."
+    override val LIVE_TRACKING_FINISHED_TITLE = "Atividade terminada"
+    override val LIVE_TRACKING_FINISHED_DESC = "A atividade foi registrada com sucesso."
+    override val LIVE_TRACKING_BTN_FINISH = "Terminar"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Ver o mapa"
     
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable-Dienste sind auf diesem Gerät nicht verfügbar"

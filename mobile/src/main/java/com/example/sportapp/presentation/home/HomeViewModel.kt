@@ -137,6 +137,14 @@ class HomeViewModel @Inject constructor(
             newData[key] = dataMap.get<Any>(key).toString()
         }
         
+        val isFinished = dataMap.getBoolean("isFinished", false)
+        if (isFinished) {
+            _activeWorkoutData.value = null
+            _activeDefinition.value = null
+            activityTimeoutJob?.cancel()
+            return
+        }
+
         _activeWorkoutData.value = newData
         
         if (dataMap.containsKey("definitionId")) {
@@ -148,10 +156,10 @@ class HomeViewModel @Inject constructor(
             }
         }
 
-        // Start or reset timeout job - if no data for 30s, assume finished
+        // Start or reset timeout job - if no data for 45s, assume finished
         activityTimeoutJob?.cancel()
         activityTimeoutJob = viewModelScope.launch {
-            delay(30000)
+            delay(45000)
             _activeWorkoutData.value = null
             _activeDefinition.value = null
         }

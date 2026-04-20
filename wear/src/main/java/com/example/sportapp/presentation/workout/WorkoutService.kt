@@ -74,6 +74,7 @@ class WorkoutService : Service(), SensorEventListener {
     private var status = WorkoutStatus.IDLE
     private var currentWorkoutId: Long = -1
     private var currentDefinitionId: Long = -1
+    private var startTimeMillis: Long = 0L
     private var totalMillisBeforePause: Long = 0L
     private var lastResumeTimeMillis: Long = 0L
     private var totalSeconds = 0L
@@ -171,11 +172,12 @@ class WorkoutService : Service(), SensorEventListener {
                 serviceScope.launch {
                     val definition = if (definitionId != -1L) workoutDefinitionDao.getDefinitionById(definitionId) else null
                     sportDefinition = definition
+                    startTimeMillis = System.currentTimeMillis()
                     
                     val workout = WorkoutEntity(
                         activityName = definition?.name ?: fallbackActivityName,
                         baseType = definition?.baseType ?: "Other",
-                        startTime = System.currentTimeMillis(),
+                        startTime = startTimeMillis,
                         durationFormatted = "00:00",
                         steps = 0,
                         distanceSteps = 0.0,
@@ -315,6 +317,7 @@ class WorkoutService : Service(), SensorEventListener {
         serviceScope.launch {
             // Wykonujemy ostatni zapis (Flush) z flagą isFinished = true
             performSave(isFinal = true)
+            sendLiveData(null, isFinished = true) // Send one last data point to notify phone
             dataLayerManager.syncAll() // Pełna synchronizacja po zakończeniu (teraz wyśle trening na telefon)
             
             withContext(Dispatchers.Main) {
@@ -459,14 +462,16 @@ class WorkoutService : Service(), SensorEventListener {
         }
     }
 
-    private fun sendLiveData(lastPoint: WorkoutPointEntity?) {
+    private fun sendLiveData(lastPoint: WorkoutPointEntity?, isFinished: Boolean = false) {
         serviceScope.launch {
             try {
                 val dataClient = Wearable.getDataClient(this@WorkoutService)
                 val request = PutDataMapRequest.create("/workout_data").apply {
                     dataMap.putLong("timestamp", System.currentTimeMillis())
                     dataMap.putLong("definitionId", currentDefinitionId)
+                    dataMap.putLong("startTime", startTimeMillis)
                     dataMap.putString("duration", formatTime(totalSeconds))
+                    dataMap.putBoolean("isFinished", isFinished)
                     
                     lastPoint?.let {
                         if (it.bpm != null) dataMap.putString(WorkoutSensor.HEART_RATE.id, it.bpm.toString())

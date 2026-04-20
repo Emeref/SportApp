@@ -1,15 +1,20 @@
 package com.example.sportapp
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -65,6 +70,26 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settingsState by settingsManager.settingsFlow.collectAsStateWithLifecycle(initialValue = MobileSettingsState())
             val texts = settingsState.language.texts
+
+            // Request permissions on startup
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) { permissions ->
+                val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+                val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+                Log.d("MainActivity", "Permissions granted: Fine=$fineLocationGranted, Coarse=$coarseLocationGranted")
+            }
+
+            LaunchedEffect(Unit) {
+                val permissions = mutableListOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                permissionLauncher.launch(permissions.toTypedArray())
+            }
 
             CompositionLocalProvider(LocalMobileTexts provides texts) {
                 SportAppTheme(themeMode = settingsState.themeMode) {

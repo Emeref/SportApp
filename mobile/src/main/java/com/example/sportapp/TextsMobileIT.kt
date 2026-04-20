@@ -24,8 +24,8 @@ object TextsMobileIT : MobileTexts {
     override val HOME_SECRET_TITLE = "Bello che tu stia cliccando, ma non c'è niente qui"
     override val HOME_CLOSE = "Chiudi"
     override val HOME_START_LIVE = "Avvia Live Tracking"
-    override val HOME_ACTIVE_WORKOUT = "Trwa aktywność"
-    override val HOME_RESUME_TRACKING = "Wróć do śledzenia"
+    override val HOME_ACTIVE_WORKOUT = "Allenamento in corso"
+    override val HOME_RESUME_TRACKING = "Riprendi monitoraggio"
 
     override fun homeResultsToday() = "Risultati di oggi:"
     override fun homeResultsWeek() = "Risultati della settimana:"
@@ -63,6 +63,8 @@ object TextsMobileIT : MobileTexts {
     override val SETTINGS_PERIOD_WATCH_DESC = "Statistiche di quale periodo?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Numero di giorni"
     override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Numero di giorni"
+    override val SETTINGS_CUSTOM_DAYS_DESC = "Numero di giorni per il periodo 'Altro'"
+    override val SETTINGS_WATCH_STATS_DAYS_DESC = "Numero di giorni per le statistiche dell'orologio"
     override val SETTINGS_INTEGRATION = "Integrazione"
     override val SETTINGS_SYNC = "Sincronizzazione"
     override val SETTINGS_STRAVA = "Strava"
@@ -271,7 +273,7 @@ object TextsMobileIT : MobileTexts {
     override val DEF_SPEED_WALKING = "Camminata veloce"
     override val DEF_RUNNING = "Corsa"
     override val DEF_TREADMILL_RUNNING = "Corsa su tapis roulant"
-    override val DEF_STAIR_CLIMBING = "Salire le scale"
+    override val DEF_STAIR_CLIMBING = "Salire le scala"
     override val DEF_STAIR_CLIMBING_MACHINE = "Stepper"
     override val DEF_CYCLING = "Ciclismo"
     override val DEF_CYCLING_STATIONARY = "Ciclismo indoor"
@@ -414,6 +416,87 @@ object TextsMobileIT : MobileTexts {
     override val WIDGET_WATCH_ASCENT = "Dislivello positivo"
     override val WIDGET_WATCH_DESCENT = "Dislivello negativo"
 
+    // Sensors
+    override val SENSOR_HEART_RATE = "Frequenza cardiaca"
+    override val SENSOR_CALORIES_SUM = "Calorie totali"
+    override val SENSOR_CALORIES_MIN = "Calorie al minuto"
+    override val SENSOR_STEPS = "Passi"
+    override val SENSOR_STEPS_MIN = "Cadenza (passi/min)"
+    override val SENSOR_DISTANCE_STEPS = "Distanza (passi)"
+    override val SENSOR_SPEED_GPS = "Velocità"
+    override val SENSOR_SPEED_STEPS = "Velocità (passi)"
+    override val SENSOR_DISTANCE_GPS = "Distanza"
+    override val SENSOR_ALTITUDE = "Altitudine"
+    override val SENSOR_TOTAL_ASCENT = "Ascesa totale"
+    override val SENSOR_TOTAL_DESCENT = "Discesa totale"
+    override val SENSOR_PRESSURE = "Pressione atm."
+    override val SENSOR_MAP = "Dati posizione"
+    override val SENSOR_AVG_STEP_LENGTH = "Lunghezza passo media"
+
+    // Units
+    override val UNIT_KCAL = "kcal"
+    override val UNIT_M = "m"
+    override val UNIT_KM = "km"
+    override val UNIT_STEP_MIN = "pas/min"
+    override val UNIT_KM_H = "km/h"
+    override val UNIT_STEPS = "passi"
+    override val UNIT_HPA = "hPa"
+    override val UNIT_MIN_KM = "min/km"
+    override val UNIT_M_ASL = "m s.l.m."
+    override val UNIT_MIN_KM_LABEL = "min/km"
+    override val UNIT_BPM = "bpm"
+    override val UNIT_KCAL_MIN = "kcal/min"
+    override val UNIT_VO2_MAX = "ml/kg/min"
+
+    // Live Tracking
+    override val LIVE_TRACKING_TITLE = "Live Tracking"
+    override val LIVE_TRACKING_SELECT_ACTIVITY = "Seleziona attività"
+    override val LIVE_TRACKING_LOCK = "Blocca"
+    override val LIVE_TRACKING_UNLOCK_SWIPE = "Scorri verso l'alto per sbloccare"
+    override val LIVE_TRACKING_MAP_NORTH = "Nord"
+    override val LIVE_TRACKING_MAP_DIRECTION = "Direzione"
+    override val LIVE_TRACKING_WAITING_FOR_WATCH = "In attesa del segnale dall'orologio..."
+    override val LIVE_TRACKING_FINISHED_TITLE = "Attività terminata"
+    override val LIVE_TRACKING_FINISHED_DESC = "L'attività è stata registrata con successo."
+    override val LIVE_TRACKING_BTN_FINISH = "Termina"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Vedi la mappa"
+
+    // Trim Screen
+    override val TRIM_TITLE = "Modifica allenamento (Taglia)"
+    override val TRIM_CONFIRM_TITLE = "Confirmer taglio"
+    override val TRIM_CONFIRM_DESC = "Sei sicuro di voler rimuovere i dati fuori dall'intervallo selezionato? Questi dati verranno eliminati permanentemente."
+    override val TRIM_SAVE_BTN = "Taglia e salva"
+    override val TRIM_CHART_HR = "Grafico FC"
+    override val TRIM_RANGE_TITLE = "Seleziona intervallo allenamento"
+    override val TRIM_PREVIEW_TITLE = "Anteprima nuove statistiche"
+    override val TRIM_NEW_DURATION = "Nuova durata:"
+    override val TRIM_DISTANCE_GPS = "Distanza (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Distanza (Passi):"
+    override val TRIM_CALORIES = "Calorie bruciate:"
+    override val TRIM_AVG_BPM = "FC media:"
+    override val TRIM_START = "Inizio"
+    override val TRIM_END = "Fine"
+
+    // Strava Strings
+    override val STRAVA_TITLE = "Sincronizzazione con Strava"
+    override val STRAVA_CONNECT = "Connetti account Strava"
+    override val STRAVA_DISCONNECT = "Scollega account Strava"
+    override val STRAVA_CONNECTED = "Connesso a Strava"
+    override val STRAVA_NOT_CONNECTED = "Non connesso"
+    override val STRAVA_SYNC_NOW = "Sincronizza ora"
+    override val STRAVA_SYNC_SUCCESS = "Allenamento inviato!"
+    override val STRAVA_SYNC_FAILED = "Invio fallito"
+    override val STRAVA_SYNCING = "Invio in corso..."
+    override val STRAVA_AUTH_ERROR = "Errore di autenticazione"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Esportazione automatica"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Esporta automaticamente i nuovi allenamenti su Strava"
+    override val STRAVA_SYNC_LOG = "history"
+    override val STRAVA_SYNC_LOG_EMPTY = "Nessun sync"
+    
+    // Errors
+    override val ERROR_WEARABLE_NOT_AVAILABLE = "Le API Wearable non sono disponibili su questo dispositivo"
+    override val ERROR_NO_WATCH_CONNECTED = "Nessun orologio collegato"
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -496,85 +579,4 @@ object TextsMobileIT : MobileTexts {
             else -> id
         }
     }
-
-    // Sensors
-    override val SENSOR_HEART_RATE = "Frequenza cardiaca"
-    override val SENSOR_CALORIES_SUM = "Calorie totali"
-    override val SENSOR_CALORIES_MIN = "Calorie al minuto"
-    override val SENSOR_STEPS = "Passi"
-    override val SENSOR_STEPS_MIN = "Cadenza (passi/min)"
-    override val SENSOR_DISTANCE_STEPS = "Distanza (passi)"
-    override val SENSOR_SPEED_GPS = "Velocità"
-    override val SENSOR_SPEED_STEPS = "Velocità (passi)"
-    override val SENSOR_DISTANCE_GPS = "Distanza"
-    override val SENSOR_ALTITUDE = "Altitudine"
-    override val SENSOR_TOTAL_ASCENT = "Ascesa totale"
-    override val SENSOR_TOTAL_DESCENT = "Discesa totale"
-    override val SENSOR_PRESSURE = "Pressione atm."
-    override val SENSOR_MAP = "Dati posizione"
-
-    // Units
-    override val UNIT_KCAL = "kcal"
-    override val UNIT_M = "m"
-    override val UNIT_KM = "km"
-    override val UNIT_STEP_MIN = "pas/min"
-    override val UNIT_KM_H = "km/h"
-    override val UNIT_STEPS = "passi"
-    override val UNIT_HPA = "hPa"
-    override val UNIT_MIN_KM = "min/km"
-    override val UNIT_M_ASL = "m s.l.m."
-    override val UNIT_MIN_KM_LABEL = "min/km"
-    override val UNIT_BPM = "bpm"
-    override val UNIT_KCAL_MIN = "kcal/min"
-    override val UNIT_VO2_MAX = "ml/kg/min"
-    
-    // New metric
-    override val SENSOR_AVG_STEP_LENGTH = "Lunghezza passo media"
-
-    // Trim Screen
-    override val TRIM_TITLE = "Modifica allenamento (Taglia)"
-    override val TRIM_CONFIRM_TITLE = "Confirmer taglio"
-    override val TRIM_CONFIRM_DESC = "Sei sicuro di voler rimuovere i dati fuori dall'intervallo selezionato? Questi dati verranno eliminati permanentemente."
-    override val TRIM_SAVE_BTN = "Taglia e salva"
-    override val TRIM_CHART_HR = "Grafico FC"
-    override val TRIM_RANGE_TITLE = "Seleziona intervallo allenamento"
-    override val TRIM_PREVIEW_TITLE = "Anteprima nuove statistiche"
-    override val TRIM_NEW_DURATION = "Nuova durata:"
-    override val TRIM_DISTANCE_GPS = "Distanza (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Distanza (Passi):"
-    override val TRIM_CALORIES = "Calorie bruciate:"
-    override val TRIM_AVG_BPM = "FC media:"
-    override val TRIM_START = "Inizio"
-    override val TRIM_END = "Fine"
-
-    // Strava Strings
-    override val STRAVA_TITLE = "Sincronizzazione con Strava"
-    override val STRAVA_CONNECT = "Connetti account Strava"
-    override val STRAVA_DISCONNECT = "Scollega account Strava"
-    override val STRAVA_CONNECTED = "Connesso a Strava"
-    override val STRAVA_NOT_CONNECTED = "Non connesso"
-    override val STRAVA_SYNC_NOW = "Sincronizza ora"
-    override val STRAVA_SYNC_SUCCESS = "Allenamento inviato!"
-    override val STRAVA_SYNC_FAILED = "Invio fallito"
-    override val STRAVA_SYNCING = "Invio in corso..."
-    override val STRAVA_AUTH_ERROR = "Errore di autenticazione"
-    override val SETTINGS_STRAVA_AUTO_EXPORT = "Esportazione automatica"
-    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Esporta automaticamente i nuovi allenamenti su Strava"
-    override val SETTINGS_CUSTOM_DAYS_DESC = "Numero di giorni per il periodo 'Altro'"
-    override val SETTINGS_WATCH_STATS_DAYS_DESC = "Numero di giorni per le statistiche dell'orologio"
-    override val STRAVA_SYNC_LOG = "history"
-    override val STRAVA_SYNC_LOG_EMPTY = "Nessun sync"
-
-    // Live Tracking
-    override val LIVE_TRACKING_TITLE = "Live Tracking"
-    override val LIVE_TRACKING_SELECT_ACTIVITY = "Seleziona attività"
-    override val LIVE_TRACKING_LOCK = "Blocca"
-    override val LIVE_TRACKING_UNLOCK_SWIPE = "Scorri verso l'alto per sbloccare"
-    override val LIVE_TRACKING_MAP_NORTH = "Nord"
-    override val LIVE_TRACKING_MAP_DIRECTION = "Direzione"
-    override val LIVE_TRACKING_WAITING_FOR_WATCH = "In attesa del segnale dall'orologio..."
-    
-    // Errors
-    override val ERROR_WEARABLE_NOT_AVAILABLE = "Le API Wearable non sono disponibili su questo dispositivo"
-    override val ERROR_NO_WATCH_CONNECTED = "Nessun orologio collegato"
 }

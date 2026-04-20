@@ -27,6 +27,8 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,8 +46,10 @@ fun LiveTrackingScreen(
     val autoCenter by viewModel.autoCenter.collectAsState()
     val isNorthOriented by viewModel.isNorthOriented.collectAsState()
     val activeDefinition by viewModel.activeDefinition.collectAsState()
+    val isFinished by viewModel.isFinished.collectAsState()
 
     val cameraPositionState = rememberCameraPositionState()
+    var isFullScreenMap by remember { mutableStateOf(false) }
 
     // Check permissions for MyLocation layer
     val hasLocationPermission by remember {
@@ -78,19 +82,59 @@ fun LiveTrackingScreen(
         }
     }
 
+    if (isFinished && !isFullScreenMap) {
+        AlertDialog(
+            onDismissRequest = { /* Wyłączamy dismiss poza przyciskami */ },
+            title = { Text(texts.LIVE_TRACKING_FINISHED_TITLE) },
+            text = { Text(texts.LIVE_TRACKING_FINISHED_DESC) },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.clearLiveTrackingData()
+                    onBack()
+                }) {
+                    Text(texts.LIVE_TRACKING_BTN_FINISH)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { isFullScreenMap = true }) {
+                    Text(texts.LIVE_TRACKING_BTN_VIEW_MAP)
+                }
+            }
+        )
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(activeDefinition?.name ?: texts.LIVE_TRACKING_TITLE) },
+                    title = { 
+                        Column {
+                            Text(activeDefinition?.name ?: texts.LIVE_TRACKING_TITLE)
+                            if (isFullScreenMap) {
+                                val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+                                Text(
+                                    text = sdf.format(Date()),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
+                    },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
+                        IconButton(onClick = {
+                            if (isFullScreenMap) {
+                                viewModel.clearLiveTrackingData()
+                            }
+                            onBack()
+                        }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                         }
                     },
                     actions = {
-                        IconButton(onClick = { viewModel.setLocked(true) }) {
-                            Icon(Icons.Default.Lock, contentDescription = texts.LIVE_TRACKING_LOCK)
+                        if (!isFullScreenMap) {
+                            IconButton(onClick = { viewModel.setLocked(true) }) {
+                                Icon(Icons.Default.Lock, contentDescription = texts.LIVE_TRACKING_LOCK)
+                            }
                         }
                     }
                 )
@@ -101,8 +145,8 @@ fun LiveTrackingScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // Map Section (3/4 height)
-                Box(modifier = Modifier.weight(3f)) {
+                // Map Section
+                Box(modifier = Modifier.weight(if (isFullScreenMap) 1f else 3f)) {
                     GoogleMap(
                         modifier = Modifier.fillMaxSize(),
                         cameraPositionState = cameraPositionState,
@@ -155,51 +199,53 @@ fun LiveTrackingScreen(
                     }
                 }
 
-                // Stats Section (1/4 height)
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(8.dp)
-                ) {
-                    if (sensorData.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(texts.LIVE_TRACKING_WAITING_FOR_WATCH, style = MaterialTheme.typography.bodyMedium)
-                        }
-                    } else {
-                        val activeWidgets = activeDefinition?.sensors?.filter { it.isVisible }?.take(4) ?: emptyList()
-                        
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (activeWidgets.isEmpty()) {
-                                // Fallback to raw sensor keys if no definition is active yet
-                                val keys = sensorData.keys.filter { it != "duration" && it != "timestamp" && it != "definitionId" }.take(4)
-                                keys.chunked(2).forEach { rowKeys ->
-                                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        rowKeys.forEach { key ->
-                                            StatWidget(
-                                                label = texts.getSensorLabel(key),
-                                                value = sensorData[key] ?: "--",
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                        }
-                                        if (rowKeys.size == 1) {
-                                            Spacer(modifier = Modifier.weight(1f))
+                // Stats Section
+                if (!isFullScreenMap) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(8.dp)
+                    ) {
+                        if (sensorData.isEmpty()) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(texts.LIVE_TRACKING_WAITING_FOR_WATCH, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        } else {
+                            val activeWidgets = activeDefinition?.sensors?.filter { it.isVisible }?.take(4) ?: emptyList()
+                            
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (activeWidgets.isEmpty()) {
+                                    // Fallback to raw sensor keys if no definition is active yet
+                                    val keys = sensorData.keys.filter { it != "duration" && it != "timestamp" && it != "definitionId" && it != "isFinished" }.take(4)
+                                    keys.chunked(2).forEach { rowKeys ->
+                                        Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            rowKeys.forEach { key ->
+                                                StatWidget(
+                                                    label = texts.getSensorLabel(key),
+                                                    value = sensorData[key] ?: "--",
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                            if (rowKeys.size == 1) {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                            }
                                         }
                                     }
-                                }
-                            } else {
-                                activeWidgets.chunked(2).forEach { rowWidgets ->
-                                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        rowWidgets.forEach { config ->
-                                            StatWidget(
-                                                label = texts.getSensorLabel(config.sensorId),
-                                                value = sensorData[config.sensorId] ?: "--",
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                        }
-                                        if (rowWidgets.size == 1) {
-                                            Spacer(modifier = Modifier.weight(1f))
+                                } else {
+                                    activeWidgets.chunked(2).forEach { rowWidgets ->
+                                        Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            rowWidgets.forEach { config ->
+                                                StatWidget(
+                                                    label = texts.getSensorLabel(config.sensorId),
+                                                    value = sensorData[config.sensorId] ?: "--",
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                            if (rowWidgets.size == 1) {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                            }
                                         }
                                     }
                                 }

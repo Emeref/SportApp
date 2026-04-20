@@ -25,7 +25,7 @@ object TextsMobilePL : MobileTexts {
     override val HOME_CLOSE = "Zamknij"
     override val HOME_START_LIVE = "Rozpocznij Live Tracking"
     override val HOME_ACTIVE_WORKOUT = "Trwa aktywność"
-    override val HOME_RESUME_TRACKING = "Wróć do śledzenia"
+    override val HOME_RESUME_TRACKING = "Śledź aktywność"
 
     override fun homeResultsToday() = "Dzisiejsze wyniki:"
     override fun homeResultsWeek() = "Wyniki z tygodnia:"
@@ -571,6 +571,10 @@ object TextsMobilePL : MobileTexts {
     override val LIVE_TRACKING_MAP_NORTH = "Północ"
     override val LIVE_TRACKING_MAP_DIRECTION = "Kierunek"
     override val LIVE_TRACKING_WAITING_FOR_WATCH = "Oczekiwanie na sygnał z zegarka..."
+    override val LIVE_TRACKING_FINISHED_TITLE = "Aktywność zakończona"
+    override val LIVE_TRACKING_FINISHED_DESC = "Aktywność zakończona z sukcesem"
+    override val LIVE_TRACKING_BTN_FINISH = "Zakończ"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Obejrzyj mapę"
     
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Usługi Wearable są niedostępne na tym urządzeniu"

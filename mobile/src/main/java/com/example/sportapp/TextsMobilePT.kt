@@ -24,8 +24,8 @@ object TextsMobilePT : MobileTexts {
     override val HOME_SECRET_TITLE = "É ótimo que você esteja clicando, mas não há nada aqui"
     override val HOME_CLOSE = "Fechar"
     override val HOME_START_LIVE = "Iniciar Live Tracking"
-    override val HOME_ACTIVE_WORKOUT = "Trwa aktywność"
-    override val HOME_RESUME_TRACKING = "Wróć do śledzenia"
+    override val HOME_ACTIVE_WORKOUT = "Treino em andamento"
+    override val HOME_RESUME_TRACKING = "Retomar acompanhamento"
 
     override fun homeResultsToday() = "Resultados de hoje:"
     override fun homeResultsWeek() = "Resultados da semana:"
@@ -59,13 +59,13 @@ object TextsMobilePT : MobileTexts {
     override val SETTINGS_CANCEL = "Cancelar"
     override val SETTINGS_CLOSE = "Fechar"
     override val SETTINGS_PERIOD = "Período padrão"
-    override val SETTINGS_PERIOD_HOME_DESC = "Para qual período mostrar os widgets?"
+    override val SETTINGS_PERIOD_HOME_DESC = "Para qual período mostrar los widgets?"
     override val SETTINGS_PERIOD_WATCH_DESC = "Estatísticas de qual período?"
     override val SETTINGS_CUSTOM_DAYS_LABEL = "Número de dias"
     override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Dias de estatísticas"
     override val SETTINGS_CUSTOM_DAYS_DESC = "Número de dias para o período 'Outro'"
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Número de dias para as estatísticas do relógio"
-    override val SETTINGS_INTEGRATION = "Integrazione"
+    override val SETTINGS_INTEGRATION = "Integração"
     override val SETTINGS_SYNC = "Sincronização"
     override val SETTINGS_STRAVA = "Strava"
     override val SETTINGS_STRAVA_DESC = "Sincronize seus treinos com o Strava"
@@ -74,7 +74,7 @@ object TextsMobilePT : MobileTexts {
     override val SETTINGS_APPEARANCE = "Aparência"
     override val SETTINGS_MY_PROFILE = "Meu perfil"
     override val LANG_PL = "Polonês"
-    override val LANG_EN = "Inglés"
+    override val LANG_EN = "Inglês"
 
     // Health Connect Strings
     override val SETTINGS_HC_TITLE = "Health Connect"
@@ -86,8 +86,8 @@ object TextsMobilePT : MobileTexts {
     override val HC_INSTALL = "Instalar"
     override val HC_SYNC_HEALTH_DATA = "Sincronizar com Health Connect"
     override val HC_SYNC_WORKOUTS = "Importar treinos do Health Connect"
-    override val HC_SYNC_CONFIRM_TITLE = "Sincronização de danych"
-    override val HC_SYNC_CONFIRM_DESC = "Deseja atualizar seu perfil com os danych encontrados no Health Connect?"
+    override val HC_SYNC_CONFIRM_TITLE = "Sincronização de dados"
+    override val HC_SYNC_CONFIRM_DESC = "Deseja atualizar seu perfil com os dados encontrados no Health Connect?"
     override val HC_SYNC_SUCCESS = "Sincronização bem-sucedida"
     override val HC_SYNC_ERROR = "Erro de sincronização"
     override val HC_SYNC_NO_DATA = "Nenhum dado novo encontrado"
@@ -120,9 +120,9 @@ object TextsMobilePT : MobileTexts {
 
     // Stage 6 - Sync Status
     override val SYNC_STATUS_TITLE = "Status de sincronização HC"
-    override val SYNC_LAST_HEALTH = "Última sync danych de saúde"
+    override val SYNC_LAST_HEALTH = "Última sync dados de saúde"
     override val SYNC_LAST_WORKOUT = "Última sync treinos"
-    override val SYNC_UNSYNCED_COUNT = "Registros no sincronizados"
+    override val SYNC_UNSYNCED_COUNT = "Registros não sincronizados"
     override val SYNC_NOW = "Sincronizar agora"
     override val SYNC_HISTORY_TITLE = "Histórico de sincronização"
     override val SYNC_TYPE_IMPORT = "Import"
@@ -135,12 +135,12 @@ object TextsMobilePT : MobileTexts {
 
     // Health Connect Permissions Dialog
     override val HC_PERMISSIONS_DIALOG_TITLE = "Permissões necessárias"
-    override val HC_PERMISSIONS_DIALOG_DESC = "As permissões de escrita są necessárias para exportar treinos para o Health Connect. Você pode concedê-las nas configurações do sistema."
+    override val HC_PERMISSIONS_DIALOG_DESC = "As permissões de escrita são necessárias para exportar treinos para o Health Connect. Você pode concedê-las nas configurações do sistema."
     override val HC_OPEN_SETTINGS = "Abrir configurações"
 
     // Health Data Screen
     override val HEALTH_TITLE = "Dados de saúde"
-    override val HEALTH_GENDER = "Gênero"
+    override val HEALTH_GENDER = "Płeć"
     override val HEALTH_GENDER_MALE = "Masculino"
     override val HEALTH_GENDER_FEMALE = "Feminino"
     override val HEALTH_AGE = "Idade"
@@ -181,7 +181,7 @@ object TextsMobilePT : MobileTexts {
     override val ACTIVITY_IMPORT_SELECT_DESC = "Selecione o tipo de treino para o arquivo GPX importado:"
     override val ACTIVITY_IMPORT_WARNING = "Aviso"
     override val ACTIVITY_IMPORT_CONTINUE = "Continuar"
-    override val ACTIVITY_IMPORT_PROGRESS = "Importando danych..."
+    override val ACTIVITY_IMPORT_PROGRESS = "Importando dados..."
     override val ACTIVITY_EXPORT_ERROR = "Erro de exportação"
     override val ACTIVITY_SHARE_TITLE = "Compartilhar treino(s)"
     override val ACTIVITY_OK = "OK"
@@ -314,7 +314,7 @@ object TextsMobilePT : MobileTexts {
     override val DEF_BASEBALL = "Beisebol"
     override val DEF_SKATEBOARDING = "Skate"
     override val DEF_COMPETITION = "Competição"
-    override val DEF_STOPWATCH = "Cronômetro"
+    override val DEF_STOPWATCH = "Cronometro"
     override val DEF_OTHER = "Outro"
     override val DEF_STANDARD_ACTIVITY = "Atividade padrão"
 
@@ -347,8 +347,8 @@ object TextsMobilePT : MobileTexts {
     // Compare Screen
     override val COMPARE_TITLE = "Comparação de atividade"
     override val COMPARE_VS = "Comparação:"
-    override val COMPARE_HIGHER_IS_BETTER = "Um resultado maior é melhor"
-    override val COMPARE_LOWER_IS_BETTER = "Um resultado menor é melhor"
+    override val COMPARE_HIGHER_IS_BETTER = "Um resultado maior é lepiej"
+    override val COMPARE_LOWER_IS_BETTER = "Um resultado menor é lepiej"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Inicializando exportação..."
@@ -448,6 +448,55 @@ object TextsMobilePT : MobileTexts {
     override val UNIT_KCAL_MIN = "kcal/min"
     override val UNIT_VO2_MAX = "ml/kg/min"
 
+    // Strava Strings
+    override val STRAVA_TITLE = "Sincronização com Strava"
+    override val STRAVA_CONNECT = "Conectar conta Strava"
+    override val STRAVA_DISCONNECT = "Desconectar conta Strava"
+    override val STRAVA_CONNECTED = "Conectado ao Strava"
+    override val STRAVA_NOT_CONNECTED = "Não conectado"
+    override val STRAVA_SYNC_NOW = "Sincronizar agora"
+    override val STRAVA_SYNC_SUCCESS = "Treino enviado!"
+    override val STRAVA_SYNC_FAILED = "Falha no envio"
+    override val STRAVA_SYNCING = "Enviando..."
+    override val STRAVA_AUTH_ERROR = "Erro de autenticação"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportação automática"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Exportar automaticamente novos treinos para o Strava"
+    override val STRAVA_SYNC_LOG = "história"
+    override val STRAVA_SYNC_LOG_EMPTY = "Nenhum dado para sincronizar"
+
+    // Live Tracking
+    override val LIVE_TRACKING_TITLE = "Live Tracking"
+    override val LIVE_TRACKING_SELECT_ACTIVITY = "Selecionar atividade"
+    override val LIVE_TRACKING_LOCK = "Bloquear"
+    override val LIVE_TRACKING_UNLOCK_SWIPE = "Deslize para cima para desbloquear"
+    override val LIVE_TRACKING_MAP_NORTH = "Norte"
+    override val LIVE_TRACKING_MAP_DIRECTION = "Direção"
+    override val LIVE_TRACKING_WAITING_FOR_WATCH = "Esperando sinal do relógio..."
+    override val LIVE_TRACKING_FINISHED_TITLE = "Atividade terminada"
+    override val LIVE_TRACKING_FINISHED_DESC = "A atividade foi registrada com sucesso."
+    override val LIVE_TRACKING_BTN_FINISH = "Terminar"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Ver o mapa"
+
+    // Trim Screen
+    override val TRIM_TITLE = "Editar treino (Cortar)"
+    override val TRIM_CONFIRM_TITLE = "Confirmar corte"
+    override val TRIM_CONFIRM_DESC = "Tem certeza de que deseja excluir os danych fora do intervalo selecionado? Esses danych serão excluídos permanentemente."
+    override val TRIM_SAVE_BTN = "Cortar e salvar"
+    override val TRIM_CHART_HR = "Gráfico de FC"
+    override val TRIM_RANGE_TITLE = "Selecionar intervalo de treino"
+    override val TRIM_PREVIEW_TITLE = "Visualização de novas estatísticas"
+    override val TRIM_NEW_DURATION = "Nova duração:"
+    override val TRIM_DISTANCE_GPS = "Distância (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Distância (Passos):"
+    override val TRIM_CALORIES = "Calorias queimadas:"
+    override val TRIM_AVG_BPM = "FC média:"
+    override val TRIM_START = "Início"
+    override val TRIM_END = "Fim"
+    
+    // Errors
+    override val ERROR_WEARABLE_NOT_AVAILABLE = "A API Wearable não está disponível neste dispositivo"
+    override val ERROR_NO_WATCH_CONNECTED = "Nenhum relógio conectado"
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -530,49 +579,4 @@ object TextsMobilePT : MobileTexts {
             else -> id
         }
     }
-
-    // Strava Strings
-    override val STRAVA_TITLE = "Sincronização com Strava"
-    override val STRAVA_CONNECT = "Conectar conta Strava"
-    override val STRAVA_DISCONNECT = "Desconectar conta Strava"
-    override val STRAVA_CONNECTED = "Conectado ao Strava"
-    override val STRAVA_NOT_CONNECTED = "Não conectado"
-    override val STRAVA_SYNC_NOW = "Sincronizar agora"
-    override val STRAVA_SYNC_SUCCESS = "Treino enviado!"
-    override val STRAVA_SYNC_FAILED = "Falha no envio"
-    override val STRAVA_SYNCING = "Enviando..."
-    override val STRAVA_AUTH_ERROR = "Erro de autenticação"
-    override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportação automática"
-    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Exportar automaticamente novos treinos para o Strava"
-    override val STRAVA_SYNC_LOG = "historia"
-    override val STRAVA_SYNC_LOG_EMPTY = "Nenhum dado para sincronizar"
-
-    // Live Tracking
-    override val LIVE_TRACKING_TITLE = "Live Tracking"
-    override val LIVE_TRACKING_SELECT_ACTIVITY = "Selecionar atividade"
-    override val LIVE_TRACKING_LOCK = "Bloquear"
-    override val LIVE_TRACKING_UNLOCK_SWIPE = "Deslize para cima para desbloquear"
-    override val LIVE_TRACKING_MAP_NORTH = "Norte"
-    override val LIVE_TRACKING_MAP_DIRECTION = "Direção"
-    override val LIVE_TRACKING_WAITING_FOR_WATCH = "Esperando sinal do relógio..."
-
-    // Trim Screen
-    override val TRIM_TITLE = "Editar treino (Cortar)"
-    override val TRIM_CONFIRM_TITLE = "Confirmar corte"
-    override val TRIM_CONFIRM_DESC = "Tem certeza de que deseja excluir os dados fora do intervalo selecionado? Esses dados serão excluídos permanentemente."
-    override val TRIM_SAVE_BTN = "Cortar e salvar"
-    override val TRIM_CHART_HR = "Gráfico de FC"
-    override val TRIM_RANGE_TITLE = "Selecionar intervalo de treino"
-    override val TRIM_PREVIEW_TITLE = "Visualização de novas estatísticas"
-    override val TRIM_NEW_DURATION = "Nova duração:"
-    override val TRIM_DISTANCE_GPS = "Distância (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Distância (Passos):"
-    override val TRIM_CALORIES = "Calorias queimadas:"
-    override val TRIM_AVG_BPM = "FC média:"
-    override val TRIM_START = "Início"
-    override val TRIM_END = "Fim"
-    
-    // Errors
-    override val ERROR_WEARABLE_NOT_AVAILABLE = "A API Wearable não está disponível neste dispositivo"
-    override val ERROR_NO_WATCH_CONNECTED = "Nenhum relógio conectado"
 }

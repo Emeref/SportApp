@@ -482,6 +482,10 @@ interface MobileTexts {
     val LIVE_TRACKING_MAP_NORTH: String
     val LIVE_TRACKING_MAP_DIRECTION: String
     val LIVE_TRACKING_WAITING_FOR_WATCH: String
+    val LIVE_TRACKING_FINISHED_TITLE: String
+    val LIVE_TRACKING_FINISHED_DESC: String
+    val LIVE_TRACKING_BTN_FINISH: String
+    val LIVE_TRACKING_BTN_VIEW_MAP: String
     
     // Errors
     val ERROR_WEARABLE_NOT_AVAILABLE: String
