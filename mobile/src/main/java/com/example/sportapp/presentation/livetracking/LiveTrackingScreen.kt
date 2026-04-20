@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -109,7 +111,19 @@ fun LiveTrackingScreen(
                 TopAppBar(
                     title = { 
                         Column {
-                            Text(activeDefinition?.name ?: texts.LIVE_TRACKING_TITLE)
+                            val rawName = activeDefinition?.name ?: texts.LIVE_TRACKING_TITLE
+                            val truncatedName = if (rawName.length > 15) {
+                                rawName.take(14) + "..."
+                            } else {
+                                rawName
+                            }
+                            
+                            Text(
+                                text = truncatedName,
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip
+                            )
+                            
                             if (isFullScreenMap) {
                                 val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
                                 Text(
@@ -132,6 +146,17 @@ fun LiveTrackingScreen(
                     },
                     actions = {
                         if (!isFullScreenMap) {
+                            val duration = sensorData["duration"] ?: "00:00:00"
+                            // Rezerwujemy miejsce dla hh:mm:ss (około 90dp powinno wystarczyć)
+                            Text(
+                                text = duration,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.widthIn(min = 90.dp).padding(end = 8.dp)
+                            )
+                            
                             IconButton(onClick = { viewModel.setLocked(true) }) {
                                 Icon(Icons.Default.Lock, contentDescription = texts.LIVE_TRACKING_LOCK)
                             }
@@ -218,7 +243,7 @@ fun LiveTrackingScreen(
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (activeWidgets.isEmpty()) {
                                     // Fallback to raw sensor keys if no definition is active yet
-                                    val keys = sensorData.keys.filter { it != "duration" && it != "timestamp" && it != "definitionId" && it != "isFinished" }.take(4)
+                                    val keys = sensorData.keys.filter { it != "duration" && it != "timestamp" && it != "definitionId" && it != "isFinished" && it != "startTime" }.take(4)
                                     keys.chunked(2).forEach { rowKeys ->
                                         Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                             rowKeys.forEach { key ->
