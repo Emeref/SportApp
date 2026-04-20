@@ -66,6 +66,9 @@ class LiveTrackingViewModel @Inject constructor(
 
     private var lastBearing = 0f
     private val _sessionStartTime = MutableStateFlow(0L)
+    
+    // Zapamiętujemy czas utworzenia ViewModelu, aby ignorować stare dane z Data Layer
+    private val viewModelCreatedAt = System.currentTimeMillis()
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -95,7 +98,7 @@ class LiveTrackingViewModel @Inject constructor(
         dataClient.addListener(this)
         startLocationUpdates()
         
-        // Obserwuj bazę danych w poszukiwaniu zakończenia AKTUALNEJ aktywności
+        // Obserwuj bazę danych ORAZ sessionStartTime w poszukiwaniu zakończenia AKTUALNEJ aktywności
         viewModelScope.launch {
             combine(_sessionStartTime, repository.getAllWorkouts()) { startTime, workouts ->
                 if (startTime != 0L) {
@@ -109,14 +112,21 @@ class LiveTrackingViewModel @Inject constructor(
             }
         }
 
-        // Check for existing data and initial finish state via Wear Data Layer
+        // Sprawdzamy stan początkowy, ale ignorujemy dane starsze niż moment otwarcia ekranu
         viewModelScope.launch {
             try {
                 val dataItemBuffer = dataClient.dataItems.await()
                 try {
                     dataItemBuffer.forEach { item ->
                         if (item.uri.path == "/workout_data") {
-                            processDataMap(DataMapItem.fromDataItem(item).dataMap)
+                            val dataMap = DataMapItem.fromDataItem(item).dataMap
+                            val timestamp = dataMap.getLong("timestamp", 0L)
+                            // Jeśli dane są świeże (sprzed max 10s lub nowsze), to je procesujemy
+                            if (timestamp > viewModelCreatedAt - 10000) {
+                                processDataMap(dataMap)
+                            } else {
+                                Log.d("LiveTrackingVM", "Ignoring old data item from previous session")
+                            }
                         }
                     }
                 } finally {
@@ -193,6 +203,7 @@ class LiveTrackingViewModel @Inject constructor(
 
         val finished = dataMap.getBoolean("isFinished", false)
         if (finished && !_isFinished.value) {
+            // Dodatkowe sprawdzenie czy to na pewno ten sam trening
             Log.d("LiveTrackingVM", "Detected isFinished flag from Wear data map, triggering popup")
             _isFinished.value = true
         }
