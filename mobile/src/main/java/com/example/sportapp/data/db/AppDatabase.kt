@@ -172,9 +172,16 @@ abstract class AppDatabase : RoomDatabase() {
                 addColumnIfNotExists("workouts", "maxPressure", "REAL")
                 addColumnIfNotExists("workouts", "minPressure", "REAL")
                 addColumnIfNotExists("workouts", "bestPace1km", "REAL")
+                addColumnIfNotExists("workouts", "destinationLatitude", "REAL")
+                addColumnIfNotExists("workouts", "destinationLongitude", "REAL")
                 
                 // Add missing columns to workout_points table
                 addColumnIfNotExists("workout_points", "pressure", "REAL")
+
+                // Add missing columns to workout_definitions table
+                addColumnIfNotExists("workout_definitions", "autoLapDistance", "REAL")
+                addColumnIfNotExists("workout_definitions", "sortOrder", "INTEGER NOT NULL DEFAULT 0")
+                addColumnIfNotExists("workout_definitions", "displayOrder", "INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

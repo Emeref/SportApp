@@ -1,5 +1,7 @@
 package com.example.sportapp.presentation.livetracking
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,9 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.sportapp.LocalMobileTexts
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -31,6 +35,7 @@ fun LiveTrackingScreen(
     onBack: () -> Unit
 ) {
     val texts = LocalMobileTexts.current
+    val context = LocalContext.current
     val currentLocation by viewModel.currentLocation.collectAsState()
     val routePoints by viewModel.routePoints.collectAsState()
     val sensorData by viewModel.sensorData.collectAsState()
@@ -41,6 +46,14 @@ fun LiveTrackingScreen(
     val activeDefinition by viewModel.activeDefinition.collectAsState()
 
     val cameraPositionState = rememberCameraPositionState()
+
+    // Check permissions for MyLocation layer
+    val hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        )
+    }
 
     // Update camera when autoCenter is enabled
     LaunchedEffect(currentLocation, autoCenter, mapRotation, isNorthOriented) {
@@ -98,7 +111,7 @@ fun LiveTrackingScreen(
                             myLocationButtonEnabled = false
                         ),
                         properties = MapProperties(
-                            isMyLocationEnabled = true
+                            isMyLocationEnabled = hasLocationPermission
                         )
                     ) {
                         if (routePoints.isNotEmpty()) {

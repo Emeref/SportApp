@@ -4,6 +4,7 @@ import android.content.Intent
 import android.util.Log
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.presentation.MainActivity
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.settings.SettingsManager
 import com.example.sportapp.presentation.settings.WidgetItem
@@ -61,6 +62,13 @@ class WearSyncService : WearableListenerService() {
                             putExtra(WorkoutService.EXTRA_HEALTH_DATA_JSON, gson.toJson(hData))
                         }
                         startForegroundService(intent)
+                        
+                        // Otwórz interfejs treningu na zegarku
+                        val activityIntent = Intent(this@WearSyncService, MainActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                            putExtra("EXTRA_DEFINITION_ID", definitionId)
+                        }
+                        startActivity(activityIntent)
                         
                         // Send confirmation back
                         val nodeClient = Wearable.getNodeClient(this@WearSyncService)
