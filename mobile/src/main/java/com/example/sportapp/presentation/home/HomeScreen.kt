@@ -27,6 +27,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.MobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.presentation.definitions.getIconForName
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -124,7 +125,7 @@ fun HomeScreen(
                             headlineContent = { Text(definition.name) },
                             leadingContent = {
                                 Icon(
-                                    imageVector = getIconVector(definition.iconName),
+                                    imageVector = getIconForName(definition.iconName),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -203,6 +204,7 @@ fun HomeScreen(
             ) {
                 ActiveWorkoutCard(
                     definitionName = activeDefinition?.name ?: texts.HOME_ACTIVE_WORKOUT,
+                    iconName = activeDefinition?.iconName ?: "DirectionsRun",
                     data = activeWorkoutData ?: emptyMap(),
                     texts = texts,
                     onClick = onNavigateToLiveTracking
@@ -255,6 +257,7 @@ fun HomeScreen(
 @Composable
 fun ActiveWorkoutCard(
     definitionName: String,
+    iconName: String,
     data: Map<String, String>,
     texts: MobileTexts,
     onClick: () -> Unit
@@ -276,11 +279,19 @@ fun ActiveWorkoutCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = definitionName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = getIconForName(iconName),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = definitionName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 Text(
                     text = data["duration"] ?: "00:00",
                     style = MaterialTheme.typography.headlineSmall,
@@ -288,7 +299,7 @@ fun ActiveWorkoutCard(
                 )
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -313,19 +324,6 @@ fun LiveMiniStat(label: String, value: String) {
     Column {
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
         Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-    }
-}
-
-fun getIconVector(iconName: String): ImageVector {
-    return when (iconName) {
-        "directions_run" -> Icons.AutoMirrored.Filled.DirectionsRun
-        "directions_walk" -> Icons.AutoMirrored.Filled.DirectionsWalk
-        "directions_bike" -> Icons.Default.DirectionsBike
-        "hiking" -> Icons.Default.Hiking
-        "pool" -> Icons.Default.Pool
-        "fitness_center" -> Icons.Default.FitnessCenter
-        "timer" -> Icons.Default.Timer
-        else -> Icons.Default.FitnessCenter
     }
 }
 
