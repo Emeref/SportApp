@@ -17,11 +17,13 @@ import com.google.android.gms.location.*
 import com.google.android.gms.wearable.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import kotlin.math.*
+import java.util.Locale
 
 @HiltViewModel
 class LiveTrackingViewModel @Inject constructor(
@@ -67,6 +69,14 @@ class LiveTrackingViewModel @Inject constructor(
     private var lastBearing = 0f
     private val _sessionStartTime = MutableStateFlow(0L)
     
+    // Timer lokalny dla płynnego odświeżania czasu co sekundę
+    private val _currentDurationSeconds = MutableStateFlow(0L)
+    val formattedDuration = _currentDurationSeconds.map { formatSeconds(it) }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "00:00"
+    )
+    
     // Zapamiętujemy czas utworzenia ViewModelu, aby ignorować stare dane z Data Layer
     private val viewModelCreatedAt = System.currentTimeMillis()
 
@@ -97,6 +107,17 @@ class LiveTrackingViewModel @Inject constructor(
     init {
         dataClient.addListener(this)
         startLocationUpdates()
+        
+        // Pętla timera lokalnego
+        viewModelScope.launch {
+            while (true) {
+                delay(1000)
+                // Inkrementujemy tylko jeśli sesja trwa i nie jest zakończona
+                if (!_isFinished.value && _sessionStartTime.value != 0L) {
+                    _currentDurationSeconds.value++
+                }
+            }
+        }
         
         // Obserwuj bazę danych ORAZ sessionStartTime w poszukiwaniu zakończenia AKTUALNEJ aktywności
         viewModelScope.launch {
@@ -201,9 +222,19 @@ class LiveTrackingViewModel @Inject constructor(
             }
         }
 
+        // Synchronizacja czasu trwania z zegarkiem (co ~5s)
+        if (dataMap.containsKey("duration")) {
+            val watchDuration = dataMap.getString("duration") ?: ""
+            val watchSeconds = parseDurationToSeconds(watchDuration)
+            // Jeśli różnica jest większa niż 2 sekundy, nadpisujemy lokalny licznik
+            if (abs(watchSeconds - _currentDurationSeconds.value) > 2) {
+                _currentDurationSeconds.value = watchSeconds
+                Log.d("LiveTrackingVM", "Synced local timer with watch: $watchDuration (watch=$watchSeconds, local=${_currentDurationSeconds.value})")
+            }
+        }
+
         val finished = dataMap.getBoolean("isFinished", false)
         if (finished && !_isFinished.value) {
-            // Dodatkowe sprawdzenie czy to na pewno ten sam trening
             Log.d("LiveTrackingVM", "Detected isFinished flag from Wear data map, triggering popup")
             _isFinished.value = true
         }
@@ -214,6 +245,27 @@ class LiveTrackingViewModel @Inject constructor(
                 setActiveDefinition(defId)
             }
         }
+    }
+
+    private fun parseDurationToSeconds(duration: String): Long {
+        val parts = duration.split(":")
+        return try {
+            when (parts.size) {
+                3 -> parts[0].toLong() * 3600 + parts[1].toLong() * 60 + parts[2].toLong()
+                2 -> parts[0].toLong() * 60 + parts[1].toLong()
+                else -> 0L
+            }
+        } catch (e: Exception) {
+            0L
+        }
+    }
+
+    private fun formatSeconds(seconds: Long): String {
+        val h = seconds / 3600
+        val m = (seconds % 3600) / 60
+        val s = seconds % 60
+        return if (h > 0) String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+        else String.format(Locale.US, "%02d:%02d", m, s)
     }
 
     private fun updateRotation(location: Location) {
@@ -266,6 +318,7 @@ class LiveTrackingViewModel @Inject constructor(
             liveLocationDao.clear()
             _isFinished.value = false // Reset state for next session
             _sessionStartTime.value = 0L
+            _currentDurationSeconds.value = 0L
         }
     }
 }

@@ -49,6 +49,7 @@ fun LiveTrackingScreen(
     val isNorthOriented by viewModel.isNorthOriented.collectAsState()
     val activeDefinition by viewModel.activeDefinition.collectAsState()
     val isFinished by viewModel.isFinished.collectAsState()
+    val formattedDuration by viewModel.formattedDuration.collectAsState()
 
     val cameraPositionState = rememberCameraPositionState()
     var isFullScreenMap by remember { mutableStateOf(false) }
@@ -146,10 +147,9 @@ fun LiveTrackingScreen(
                     },
                     actions = {
                         if (!isFullScreenMap) {
-                            val duration = sensorData["duration"] ?: "00:00:00"
                             // Rezerwujemy miejsce dla hh:mm:ss (około 90dp powinno wystarczyć)
                             Text(
-                                text = duration,
+                                text = formattedDuration,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
