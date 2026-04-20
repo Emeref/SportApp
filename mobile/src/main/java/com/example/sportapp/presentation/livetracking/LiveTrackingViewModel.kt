@@ -11,6 +11,7 @@ import com.example.sportapp.AppConstants
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.db.LiveLocationDao
 import com.example.sportapp.data.db.LiveLocationPoint
+import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.google.android.gms.location.*
 import com.google.android.gms.wearable.*
@@ -64,7 +65,7 @@ class LiveTrackingViewModel @Inject constructor(
     val isNorthOriented = _isNorthOriented.asStateFlow()
 
     private var lastBearing = 0f
-    private var sessionStartTime: Long = 0L
+    private val _sessionStartTime = MutableStateFlow(0L)
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -96,13 +97,14 @@ class LiveTrackingViewModel @Inject constructor(
         
         // Obserwuj bazę danych w poszukiwaniu zakończenia AKTUALNEJ aktywności
         viewModelScope.launch {
-            repository.getAllWorkouts().collect { workouts ->
-                if (sessionStartTime != 0L) {
-                    val currentWorkout = workouts.find { it.startTime == sessionStartTime }
-                    if (currentWorkout?.isFinished == true && !_isFinished.value) {
-                        Log.d("LiveTrackingVM", "Detected current workout finished in DB, triggering popup")
-                        _isFinished.value = true
-                    }
+            combine(_sessionStartTime, repository.getAllWorkouts()) { startTime, workouts ->
+                if (startTime != 0L) {
+                    workouts.find { it.startTime == startTime }
+                } else null
+            }.collect { currentWorkout ->
+                if (currentWorkout?.isFinished == true && !_isFinished.value) {
+                    Log.d("LiveTrackingVM", "Detected current workout finished in DB (startTime: ${currentWorkout.startTime}), triggering popup")
+                    _isFinished.value = true
                 }
             }
         }
@@ -182,12 +184,16 @@ class LiveTrackingViewModel @Inject constructor(
         _sensorData.value = newData
         
         if (dataMap.containsKey("startTime")) {
-            sessionStartTime = dataMap.getLong("startTime")
+            val startTime = dataMap.getLong("startTime")
+            if (_sessionStartTime.value != startTime) {
+                _sessionStartTime.value = startTime
+                Log.d("LiveTrackingVM", "Session startTime set to: $startTime")
+            }
         }
 
         val finished = dataMap.getBoolean("isFinished", false)
         if (finished && !_isFinished.value) {
-            Log.d("LiveTrackingVM", "Detected isFinished flag from Wear, triggering popup")
+            Log.d("LiveTrackingVM", "Detected isFinished flag from Wear data map, triggering popup")
             _isFinished.value = true
         }
 
@@ -248,6 +254,7 @@ class LiveTrackingViewModel @Inject constructor(
         viewModelScope.launch {
             liveLocationDao.clear()
             _isFinished.value = false // Reset state for next session
+            _sessionStartTime.value = 0L
         }
     }
 }
