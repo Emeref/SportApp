@@ -24,6 +24,8 @@ object TextsMobileEN : MobileTexts {
     override val HOME_SECRET_TITLE = "Great that you're clicking, but there's nothing here"
     override val HOME_CLOSE = "Close"
     override val HOME_START_LIVE = "Start Live Tracking"
+    override val HOME_ACTIVE_WORKOUT = "Workout in progress"
+    override val HOME_RESUME_TRACKING = "Resume tracking"
 
     override fun homeResultsToday() = "Today's results:"
     override fun homeResultsWeek() = "Weekly results:"
@@ -539,7 +541,7 @@ object TextsMobileEN : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
-            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "avg_cadence" -> WIDGET_AVG_BPM
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> id
         }

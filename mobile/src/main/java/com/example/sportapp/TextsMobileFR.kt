@@ -24,6 +24,8 @@ object TextsMobileFR : MobileTexts {
     override val HOME_SECRET_TITLE = "C'est super de cliquer, mais il n'y a rien ici"
     override val HOME_CLOSE = "Fermer"
     override val HOME_START_LIVE = "Démarrer le Live Tracking"
+    override val HOME_ACTIVE_WORKOUT = "Trwa aktywność"
+    override val HOME_RESUME_TRACKING = "Wróć do śledzenia"
 
     override fun homeResultsToday() = "Résultats d'aujourd'hui :"
     override fun homeResultsWeek() = "Résultats de la semaine :"

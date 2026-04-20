@@ -24,6 +24,8 @@ object TextsMobileDE : MobileTexts {
     override val HOME_SECRET_TITLE = "Schön, dass du klickst, ale tutaj nic nie ma"
     override val HOME_CLOSE = "Schließen"
     override val HOME_START_LIVE = "Live-Tracking starten"
+    override val HOME_ACTIVE_WORKOUT = "Workout läuft"
+    override val HOME_RESUME_TRACKING = "Zurück zum Tracking"
 
     override fun homeResultsToday() = "Heutige Ergebnisse:"
     override fun homeResultsWeek() = "Wöchentliche Ergebnisse:"
@@ -356,9 +358,9 @@ object TextsMobileDE : MobileTexts {
 
     // Gpx Importer
     override val GPX_NO_POINTS = "GPX-Datei enthält keine Trackpunkte."
-    override val GPX_WARN_HR = "Datei enthält HF-Daten, aber die gewählte Aktivität unterstützt diese nie."
-    override val GPX_WARN_ELE = "Datei enthält Höhendaten, aber die gewählte Aktivität unterstützt diese nie."
-    override val GPX_WARN_CADENCE = "Datei enthält Trittfrequenzdaten, aber die gewählte Aktivität unterstützt diese nie."
+    override val GPX_WARN_HR = "Datei enthält HF-Daten, ale wybrana aktywność ich nie obsługuje."
+    override val GPX_WARN_ELE = "Datei enthält Höhendaten, ale wybrana aktywność ich nie obsługuje."
+    override val GPX_WARN_CADENCE = "Datei enthält Trittfrequenzdaten, ale wybrana aktywność ich nie obsługuje."
 
     // Periods
     override val PERIOD_TODAY = "Heute"

@@ -23,6 +23,8 @@ interface MobileTexts {
     val HOME_SECRET_TITLE: String
     val HOME_CLOSE: String
     val HOME_START_LIVE: String
+    val HOME_ACTIVE_WORKOUT: String
+    val HOME_RESUME_TRACKING: String
     fun homeResultsToday(): String
     fun homeResultsWeek(): String
     fun homeResultsMonth(): String

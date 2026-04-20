@@ -12,11 +12,11 @@ import com.example.sportapp.data.model.WorkoutSensor
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.wearable.MessageClient
-import com.google.android.gms.wearable.MessageEvent
-import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -28,10 +28,11 @@ class HomeViewModel @Inject constructor(
     private val repository: IWorkoutRepository,
     private val syncStatusManager: SyncStatusManager,
     private val liveLocationDao: LiveLocationDao
-) : ViewModel(), MessageClient.OnMessageReceivedListener {
+) : ViewModel(), MessageClient.OnMessageReceivedListener, DataClient.OnDataChangedListener {
     private val settingsManager = MobileSettingsManager(context)
     private val messageClient by lazy { Wearable.getMessageClient(context) }
     private val nodeClient by lazy { Wearable.getNodeClient(context) }
+    private val dataClient by lazy { Wearable.getDataClient(context) }
 
     private val _settings = settingsManager.settingsFlow.stateIn(
         scope = viewModelScope,
@@ -67,11 +68,34 @@ class HomeViewModel @Inject constructor(
     private val _errorEvent = MutableSharedFlow<String>()
     val errorEvent = _errorEvent.asSharedFlow()
 
+    private val _activeWorkoutData = MutableStateFlow<Map<String, String>?>(null)
+    val activeWorkoutData = _activeWorkoutData.asStateFlow()
+
+    private val _activeDefinition = MutableStateFlow<WorkoutDefinition?>(null)
+    val activeDefinition = _activeDefinition.asStateFlow()
+
+    private var activityTimeoutJob: Job? = null
+
     init {
         try {
             messageClient.addListener(this)
+            dataClient.addListener(this)
+            
+            // Check if there is existing data on startup
+            viewModelScope.launch {
+                try {
+                    val dataItems = dataClient.dataItems.await()
+                    dataItems.forEach { item ->
+                        if (item.uri.path == "/workout_data") {
+                            processWorkoutData(item)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("HomeViewModel", "Error fetching initial data items", e)
+                }
+            }
         } catch (e: Exception) {
-            Log.e("HomeViewModel", "init: Error adding listener", e)
+            Log.e("HomeViewModel", "init: Error adding listeners", e)
         }
     }
 
@@ -79,8 +103,9 @@ class HomeViewModel @Inject constructor(
         super.onCleared()
         try {
             messageClient.removeListener(this)
+            dataClient.removeListener(this)
         } catch (e: Exception) {
-            Log.e("HomeViewModel", "onCleared: Error removing listener", e)
+            Log.e("HomeViewModel", "onCleared: Error removing listeners", e)
         }
     }
 
@@ -90,6 +115,45 @@ class HomeViewModel @Inject constructor(
                 liveLocationDao.clear() // Clear old data before starting new session
                 _navigationEvent.emit("live_tracking")
             }
+        }
+    }
+
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        try {
+            dataEvents.forEach { event ->
+                if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/workout_data") {
+                    processWorkoutData(event.dataItem)
+                }
+            }
+        } finally {
+            dataEvents.release()
+        }
+    }
+
+    private fun processWorkoutData(dataItem: DataItem) {
+        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+        val newData = mutableMapOf<String, String>()
+        dataMap.keySet().forEach { key ->
+            newData[key] = dataMap.get<Any>(key).toString()
+        }
+        
+        _activeWorkoutData.value = newData
+        
+        if (dataMap.containsKey("definitionId")) {
+            val defId = dataMap.getLong("definitionId")
+            if (_activeDefinition.value?.id != defId) {
+                viewModelScope.launch {
+                    _activeDefinition.value = repository.getDefinitionById(defId)
+                }
+            }
+        }
+
+        // Start or reset timeout job - if no data for 30s, assume finished
+        activityTimeoutJob?.cancel()
+        activityTimeoutJob = viewModelScope.launch {
+            delay(30000)
+            _activeWorkoutData.value = null
+            _activeDefinition.value = null
         }
     }
 

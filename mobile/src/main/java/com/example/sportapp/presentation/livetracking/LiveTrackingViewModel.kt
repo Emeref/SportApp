@@ -116,28 +116,36 @@ class LiveTrackingViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
-        dataClient.removeListener(this)
+        try {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+            dataClient.removeListener(this)
+        } catch (e: Exception) {
+            Log.e("LiveTrackingViewModel", "Error removing listeners", e)
+        }
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
-        dataEvents.forEach { event ->
-            if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/workout_data") {
-                val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
-                val newData = mutableMapOf<String, String>()
-                dataMap.keySet().forEach { key ->
-                    newData[key] = dataMap.get<Any>(key).toString()
-                }
-                _sensorData.value = newData
-                
-                // If definition ID is sent in data map, we can update it
-                if (dataMap.containsKey("definitionId")) {
-                    val defId = dataMap.getLong("definitionId")
-                    if (_activeDefinition.value?.id != defId) {
-                        setActiveDefinition(defId)
+        try {
+            dataEvents.forEach { event ->
+                if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/workout_data") {
+                    val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
+                    val newData = mutableMapOf<String, String>()
+                    dataMap.keySet().forEach { key ->
+                        newData[key] = dataMap.get<Any>(key).toString()
+                    }
+                    _sensorData.value = newData
+                    
+                    // If definition ID is sent in data map, we can update it
+                    if (dataMap.containsKey("definitionId")) {
+                        val defId = dataMap.getLong("definitionId")
+                        if (_activeDefinition.value?.id != defId) {
+                            setActiveDefinition(defId)
+                        }
                     }
                 }
             }
+        } finally {
+            dataEvents.release()
         }
     }
 

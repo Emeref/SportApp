@@ -1,5 +1,8 @@
 package com.example.sportapp.presentation.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,8 +22,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.LocalMobileTexts
+import com.example.sportapp.MobileTexts
 import com.example.sportapp.R
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.text.DecimalFormat
@@ -41,6 +46,8 @@ fun HomeScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val settings by viewModel.settings.collectAsState()
     val locationDefinitions by viewModel.locationDefinitions.collectAsState()
+    val activeWorkoutData by viewModel.activeWorkoutData.collectAsState()
+    val activeDefinition by viewModel.activeDefinition.collectAsState()
     
     val snackbarHostState = remember { SnackbarHostState() }
     var showSecretPopup by remember { mutableStateOf(false) }
@@ -165,8 +172,18 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showActivitySelection = true }) {
-                Icon(Icons.Default.Add, contentDescription = texts.HOME_START_LIVE)
+            if (activeWorkoutData == null) {
+                FloatingActionButton(onClick = { showActivitySelection = true }) {
+                    Icon(Icons.Default.Add, contentDescription = texts.HOME_START_LIVE)
+                }
+            } else {
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToLiveTracking,
+                    icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
+                    text = { Text(texts.HOME_RESUME_TRACKING) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -179,6 +196,19 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            AnimatedVisibility(
+                visible = activeWorkoutData != null,
+                enter = expandIn(),
+                exit = shrinkOut()
+            ) {
+                ActiveWorkoutCard(
+                    definitionName = activeDefinition?.name ?: texts.HOME_ACTIVE_WORKOUT,
+                    data = activeWorkoutData ?: emptyMap(),
+                    texts = texts,
+                    onClick = onNavigateToLiveTracking
+                )
+            }
+
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,
@@ -219,6 +249,70 @@ fun HomeScreen(
                     .clickable { showSecretPopup = true }
             )
         }
+    }
+}
+
+@Composable
+fun ActiveWorkoutCard(
+    definitionName: String,
+    data: Map<String, String>,
+    texts: MobileTexts,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = definitionName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = data["duration"] ?: "00:00",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                data["bpm"]?.let {
+                    LiveMiniStat(label = texts.SENSOR_HEART_RATE, value = it)
+                }
+                data["distanceGps"]?.let {
+                    LiveMiniStat(label = texts.SENSOR_DISTANCE_GPS, value = it)
+                }
+                data["speedGps"]?.let {
+                    LiveMiniStat(label = texts.SENSOR_SPEED_GPS, value = it)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LiveMiniStat(label: String, value: String) {
+    Column {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
 }
 
