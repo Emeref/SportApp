@@ -3,6 +3,7 @@ package com.example.sportapp.presentation.livetracking
 import android.annotation.SuppressLint
 import android.app.*
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.location.Location
 import android.os.Binder
 import android.os.Build
@@ -30,6 +31,7 @@ class LiveTrackingService : Service() {
     
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val binder = LocalBinder()
+    private var isTracking = false
 
     companion object {
         private const val NOTIFICATION_ID = 1001
@@ -51,9 +53,12 @@ class LiveTrackingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_START -> startTracking()
-            ACTION_STOP -> stopTracking()
+        if (intent?.action == ACTION_STOP) {
+            stopTracking()
+        } else {
+            // Wywołujemy startTracking dla ACTION_START oraz gdy intent jest null (restart przez system)
+            // Gwarantuje to wywołanie startForeground() i uniknięcie crasha.
+            startTracking()
         }
         return START_STICKY
     }
@@ -61,7 +66,15 @@ class LiveTrackingService : Service() {
     @SuppressLint("MissingPermission")
     private fun startTracking() {
         val notification = createNotification()
-        startForeground(NOTIFICATION_ID, notification)
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+
+        if (isTracking) return
+        isTracking = true
 
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2000)
             .setMinUpdateIntervalMillis(1000)
@@ -106,6 +119,7 @@ class LiveTrackingService : Service() {
             fusedLocationClient.removeLocationUpdates(it)
         }
         stopForeground(STOP_FOREGROUND_REMOVE)
+        isTracking = false
         stopSelf()
     }
 

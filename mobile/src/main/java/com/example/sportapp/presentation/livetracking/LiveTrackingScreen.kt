@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -17,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -239,6 +241,43 @@ fun LiveTrackingScreen(
                         }
                     }
 
+                    // Heart Rate Overlay - Bottom Left
+                    val hrValue = sensorData["bpm"]
+                    val isHrAvailable = !hrValue.isNullOrBlank() && hrValue != "--"
+                    
+                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                    val alpha by infiniteTransition.animateFloat(
+                        initialValue = 1f,
+                        targetValue = 0.3f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1000),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "alpha"
+                    )
+                    
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                            .then(if (isHrAvailable) Modifier.alpha(alpha) else Modifier),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isHrAvailable) hrValue!! else "---",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Red
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = null,
+                            tint = Color.Red,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
                     // Map Controls - Bottom Right (Zoom)
                     Column(
                         modifier = Modifier
@@ -279,11 +318,11 @@ fun LiveTrackingScreen(
                                 Text(texts.LIVE_TRACKING_WAITING_FOR_WATCH, style = MaterialTheme.typography.bodyMedium)
                             }
                         } else {
-                            val activeWidgets = activeDefinition?.sensors?.filter { it.isVisible }?.take(4) ?: emptyList()
+                            val activeWidgets = activeDefinition?.sensors?.filter { it.isVisible && it.sensorId != "bpm" }?.take(4) ?: emptyList()
                             
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (activeWidgets.isEmpty()) {
-                                    val keys = sensorData.keys.filter { it != "duration" && it != "timestamp" && it != "definitionId" && it != "isFinished" && it != "startTime" && it != "status" }.take(4)
+                                if (activeWidgets.isEmpty() && (activeDefinition?.sensors?.filter { it.isVisible }?.isEmpty() != false)) {
+                                    val keys = sensorData.keys.filter { it !in listOf("duration", "timestamp", "definitionId", "isFinished", "startTime", "status", "bpm") }.take(4)
                                     keys.chunked(2).forEach { rowKeys ->
                                         Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                             rowKeys.forEach { key ->
