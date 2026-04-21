@@ -344,6 +344,22 @@ object TextsMobileIT : MobileTexts {
     override val ZONE_Z4 = "Difficile"
     override val ZONE_Z5 = "Massimo"
 
+    // Trim Screen
+    override val TRIM_TITLE = "Modifica allenamento (Taglia)"
+    override val TRIM_CONFIRM_TITLE = "Confirmer taglio"
+    override val TRIM_CONFIRM_DESC = "Sei sicuro di voler rimuovere i dati fuori dall'intervallo selezionato? Questi dati verranno eliminati permanentemente."
+    override val TRIM_SAVE_BTN = "Taglia e salva"
+    override val TRIM_CHART_HR = "Grafico FC"
+    override val TRIM_RANGE_TITLE = "Seleziona intervallo allenamento"
+    override val TRIM_PREVIEW_TITLE = "Anteprima nuove statistiche"
+    override val TRIM_NEW_DURATION = "Nuova durata:"
+    override val TRIM_DISTANCE_GPS = "Distanza (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Distanza (Passi):"
+    override val TRIM_CALORIES = "Calorie bruciate:"
+    override val TRIM_AVG_BPM = "FC media:"
+    override val TRIM_START = "Inizio"
+    override val TRIM_END = "Fine"
+
     // Compare Screen
     override val COMPARE_TITLE = "Confronto attività"
     override val COMPARE_VS = "Confronto:"
@@ -460,22 +476,7 @@ object TextsMobileIT : MobileTexts {
     override val LIVE_TRACKING_FINISHED_DESC = "L'attività è stata registrata con successo."
     override val LIVE_TRACKING_BTN_FINISH = "Termina"
     override val LIVE_TRACKING_BTN_VIEW_MAP = "Vedi la mappa"
-
-    // Trim Screen
-    override val TRIM_TITLE = "Modifica allenamento (Taglia)"
-    override val TRIM_CONFIRM_TITLE = "Confirmer taglio"
-    override val TRIM_CONFIRM_DESC = "Sei sicuro di voler rimuovere i dati fuori dall'intervallo selezionato? Questi dati verranno eliminati permanentemente."
-    override val TRIM_SAVE_BTN = "Taglia e salva"
-    override val TRIM_CHART_HR = "Grafico FC"
-    override val TRIM_RANGE_TITLE = "Seleziona intervallo allenamento"
-    override val TRIM_PREVIEW_TITLE = "Anteprima nuove statistiche"
-    override val TRIM_NEW_DURATION = "Nuova durata:"
-    override val TRIM_DISTANCE_GPS = "Distanza (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Distanza (Passi):"
-    override val TRIM_CALORIES = "Calorie bruciate:"
-    override val TRIM_AVG_BPM = "FC media:"
-    override val TRIM_START = "Inizio"
-    override val TRIM_END = "Fine"
+    override val LIVE_TRACKING_PAUSED = "Pausa"
 
     // Strava Strings
     override val STRAVA_TITLE = "Sincronizzazione con Strava"

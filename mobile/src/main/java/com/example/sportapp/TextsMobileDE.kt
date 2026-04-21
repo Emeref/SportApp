@@ -33,7 +33,7 @@ object TextsMobileDE : MobileTexts {
         val monthName = Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.GERMAN)
         return "Ergebnisse für $monthName:"
     }
-    override fun homeResultsYear() = "Ergebnisse für dieses Jahr:"
+    override fun homeResultsYear() = "Ergebnisse for dieses Jahr:"
     override fun homeResultsCustom(days: Int) = if (days == 1) "Ergebnisse vom letzten Tag:" else "Ergebnisse der letzten $days Tage:"
 
     // Settings Screen
@@ -571,10 +571,11 @@ object TextsMobileDE : MobileTexts {
     override val LIVE_TRACKING_MAP_NORTH = "Norden"
     override val LIVE_TRACKING_MAP_DIRECTION = "Richtung"
     override val LIVE_TRACKING_WAITING_FOR_WATCH = "Warten auf Signal von der Uhr..."
-    override val LIVE_TRACKING_FINISHED_TITLE = "Atividade terminada"
-    override val LIVE_TRACKING_FINISHED_DESC = "A atividade foi registrada com sucesso."
-    override val LIVE_TRACKING_BTN_FINISH = "Terminar"
-    override val LIVE_TRACKING_BTN_VIEW_MAP = "Ver o mapa"
+    override val LIVE_TRACKING_FINISHED_TITLE = "Workout beendet"
+    override val LIVE_TRACKING_FINISHED_DESC = "Das Workout wurde erfolgreich aufgezeichnet."
+    override val LIVE_TRACKING_BTN_FINISH = "Beenden"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Karte anzeigen"
+    override val LIVE_TRACKING_PAUSED = "Pause"
     
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable-Dienste sind auf diesem Gerät nicht verfügbar"

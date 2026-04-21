@@ -47,6 +47,7 @@ fun LiveTrackingScreen(
     val sensorData by viewModel.sensorData.collectAsState()
     val mapRotation by viewModel.mapRotation.collectAsState()
     val isLocked by viewModel.isLocked.collectAsState()
+    val isPaused by viewModel.isPaused.collectAsState()
     val autoCenter by viewModel.autoCenter.collectAsState()
     val isNorthOriented by viewModel.isNorthOriented.collectAsState()
     val zoomLevel by viewModel.zoomLevel.collectAsState()
@@ -282,7 +283,7 @@ fun LiveTrackingScreen(
                             
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (activeWidgets.isEmpty()) {
-                                    val keys = sensorData.keys.filter { it != "duration" && it != "timestamp" && it != "definitionId" && it != "isFinished" && it != "startTime" }.take(4)
+                                    val keys = sensorData.keys.filter { it != "duration" && it != "timestamp" && it != "definitionId" && it != "isFinished" && it != "startTime" && it != "status" }.take(4)
                                     keys.chunked(2).forEach { rowKeys ->
                                         Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                             rowKeys.forEach { key ->
@@ -313,6 +314,28 @@ fun LiveTrackingScreen(
                                         }
                                     }
                                 }
+                            }
+                        }
+                        
+                        // Pause Overlay
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = isPaused,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            modifier = Modifier.matchParentSize()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = texts.LIVE_TRACKING_PAUSED,
+                                    style = MaterialTheme.typography.displayMedium,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
                     }

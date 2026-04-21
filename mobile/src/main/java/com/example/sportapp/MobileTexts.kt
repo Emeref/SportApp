@@ -486,6 +486,7 @@ interface MobileTexts {
     val LIVE_TRACKING_FINISHED_DESC: String
     val LIVE_TRACKING_BTN_FINISH: String
     val LIVE_TRACKING_BTN_VIEW_MAP: String
+    val LIVE_TRACKING_PAUSED: String
     
     // Errors
     val ERROR_WEARABLE_NOT_AVAILABLE: String

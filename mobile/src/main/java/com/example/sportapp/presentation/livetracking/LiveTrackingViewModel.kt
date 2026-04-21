@@ -50,6 +50,9 @@ class LiveTrackingViewModel @Inject constructor(
 
     private val _isFinished = MutableStateFlow(false)
     val isFinished = _isFinished.asStateFlow()
+    
+    private val _isPaused = MutableStateFlow(false)
+    val isPaused = _isPaused.asStateFlow()
 
     private val _mapRotation = MutableStateFlow(0f)
     val mapRotation = _mapRotation.asStateFlow()
@@ -85,7 +88,7 @@ class LiveTrackingViewModel @Inject constructor(
         viewModelScope.launch {
             while (true) {
                 delay(1000)
-                if (!_isFinished.value && _sessionStartTime.value != 0L) {
+                if (!_isFinished.value && !_isPaused.value && _sessionStartTime.value != 0L) {
                     _currentDurationSeconds.value++
                 }
             }
@@ -115,7 +118,7 @@ class LiveTrackingViewModel @Inject constructor(
                         if (item.uri.path == "/workout_data") {
                             val dataMap = DataMapItem.fromDataItem(item).dataMap
                             val timestamp = dataMap.getLong("timestamp", 0L)
-                            if (timestamp > viewModelCreatedAt - 10000) {
+                            if (timestamp > viewModelCreatedAt - 30000) {
                                 processDataMap(dataMap)
                             }
                         }
@@ -224,6 +227,11 @@ class LiveTrackingViewModel @Inject constructor(
             _isFinished.value = true
             stopTrackingService()
         }
+        
+        val status = dataMap.getString("status")
+        if (status != null) {
+            _isPaused.value = (status == "PAUSED")
+        }
 
         if (dataMap.containsKey("definitionId")) {
             val defId = dataMap.getLong("definitionId")
@@ -328,6 +336,7 @@ class LiveTrackingViewModel @Inject constructor(
             stopTrackingService()
             liveLocationDao.clear()
             _isFinished.value = false
+            _isPaused.value = false
             _sessionStartTime.value = 0L
             _currentDurationSeconds.value = 0L
         }

@@ -476,6 +476,7 @@ object TextsMobilePT : MobileTexts {
     override val LIVE_TRACKING_FINISHED_DESC = "A atividade foi registrada com sucesso."
     override val LIVE_TRACKING_BTN_FINISH = "Terminar"
     override val LIVE_TRACKING_BTN_VIEW_MAP = "Ver o mapa"
+    override val LIVE_TRACKING_PAUSED = "Pause"
 
     // Trim Screen
     override val TRIM_TITLE = "Editar treino (Cortar)"

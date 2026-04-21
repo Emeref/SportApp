@@ -575,6 +575,7 @@ object TextsMobilePL : MobileTexts {
     override val LIVE_TRACKING_FINISHED_DESC = "Aktywność zakończona z sukcesem"
     override val LIVE_TRACKING_BTN_FINISH = "Zakończ"
     override val LIVE_TRACKING_BTN_VIEW_MAP = "Obejrzyj mapę"
+    override val LIVE_TRACKING_PAUSED = "Pauza"
     
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Usługi Wearable są niedostępne na tym urządzeniu"

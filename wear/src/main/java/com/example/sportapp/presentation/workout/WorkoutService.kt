@@ -249,6 +249,7 @@ class WorkoutService : Service(), SensorEventListener {
         startAutosave()
         startLocationUpdates()
         updateState(null)
+        sendLiveData(null)
     }
 
     private fun setupOngoingActivity() {
@@ -286,6 +287,7 @@ class WorkoutService : Service(), SensorEventListener {
         }
         updateNotification()
         updateState(null)
+        sendLiveData(_workoutState.value.lastPoint)
 
         // Po zapauzowaniu aktywności - tylko zapis, bez sync (aby nie wysyłać nieukończonych do HC)
         if (wasActive && status == WorkoutStatus.PAUSED) {
@@ -472,6 +474,7 @@ class WorkoutService : Service(), SensorEventListener {
                     dataMap.putLong("startTime", startTimeMillis)
                     dataMap.putString("duration", formatTime(totalSeconds))
                     dataMap.putBoolean("isFinished", isFinished)
+                    dataMap.putString("status", status.name)
                     
                     lastPoint?.let {
                         if (it.bpm != null) dataMap.putString(WorkoutSensor.HEART_RATE.id, it.bpm.toString())
