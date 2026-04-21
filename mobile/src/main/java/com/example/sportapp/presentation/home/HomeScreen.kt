@@ -49,6 +49,7 @@ fun HomeScreen(
     val locationDefinitions by viewModel.locationDefinitions.collectAsState()
     val activeWorkoutData by viewModel.activeWorkoutData.collectAsState()
     val activeDefinition by viewModel.activeDefinition.collectAsState()
+    val formattedDuration by viewModel.formattedDuration.collectAsState()
     
     val snackbarHostState = remember { SnackbarHostState() }
     var showSecretPopup by remember { mutableStateOf(false) }
@@ -205,6 +206,7 @@ fun HomeScreen(
                 ActiveWorkoutCard(
                     definitionName = activeDefinition?.name ?: texts.HOME_ACTIVE_WORKOUT,
                     iconName = activeDefinition?.iconName ?: "DirectionsRun",
+                    duration = formattedDuration,
                     data = activeWorkoutData ?: emptyMap(),
                     texts = texts,
                     onClick = onNavigateToLiveTracking
@@ -258,6 +260,7 @@ fun HomeScreen(
 fun ActiveWorkoutCard(
     definitionName: String,
     iconName: String,
+    duration: String,
     data: Map<String, String>,
     texts: MobileTexts,
     onClick: () -> Unit
@@ -293,7 +296,7 @@ fun ActiveWorkoutCard(
                     )
                 }
                 Text(
-                    text = data["duration"] ?: "00:00",
+                    text = duration,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )

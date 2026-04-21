@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import java.util.Locale
+import kotlin.math.abs
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -73,6 +75,13 @@ class HomeViewModel @Inject constructor(
 
     private val _activeDefinition = MutableStateFlow<WorkoutDefinition?>(null)
     val activeDefinition = _activeDefinition.asStateFlow()
+    
+    private val _currentDurationSeconds = MutableStateFlow(0L)
+    val formattedDuration = _currentDurationSeconds.map { formatSeconds(it) }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "00:00"
+    )
 
     private var activityTimeoutJob: Job? = null
 
@@ -92,6 +101,16 @@ class HomeViewModel @Inject constructor(
                     }
                 } catch (e: Exception) {
                     Log.e("HomeViewModel", "Error fetching initial data items", e)
+                }
+            }
+
+            // Pętla timera lokalnego
+            viewModelScope.launch {
+                while (true) {
+                    delay(1000)
+                    if (_activeWorkoutData.value != null) {
+                        _currentDurationSeconds.value++
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -141,8 +160,18 @@ class HomeViewModel @Inject constructor(
         if (isFinished) {
             _activeWorkoutData.value = null
             _activeDefinition.value = null
+            _currentDurationSeconds.value = 0L
             activityTimeoutJob?.cancel()
             return
+        }
+
+        if (dataMap.containsKey("duration")) {
+            val watchDuration = dataMap.getString("duration") ?: ""
+            val watchSeconds = parseDurationToSeconds(watchDuration)
+            // Synchronizuj jeśli różnica jest znacząca (powyżej 2s)
+            if (abs(watchSeconds - _currentDurationSeconds.value) > 2) {
+                _currentDurationSeconds.value = watchSeconds
+            }
         }
 
         _activeWorkoutData.value = newData
@@ -162,7 +191,29 @@ class HomeViewModel @Inject constructor(
             delay(45000)
             _activeWorkoutData.value = null
             _activeDefinition.value = null
+            _currentDurationSeconds.value = 0L
         }
+    }
+
+    private fun parseDurationToSeconds(duration: String): Long {
+        val parts = duration.split(":")
+        return try {
+            when (parts.size) {
+                3 -> parts[0].toLong() * 3600 + parts[1].toLong() * 60 + parts[2].toLong()
+                2 -> parts[0].toLong() * 60 + parts[1].toLong()
+                else -> 0L
+            }
+        } catch (e: Exception) {
+            0L
+        }
+    }
+
+    private fun formatSeconds(seconds: Long): String {
+        val h = seconds / 3600
+        val m = (seconds % 3600) / 60
+        val s = seconds % 60
+        return if (h > 0) String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+        else String.format(Locale.US, "%02d:%02d", m, s)
     }
 
     fun triggerSync() {
