@@ -16,8 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -291,7 +293,7 @@ fun LiveTrackingScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.7f))
+                    .background(Color.Transparent)
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
                             onDragEnd = {
@@ -305,21 +307,56 @@ fun LiveTrackingScreen(
                             }
                         )
                     },
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.CenterEnd
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(end = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(24.dp)
+                    )
                     Icon(
                         Icons.Default.Lock,
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(64.dp)
+                        tint = Color.Black,
+                        modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         texts.LIVE_TRACKING_UNLOCK_SWIPE,
-                        color = Color.White,
+                        color = Color.Black,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(100.dp)
                     )
                 }
             }
