@@ -63,6 +63,9 @@ class LiveTrackingViewModel @Inject constructor(
     private val _isNorthOriented = MutableStateFlow(true)
     val isNorthOriented = _isNorthOriented.asStateFlow()
 
+    private val _zoomLevel = MutableStateFlow(17f)
+    val zoomLevel = _zoomLevel.asStateFlow()
+
     private var lastBearing = 0f
     private val _sessionStartTime = MutableStateFlow(0L)
     
@@ -296,6 +299,18 @@ class LiveTrackingViewModel @Inject constructor(
 
     fun setAutoCenter(enabled: Boolean) {
         _autoCenter.value = enabled
+    }
+
+    fun setZoomLevel(zoom: Float) {
+        _zoomLevel.value = zoom.coerceIn(2f, 21f)
+    }
+
+    fun zoomIn() {
+        setZoomLevel(_zoomLevel.value + 1f)
+    }
+
+    fun zoomOut() {
+        setZoomLevel(_zoomLevel.value - 1f)
     }
 
     fun toggleOrientation() {

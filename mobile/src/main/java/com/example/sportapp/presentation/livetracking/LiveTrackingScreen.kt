@@ -16,10 +16,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +47,7 @@ fun LiveTrackingScreen(
     val isLocked by viewModel.isLocked.collectAsState()
     val autoCenter by viewModel.autoCenter.collectAsState()
     val isNorthOriented by viewModel.isNorthOriented.collectAsState()
+    val zoomLevel by viewModel.zoomLevel.collectAsState()
     val activeDefinition by viewModel.activeDefinition.collectAsState()
     val isFinished by viewModel.isFinished.collectAsState()
     val formattedDuration by viewModel.formattedDuration.collectAsState()
@@ -64,15 +63,15 @@ fun LiveTrackingScreen(
         )
     }
 
-    // Update camera when autoCenter is enabled
-    LaunchedEffect(currentLocation, autoCenter, mapRotation, isNorthOriented) {
+    // Update camera when autoCenter is enabled or when map attributes change
+    LaunchedEffect(currentLocation, autoCenter, mapRotation, isNorthOriented, zoomLevel) {
         if (autoCenter && currentLocation != null) {
             val target = LatLng(currentLocation!!.latitude, currentLocation!!.longitude)
             cameraPositionState.animate(
                 com.google.android.gms.maps.CameraUpdateFactory.newCameraPosition(
                     CameraPosition.builder()
                         .target(target)
-                        .zoom(17f)
+                        .zoom(zoomLevel)
                         .bearing(if (isNorthOriented) 0f else mapRotation)
                         .build()
                 )
@@ -80,8 +79,12 @@ fun LiveTrackingScreen(
         }
     }
 
-    // Detect manual map movement
+    // Detect manual map movement and zoom
     LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving && cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
+            // Update zoom level in VM if user changed it manually
+            viewModel.setZoomLevel(cameraPositionState.position.zoom)
+        }
         if (cameraPositionState.isMoving && cameraPositionState.cameraMoveStartedReason == CameraMoveStartedReason.GESTURE) {
             viewModel.setAutoCenter(false)
         }
@@ -149,7 +152,6 @@ fun LiveTrackingScreen(
                     },
                     actions = {
                         if (!isFullScreenMap) {
-                            // Rezerwujemy miejsce dla hh:mm:ss (około 90dp powinno wystarczyć)
                             Text(
                                 text = formattedDuration,
                                 style = MaterialTheme.typography.titleLarge,
@@ -194,7 +196,7 @@ fun LiveTrackingScreen(
                         }
                     }
 
-                    // Map Controls
+                    // Map Controls - Top
                     Column(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -224,6 +226,31 @@ fun LiveTrackingScreen(
                             }
                         }
                     }
+
+                    // Map Controls - Bottom Right (Zoom)
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FloatingActionButton(
+                            onClick = { viewModel.zoomIn() },
+                            modifier = Modifier.size(40.dp),
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Zoom In")
+                        }
+                        FloatingActionButton(
+                            onClick = { viewModel.zoomOut() },
+                            modifier = Modifier.size(40.dp),
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            Icon(Icons.Default.Remove, contentDescription = "Zoom Out")
+                        }
+                    }
                 }
 
                 // Stats Section
@@ -244,7 +271,6 @@ fun LiveTrackingScreen(
                             
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (activeWidgets.isEmpty()) {
-                                    // Fallback to raw sensor keys if no definition is active yet
                                     val keys = sensorData.keys.filter { it != "duration" && it != "timestamp" && it != "definitionId" && it != "isFinished" && it != "startTime" }.take(4)
                                     keys.chunked(2).forEach { rowKeys ->
                                         Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -313,36 +339,14 @@ fun LiveTrackingScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(end = 4.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    repeat(5) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                     Icon(
                         Icons.Default.Lock,
                         contentDescription = null,
