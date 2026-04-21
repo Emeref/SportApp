@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Uprawnienia systemowe Health Connect (Android 14+, API 34+) -->
     <uses-permission android:name="android.permission.health.READ_HEIGHT"/>
@@ -122,6 +125,12 @@
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/db_workouts/" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".presentation.livetracking.LiveTrackingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
