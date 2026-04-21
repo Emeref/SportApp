@@ -41,7 +41,8 @@ class WorkoutDefinitionViewModel @Inject constructor(
 
     private fun ensureDefaultDefinition() {
         viewModelScope.launch {
-            if (dao.getDefaultCount() == 0) {
+            // Reagujemy tylko jeśli lista jest całkowicie pusta
+            if (dao.getAllDefinitionsOnce().isEmpty()) {
                 val texts = mobileSettingsManager.settingsFlow.first().language.texts
                 val defaultSensors = WorkoutSensor.entries.map {
                     SensorConfig(it.id, isVisible = true, isRecording = true)
@@ -85,7 +86,6 @@ class WorkoutDefinitionViewModel @Inject constructor(
     }
 
     fun deleteDefinition(definition: WorkoutDefinition) {
-        if (definition.isDefault) return
         viewModelScope.launch {
             dao.deleteDefinition(definition)
             detailSettingsManager.deleteSettings(definition.name)
