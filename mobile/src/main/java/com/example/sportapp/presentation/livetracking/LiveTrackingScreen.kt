@@ -1,7 +1,9 @@
 package com.example.sportapp.presentation.livetracking
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
+import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,6 +56,15 @@ fun LiveTrackingScreen(
 
     val cameraPositionState = rememberCameraPositionState()
     var isFullScreenMap by remember { mutableStateOf(false) }
+
+    // Keep Screen On
+    val activity = context as? Activity
+    DisposableEffect(Unit) {
+        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     // Check permissions for MyLocation layer
     val hasLocationPermission by remember {
