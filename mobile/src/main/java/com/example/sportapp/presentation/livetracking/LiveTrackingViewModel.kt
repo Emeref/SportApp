@@ -253,18 +253,27 @@ class LiveTrackingViewModel @Inject constructor(
 
     private fun updateRotation(location: Location) {
         val points = _routePoints.value
-        if (points.size < 2) return
+        if (points.isEmpty()) return
 
         val lastPoint = points.last()
-        val prevPoint = points[points.size - 2]
+        // Szukamy punktu sprzed ok. 5 sekund
+        val targetTimestamp = lastPoint.timestamp - 5000
+        val prevPoint = points.findLast { it.timestamp <= targetTimestamp } ?: points.first()
+
+        // Jeśli nie mamy wystarczającej odległości czasowej/przestrzennej, by wyznaczyć wektor, wychodzimy
+        if (prevPoint.id == lastPoint.id) return
 
         val bearing = calculateBearing(
             prevPoint.latitude, prevPoint.longitude,
             lastPoint.latitude, lastPoint.longitude
         )
 
-        if (abs(bearing - lastBearing) > AppConstants.MAP_ROTATION_THRESHOLD_DEGREES) {
-            _mapRotation.value = -bearing
+        // Obliczamy najkrótszą różnicę kątową (uwzględniając przejście przez 0/360)
+        var diff = abs(bearing - lastBearing)
+        if (diff > 180) diff = 360 - diff
+
+        if (diff > AppConstants.MAP_ROTATION_THRESHOLD_DEGREES) {
+            _mapRotation.value = bearing
             lastBearing = bearing
         }
     }
@@ -293,6 +302,9 @@ class LiveTrackingViewModel @Inject constructor(
         _isNorthOriented.value = !_isNorthOriented.value
         if (_isNorthOriented.value) {
             _mapRotation.value = 0f
+        } else {
+            // Przy przełączeniu na tryb kierunku, od razu spróbujmy ustawić właściwą rotację
+            _currentLocation.value?.let { updateRotation(it) }
         }
     }
 
