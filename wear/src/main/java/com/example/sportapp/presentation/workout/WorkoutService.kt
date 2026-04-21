@@ -479,11 +479,16 @@ class WorkoutService : Service(), SensorEventListener {
                         if (it.speedGps != null) dataMap.putString(WorkoutSensor.SPEED_GPS.id, String.format(Locale.US, "%.1f km/h", it.speedGps))
                         if (it.altitude != null) dataMap.putString(WorkoutSensor.ALTITUDE.id, String.format(Locale.US, "%.0f m", it.altitude))
                         if (it.calorieSum != null) dataMap.putString(WorkoutSensor.CALORIES_SUM.id, it.calorieSum.toInt().toString())
+                        if (it.calorieMin != null) dataMap.putString(WorkoutSensor.CALORIES_PER_MINUTE.id, String.format(Locale.US, "%.1f", it.calorieMin))
                         if (it.steps != null) dataMap.putString(WorkoutSensor.STEPS.id, it.steps.toString())
                         if (it.stepsMin != null) dataMap.putString(WorkoutSensor.STEPS_PER_MINUTE.id, it.stepsMin.toInt().toString())
                         if (it.totalAscent != null) dataMap.putString(WorkoutSensor.TOTAL_ASCENT.id, String.format(Locale.US, "+%.0f m", it.totalAscent))
                         if (it.totalDescent != null) dataMap.putString(WorkoutSensor.TOTAL_DESCENT.id, String.format(Locale.US, "-%.0f m", it.totalDescent))
                         if (it.pressure != null) dataMap.putString(WorkoutSensor.PRESSURE.id, String.format(Locale.US, "%.1f hPa", it.pressure))
+                        
+                        // Dodatkowe wektory dystansu/prędkości z kroków jeśli są potrzebne
+                        if (it.distanceSteps != null) dataMap.putString(WorkoutSensor.DISTANCE_STEPS.id, String.format(Locale.US, "%.2f km", it.distanceSteps / 1000.0))
+                        if (it.speedSteps != null) dataMap.putString(WorkoutSensor.SPEED_STEPS.id, String.format(Locale.US, "%.1f km/h", it.speedSteps))
                     }
                 }.asPutDataRequest().setUrgent()
                 
