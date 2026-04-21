@@ -53,26 +53,26 @@ class LiveTrackingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
-            stopTracking()
-        } else {
-            // Wywołujemy startTracking dla ACTION_START oraz gdy intent jest null (restart przez system)
-            // Gwarantuje to wywołanie startForeground() i uniknięcie crasha.
-            startTracking()
-        }
-        return START_STICKY
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun startTracking() {
+        // GWARANCJA: Zawsze wywołujemy startForeground jako pierwszą operację w onStartCommand.
+        // To zapobiega błędowi "ForegroundServiceDidNotStartInTimeException", 
+        // nawet jeśli zaraz potem nastąpi stopSelf().
         val notification = createNotification()
-        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
 
+        if (intent?.action == ACTION_STOP) {
+            stopTracking()
+        } else {
+            startTrackingInternal()
+        }
+        return START_STICKY
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startTrackingInternal() {
         if (isTracking) return
         isTracking = true
 

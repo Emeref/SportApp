@@ -118,7 +118,8 @@ class LiveTrackingViewModel @Inject constructor(
                         if (item.uri.path == "/workout_data") {
                             val dataMap = DataMapItem.fromDataItem(item).dataMap
                             val timestamp = dataMap.getLong("timestamp", 0L)
-                            if (timestamp > viewModelCreatedAt - 30000) {
+                            // TYLKO jeśli dane są świeże (z ostatniej minuty)
+                            if (timestamp > System.currentTimeMillis() - 60000) {
                                 processDataMap(dataMap)
                             }
                         }
@@ -196,6 +197,14 @@ class LiveTrackingViewModel @Inject constructor(
     }
 
     private fun processDataMap(dataMap: DataMap) {
+        val isFinishedOnWatch = dataMap.getBoolean("isFinished", false)
+        
+        // Ignorujemy dane oznaczone jako zakończone, jeśli właśnie startujemy nową aktywność
+        // (zapobiega to wyświetlaniu popupu "Zakończono" ze starych danych z DataLayer)
+        if (isFinishedOnWatch && _sessionStartTime.value == 0L) {
+            return
+        }
+
         val newData = mutableMapOf<String, String>()
         dataMap.keySet().forEach { key ->
             val value = dataMap.get<Any>(key)
@@ -209,6 +218,7 @@ class LiveTrackingViewModel @Inject constructor(
             val startTime = dataMap.getLong("startTime")
             if (_sessionStartTime.value != startTime && startTime != 0L) {
                 _sessionStartTime.value = startTime
+                _isFinished.value = false // Resetujemy stan zakończenia dla nowej sesji
                 Log.d("LiveTrackingVM", "New session started, starting foreground service")
                 startTrackingService()
             }
@@ -222,8 +232,7 @@ class LiveTrackingViewModel @Inject constructor(
             }
         }
 
-        val finished = dataMap.getBoolean("isFinished", false)
-        if (finished && !_isFinished.value) {
+        if (isFinishedOnWatch && !_isFinished.value) {
             _isFinished.value = true
             stopTrackingService()
         }
