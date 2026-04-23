@@ -12,6 +12,9 @@ import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.db.LiveLocationDao
 import com.example.sportapp.data.db.LiveLocationPoint
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.presentation.settings.AppMapType
+import com.example.sportapp.presentation.settings.MobileSettingsManager
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.wearable.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -27,7 +30,8 @@ import java.util.Locale
 class LiveTrackingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val liveLocationDao: LiveLocationDao,
-    private val repository: IWorkoutRepository
+    private val repository: IWorkoutRepository,
+    private val mobileSettingsManager: MobileSettingsManager
 ) : ViewModel(), DataClient.OnDataChangedListener {
 
     private val dataClient by lazy { Wearable.getDataClient(context) }
@@ -78,6 +82,13 @@ class LiveTrackingViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = "00:00"
     )
+
+    val mobileSettings: StateFlow<MobileSettingsState> = mobileSettingsManager.settingsFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = MobileSettingsState()
+        )
     
     private val viewModelCreatedAt = System.currentTimeMillis()
 
@@ -337,6 +348,12 @@ class LiveTrackingViewModel @Inject constructor(
         } else {
             // Przy przełączeniu na tryb kierunku, od razu spróbujmy ustawić właściwą rotację
             _currentLocation.value?.let { updateRotation(it) }
+        }
+    }
+
+    fun setMapType(mapType: AppMapType) {
+        viewModelScope.launch {
+            mobileSettingsManager.updateMapType(mapType)
         }
     }
 

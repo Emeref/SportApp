@@ -585,4 +585,11 @@ object TextsMobileEN : MobileTexts {
     override val TRIM_AVG_BPM = "Average HR:"
     override val TRIM_START = "Start"
     override val TRIM_END = "Finish"
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Map Type"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satellite"
+    override val MAP_TYPE_HYBRID = "Hybrid"
+    override val MAP_TYPE_TERRAIN = "Terrain"
 }

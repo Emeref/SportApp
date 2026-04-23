@@ -21,7 +21,7 @@ object TextsMobileDE : MobileTexts {
     override val HOME_GENERAL_STATS = "Allgemeine Statistiken"
     override val HOME_WORKOUT_DETAILS = "Workout-Details"
     override val HOME_LOGO_DESC = "App-Logo"
-    override val HOME_SECRET_TITLE = "Schön, dass du klickst, ale tutaj nic nie ma"
+    override val HOME_SECRET_TITLE = "Schön, dass du klickst, aber hier gibt es nichts"
     override val HOME_CLOSE = "Schließen"
     override val HOME_START_LIVE = "Live-Tracking starten"
     override val HOME_ACTIVE_WORKOUT = "Workout läuft"
@@ -68,7 +68,7 @@ object TextsMobileDE : MobileTexts {
     override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_SYNC = "Synchronisation"
     override val SETTINGS_STRAVA = "Strava"
-    override val SETTINGS_STRAVA_DESC = "Synchronisiere deine Workouts with Strava"
+    override val SETTINGS_STRAVA_DESC = "Synchronisiere deine Workouts mit Strava"
     override val SETTINGS_GOOGLE_DRIVE = "Google Drive"
     override val SETTINGS_GOOGLE_DRIVE_DESC = "Verlauf und Zusammenfassungen speichern (Bald)"
     override val SETTINGS_APPEARANCE = "Aussehen"
@@ -87,7 +87,7 @@ object TextsMobileDE : MobileTexts {
     override val HC_SYNC_HEALTH_DATA = "Mit Health Connect synchronisieren"
     override val HC_SYNC_WORKOUTS = "Workouts aus Health Connect importieren"
     override val HC_SYNC_CONFIRM_TITLE = "Datensynchronisation"
-    override val HC_SYNC_CONFIRM_DESC = "Möchten Sie Ihr Profil with Daten aus Health Connect aktualisieren?"
+    override val HC_SYNC_CONFIRM_DESC = "Möchten Sie Ihr Profil mit Daten aus Health Connect aktualisieren?"
     override val HC_SYNC_SUCCESS = "Synchronisation erfolgreich"
     override val HC_SYNC_ERROR = "Synchronisationsfehler"
     override val HC_SYNC_NO_DATA = "Keine neuen Daten gefunden"
@@ -310,8 +310,8 @@ object TextsMobileDE : MobileTexts {
     override val DEF_VOLLEYBALL = "Volleyball"
     override val DEF_GOLF = "Golf"
     override val DEF_MARTIAL_ARTS = "Kampfsport"
-    override val DEF_SKIING = "Skifahren"
-    override val DEF_SNOWBOARDING = "Snowboarden"
+    override val DEF_SKIING = "Sci"
+    override val DEF_SNOWBOARDING = "Snowboard"
     override val DEF_SKATING = "Skaten"
     override val DEF_ICE_SKATING = "Eislaufen"
     
@@ -469,6 +469,47 @@ object TextsMobileDE : MobileTexts {
     override val UNIT_KCAL_MIN = "kcal/Min"
     override val UNIT_VO2_MAX = "ml/kg/Min"
 
+    // Strava Strings
+    override val STRAVA_TITLE = "Strava-Synchronisation"
+    override val STRAVA_CONNECT = "Mit Strava-Konto verbinden"
+    override val STRAVA_DISCONNECT = "Strava-Konto trennen"
+    override val STRAVA_CONNECTED = "Mit Strava verbunden"
+    override val STRAVA_NOT_CONNECTED = "Nicht verbunden"
+    override val STRAVA_SYNC_NOW = "Jetzt synchronisieren"
+    override val STRAVA_SYNC_SUCCESS = "Workout wurde gesendet!"
+    override val STRAVA_SYNC_FAILED = "Senden fehlgeschlagen"
+    override val STRAVA_SYNCING = "Senden..."
+    override val STRAVA_AUTH_ERROR = "Autorisierungsfehler"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Automatischer Export"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Neue Workouts automatisch nach Strava senden"
+    override val STRAVA_SYNC_LOG = "Synchronisierungsverlauf"
+    override val STRAVA_SYNC_LOG_EMPTY = "Kein Synchronisierungsverlauf"
+
+    // Live Tracking
+    override val LIVE_TRACKING_TITLE = "Live-Tracking"
+    override val LIVE_TRACKING_SELECT_ACTIVITY = "Aktivität auswählen"
+    override val LIVE_TRACKING_LOCK = "Sperren"
+    override val LIVE_TRACKING_UNLOCK_SWIPE = "Nach oben wischen zum Entsperren"
+    override val LIVE_TRACKING_MAP_NORTH = "Norden"
+    override val LIVE_TRACKING_MAP_DIRECTION = "Richtung"
+    override val LIVE_TRACKING_WAITING_FOR_WATCH = "Warten auf Signal von der Uhr..."
+    override val LIVE_TRACKING_FINISHED_TITLE = "Workout beendet"
+    override val LIVE_TRACKING_FINISHED_DESC = "Das Workout wurde erfolgreich aufgezeichnet."
+    override val LIVE_TRACKING_BTN_FINISH = "Beenden"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Karte anzeigen"
+    override val LIVE_TRACKING_PAUSED = "Pause"
+    
+    // Errors
+    override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable-Dienste sind auf diesem Gerät nicht verfügbar"
+    override val ERROR_NO_WATCH_CONNECTED = "Keine verbundene Uhr gefunden"
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Kartentyp"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satellit"
+    override val MAP_TYPE_HYBRID = "Hybrid"
+    override val MAP_TYPE_TERRAIN = "Gelände"
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -546,43 +587,9 @@ object TextsMobileDE : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
-            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "avg_cadence" -> WIDGET_AVG_BPM
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> id
         }
     }
-
-    // Strava Strings
-    override val STRAVA_TITLE = "Strava-Synchronisation"
-    override val STRAVA_CONNECT = "Mit Strava-Konto verbinden"
-    override val STRAVA_DISCONNECT = "Strava-Konto trennen"
-    override val STRAVA_CONNECTED = "Mit Strava verbunden"
-    override val STRAVA_NOT_CONNECTED = "Nicht verbunden"
-    override val STRAVA_SYNC_NOW = "Jetzt synchronisieren"
-    override val STRAVA_SYNC_SUCCESS = "Workout wurde gesendet!"
-    override val STRAVA_SYNC_FAILED = "Senden fehlgeschlagen"
-    override val STRAVA_SYNCING = "Senden..."
-    override val STRAVA_AUTH_ERROR = "Autorisierungsfehler"
-    override val SETTINGS_STRAVA_AUTO_EXPORT = "Automatischer Export"
-    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Neue Workouts automatisch nach Strava senden"
-    override val STRAVA_SYNC_LOG = "Synchronisierungsverlauf"
-    override val STRAVA_SYNC_LOG_EMPTY = "Kein Synchronisierungsverlauf"
-
-    // Live Tracking
-    override val LIVE_TRACKING_TITLE = "Live-Tracking"
-    override val LIVE_TRACKING_SELECT_ACTIVITY = "Aktivität auswählen"
-    override val LIVE_TRACKING_LOCK = "Sperren"
-    override val LIVE_TRACKING_UNLOCK_SWIPE = "Nach oben wischen zum Entsperren"
-    override val LIVE_TRACKING_MAP_NORTH = "Norden"
-    override val LIVE_TRACKING_MAP_DIRECTION = "Richtung"
-    override val LIVE_TRACKING_WAITING_FOR_WATCH = "Warten auf Signal von der Uhr..."
-    override val LIVE_TRACKING_FINISHED_TITLE = "Workout beendet"
-    override val LIVE_TRACKING_FINISHED_DESC = "Das Workout wurde erfolgreich aufgezeichnet."
-    override val LIVE_TRACKING_BTN_FINISH = "Beenden"
-    override val LIVE_TRACKING_BTN_VIEW_MAP = "Karte anzeigen"
-    override val LIVE_TRACKING_PAUSED = "Pause"
-    
-    // Errors
-    override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable-Dienste sind auf diesem Gerät nicht verfügbar"
-    override val ERROR_NO_WATCH_CONNECTED = "Keine verbundene Uhr gefunden"
 }

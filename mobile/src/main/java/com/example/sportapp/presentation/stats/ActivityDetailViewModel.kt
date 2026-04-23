@@ -23,6 +23,7 @@ import com.example.sportapp.data.strava.StravaSyncWorker
 import com.example.sportapp.healthconnect.ExerciseExportUseCase
 import com.example.sportapp.healthconnect.ExportResult
 import com.example.sportapp.healthconnect.HealthConnectManager
+import com.example.sportapp.presentation.settings.AppMapType
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -245,6 +246,12 @@ class ActivityDetailViewModel @Inject constructor(
             _selectedLap.value = null
         } else {
             _selectedLap.value = lap
+        }
+    }
+
+    fun setMapType(mapType: AppMapType) {
+        viewModelScope.launch {
+            mobileSettingsManager.updateMapType(mapType)
         }
     }
 

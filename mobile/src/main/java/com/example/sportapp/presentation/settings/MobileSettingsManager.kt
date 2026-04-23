@@ -38,6 +38,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         private val HEALTH_DATA_JSON = stringPreferencesKey("health_data_json")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val LANGUAGE = stringPreferencesKey("language")
+        private val MAP_TYPE = stringPreferencesKey("map_type")
         private val AUTO_EXPORT_HC = booleanPreferencesKey("auto_export_hc")
         private val AUTO_EXPORT_STRAVA = booleanPreferencesKey("auto_export_strava")
         private val HC_PERMISSIONS_DENIED_COUNT = intPreferencesKey("hc_permissions_denied_count")
@@ -95,6 +96,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             healthData = healthData,
             themeMode = ThemeMode.valueOf(preferences[THEME_MODE] ?: defaultState.themeMode.name),
             language = language,
+            mapType = AppMapType.valueOf(preferences[MAP_TYPE] ?: defaultState.mapType.name),
             autoExportToHC = preferences[AUTO_EXPORT_HC] ?: defaultState.autoExportToHC,
             autoExportToStrava = preferences[AUTO_EXPORT_STRAVA] ?: defaultState.autoExportToStrava,
             hcPermissionsDeniedCount = preferences[HC_PERMISSIONS_DENIED_COUNT] ?: defaultState.hcPermissionsDeniedCount,
@@ -117,6 +119,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[HEALTH_DATA_JSON] = gson.toJson(state.healthData)
             preferences[THEME_MODE] = state.themeMode.name
             preferences[LANGUAGE] = state.language.code
+            preferences[MAP_TYPE] = state.mapType.name
             preferences[AUTO_EXPORT_HC] = state.autoExportToHC
             preferences[AUTO_EXPORT_STRAVA] = state.autoExportToStrava
             preferences[HC_PERMISSIONS_DENIED_COUNT] = state.hcPermissionsDeniedCount
@@ -125,6 +128,12 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         syncWatchStatsSettings(state)
         syncHealthData(state.healthData)
         requestFullSyncFromWatch()
+    }
+
+    suspend fun updateMapType(mapType: AppMapType) {
+        context.dataStore.edit { preferences ->
+            preferences[MAP_TYPE] = mapType.name
+        }
     }
 
     suspend fun updateAutoExport(enabled: Boolean) {

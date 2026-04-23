@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,6 +49,8 @@ import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.healthconnect.ExportResult
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
+import com.example.sportapp.presentation.settings.AppMapType
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -87,6 +90,7 @@ fun ActivityDetailScreen(
     var showPermissionRationale by remember { mutableStateOf(false) }
     var showExportedText by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
+    var showMapTypeDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -195,15 +199,24 @@ fun ActivityDetailScreen(
         )
     }
 
+    if (showMapTypeDialog) {
+        MapTypeSelectionDialog(
+            currentMapType = mobileSettings.mapType,
+            onDismiss = { showMapTypeDialog = false },
+            onSelect = { viewModel.setMapType(it) }
+        )
+    }
+
     if (isMapFullScreen && sessionData != null) {
         BackHandler { isMapFullScreen = false }
         FullScreenMap(
             data = sessionData!!,
             settings = settings,
-            isDarkTheme = isDarkTheme,
+            mobileSettings = mobileSettings,
             selectedLap = selectedLap,
             selectedIndex = selectedIndex,
-            onClose = { isMapFullScreen = false }
+            onClose = { isMapFullScreen = false },
+            onMapTypeClick = { showMapTypeDialog = true }
         )
     } else {
         Scaffold(
@@ -281,11 +294,12 @@ fun ActivityDetailScreen(
                                     MapSection(
                                         data = data, 
                                         settings = settings, 
-                                        isDarkTheme = isDarkTheme, 
+                                        mobileSettings = mobileSettings,
                                         selectedLap = selectedLap, 
                                         onMapClick = { viewModel.selectLap(null) }, 
                                         selectedIndex = selectedIndex,
-                                        onExpandClick = { isMapFullScreen = true }
+                                        onExpandClick = { isMapFullScreen = true },
+                                        onMapTypeClick = { showMapTypeDialog = true }
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
@@ -339,6 +353,45 @@ fun ActivityDetailScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MapTypeSelectionDialog(
+    currentMapType: AppMapType,
+    onDismiss: () -> Unit,
+    onSelect: (AppMapType) -> Unit
+) {
+    val texts = LocalMobileTexts.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(texts.MAP_TYPE_TITLE) },
+        text = {
+            Column {
+                MapTypeOption(texts.MAP_TYPE_NORMAL, AppMapType.NORMAL, currentMapType == AppMapType.NORMAL) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_SATELLITE, AppMapType.SATELLITE, currentMapType == AppMapType.SATELLITE) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_HYBRID, AppMapType.HYBRID, currentMapType == AppMapType.HYBRID) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_TERRAIN, AppMapType.TERRAIN, currentMapType == AppMapType.TERRAIN) { onSelect(it); onDismiss() }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(texts.SETTINGS_CLOSE) }
+        }
+    )
+}
+
+@Composable
+fun MapTypeOption(label: String, type: AppMapType, selected: Boolean, onClick: (AppMapType) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick(type) }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = { onClick(type) })
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(label)
     }
 }
 
@@ -424,15 +477,21 @@ fun ExportOptionRow(
 fun MapSection(
     data: SessionData,
     settings: ActivityDetailSettings,
-    isDarkTheme: Boolean,
+    mobileSettings: MobileSettingsState,
     selectedLap: WorkoutLap?,
     onMapClick: () -> Unit,
     selectedIndex: Int? = null,
-    onExpandClick: () -> Unit = {}
+    onExpandClick: () -> Unit = {},
+    onMapTypeClick: () -> Unit = {}
 ) {
     val texts = LocalMobileTexts.current
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
+    val isDarkTheme = when (mobileSettings.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
 
     LaunchedEffect(selectedLap, data.route) {
         val pointsToShow = if (selectedLap != null) {
@@ -459,7 +518,15 @@ fun MapSection(
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
+            properties = MapProperties(
+                mapStyleOptions = if (isDarkTheme && mobileSettings.mapType == AppMapType.NORMAL) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null,
+                mapType = when(mobileSettings.mapType) {
+                    AppMapType.NORMAL -> MapType.NORMAL
+                    AppMapType.SATELLITE -> MapType.SATELLITE
+                    AppMapType.HYBRID -> MapType.HYBRID
+                    AppMapType.TERRAIN -> MapType.TERRAIN
+                }
+            ),
             onMapClick = { onMapClick() }
         ) {
             val startIcon = remember { BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) }
@@ -505,11 +572,19 @@ fun MapSection(
             }
         }
         
-        IconButton(
-            onClick = onExpandClick,
-            modifier = Modifier.padding(8.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
-        ) {
-            Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND)
+        Row(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            IconButton(
+                onClick = onMapTypeClick,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
+            }
+            IconButton(
+                onClick = onExpandClick,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND)
+            }
         }
     }
 }
@@ -518,14 +593,20 @@ fun MapSection(
 fun FullScreenMap(
     data: SessionData,
     settings: ActivityDetailSettings,
-    isDarkTheme: Boolean,
+    mobileSettings: MobileSettingsState,
     selectedLap: WorkoutLap?,
     selectedIndex: Int?,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onMapTypeClick: () -> Unit = {}
 ) {
     val texts = LocalMobileTexts.current
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
+    val isDarkTheme = when (mobileSettings.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
 
     LaunchedEffect(selectedLap, data.route) {
         val pointsToShow = if (selectedLap != null) {
@@ -552,7 +633,15 @@ fun FullScreenMap(
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
+            properties = MapProperties(
+                mapStyleOptions = if (isDarkTheme && mobileSettings.mapType == AppMapType.NORMAL) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null,
+                mapType = when(mobileSettings.mapType) {
+                    AppMapType.NORMAL -> MapType.NORMAL
+                    AppMapType.SATELLITE -> MapType.SATELLITE
+                    AppMapType.HYBRID -> MapType.HYBRID
+                    AppMapType.TERRAIN -> MapType.TERRAIN
+                }
+            ),
         ) {
             val startIcon = remember { BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) }
             val finishIcon = remember {
@@ -597,11 +686,19 @@ fun FullScreenMap(
             }
         }
         
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
-        ) {
-            Icon(Icons.Default.FullscreenExit, contentDescription = texts.DETAIL_MAP_COLLAPSE)
+        Column(modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            IconButton(
+                onClick = onMapTypeClick,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
+            }
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.FullscreenExit, contentDescription = texts.DETAIL_MAP_COLLAPSE)
+            }
         }
     }
 }

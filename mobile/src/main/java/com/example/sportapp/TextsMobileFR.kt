@@ -503,6 +503,14 @@ object TextsMobileFR : MobileTexts {
     override val ERROR_WEARABLE_NOT_AVAILABLE = "L'API Wearable n'est pas disponible sur cet appareil"
     override val ERROR_NO_WATCH_CONNECTED = "Aucune montre connectée"
 
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Tipo de mapa"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satélite"
+    override val MAP_TYPE_HYBRID = "Híbrido"
+    override val MAP_TYPE_TERRAIN = "Terreno"
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT

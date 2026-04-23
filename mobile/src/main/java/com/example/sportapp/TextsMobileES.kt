@@ -246,7 +246,7 @@ object TextsMobileES : MobileTexts {
     override val CHART_STEPS = "Pasos"
 
     // Definitions
-    override val DEF_TITLE = "Definiciones de actividad"
+    override val DEF_TITLE = "Definicione de entrenamiento"
     override val DEF_ADD = "Añadir definición"
     override val DEF_EDIT = "Editar definición"
     override val DEF_DELETE = "Eliminar definición"
@@ -265,7 +265,7 @@ object TextsMobileES : MobileTexts {
     override val DEF_NEW_ACTIVITY = "Nueva actividad"
     override val DEF_EDIT_ACTIVITY = "Editar actividad"
     override val DEF_NAME_LABEL = "Nombre de la actividad"
-    override val DEF_AUTO_LAP_LABEL = "Vuelta automática (metros, opcjonalnie)"
+    override val DEF_AUTO_LAP_LABEL = "Vuelta automática (metros, opcional)"
     override val DEF_WIDGET_IN_ACTIVITY = "Widget en actividad"
     override val DEF_VISIBILITY = "Visibilidad"
     override val DEF_RECORD = "Grabar"
@@ -349,12 +349,6 @@ object TextsMobileES : MobileTexts {
     override val ZONE_Z4 = "Difícil"
     override val ZONE_Z5 = "Máximo"
 
-    // Compare Screen
-    override val COMPARE_TITLE = "Comparación de actividad"
-    override val COMPARE_VS = "Comparación:"
-    override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
-    override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
-
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Inicializando exportación..."
     override fun vmExportGenerating(name: String, current: Int, total: Int) = "Generando: $name ($current/$total)"
@@ -410,23 +404,23 @@ object TextsMobileES : MobileTexts {
     override val WIDGET_TOTAL_ASCENT = "Suma de subidas"
     override val WIDGET_TOTAL_DESCENT = "Suma de bajadas"
     override val WIDGET_AVG_STEP_LENGTH = "Longitud de paso media"
-    override val WIDGET_AVG_CADENCE_DESC = "Cadencia media"
+    override val WIDGET_AVG_CADENCE_DESC = "Cadenza media"
     override val WIDGET_MAX_CADENCE = "Cadencia máxima"
     override val WIDGET_TOTAL_STEPS = "Número de pasos"
     override val WIDGET_PRESSURE_START = "Presión atm. (inicio)"
     override val WIDGET_PRESSURE_END = "Presión atm. (final)"
     override val WIDGET_MAX_PRESSURE = "Presión atm. máxima"
     override val WIDGET_MIN_PRESSURE = "Presión atm. mínima"
-    override val WIDGET_BEST_PACE_1KM = "Mejor ritmo de 1 km"
-    override val WIDGET_WATCH_ASCENT = "Subida acumulada"
-    override val WIDGET_WATCH_DESCENT = "Bajada acumulada"
+    override val WIDGET_BEST_PACE_1KM = "Mejor ritmo (1km)"
+    override val WIDGET_WATCH_ASCENT = "Ascenso acumulado"
+    override val WIDGET_WATCH_DESCENT = "Descenso acumulado"
 
     // Sensors
     override val SENSOR_HEART_RATE = "Frecuencia cardíaca"
     override val SENSOR_CALORIES_SUM = "Calorías totales"
     override val SENSOR_CALORIES_MIN = "Calorías por minuto"
     override val SENSOR_STEPS = "Pasos"
-    override val SENSOR_STEPS_MIN = "Cadence (steps/min)"
+    override val SENSOR_STEPS_MIN = "Cadencia (pasos/min)"
     override val SENSOR_DISTANCE_STEPS = "Distancia (pasos)"
     override val SENSOR_SPEED_GPS = "Velocidad"
     override val SENSOR_SPEED_STEPS = "Velocidad (pasos)"
@@ -438,21 +432,11 @@ object TextsMobileES : MobileTexts {
     override val SENSOR_MAP = "Datos de ubicación"
     override val SENSOR_AVG_STEP_LENGTH = "Longitud de paso media"
 
-    // Trim Screen
-    override val TRIM_TITLE = "Editar entrenamiento (Recorte)"
-    override val TRIM_CONFIRM_TITLE = "Confirmar recorte"
-    override val TRIM_CONFIRM_DESC = "¿Está seguro de que desea eliminar los datos fuera del rango seleccionado? Estos datos se eliminarán permanentemente."
-    override val TRIM_SAVE_BTN = "Recortar y guardar"
-    override val TRIM_CHART_HR = "Gráfico de frecuencia cardíaca"
-    override val TRIM_RANGE_TITLE = "Seleccionar rango de entrenamiento"
-    override val TRIM_PREVIEW_TITLE = "Vista previa de las nuevas estadísticas"
-    override val TRIM_NEW_DURATION = "Nueva duración:"
-    override val TRIM_DISTANCE_GPS = "Distancia (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Distancia (pasos):"
-    override val TRIM_CALORIES = "Calorías quemadas:"
-    override val TRIM_AVG_BPM = "FC media:"
-    override val TRIM_START = "Inicio"
-    override val TRIM_END = "Final"
+    // Compare Screen
+    override val COMPARE_TITLE = "Comparación de actividad"
+    override val COMPARE_VS = "Comparación:"
+    override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
+    override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
 
     // Units
     override val UNIT_KCAL = "kcal"
@@ -502,6 +486,13 @@ object TextsMobileES : MobileTexts {
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "La API Wearable no está disponible en este dispositivo"
     override val ERROR_NO_WATCH_CONNECTED = "No hay ningún reloj conectado"
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Tipo de mapa"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satélite"
+    override val MAP_TYPE_HYBRID = "Híbrido"
+    override val MAP_TYPE_TERRAIN = "Terreno"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -580,9 +571,24 @@ object TextsMobileES : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
-            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "avg_cadence" -> WIDGET_AVG_BPM
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> id
         }
     }
+
+    override val TRIM_TITLE = "Editar entrenamiento (Recorte)"
+    override val TRIM_CONFIRM_TITLE = "Confirmar recorte"
+    override val TRIM_CONFIRM_DESC = "¿Está seguro de que desea eliminar los datos fuera del rango seleccionado? Estos datos se eliminarán permanentemente."
+    override val TRIM_SAVE_BTN = "Recortar y guardar"
+    override val TRIM_CHART_HR = "Gráfico de frecuencia cardíaca"
+    override val TRIM_RANGE_TITLE = "Seleccionar rango de entrenamiento"
+    override val TRIM_PREVIEW_TITLE = "Vista previa de las nuevas estadísticas"
+    override val TRIM_NEW_DURATION = "Nueva duración:"
+    override val TRIM_DISTANCE_GPS = "Distancia (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Distancia (pasos):"
+    override val TRIM_CALORIES = "Calorías quemadas:"
+    override val TRIM_AVG_BPM = "FC media:"
+    override val TRIM_START = "Inicio"
+    override val TRIM_END = "Final"
 }

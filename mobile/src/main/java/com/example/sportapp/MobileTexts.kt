@@ -496,6 +496,13 @@ interface MobileTexts {
     // Errors
     val ERROR_WEARABLE_NOT_AVAILABLE: String
     val ERROR_NO_WATCH_CONNECTED: String
+
+    // Map Types
+    val MAP_TYPE_TITLE: String
+    val MAP_TYPE_NORMAL: String
+    val MAP_TYPE_SATELLITE: String
+    val MAP_TYPE_HYBRID: String
+    val MAP_TYPE_TERRAIN: String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

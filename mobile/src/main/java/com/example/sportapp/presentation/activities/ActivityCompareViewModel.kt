@@ -10,6 +10,7 @@ import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.model.HeartRateZoneResult
+import com.example.sportapp.presentation.settings.AppMapType
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.example.sportapp.presentation.stats.ActivityDetailSettings
@@ -166,6 +167,12 @@ class ActivityCompareViewModel @Inject constructor(
                     Log.d("ChartDebug", "Producer $id: ustawiono ${seriesList.sumOf { it.size }} punktów")
                 }
             }
+        }
+    }
+
+    fun setMapType(mapType: AppMapType) {
+        viewModelScope.launch {
+            mobileSettingsManager.updateMapType(mapType)
         }
     }
 }

@@ -478,7 +478,7 @@ object TextsMobilePL : MobileTexts {
             "ascent" -> WIDGET_ASCENT
             "descent" -> WIDGET_DESCENT
             "steps" -> WIDGET_STEPS
-            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "avg_cadence" -> WIDGET_AVG_BPM
             "max_speed" -> WIDGET_MAX_SPEED
             "max_altitude" -> WIDGET_MAX_ALTITUDE
             "max_elevation_gain" -> WIDGET_MAX_ELEVATION_GAIN
@@ -585,4 +585,11 @@ object TextsMobilePL : MobileTexts {
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Usługi Wearable są niedostępne na tym urządzeniu"
     override val ERROR_NO_WATCH_CONNECTED = "Nie znaleziono połączonego zegarka"
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Typ mapy"
+    override val MAP_TYPE_NORMAL = "Normalna"
+    override val MAP_TYPE_SATELLITE = "Satelitarna"
+    override val MAP_TYPE_HYBRID = "Hybrydowa"
+    override val MAP_TYPE_TERRAIN = "Terenowa"
 }

@@ -18,6 +18,10 @@ enum class ThemeMode {
     SYSTEM, LIGHT, DARK
 }
 
+enum class AppMapType {
+    NORMAL, SATELLITE, HYBRID, TERRAIN
+}
+
 enum class AppLanguage(val code: String, val label: String, val texts: MobileTexts) {
  //   ENGLISH("en", "English", TextsMobileEN),
  //   SPANISH("es", "Español", TextsMobileES),
@@ -69,6 +73,7 @@ data class MobileSettingsState(
     val healthData: HealthData = HealthData(),
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val language: AppLanguage = AppLanguage.POLISH,
+    val mapType: AppMapType = AppMapType.NORMAL,
     val autoExportToHC: Boolean = false,
     val autoExportToStrava: Boolean = false,
     val hcPermissionsDeniedCount: Int = 0,
