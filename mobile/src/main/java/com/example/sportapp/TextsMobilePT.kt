@@ -135,7 +135,7 @@ object TextsMobilePT : MobileTexts {
 
     // Health Connect Permissions Dialog
     override val HC_PERMISSIONS_DIALOG_TITLE = "Permissões Necessárias"
-    override val HC_PERMISSIONS_DIALOG_DESC = "Permissões de escrita são necessárias para exportar treinos para o Health Connect. Você pode concedê-las nas configurações do sistema."
+    override val HC_PERMISSIONS_DIALOG_DESC = "Permissões de escrita son necessárias para exportar treinos para o Health Connect. Você pode concedê-las nas configurações do sistema."
     override val HC_OPEN_SETTINGS = "Abrir configurações"
 
     // Health Data Screen
@@ -333,7 +333,7 @@ object TextsMobilePT : MobileTexts {
     override val HR_NO_DATA = "Sem dados de FC"
     override val HR_TOO_LITTLE_DATA = "Dados insuficientes"
     override val HR_BELOW_ZONES = "FC abaixo das zonas"
-    override val HR_EFFECT_Z0 = "Baixa intensidade / Aquecimento"
+    override val HR_EFFECT_Z0 = "Baixa intensity / Aquecimento"
     override val HR_EFFECT_Z1 = "Base aeróbica e recuperação"
     override val HR_EFFECT_Z2 = "Queima de gordura eficiente"
     override val HR_EFFECT_Z3 = "Melhora da capacidade aeróbica"
@@ -430,8 +430,7 @@ object TextsMobilePT : MobileTexts {
     override val SENSOR_TOTAL_DESCENT = "Perda total"
     override val SENSOR_PRESSURE = "Pressão atm."
     override val SENSOR_MAP = "Dados de localização"
-    override val SENSOR_AVG_STEP_LENGTH = "Comprimento do passo médio"
-
+    
     // Trim Screen
     override val TRIM_TITLE = "Editar Treino (Recortar)"
     override val TRIM_CONFIRM_TITLE = "Confirmar recorte"
@@ -470,7 +469,48 @@ object TextsMobilePT : MobileTexts {
     override val UNIT_VO2_MAX = "ml/kg/min"
     
     // New metric
-    // SENSOR_AVG_STEP_LENGTH is already overridden above
+    override val SENSOR_AVG_STEP_LENGTH = "Comprimento médio do passo"
+
+    // Strava Strings
+    override val STRAVA_TITLE = "Sincronização com Strava"
+    override val STRAVA_CONNECT = "Conectar à conta Strava"
+    override val STRAVA_DISCONNECT = "Desconectar conta Strava"
+    override val STRAVA_CONNECTED = "Conectado ao Strava"
+    override val STRAVA_NOT_CONNECTED = "Não conectado"
+    override val STRAVA_SYNC_NOW = "Sincronizar agora"
+    override val STRAVA_SYNC_SUCCESS = "Treino enviado!"
+    override val STRAVA_SYNC_FAILED = "Falha no envio"
+    override val STRAVA_SYNCING = "Enviando..."
+    override val STRAVA_AUTH_ERROR = "Erro de autorização"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportação automática"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Enviar automaticamente novos treinos para o Strava"
+    override val STRAVA_SYNC_LOG = "Histórico de sincronização"
+    override val STRAVA_SYNC_LOG_EMPTY = "Nenhum histórico de sincronização"
+
+    // Live Tracking
+    override val LIVE_TRACKING_TITLE = "Live Tracking"
+    override val LIVE_TRACKING_SELECT_ACTIVITY = "Selecionar atividade"
+    override val LIVE_TRACKING_LOCK = "Bloquear"
+    override val LIVE_TRACKING_UNLOCK_SWIPE = "Deslize para cima para desbloquear"
+    override val LIVE_TRACKING_MAP_NORTH = "Norte"
+    override val LIVE_TRACKING_MAP_DIRECTION = "Direção"
+    override val LIVE_TRACKING_WAITING_FOR_WATCH = "Aguardando sinal do relógio..."
+    override val LIVE_TRACKING_FINISHED_TITLE = "Atividade concluída"
+    override val LIVE_TRACKING_FINISHED_DESC = "A atividade foi gravada com sucesso."
+    override val LIVE_TRACKING_BTN_FINISH = "Concluir"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Ver mapa"
+    override val LIVE_TRACKING_PAUSED = "Pausa"
+    
+    // Errors
+    override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable API não está disponível neste dispositivo"
+    override val ERROR_NO_WATCH_CONNECTED = "Nenhum relógio conectado"
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Tipo de Mapa"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satélite"
+    override val MAP_TYPE_HYBRID = "Híbrido"
+    override val MAP_TYPE_TERRAIN = "Relevo"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -545,7 +585,6 @@ object TextsMobilePT : MobileTexts {
             "przewyzszenia_dol" -> SENSOR_TOTAL_DESCENT
             "descent" -> WIDGET_DESCENT
             "pressure" -> SENSOR_PRESSURE
-            "map" -> SENSOR_MAP
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
@@ -554,45 +593,4 @@ object TextsMobilePT : MobileTexts {
             else -> id
         }
     }
-
-    // Strava Strings
-    override val STRAVA_TITLE = "Sincronização com Strava"
-    override val STRAVA_CONNECT = "Conectar à conta Strava"
-    override val STRAVA_DISCONNECT = "Desconectar conta Strava"
-    override val STRAVA_CONNECTED = "Conectado ao Strava"
-    override val STRAVA_NOT_CONNECTED = "Não conectado"
-    override val STRAVA_SYNC_NOW = "Sincronizar agora"
-    override val STRAVA_SYNC_SUCCESS = "Treino enviado!"
-    override val STRAVA_SYNC_FAILED = "Falha no envio"
-    override val STRAVA_SYNCING = "Enviando..."
-    override val STRAVA_AUTH_ERROR = "Erro de autorização"
-    override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportação automática"
-    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Enviar automaticamente novos treinos para o Strava"
-    override val STRAVA_SYNC_LOG = "Histórico de sincronização"
-    override val STRAVA_SYNC_LOG_EMPTY = "Nenhum histórico de sincronização"
-
-    // Live Tracking
-    override val LIVE_TRACKING_TITLE = "Live Tracking"
-    override val LIVE_TRACKING_SELECT_ACTIVITY = "Selecionar atividade"
-    override val LIVE_TRACKING_LOCK = "Bloquear"
-    override val LIVE_TRACKING_UNLOCK_SWIPE = "Deslize para cima para desbloquear"
-    override val LIVE_TRACKING_MAP_NORTH = "Norte"
-    override val LIVE_TRACKING_MAP_DIRECTION = "Direção"
-    override val LIVE_TRACKING_WAITING_FOR_WATCH = "Aguardando sinal do relógio..."
-    override val LIVE_TRACKING_FINISHED_TITLE = "Atividade concluída"
-    override val LIVE_TRACKING_FINISHED_DESC = "A atividade foi gravada com sucesso."
-    override val LIVE_TRACKING_BTN_FINISH = "Concluir"
-    override val LIVE_TRACKING_BTN_VIEW_MAP = "Ver mapa"
-    override val LIVE_TRACKING_PAUSED = "Pausa"
-    
-    // Errors
-    override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable API não está disponível neste dispositivo"
-    override val ERROR_NO_WATCH_CONNECTED = "Nenhum relógio conectado"
-
-    // Map Types
-    override val MAP_TYPE_TITLE = "Tipo de Mapa"
-    override val MAP_TYPE_NORMAL = "Normal"
-    override val MAP_TYPE_SATELLITE = "Satélite"
-    override val MAP_TYPE_HYBRID = "Híbrido"
-    override val MAP_TYPE_TERRAIN = "Relevo"
 }
