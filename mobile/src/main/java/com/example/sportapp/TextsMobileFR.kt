@@ -23,6 +23,9 @@ object TextsMobileFR : MobileTexts {
     override val HOME_LOGO_DESC = "Logo de l'application"
     override val HOME_SECRET_TITLE = "C'est super de cliquer, mais il n'y a rien ici"
     override val HOME_CLOSE = "Fermer"
+    override val HOME_START_LIVE = "Démarrer le Live Tracking"
+    override val HOME_ACTIVE_WORKOUT = "Entraînement en cours"
+    override val HOME_RESUME_TRACKING = "Reprendre le suivi"
 
     override fun homeResultsToday() = "Résultats d'aujourd'hui :"
     override fun homeResultsWeek() = "Résultats de la semaine :"
@@ -233,8 +236,8 @@ object TextsMobileFR : MobileTexts {
     override val STATS_SECTION_CHARTS = "Section : Graphiques de tendance"
     override val STATS_MOVE_UP = "Monter"
     override val STATS_MOVE_DOWN = "Descendre"
-    override fun chartDistanceGps(km: Boolean) = if (km) "Distance (GPS) en km" else "Distance (GPS) en m"
-    override fun chartDistanceSteps(km: Boolean) = if (km) "Distance (pas) en km" else "Distance (pas) en m"
+    override fun chartDistanceGps(km: Boolean) = if (km) "Distance (GPS) en km" else "Distance (GPS) in m"
+    override fun chartDistanceSteps(km: Boolean) = if (km) "Distance (pas) en km" else "Distance (pas) in m"
     override val CHART_STEPS = "Pas"
 
     // Definitions
@@ -244,7 +247,7 @@ object TextsMobileFR : MobileTexts {
     override val DEF_DELETE = "Supprimer la définition"
     override val DEF_NAME = "Nom"
     override val DEF_ICON = "Icône"
-    override val DEF_SENSORS = "Capteurs"
+    override val DEF_SENSORS = "Sensors"
     override val DEF_LIST_TITLE = "Définition d'activité"
     override val DEF_SENSORS_DESC = "Gérer la liste des sports et capteurs"
     override val DEF_RECORDING = "Enregistrement"
@@ -304,8 +307,8 @@ object TextsMobileFR : MobileTexts {
     override val DEF_MARTIAL_ARTS = "Arts martiaux"
     override val DEF_SKIING = "Ski"
     override val DEF_SNOWBOARDING = "Snowboard"
-    override val DEF_SKATING = "Patinage"
-    override val DEF_ICE_SKATING = "Patinage sur glace"
+    override val DEF_SKATING = "Pattinage"
+    override val DEF_ICE_SKATING = "Pattinage sur glace"
     
     override val DEF_GYM = "Gym"
     override val DEF_BASEBALL = "Baseball"
@@ -461,6 +464,40 @@ object TextsMobileFR : MobileTexts {
     override val AD_SETTINGS_SECTION_WIDGETS = "Section : Widgets"
     override val AD_SETTINGS_SECTION_CHARTS = "Section : Graphiques"
 
+    // Strava Strings
+    override val STRAVA_TITLE = "Synchronisation avec Strava"
+    override val STRAVA_CONNECT = "Se connecter à Strava"
+    override val STRAVA_DISCONNECT = "Déconnecter Strava"
+    override val STRAVA_CONNECTED = "Connecté à Strava"
+    override val STRAVA_NOT_CONNECTED = "Non connecté"
+    override val STRAVA_SYNC_NOW = "Synchroniser maintenant"
+    override val STRAVA_SYNC_SUCCESS = "Entraînement téléchargé !"
+    override val STRAVA_SYNC_FAILED = "Échec du téléchargement"
+    override val STRAVA_SYNCING = "Téléchargement..."
+    override val STRAVA_AUTH_ERROR = "Erreur d'autorisation"
+    override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportation automatique"
+    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Télécharger automatiquement les nouveaux entraînements vers Strava"
+    override val STRAVA_SYNC_LOG = "Historique de synchronisation"
+    override val STRAVA_SYNC_LOG_EMPTY = "Aucun entraînement téléchargé"
+
+    // Live Tracking
+    override val LIVE_TRACKING_TITLE = "Live Tracking"
+    override val LIVE_TRACKING_SELECT_ACTIVITY = "Sélectionner l'activité"
+    override val LIVE_TRACKING_LOCK = "Verrouiller"
+    override val LIVE_TRACKING_UNLOCK_SWIPE = "Glisser vers le haut pour déverrouiller"
+    override val LIVE_TRACKING_MAP_NORTH = "Nord"
+    override val LIVE_TRACKING_MAP_DIRECTION = "Direction"
+    override val LIVE_TRACKING_WAITING_FOR_WATCH = "En attente du signal de la montre..."
+    override val LIVE_TRACKING_FINISHED_TITLE = "Activité terminée"
+    override val LIVE_TRACKING_FINISHED_DESC = "L'activité a été enregistrée avec succès."
+    override val LIVE_TRACKING_BTN_FINISH = "Terminer"
+    override val LIVE_TRACKING_BTN_VIEW_MAP = "Voir la carte"
+    override val LIVE_TRACKING_PAUSED = "Pause"
+    
+    // Errors
+    override val ERROR_WEARABLE_NOT_AVAILABLE = "L'API Wearable n'est pas disponible sur cet appareil"
+    override val ERROR_NO_WATCH_CONNECTED = "Aucune montre connectée"
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -543,20 +580,4 @@ object TextsMobileFR : MobileTexts {
             else -> id
         }
     }
-
-    // Strava Strings
-    override val STRAVA_TITLE = "Synchronisation avec Strava"
-    override val STRAVA_CONNECT = "Se connecter à Strava"
-    override val STRAVA_DISCONNECT = "Déconnecter Strava"
-    override val STRAVA_CONNECTED = "Connecté à Strava"
-    override val STRAVA_NOT_CONNECTED = "Non connecté"
-    override val STRAVA_SYNC_NOW = "Synchroniser maintenant"
-    override val STRAVA_SYNC_SUCCESS = "Entraînement téléchargé !"
-    override val STRAVA_SYNC_FAILED = "Échec du téléchargement"
-    override val STRAVA_SYNCING = "Téléchargement..."
-    override val STRAVA_AUTH_ERROR = "Erreur d'autorisation"
-    override val SETTINGS_STRAVA_AUTO_EXPORT = "Exportation automatique"
-    override val SETTINGS_STRAVA_AUTO_EXPORT_DESC = "Télécharger automatiquement les nouveaux entraînements vers Strava"
-    override val STRAVA_SYNC_LOG = "Historique de synchronisation"
-    override val STRAVA_SYNC_LOG_EMPTY = "Aucun entraînement téléchargé"
 }

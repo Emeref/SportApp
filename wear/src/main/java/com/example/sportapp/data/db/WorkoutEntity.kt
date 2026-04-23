@@ -2,25 +2,27 @@ package com.example.sportapp.data.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
 
 @Entity(tableName = "workouts")
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val activityName: String,
+    @ColumnInfo(defaultValue = "Other")
     val baseType: String = "Other",
     val startTime: Long,
     val durationFormatted: String,
-    val steps: Int?,
-    val distanceSteps: Double?,
-    val distanceGps: Double?,
-    val avgSpeedSteps: Double?,
-    val avgSpeedGps: Double?,
-    val totalAscent: Double?,
-    val totalDescent: Double?,
-    val avgBpm: Double?,
-    val maxBpm: Int?,
-    val totalCalories: Double?,
-    val maxCalorieMin: Double?,
+    val steps: Int? = null,
+    val distanceSteps: Double? = null,
+    val distanceGps: Double? = null,
+    val avgSpeedSteps: Double? = null,
+    val avgSpeedGps: Double? = null,
+    val totalAscent: Double? = null,
+    val totalDescent: Double? = null,
+    val avgBpm: Double? = null,
+    val maxBpm: Int? = null,
+    val totalCalories: Double? = null,
+    val maxCalorieMin: Double? = null,
     val durationSeconds: Long,
     // Nowe metryki statystyczne
     val avgPace: Double? = null, // min/km
@@ -35,7 +37,14 @@ data class WorkoutEntity(
     val bestPace1km: Double? = null, // min/km
     val autoLapDistance: Double? = null, // m - dystans autolapa w momencie startu
     val isSynced: Boolean = false,
-    val isFinished: Boolean = true // Nowe pole
+    @ColumnInfo(name = "hc_session_id")
+    val hcSessionId: String? = null,
+    @ColumnInfo(defaultValue = "1")
+    val isFinished: Boolean = true, // Nowe pole
+    
+    // Pola dla zgodności z mobile
+    val destinationLatitude: Double? = null,
+    val destinationLongitude: Double? = null
 )
 
 @Entity(tableName = "workout_points")

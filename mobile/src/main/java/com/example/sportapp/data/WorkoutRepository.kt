@@ -305,6 +305,10 @@ class WorkoutRepository @Inject constructor(
 
     override fun getAllDefinitions(): Flow<List<WorkoutDefinition>> = workoutDefinitionDao.getAllDefinitions()
 
+    override suspend fun getDefinitionById(id: Long): WorkoutDefinition? = withContext(Dispatchers.IO) {
+        workoutDefinitionDao.getDefinitionById(id)
+    }
+
     override suspend fun existsByHCSessionId(hcSessionId: String): Boolean = withContext(Dispatchers.IO) {
         workoutDao.existsByHCSessionId(hcSessionId)
     }

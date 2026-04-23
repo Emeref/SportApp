@@ -248,7 +248,6 @@ fun SensorEditRow(
         Text(
             text = label, 
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White,
             modifier = Modifier.weight(1f)
         )
         
@@ -291,14 +290,14 @@ fun SensorEditRow(
                 Icon(
                     Icons.Default.ArrowUpward, 
                     contentDescription = null, 
-                    tint = if (onMoveUp != null) Color.White else Color.Transparent
+                    tint = if (onMoveUp != null) MaterialTheme.colorScheme.onSurface else Color.Transparent
                 )
             }
             IconButton(onClick = onMoveDown ?: {}, enabled = onMoveDown != null, modifier = Modifier.size(32.dp)) {
                 Icon(
                     Icons.Default.ArrowDownward, 
                     contentDescription = null, 
-                    tint = if (onMoveDown != null) Color.White else Color.Transparent
+                    tint = if (onMoveDown != null) MaterialTheme.colorScheme.onSurface else Color.Transparent
                 )
             }
         }
@@ -503,10 +502,11 @@ fun IconPickerSelection(onIconSelected: (String) -> Unit, onDismiss: () -> Unit)
             LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
                 itemsIndexed(icons) { _, item ->
                     val (name, label) = item
+                    val icon = getIconForName(name)
                     DropdownMenuItem(
                         text = { 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(getIconForName(name), contentDescription = null)
+                                Icon(icon, contentDescription = null)
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Text(label)
                             }

@@ -95,9 +95,16 @@ class MainActivity : ComponentActivity() {
             val targetWorkoutId by navigationIntentId.collectAsState()
             LaunchedEffect(targetWorkoutId) {
                 targetWorkoutId?.let { id ->
-                    navController.navigate("dynamic_workout/$id") {
-                        popUpTo("main_menu") { inclusive = false }
-                        launchSingleTop = true
+                    if (id == -1L) {
+                        navController.navigate("choose_sport") {
+                            popUpTo("main_menu") { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    } else {
+                        navController.navigate("dynamic_workout/$id") {
+                            popUpTo("main_menu") { inclusive = false }
+                            launchSingleTop = true
+                        }
                     }
                     navigationIntentId.value = null
                 }
@@ -325,7 +332,10 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         intent?.let {
-            if (it.action == "com.example.sportapp.ACTION_NAVIGATE_TO_WORKOUT") {
+            if (it.hasExtra("EXTRA_DEFINITION_ID")) {
+                val definitionId = it.getLongExtra("EXTRA_DEFINITION_ID", -1L)
+                navigationIntentId.value = definitionId
+            } else if (it.action == "com.example.sportapp.ACTION_NAVIGATE_TO_WORKOUT") {
                 val definitionId = it.getLongExtra("definitionId", -1L)
                 if (definitionId != -1L) {
                     navigationIntentId.value = definitionId

@@ -36,13 +36,13 @@ enum class ScreenBehavior {
 }
 
 enum class AppLanguage(val code: String, val label: String, val texts: WearTexts) {
-    GERMAN("de", "Deutsch", TextsWearDE),
-    ENGLISH("en", "English", TextsWearEN),
-    FRENCH("fr", "Français", TextsWearFR),
-    SPANISH("es", "Español", TextsWearES),
-    ITALIAN("it", "Italiano", TextsWearIT),
+ //   GERMAN("de", "Deutsch", TextsWearDE),
+//    ENGLISH("en", "English", TextsWearEN),
+//    FRENCH("fr", "Français", TextsWearFR),
+ //   SPANISH("es", "Español", TextsWearES),
+ //   ITALIAN("it", "Italiano", TextsWearIT),
     POLISH("pl", "Polski", TextsWearPL),
-    PORTUGUESE("pt", "Português", TextsWearPT)
+ //   PORTUGUESE("pt", "Português", TextsWearPT)
 }
 
 @Singleton

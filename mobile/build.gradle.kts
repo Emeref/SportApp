@@ -88,8 +88,9 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // Maps
+    // Maps & Location
     implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
     implementation(libs.maps.compose)
 
     // DataStore & Gson

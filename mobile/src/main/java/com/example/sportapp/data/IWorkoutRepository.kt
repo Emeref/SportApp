@@ -44,6 +44,7 @@ interface IWorkoutRepository {
     fun getActivityItemsFlow(): Flow<List<ActivityItem>>
 
     fun getAllDefinitions(): Flow<List<WorkoutDefinition>>
+    suspend fun getDefinitionById(id: Long): WorkoutDefinition?
 
     suspend fun insertWorkout(workout: WorkoutEntity): Long
     suspend fun insertPoints(points: List<WorkoutPointEntity>)

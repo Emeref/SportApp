@@ -1,24 +1,33 @@
 package com.example.sportapp.presentation.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.LocalMobileTexts
+import com.example.sportapp.MobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.presentation.definitions.getIconForName
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -30,13 +39,22 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToStats: () -> Unit,
     onNavigateToActivityList: () -> Unit,
+    onNavigateToLiveTracking: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     val texts = LocalMobileTexts.current
     val stats by viewModel.stats.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val locationDefinitions by viewModel.locationDefinitions.collectAsState()
+    val activeWorkoutData by viewModel.activeWorkoutData.collectAsState()
+    val activeDefinition by viewModel.activeDefinition.collectAsState()
+    val formattedDuration by viewModel.formattedDuration.collectAsState()
+    
+    val snackbarHostState = remember { SnackbarHostState() }
     var showSecretPopup by remember { mutableStateOf(false) }
+    var showActivitySelection by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     val activeWidgets = settings.widgets.filter { it.isEnabled }
 
@@ -52,6 +70,25 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
+            if (event == "live_tracking") {
+                onNavigateToLiveTracking()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.errorEvent.collect { errorCode ->
+            val message = when (errorCode) {
+                "ERROR_WEARABLE_NOT_AVAILABLE" -> texts.ERROR_WEARABLE_NOT_AVAILABLE
+                "ERROR_NO_WATCH_CONNECTED" -> texts.ERROR_NO_WATCH_CONNECTED
+                else -> errorCode
+            }
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
     if (showSecretPopup) {
         Dialog(onDismissRequest = { showSecretPopup = false }) {
             Card {
@@ -62,6 +99,44 @@ fun HomeScreen(
                         }
                     }
                     Text(texts.HOME_SECRET_TITLE, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
+    }
+
+    if (showActivitySelection) {
+        ModalBottomSheet(
+            onDismissRequest = { showActivitySelection = false },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    text = texts.LIVE_TRACKING_SELECT_ACTIVITY,
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                LazyColumn {
+                    items(locationDefinitions) { definition ->
+                        ListItem(
+                            headlineContent = { Text(definition.name) },
+                            leadingContent = {
+                                Icon(
+                                    imageVector = getIconForName(definition.iconName),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            modifier = Modifier.clickable {
+                                viewModel.startActivityOnWatch(definition)
+                                showActivitySelection = false
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -97,7 +172,23 @@ fun HomeScreen(
                     }
                 }
             )
-        }
+        },
+        floatingActionButton = {
+            if (activeWorkoutData == null) {
+                FloatingActionButton(onClick = { showActivitySelection = true }) {
+                    Icon(Icons.Default.Add, contentDescription = texts.HOME_START_LIVE)
+                }
+            } else {
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToLiveTracking,
+                    icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
+                    text = { Text(texts.HOME_RESUME_TRACKING) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -107,6 +198,21 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            AnimatedVisibility(
+                visible = activeWorkoutData != null,
+                enter = expandIn(),
+                exit = shrinkOut()
+            ) {
+                ActiveWorkoutCard(
+                    definitionName = activeDefinition?.name ?: texts.HOME_ACTIVE_WORKOUT,
+                    iconName = activeDefinition?.iconName ?: "DirectionsRun",
+                    duration = formattedDuration,
+                    data = activeWorkoutData ?: emptyMap(),
+                    texts = texts,
+                    onClick = onNavigateToLiveTracking
+                )
+            }
+
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,
@@ -147,6 +253,80 @@ fun HomeScreen(
                     .clickable { showSecretPopup = true }
             )
         }
+    }
+}
+
+@Composable
+fun ActiveWorkoutCard(
+    definitionName: String,
+    iconName: String,
+    duration: String,
+    data: Map<String, String>,
+    texts: MobileTexts,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = getIconForName(iconName),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = definitionName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    text = duration,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                data["bpm"]?.let {
+                    LiveMiniStat(label = texts.SENSOR_HEART_RATE, value = it)
+                }
+                data["distanceGps"]?.let {
+                    LiveMiniStat(label = texts.SENSOR_DISTANCE_GPS, value = it)
+                }
+                data["speedGps"]?.let {
+                    LiveMiniStat(label = texts.SENSOR_SPEED_GPS, value = it)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LiveMiniStat(label: String, value: String) {
+    Column {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
 }
 

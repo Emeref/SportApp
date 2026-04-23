@@ -3,6 +3,7 @@ package com.example.sportapp.di
 import android.content.Context
 import androidx.room.Room
 import com.example.sportapp.data.db.AppDatabase
+import com.example.sportapp.data.db.LiveLocationDao
 import com.example.sportapp.data.db.SyncMetadataDao
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
@@ -33,7 +34,9 @@ object DatabaseModule {
             AppDatabase.MIGRATION_18_19,
             AppDatabase.MIGRATION_19_20,
             AppDatabase.MIGRATION_20_21,
-            AppDatabase.MIGRATION_21_22
+            AppDatabase.MIGRATION_21_22,
+            AppDatabase.MIGRATION_22_23,
+            AppDatabase.MIGRATION_23_24
         )
         .build()
     }
@@ -51,5 +54,10 @@ object DatabaseModule {
     @Provides
     fun provideSyncMetadataDao(database: AppDatabase): SyncMetadataDao {
         return database.syncMetadataDao()
+    }
+
+    @Provides
+    fun provideLiveLocationDao(database: AppDatabase): LiveLocationDao {
+        return database.liveLocationDao()
     }
 }
