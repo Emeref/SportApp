@@ -41,6 +41,7 @@ import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
@@ -76,6 +77,7 @@ fun ActivityDetailScreen(
     val isExporting by viewModel.isExporting.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val hcSessionId by viewModel.hcSessionId.collectAsStateWithLifecycle(null)
+    val isExportedToStrava by viewModel.isExportedToStrava.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     var isIntervalsExpanded by remember { mutableStateOf(false) }
@@ -84,6 +86,7 @@ fun ActivityDetailScreen(
     var isMapFullScreen by remember { mutableStateOf(false) }
     var showPermissionRationale by remember { mutableStateOf(false) }
     var showExportedText by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -95,7 +98,7 @@ fun ActivityDetailScreen(
     ) { granted ->
         if (granted.containsAll(viewModel.healthConnectManager.writePermissions)) {
             viewModel.resetHcDeniedCount()
-            viewModel.exportToHC()
+            viewModel.exportActivity(viewModel.activityId, toStrava = false, toHealthConnect = true)
         } else {
             viewModel.incrementHcDeniedCount()
             Toast.makeText(context, texts.HC_EXPORT_PERMISSION_DENIED, Toast.LENGTH_SHORT).show()
@@ -163,6 +166,35 @@ fun ActivityDetailScreen(
         )
     }
 
+    if (showExportDialog) {
+        ExportSelectionDialog(
+            isExportedToHC = hcSessionId != null,
+            isExportedToStrava = isExportedToStrava,
+            onDismiss = { showExportDialog = false },
+            onExport = { toStrava, toHC ->
+                showExportDialog = false
+                scope.launch {
+                    if (toHC) {
+                        if (viewModel.healthConnectManager.hasPermissions(viewModel.healthConnectManager.writePermissions)) {
+                            viewModel.exportActivity(viewModel.activityId, toStrava = toStrava, toHealthConnect = true)
+                        } else {
+                            if (mobileSettings.hcPermissionsDeniedCount >= 2) {
+                                showPermissionRationale = true
+                            } else {
+                                permissionLauncher.launch(viewModel.healthConnectManager.writePermissions)
+                            }
+                            if (toStrava) {
+                                viewModel.exportActivity(viewModel.activityId, toStrava = true, toHealthConnect = false)
+                            }
+                        }
+                    } else if (toStrava) {
+                        viewModel.exportActivity(viewModel.activityId, toStrava = true, toHealthConnect = false)
+                    }
+                }
+            }
+        )
+    }
+
     if (isMapFullScreen && sessionData != null) {
         BackHandler { isMapFullScreen = false }
         FullScreenMap(
@@ -180,7 +212,8 @@ fun ActivityDetailScreen(
                     title = { Text(texts.DETAIL_TITLE) },
                     navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE) } },
                     actions = {
-                        if (hcSessionId != null) {
+                        val isFullyExported = hcSessionId != null && isExportedToStrava
+                        if (isFullyExported) {
                             Surface(
                                 onClick = { showExportedText = true },
                                 shape = RoundedCornerShape(16.dp),
@@ -200,7 +233,7 @@ fun ActivityDetailScreen(
                                     )
                                     AnimatedVisibility(visible = showExportedText) {
                                         Text(
-                                            text = texts.HC_EXPORTED_ON,
+                                            text = texts.ACTIVITY_ALREADY_SYNCED,
                                             style = MaterialTheme.typography.labelMedium,
                                             color = Color(0xFF4CAF50),
                                             modifier = Modifier.padding(start = 4.dp)
@@ -212,20 +245,8 @@ fun ActivityDetailScreen(
                             if (isExporting) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 16.dp), strokeWidth = 2.dp)
                             } else {
-                                IconButton(onClick = {
-                                    scope.launch {
-                                        if (viewModel.healthConnectManager.hasPermissions(viewModel.healthConnectManager.writePermissions)) {
-                                            viewModel.exportToHC()
-                                        } else {
-                                            if (mobileSettings.hcPermissionsDeniedCount >= 2) {
-                                                showPermissionRationale = true
-                                            } else {
-                                                permissionLauncher.launch(viewModel.healthConnectManager.writePermissions)
-                                            }
-                                        }
-                                    }
-                                }) {
-                                    Icon(Icons.Default.CloudUpload, contentDescription = texts.HC_EXPORT_TO)
+                                IconButton(onClick = { showExportDialog = true }) {
+                                    Icon(Icons.Default.CloudUpload, contentDescription = texts.ACTIVITY_EXPORT)
                                 }
                             }
                         }
@@ -322,8 +343,86 @@ fun ActivityDetailScreen(
 }
 
 @Composable
+fun ExportSelectionDialog(
+    isExportedToHC: Boolean,
+    isExportedToStrava: Boolean,
+    onDismiss: () -> Unit,
+    onExport: (toStrava: Boolean, toHC: Boolean) -> Unit
+) {
+    val texts = LocalMobileTexts.current
+    var exportStrava by remember { mutableStateOf(!isExportedToStrava) }
+    var exportHC by remember { mutableStateOf(!isExportedToHC) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(texts.ACTIVITY_EXPORT_DIALOG_TITLE) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ExportOptionRow(
+                    label = texts.STR_HEALTH_CONNECT,
+                    isExported = isExportedToHC,
+                    checked = exportHC,
+                    onCheckedChange = { exportHC = it }
+                )
+                ExportOptionRow(
+                    label = texts.STR_STRAVA,
+                    isExported = isExportedToStrava,
+                    checked = exportStrava,
+                    onCheckedChange = { exportStrava = it }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onExport(exportStrava, exportHC) },
+                enabled = (exportStrava && !isExportedToStrava) || (exportHC && !isExportedToHC)
+            ) {
+                Text(texts.ACTIVITY_EXPORT)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(texts.SETTINGS_CANCEL)
+            }
+        }
+    )
+}
+
+@Composable
+fun ExportOptionRow(
+    label: String,
+    isExported: Boolean,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isExported) { onCheckedChange(!checked) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = isExported || checked,
+            onCheckedChange = if (isExported) null else onCheckedChange,
+            enabled = !isExported
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = label, modifier = Modifier.weight(1f))
+        if (isExported) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
 fun MapSection(
-    data: com.example.sportapp.data.SessionData,
+    data: SessionData,
     settings: ActivityDetailSettings,
     isDarkTheme: Boolean,
     selectedLap: WorkoutLap?,
@@ -417,7 +516,7 @@ fun MapSection(
 
 @Composable
 fun FullScreenMap(
-    data: com.example.sportapp.data.SessionData,
+    data: SessionData,
     settings: ActivityDetailSettings,
     isDarkTheme: Boolean,
     selectedLap: WorkoutLap?,
@@ -776,14 +875,14 @@ private fun formatPaceFromSeconds(totalSeconds: Int): String {
 }
 
 @Composable
-fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidgets: List<WidgetItem>) {
+fun SummaryWidgetsGrid(data: SessionData, visibleWidgets: List<WidgetItem>) {
     val texts = LocalMobileTexts.current
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
     
     val avgSpeedGps = if (data.durationSeconds > 0) (data.totalDistanceGps / 1000.0) / (data.durationSeconds / 3600.0) else 0.0
     val avgSpeedSteps = if (data.durationSeconds > 0) (data.totalDistanceSteps / 1000.0) / (data.durationSeconds / 3600.0) else 0.0
 
-    val widgetValues = mapOf(
+    val widgetValues: Map<String, Pair<String, String>> = mapOf(
         "duration" to (texts.WIDGET_DURATION to data.duration),
         "max_bpm" to (texts.WIDGET_MAX_BPM to "${data.maxBpm} ${texts.UNIT_BPM}"),
         "avg_bpm" to (texts.WIDGET_AVG_BPM to "${data.avgBpm} ${texts.UNIT_BPM}"),

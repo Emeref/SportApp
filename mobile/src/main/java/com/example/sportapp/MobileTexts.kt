@@ -172,6 +172,11 @@ interface MobileTexts {
     val ACTIVITY_IMPORT_CONTINUE: String
     val ACTIVITY_IMPORT_PROGRESS: String
     val ACTIVITY_EXPORT_ERROR: String
+    val ACTIVITY_EXPORT_DIALOG_TITLE: String
+    val STR_STRAVA: String
+    val STR_HEALTH_CONNECT: String
+    val ACTIVITY_ALREADY_SYNCED: String
+    val ACTIVITY_EXPORT: String
     val ACTIVITY_SHARE_TITLE: String
     val ACTIVITY_OK: String
     val ACTIVITY_CONFIRM_DELETE_TITLE: String

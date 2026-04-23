@@ -17,7 +17,7 @@ import com.example.sportapp.data.model.WorkoutLap
         SyncMetadataEntity::class,
         LiveLocationPoint::class
     ], 
-    version = 24
+    version = 25
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -182,6 +182,11 @@ abstract class AppDatabase : RoomDatabase() {
                 addColumnIfNotExists("workout_definitions", "autoLapDistance", "REAL")
                 addColumnIfNotExists("workout_definitions", "sortOrder", "INTEGER NOT NULL DEFAULT 0")
                 addColumnIfNotExists("workout_definitions", "displayOrder", "INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+        val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workouts ADD COLUMN isExportedToStrava INTEGER NOT NULL DEFAULT 0")
             }
         }
     }
