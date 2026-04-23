@@ -455,7 +455,7 @@ class WorkoutService : Service(), SensorEventListener {
                         lastNotificationUpdateMillis = now
                     }
                     // ustawienei czestotliwości odswieżania danych na telefonie
-                    if (now - lastLiveDataUpdateMillis > 2000) {
+                    if (now - lastLiveDataUpdateMillis > 1000) {
                         sendLiveData(lastPoint)
                         lastLiveDataUpdateMillis = now
                     }
