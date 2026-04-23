@@ -83,6 +83,9 @@ class HomeViewModel @Inject constructor(
         initialValue = "00:00"
     )
 
+    private val _isPaused = MutableStateFlow(false)
+    val isPaused = _isPaused.asStateFlow()
+
     private var activityTimeoutJob: Job? = null
 
     init {
@@ -108,7 +111,7 @@ class HomeViewModel @Inject constructor(
             viewModelScope.launch {
                 while (true) {
                     delay(1000)
-                    if (_activeWorkoutData.value != null) {
+                    if (_activeWorkoutData.value != null && !_isPaused.value) {
                         _currentDurationSeconds.value++
                     }
                 }
@@ -161,6 +164,7 @@ class HomeViewModel @Inject constructor(
             _activeWorkoutData.value = null
             _activeDefinition.value = null
             _currentDurationSeconds.value = 0L
+            _isPaused.value = false
             activityTimeoutJob?.cancel()
             return
         }
@@ -172,6 +176,11 @@ class HomeViewModel @Inject constructor(
             if (abs(watchSeconds - _currentDurationSeconds.value) > 2) {
                 _currentDurationSeconds.value = watchSeconds
             }
+        }
+
+        val status = dataMap.getString("status")
+        if (status != null) {
+            _isPaused.value = (status == "PAUSED")
         }
 
         _activeWorkoutData.value = newData
@@ -192,6 +201,7 @@ class HomeViewModel @Inject constructor(
             _activeWorkoutData.value = null
             _activeDefinition.value = null
             _currentDurationSeconds.value = 0L
+            _isPaused.value = false
         }
     }
 

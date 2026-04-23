@@ -278,6 +278,7 @@ class WorkoutService : Service(), SensorEventListener {
         if (status == WorkoutStatus.ACTIVE) {
             status = WorkoutStatus.PAUSED
             totalMillisBeforePause += (System.currentTimeMillis() - lastResumeTimeMillis)
+            totalSeconds = totalMillisBeforePause / 1000
         } else if (status == WorkoutStatus.PAUSED) {
             status = WorkoutStatus.ACTIVE
             lastResumeTimeMillis = System.currentTimeMillis()
@@ -411,6 +412,8 @@ class WorkoutService : Service(), SensorEventListener {
             while (isActive) {
                 if (status == WorkoutStatus.ACTIVE) {
                     delay(1000)
+                    if (status != WorkoutStatus.ACTIVE) continue
+
                     val now = System.currentTimeMillis()
                     val deltaMillis = now - lastUpdateMillis
                     lastUpdateMillis = now
