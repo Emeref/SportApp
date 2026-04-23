@@ -102,7 +102,7 @@ object TextsMobilePL : MobileTexts {
     // Stage 3 - Import Workouts
     override val HC_IMPORT_TITLE = "Importuj treningi"
     override val HC_IMPORT_ALREADY_IMPORTED = "Już zaimportowano"
-    override val HC_IMPORT_EMPTY = "Nie znaleziono treningów w Health Connect z ostatnich 30 dni."
+    override val HC_IMPORT_EMPTY = "Nie znaleziono treningów w Health Connect z ostatniego tygodnia."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Czy na pewno chcesz zaimportować wybrane treningi?"
     override val HC_IMPORT_SELECT_ALL = "Zaznacz wszystkie"
     override fun hcImportSelected(count: Int) = "Importuj wybrane ($count)"
