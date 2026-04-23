@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -101,89 +102,179 @@ class MainActivity : ComponentActivity() {
                         val scope = rememberCoroutineScope()
 
                         NavHost(navController = navController, startDestination = "home") {
-                            composable("home") {
+                            composable("home") { backStackEntry ->
                                 val homeViewModel: HomeViewModel = hiltViewModel()
                                 HomeScreen(
                                     viewModel = homeViewModel,
-                                    onNavigateToStats = { navController.navigate(Screen.OverallStats.route) },
-                                    onNavigateToActivityList = { navController.navigate(Screen.ActivityList.route) },
-                                    onNavigateToLiveTracking = { navController.navigate("live_tracking") },
-                                    onSettingsClick = { navController.navigate("settings") }
+                                    onNavigateToStats = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate(Screen.OverallStats.route) 
+                                        }
+                                    },
+                                    onNavigateToActivityList = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate(Screen.ActivityList.route) 
+                                        }
+                                    },
+                                    onNavigateToLiveTracking = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("live_tracking") 
+                                        }
+                                    },
+                                    onSettingsClick = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("settings") 
+                                        }
+                                    }
                                 )
                             }
-                            composable("live_tracking") {
+                            composable("live_tracking") { backStackEntry ->
                                 val liveTrackingViewModel: LiveTrackingViewModel = hiltViewModel()
                                 LiveTrackingScreen(
                                     viewModel = liveTrackingViewModel,
-                                    onBack = { navController.popBackStack() }
+                                    onBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable("settings") {
+                            composable("settings") { backStackEntry ->
                                 SettingsScreen(
                                     initialState = settingsState,
                                     onSave = { updatedSettings ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(updatedSettings)
-                                            navController.popBackStack()
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            scope.launch {
+                                                settingsManager.saveSettings(updatedSettings)
+                                                navController.popBackStack()
+                                            }
                                         }
                                     },
-                                    onCancel = { navController.popBackStack() },
-                                    onNavigateToWidgetSelection = { navController.navigate("widget_selection") },
-                                    onNavigateToWatchWidgetSelection = { navController.navigate("watch_widget_selection") },
-                                    onNavigateToDefinitions = { navController.navigate("definitions") },
-                                    onNavigateToHealthData = { navController.navigate("health_data") },
-                                    onNavigateToLanguageSelection = { navController.navigate("language_selection") },
-                                    onNavigateToSync = { navController.navigate("sync_settings") },
-                                    onNavigateToStrava = { navController.navigate("strava_settings") }
+                                    onCancel = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    },
+                                    onNavigateToWidgetSelection = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("widget_selection") 
+                                        }
+                                    },
+                                    onNavigateToWatchWidgetSelection = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("watch_widget_selection") 
+                                        }
+                                    },
+                                    onNavigateToDefinitions = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("definitions") 
+                                        }
+                                    },
+                                    onNavigateToHealthData = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("health_data") 
+                                        }
+                                    },
+                                    onNavigateToLanguageSelection = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("language_selection") 
+                                        }
+                                    },
+                                    onNavigateToSync = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("sync_settings") 
+                                        }
+                                    },
+                                    onNavigateToStrava = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("strava_settings") 
+                                        }
+                                    }
                                 )
                             }
-                            composable("strava_settings") {
+                            composable("strava_settings") { backStackEntry ->
                                 StravaSettingsScreen(
                                     stravaStorage = stravaStorage,
                                     settingsManager = settingsManager,
                                     syncMetadataDao = syncMetadataDao,
-                                    onBack = { navController.popBackStack() }
+                                    onBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable("sync_settings") {
+                            composable("sync_settings") { backStackEntry ->
                                 HealthConnectSettingsScreen(
                                     initialState = settingsState,
                                     onSave = { updatedSettings ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(updatedSettings)
-                                            navController.popBackStack()
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            scope.launch {
+                                                settingsManager.saveSettings(updatedSettings)
+                                                navController.popBackStack()
+                                            }
                                         }
                                     },
-                                    onCancel = { navController.popBackStack() },
-                                    onNavigateToSyncStatus = { navController.navigate("sync_status") },
-                                    onNavigateToExerciseImport = { navController.navigate("exercise_import") },
+                                    onCancel = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    },
+                                    onNavigateToSyncStatus = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("sync_status") 
+                                        }
+                                    },
+                                    onNavigateToExerciseImport = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("exercise_import") 
+                                        }
+                                    },
                                     settingsManager = settingsManager
                                 )
                             }
-                            composable("sync_status") {
+                            composable("sync_status") { backStackEntry ->
                                 SyncStatusScreen(
-                                    onBack = { navController.popBackStack() }
+                                    onBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable("sync_history") {
+                            composable("sync_history") { backStackEntry ->
                                 SyncHistoryScreen(
                                     syncMetadataDao = syncMetadataDao,
-                                    onBack = { navController.popBackStack() }
+                                    onBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable("exercise_import") {
+                            composable("exercise_import") { backStackEntry ->
                                 ExerciseImportScreen(
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable("definitions") {
+                            composable("definitions") { backStackEntry ->
                                 val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
                                 WorkoutDefinitionListScreen(
                                     viewModel = viewModel,
                                     onNavigateToEdit = { id -> 
-                                        navController.navigate("definition_edit/$id")
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("definition_edit/$id")
+                                        }
                                     },
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
                             composable("definition_edit/{id}") { backStackEntry ->
@@ -191,110 +282,170 @@ class MainActivity : ComponentActivity() {
                                 val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
                                 WorkoutDefinitionEditScreen(
                                     definitionId = id,
-                                    onBack = { navController.popBackStack() },
+                                    onBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    },
                                     viewModel = viewModel
                                 )
                             }
-                            composable("health_data") {
+                            composable("health_data") { backStackEntry ->
                                 HealthDataScreen(
                                     initialData = settingsState.healthData,
                                     onSave = { updatedData ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(settingsState.copy(healthData = updatedData))
-                                            navController.popBackStack()
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            scope.launch {
+                                                settingsManager.saveSettings(settingsState.copy(healthData = updatedData))
+                                                navController.popBackStack()
+                                            }
                                         }
                                     },
-                                    onCancel = { navController.popBackStack() }
+                                    onCancel = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable("language_selection") {
+                            composable("language_selection") { backStackEntry ->
                                 LanguageSelectionScreen(
                                     currentLanguage = settingsState.language,
                                     onLanguageSelected = { newLanguage ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(settingsState.copy(language = newLanguage))
-                                            navController.popBackStack()
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            scope.launch {
+                                                settingsManager.saveSettings(settingsState.copy(language = newLanguage))
+                                                navController.popBackStack()
+                                            }
                                         }
                                     },
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable(Screen.OverallStats.route) {
+                            composable(Screen.OverallStats.route) { backStackEntry ->
                                 val viewModel: OverallStatsViewModel = hiltViewModel()
                                 OverallStatsScreen(
                                     viewModel = viewModel,
-                                    onNavigateBack = { navController.popBackStack() },
-                                    onNavigateToOptions = { navController.navigate("stats_settings") }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    },
+                                    onNavigateToOptions = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("stats_settings") 
+                                        }
+                                    }
                                 )
                             }
-                            composable("stats_settings") {
+                            composable("stats_settings") { backStackEntry ->
                                 val viewModel: OverallStatsSettingsViewModel = hiltViewModel()
                                 OverallStatsSettingsScreen(
                                     viewModel = viewModel,
-                                    onBack = { navController.popBackStack() }
+                                    onBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable("widget_selection") {
+                            composable("widget_selection") { backStackEntry ->
                                 WidgetSelectionScreen(
                                     widgets = settingsState.widgets,
                                     title = texts.SETTINGS_WIDGETS_HOME_TITLE,
                                     initialDays = settingsState.customDays,
                                     daysLabel = texts.SETTINGS_CUSTOM_DAYS_LABEL,
                                     onSave = { updatedWidgets, days ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(settingsState.copy(
-                                                widgets = updatedWidgets,
-                                                customDays = days ?: settingsState.customDays
-                                            ))
-                                            navController.popBackStack()
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            scope.launch {
+                                                settingsManager.saveSettings(settingsState.copy(
+                                                    widgets = updatedWidgets,
+                                                    customDays = days ?: settingsState.customDays
+                                                ))
+                                                navController.popBackStack()
+                                            }
                                         }
                                     },
-                                    onCancel = { navController.popBackStack() }
+                                    onCancel = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable("watch_widget_selection") {
+                            composable("watch_widget_selection") { backStackEntry ->
                                 WidgetSelectionScreen(
                                     widgets = settingsState.watchStatsWidgets,
                                     title = texts.SETTINGS_WIDGETS_WATCH_TITLE,
                                     initialDays = settingsState.watchStatsCustomDays,
                                     daysLabel = texts.SETTINGS_WATCH_STATS_DAYS_LABEL,
                                     onSave = { updatedWidgets, days ->
-                                        scope.launch {
-                                            settingsManager.saveSettings(settingsState.copy(
-                                                watchStatsWidgets = updatedWidgets,
-                                                watchStatsCustomDays = days ?: settingsState.watchStatsCustomDays
-                                            ))
-                                            navController.popBackStack()
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            scope.launch {
+                                                settingsManager.saveSettings(settingsState.copy(
+                                                    watchStatsWidgets = updatedWidgets,
+                                                    watchStatsCustomDays = days ?: settingsState.watchStatsCustomDays
+                                                ))
+                                                navController.popBackStack()
+                                            }
                                         }
                                     },
-                                    onCancel = { navController.popBackStack() }
+                                    onCancel = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
-                            composable(Screen.ActivityList.route) {
+                            composable(Screen.ActivityList.route) { backStackEntry ->
                                 val viewModel: ActivityListViewModel = hiltViewModel()
                                 ActivityListScreen(
                                     viewModel = viewModel,
-                                    onNavigateBack = { navController.popBackStack() },
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    },
                                     onNavigateToDetail = { id -> 
-                                        navController.navigate("activity_detail/$id")
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("activity_detail/$id")
+                                        }
                                     },
                                     onNavigateToTrim = { id ->
-                                        navController.navigate("activity_trim/$id")
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("activity_trim/$id")
+                                        }
                                     },
                                     onNavigateToCompare = { id1, id2 ->
-                                        navController.navigate("compare/$id1,$id2")
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("compare/$id1,$id2")
+                                        }
                                     },
-                                    onNavigateToSettings = { navController.navigate("activity_detail_settings_list") }
+                                    onNavigateToSettings = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("activity_detail_settings_list") 
+                                        }
+                                    }
                                 )
                             }
-                            composable("activity_detail_settings_list") {
+                            composable("activity_detail_settings_list") { backStackEntry ->
                                 val viewModel: WorkoutDefinitionViewModel = hiltViewModel()
                                 ActivityDetailSettingsListScreen(
                                     viewModel = viewModel,
                                     onNavigateToEdit = { typeName ->
-                                        navController.navigate("activity_detail_settings_edit/$typeName")
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("activity_detail_settings_edit/$typeName")
+                                        }
                                     },
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
                             composable("activity_detail_settings_edit/{typeName}") { backStackEntry ->
@@ -306,28 +457,44 @@ class MainActivity : ComponentActivity() {
                                     viewModel = viewModel,
                                     initialWidgets = settings.visibleWidgets,
                                     initialCharts = settings.visibleCharts,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
                             composable("activity_detail/{activityId}") { backStackEntry ->
                                 val viewModel: ActivityDetailViewModel = hiltViewModel()
                                 ActivityDetailScreen(
                                     viewModel = viewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
                             composable("activity_trim/{activityId}") { backStackEntry ->
                                 val viewModel: ActivityTrimViewModel = hiltViewModel()
                                 ActivityTrimScreen(
                                     viewModel = viewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
                             composable("compare/{id1},{id2}") { backStackEntry ->
                                 val viewModel: ActivityCompareViewModel = hiltViewModel()
                                 ActivityCompareScreen(
                                     viewModel = viewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = { 
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack() 
+                                        }
+                                    }
                                 )
                             }
                         }

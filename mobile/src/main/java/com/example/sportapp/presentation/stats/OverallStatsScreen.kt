@@ -55,16 +55,7 @@ fun OverallStatsScreen(
         onTypeToggle = { viewModel.toggleTypeSelection(it) },
         onToggleAllTypes = { viewModel.toggleAllTypes() },
         onDateRangeSelected = { start, end -> viewModel.onDateRangeSelected(start, end) },
-        onNavigateBack = {
-             // Zabezpieczenie przed błędem IndexOutOfBoundsException przy szybkim powrocie
-             // Może on wynikać z trwającej animacji Predictive Back w NavHost
-             try {
-                onNavigateBack()
-             } catch (e: Exception) {
-                // Log i zignorowanie, aby nie wywalało apki przy powrocie
-                android.util.Log.e("OverallStatsScreen", "Error during navigation back", e)
-             }
-        },
+        onNavigateBack = onNavigateBack,
         onNavigateToOptions = onNavigateToOptions
     )
 }
