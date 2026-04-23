@@ -86,6 +86,7 @@ interface MobileTexts {
     val HC_SYNC_SUCCESS: String
     val HC_SYNC_ERROR: String
     val HC_SYNC_NO_DATA: String
+    val HC_IMPORT_SELECT_FIELDS_TITLE: String
     fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String
     
     // Stage 3 - Import Workouts

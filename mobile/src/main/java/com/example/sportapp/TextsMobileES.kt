@@ -91,6 +91,7 @@ object TextsMobileES : MobileTexts {
     override val HC_SYNC_SUCCESS = "Sincronización realizada correctamente"
     override val HC_SYNC_ERROR = "Error de sincronización"
     override val HC_SYNC_NO_DATA = "No se han encontrado datos nuevos"
+    override val HC_IMPORT_SELECT_FIELDS_TITLE = "Wybierz dane do zaimportowania"
     override fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String {
         val parts = mutableListOf<String>()
         weight?.let { parts.add("peso $it kg") }

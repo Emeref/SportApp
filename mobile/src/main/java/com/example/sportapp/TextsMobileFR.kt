@@ -91,6 +91,7 @@ object TextsMobileFR : MobileTexts {
     override val HC_SYNC_SUCCESS = "Synchronisation réussie"
     override val HC_SYNC_ERROR = "Erreur de synchronisation"
     override val HC_SYNC_NO_DATA = "Aucune nouvelle donnée trouvée"
+    override val HC_IMPORT_SELECT_FIELDS_TITLE = "Sélectionnez les données à importer"
     override fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String {
         val parts = mutableListOf<String>()
         weight?.let { parts.add("poids $it kg") }
@@ -102,7 +103,7 @@ object TextsMobileFR : MobileTexts {
     // Stage 3 - Import Workouts
     override val HC_IMPORT_TITLE = "Importer les entraînements"
     override val HC_IMPORT_ALREADY_IMPORTED = "Déjà importé"
-    override val HC_IMPORT_EMPTY = "Aucun entraînement trouvé dans Health Connect au cours des 30 derniers jours."
+    override val HC_IMPORT_EMPTY = "Aucun entraînement trouvé dans Health Connect au cours de la semaine dernière."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Êtes-vous sûr de vouloir importer les entraînements sélectionnés ?"
     override val HC_IMPORT_SELECT_ALL = "Sélectionner tout"
     override fun hcImportSelected(count: Int) = "Importer la sélection ($count)"
