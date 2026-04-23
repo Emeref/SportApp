@@ -258,7 +258,7 @@ fun LiveTrackingScreen(
                     
                     Row(
                         modifier = Modifier
-                            .align(Alignment.BottomStart)
+                            .align(Alignment.BottomCenter)
                             .padding(16.dp)
                             .then(if (isHrAvailable) Modifier.alpha(alpha) else Modifier),
                         verticalAlignment = Alignment.CenterVertically
