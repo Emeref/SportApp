@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.db.SyncMetadataDao
-import com.example.sportapp.data.db.SyncMetadataEntity
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -45,7 +44,7 @@ fun SyncHistoryScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(history.sortedByDescending { it.lastSyncTime }) { item ->
-                SyncHistoryItem(item, sdf)
+                SyncStatusHistoryItem(item, sdf)
             }
         }
     }

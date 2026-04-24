@@ -93,6 +93,7 @@ object TextsMobileEN : MobileTexts {
     override val HC_SYNC_SUCCESS = "Synchronization successful"
     override val HC_SYNC_ERROR = "Synchronization error"
     override val HC_SYNC_NO_DATA = "No new data found"
+    override val HC_IMPORT_SELECT_FIELDS_TITLE = "Select data to import"
     override fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String {
         val parts = mutableListOf<String>()
         weight?.let { parts.add("weight $it kg") }
@@ -104,7 +105,7 @@ object TextsMobileEN : MobileTexts {
     // Stage 3 - Import Workouts
     override val HC_IMPORT_TITLE = "Import Workouts"
     override val HC_IMPORT_ALREADY_IMPORTED = "Already imported"
-    override val HC_IMPORT_EMPTY = "No workouts found in Health Connect from last 30 days."
+    override val HC_IMPORT_EMPTY = "No workouts found in Health Connect from last week."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Are you sure you want to import selected workouts?"
     override val HC_IMPORT_SELECT_ALL = "Select all"
     override fun hcImportSelected(count: Int) = "Import selected ($count)"
@@ -183,11 +184,23 @@ object TextsMobileEN : MobileTexts {
     override val ACTIVITY_IMPORT_CONTINUE = "Continue"
     override val ACTIVITY_IMPORT_PROGRESS = "Importing data..."
     override val ACTIVITY_EXPORT_ERROR = "Export error"
+    override val ACTIVITY_EXPORT_DIALOG_TITLE = "Export Activity"
+    override val STR_STRAVA = "Strava"
+    override val STR_HEALTH_CONNECT = "Health Connect"
+    override val ACTIVITY_ALREADY_SYNCED = "Synced"
+    override val ACTIVITY_EXPORT = "Export"
     override val ACTIVITY_SHARE_TITLE = "Share workout(s)"
     override val ACTIVITY_OK = "OK"
     override val ACTIVITY_CONFIRM_DELETE_TITLE = "Delete activities"
     override val ACTIVITY_ALL = "All"
     override val ACTIVITY_NONE = "None"
+
+    // New Export/Import SAE
+    override val ACTIVITY_EXPORT_SAE = "Export SAE"
+    override val ACTIVITY_IMPORT_SAE = "Import SAE"
+    override val ACTIVITY_EXPORT_FORMAT_SELECT = "Select export format"
+    override val ACTIVITY_EXPORT_SAE_DESC = "SAE format (.sae) allows full backup of all workout data, including indoor workouts (no GPS)."
+    override val ACTIVITY_EXPORT_INCOMPATIBLE_GPX = "Some selected activities do not have GPS data and cannot be exported to GPX."
 
     // Activity Detail
     override val DETAIL_TITLE = "Activity Details"
@@ -289,7 +302,7 @@ object TextsMobileEN : MobileTexts {
     override val DEF_CALISTHENICS = "Calisthenics"
     override val DEF_YOGA = "Yoga"
     override val DEF_PILATES = "Pilates"
-    override val DEF_AEROBICS = "Aerobics"
+    override val DEF_AEROBICS = "Aerobic"
     override val DEF_DANCING = "Dancing"
     override val DEF_SWIMMING = "Swimming"
     override val DEF_SWIMMING_POOL = "Swimming (pool)"
@@ -310,6 +323,7 @@ object TextsMobileEN : MobileTexts {
     override val DEF_SKATING = "Skating"
     override val DEF_ICE_SKATING = "Ice skating"
     
+    // Extra Definitions
     override val DEF_GYM = "Gym"
     override val DEF_BASEBALL = "Baseball"
     override val DEF_SKATEBOARDING = "Skateboarding"
@@ -343,12 +357,6 @@ object TextsMobileEN : MobileTexts {
     override val ZONE_Z3 = "Moderate"
     override val ZONE_Z4 = "Hard"
     override val ZONE_Z5 = "Maximum"
-
-    // Compare Screen
-    override val COMPARE_TITLE = "Activity Comparison"
-    override val COMPARE_VS = "Comparison:"
-    override val COMPARE_HIGHER_IS_BETTER = "Higher score is better"
-    override val COMPARE_LOWER_IS_BETTER = "Lower score is better"
 
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Initializing export..."
@@ -448,6 +456,12 @@ object TextsMobileEN : MobileTexts {
     override val TRIM_AVG_BPM = "Average HR:"
     override val TRIM_START = "Start"
     override val TRIM_END = "Finish"
+
+    // Compare Screen
+    override val COMPARE_TITLE = "Activity Comparison"
+    override val COMPARE_VS = "Comparison:"
+    override val COMPARE_HIGHER_IS_BETTER = "Higher score is better"
+    override val COMPARE_LOWER_IS_BETTER = "Lower score is better"
 
     // Units
     override val UNIT_KCAL = "kcal"
@@ -580,4 +594,11 @@ object TextsMobileEN : MobileTexts {
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable API is not available on this device"
     override val ERROR_NO_WATCH_CONNECTED = "No watch connected"
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Map Type"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satellite"
+    override val MAP_TYPE_HYBRID = "Hybrid"
+    override val MAP_TYPE_TERRAIN = "Terrain"
 }

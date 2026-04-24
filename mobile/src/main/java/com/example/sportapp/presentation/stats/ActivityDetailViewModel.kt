@@ -2,19 +2,27 @@ package com.example.sportapp.presentation.stats
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sportapp.data.IWorkoutRepository
-import com.example.sportapp.data.LapManager
-import com.example.sportapp.data.SessionData
-import com.example.sportapp.data.SessionRepository
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
+import androidx.work.workDataOf
+import com.example.sportapp.data.*
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
+import com.example.sportapp.data.strava.StravaSyncWorker
 import com.example.sportapp.healthconnect.ExerciseExportUseCase
 import com.example.sportapp.healthconnect.ExportResult
 import com.example.sportapp.healthconnect.HealthConnectManager
+import com.example.sportapp.presentation.activities.ExportState
+import com.example.sportapp.presentation.settings.AppMapType
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -26,18 +34,23 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ActivityDetailViewModel @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val context: Context,
     private val repository: IWorkoutRepository,
     private val sessionRepository: SessionRepository,
     private val workoutDao: WorkoutDao,
     private val lapManager: LapManager,
     private val mobileSettingsManager: MobileSettingsManager,
     private val exerciseExportUseCase: ExerciseExportUseCase,
+    private val exportImportManager: ExportImportManager,
     val healthConnectManager: HealthConnectManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -68,6 +81,9 @@ class ActivityDetailViewModel @Inject constructor(
     private val _exportResult = MutableStateFlow<ExportResult?>(null)
     val exportResult = _exportResult.asStateFlow()
 
+    private val _fileExportState = MutableStateFlow<ExportState>(ExportState.Idle)
+    val fileExportState = _fileExportState.asStateFlow()
+
     val hcSessionId: StateFlow<String?> = workoutDao.getWorkoutFlowById(activityId)
         .map { it?.hcSessionId }
         .distinctUntilChanged()
@@ -75,6 +91,15 @@ class ActivityDetailViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
+        )
+
+    val isExportedToStrava: StateFlow<Boolean> = workoutDao.getWorkoutFlowById(activityId)
+        .map { it?.isExportedToStrava ?: false }
+        .distinctUntilChanged()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
         )
 
     val settings: StateFlow<ActivityDetailSettings> = _sessionData
@@ -130,42 +155,33 @@ class ActivityDetailViewModel @Inject constructor(
         val pointsFlow = workoutDao.getPointsFlowForWorkout(activityId)
         val lapsFlow = workoutDao.getLapsFlowForWorkout(activityId)
 
-        // 2. Obserwacja i przetwarzanie wszystkich danych w jednym strumieniu
         combine(
             workoutFlow,
             pointsFlow,
             lapsFlow,
             mobileSettingsManager.settingsFlow
         ) { workout, points, dbLaps, mSettings ->
-            // Priorytet ma dystans autolapa zapisany w treningu (w momencie startu)
-            // Jeśli go nie ma (stare treningi), próbujemy pobrać z definicji (fallback)
             val effectiveAutoLapDist = workout.autoLapDistance ?: _autoLapDistance.value
             
-            // Jeśli jeszcze nie załadowaliśmy dystansu z definicji, zróbmy to teraz (tylko raz dla danej aktywności)
             if (workout.autoLapDistance == null && _autoLapDistance.value == null) {
                 loadAutoLapDistance(workout.activityName)
             }
 
-            // Obliczenia danych sesji i statystyk
             val data = sessionRepository.calculateSessionData(workout, points)
             _sessionData.value = data
-            _autoLapDistance.value = effectiveAutoLapDist // Aktualizacja stanu UI
+            _autoLapDistance.value = effectiveAutoLapDist
             updateCharts(data)
             
-            // Obsługa odcinków - wymuszamy przeliczenie od początku, aby uniknąć błędów w numeracji
             if (effectiveAutoLapDist != null && effectiveAutoLapDist > 0) {
                 val generatedLaps = lapManager.processLaps(activityId, points, effectiveAutoLapDist)
                 
-                // Aktualizacja UI natychmiastowo obliczonymi danymi (rozwiązuje problem dziur w Nr)
                 _laps.value = generatedLaps
                 
-                // Sprawdź czy zaszły istotne zmiany przed zapisem do bazy
                 val hasChanges = if (generatedLaps.size != dbLaps.size) {
                     true
                 } else if (generatedLaps.isNotEmpty() && dbLaps.isNotEmpty()) {
                     val lastNew = generatedLaps.last()
                     val lastOld = dbLaps.last()
-                    // Sprawdzamy czy ostatni odcinek uległ zmianie (trwający trening)
                     lastNew.durationMillis != lastOld.durationMillis || 
                     lastNew.distanceMeters != lastOld.distanceMeters ||
                     lastNew.endLocationIndex != lastOld.endLocationIndex
@@ -174,7 +190,6 @@ class ActivityDetailViewModel @Inject constructor(
                 }
 
                 if (hasChanges) {
-                    // Zapisujemy asynchronicznie, aby nie blokować transformacji flow
                     viewModelScope.launch(Dispatchers.IO) {
                         try {
                             workoutDao.updateLapsForWorkout(activityId, generatedLaps)
@@ -184,11 +199,9 @@ class ActivityDetailViewModel @Inject constructor(
                     }
                 }
             } else {
-                // Jeśli nie ma autolapa, pokazujemy to co jest w bazie (może nic nie być)
                 _laps.value = dbLaps
             }
             
-            // Aktualizacja stref tętna
             _hrZoneResult.value = HeartRateMath.calculateZones(points, mSettings.healthData.maxHR, mSettings.language.texts)
         }
         .flowOn(Dispatchers.Default)
@@ -242,14 +255,93 @@ class ActivityDetailViewModel @Inject constructor(
         }
     }
 
-    fun exportToHC() {
-        if (activityId == -1L || _isExporting.value) return
+    fun setMapType(mapType: AppMapType) {
+        viewModelScope.launch {
+            mobileSettingsManager.updateMapType(mapType)
+        }
+    }
+
+    fun exportActivity(id: Long, toStrava: Boolean, toHealthConnect: Boolean) {
+        if (id == -1L || _isExporting.value) return
         viewModelScope.launch {
             _isExporting.value = true
-            val result = exerciseExportUseCase.exportActivityToHC(activityId)
-            _exportResult.value = result
+            
+            if (toHealthConnect) {
+                val result = exerciseExportUseCase.exportActivityToHC(id)
+                _exportResult.value = result
+            }
+            
+            if (toStrava) {
+                enqueueStravaSync(id)
+            }
+            
             _isExporting.value = false
         }
+    }
+
+    fun exportToFile(useSae: Boolean) {
+        if (activityId == -1L) return
+        viewModelScope.launch {
+            val texts = mobileSettings.value.language.texts
+            _fileExportState.value = ExportState.Exporting(0f, texts.VM_EXPORT_INITIALIZING)
+            try {
+                val workout = repository.getWorkoutById(activityId) ?: throw Exception("Workout not found")
+                val exportDir = File(context.cacheDir, "exports")
+                if (exportDir.exists()) exportDir.deleteRecursively()
+                exportDir.mkdirs()
+
+                val sdf = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US)
+                val baseName = "${workout.activityName}_${sdf.format(Date(workout.startTime))}"
+                    .replace(" ", "_")
+                    .replace(":", "")
+                
+                val extension = if (useSae) "sae" else "gpx"
+                val fileName = "$baseName.$extension"
+                val file = File(exportDir, fileName)
+
+                if (useSae) {
+                    val saeContent = exportImportManager.exportToSae(activityId)
+                    file.writeText(saeContent)
+                } else {
+                    val gpxGenerator = GpxGenerator()
+                    val points = repository.getPointsForWorkout(activityId)
+                    val gpxContent = gpxGenerator.generateGpx(workout, points)
+                    file.writeText(gpxContent)
+                }
+
+                val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", file)
+                _fileExportState.value = ExportState.Success(uri, false)
+            } catch (e: Exception) {
+                _fileExportState.value = ExportState.Error(texts.vmExportError(e.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    fun resetFileExportState() {
+        _fileExportState.value = ExportState.Idle
+    }
+
+    private fun enqueueStravaSync(workoutId: Long) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val syncRequest = OneTimeWorkRequestBuilder<StravaSyncWorker>()
+            .setConstraints(constraints)
+            .setInputData(workDataOf(StravaSyncWorker.EXTRA_WORKOUT_ID to workoutId))
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .addTag("StravaSync_$workoutId")
+            .build()
+
+        WorkManager.getInstance(context).enqueue(syncRequest)
+    }
+
+    fun exportToHC() {
+        exportActivity(activityId, toStrava = false, toHealthConnect = true)
     }
 
     fun incrementHcDeniedCount() {

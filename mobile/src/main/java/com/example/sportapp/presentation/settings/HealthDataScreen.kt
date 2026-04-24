@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.settings
 
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,8 +37,56 @@ fun HealthDataScreen(
         contract = androidx.health.connect.client.PermissionController.createRequestPermissionResultContract()
     ) { granted ->
         if (granted.isNotEmpty()) {
-            viewModel.syncHealthData()
+            viewModel.onSyncClick { /* Już sprawdzamy uprawnienia wewnątrz */ }
         }
+    }
+
+    if (uiState.showFieldSelectionDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onCancelFieldSelection() },
+            title = { Text(texts.HC_IMPORT_SELECT_FIELDS_TITLE) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    uiState.availableFields.forEach { field ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.toggleField(field) }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Checkbox(
+                                checked = uiState.selectedFields.contains(field),
+                                onCheckedChange = { viewModel.toggleField(field) }
+                            )
+                            Text(
+                                text = when (field) {
+                                    HealthField.WEIGHT -> texts.HEALTH_WEIGHT
+                                    HealthField.HEIGHT -> texts.HEALTH_HEIGHT
+                                    HealthField.RESTING_HR -> texts.HEALTH_RESTING_HR
+                                    HealthField.MAX_HR -> texts.HEALTH_MAX_HR
+                                    HealthField.VO2_MAX -> texts.HEALTH_VO2_MAX
+                                },
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.onConfirmFieldSelection() },
+                    enabled = uiState.selectedFields.isNotEmpty()
+                ) {
+                    Text(texts.ACTIVITY_OK)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onCancelFieldSelection() }) {
+                    Text(texts.SETTINGS_CANCEL)
+                }
+            }
+        )
     }
 
     if (uiState.showPreviewDialog && uiState.previewData != null) {

@@ -91,6 +91,7 @@ object TextsMobileFR : MobileTexts {
     override val HC_SYNC_SUCCESS = "Synchronisation réussie"
     override val HC_SYNC_ERROR = "Erreur de synchronisation"
     override val HC_SYNC_NO_DATA = "Aucune nouvelle donnée trouvée"
+    override val HC_IMPORT_SELECT_FIELDS_TITLE = "Sélectionnez les données à importer"
     override fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String {
         val parts = mutableListOf<String>()
         weight?.let { parts.add("poids $it kg") }
@@ -102,7 +103,7 @@ object TextsMobileFR : MobileTexts {
     // Stage 3 - Import Workouts
     override val HC_IMPORT_TITLE = "Importer les entraînements"
     override val HC_IMPORT_ALREADY_IMPORTED = "Déjà importé"
-    override val HC_IMPORT_EMPTY = "Aucun entraînement trouvé dans Health Connect au cours des 30 derniers jours."
+    override val HC_IMPORT_EMPTY = "Aucun entraînement trouvé dans Health Connect au cours de la semaine dernière."
     override val HC_IMPORT_CONFIRM_DESC_PLURAL = "Êtes-vous sûr de vouloir importer les entraînements sélectionnés ?"
     override val HC_IMPORT_SELECT_ALL = "Sélectionner tout"
     override fun hcImportSelected(count: Int) = "Importer la sélection ($count)"
@@ -183,11 +184,23 @@ object TextsMobileFR : MobileTexts {
     override val ACTIVITY_IMPORT_CONTINUE = "Continuer"
     override val ACTIVITY_IMPORT_PROGRESS = "Importation des données..."
     override val ACTIVITY_EXPORT_ERROR = "Erreur d'exportation"
+    override val ACTIVITY_EXPORT_DIALOG_TITLE = "Export Activity"
+    override val STR_STRAVA = "Strava"
+    override val STR_HEALTH_CONNECT = "Health Connect"
+    override val ACTIVITY_ALREADY_SYNCED = "Synced"
+    override val ACTIVITY_EXPORT = "Export"
     override val ACTIVITY_SHARE_TITLE = "Partager l'entraînement"
     override val ACTIVITY_OK = "OK"
     override val ACTIVITY_CONFIRM_DELETE_TITLE = "Supprimer les activités"
     override val ACTIVITY_ALL = "Tout"
     override val ACTIVITY_NONE = "Aucun"
+
+    // New Export/Import SAE
+    override val ACTIVITY_EXPORT_SAE = "Exporter SAE"
+    override val ACTIVITY_IMPORT_SAE = "Importer SAE"
+    override val ACTIVITY_EXPORT_FORMAT_SELECT = "Choisir le format d'exportation"
+    override val ACTIVITY_EXPORT_SAE_DESC = "Le format SAE (.sae) permet une sauvegarde complète de toutes les données de l'entraînement, y compris les entraînements en intérieur (sans GPS)."
+    override val ACTIVITY_EXPORT_INCOMPATIBLE_GPX = "Certaines activités sélectionnées n'ont pas de données GPS et ne peuvent pas être exportées en GPX."
 
     // Activity Detail
     override val DETAIL_TITLE = "Détails de l'activité"
@@ -497,6 +510,14 @@ object TextsMobileFR : MobileTexts {
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "L'API Wearable n'est pas disponible sur cet appareil"
     override val ERROR_NO_WATCH_CONNECTED = "Aucune montre connectée"
+
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Type de carte"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satellite"
+    override val MAP_TYPE_HYBRID = "Hybride"
+    override val MAP_TYPE_TERRAIN = "Terrain"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {

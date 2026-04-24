@@ -77,26 +77,6 @@ fun SyncStatusScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = { viewModel.syncNow() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isSyncing
-            ) {
-                if (isSyncing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Icon(Icons.Default.Sync, contentDescription = null)
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(texts.SYNC_NOW)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
             Text(
                 text = texts.SYNC_HISTORY_TITLE,
                 style = MaterialTheme.typography.titleMedium,
@@ -110,7 +90,7 @@ fun SyncStatusScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(history.sortedByDescending { it.lastSyncTime }) { item ->
-                    SyncHistoryItem(item, sdf)
+                    SyncStatusHistoryItem(item, sdf)
                 }
             }
         }
@@ -144,7 +124,7 @@ fun SyncInfoRow(label: String, value: String, isBadge: Boolean = false) {
 }
 
 @Composable
-fun SyncHistoryItem(item: SyncMetadataEntity, sdf: SimpleDateFormat) {
+fun SyncStatusHistoryItem(item: com.example.sportapp.data.db.SyncMetadataEntity, sdf: SimpleDateFormat) {
     val texts = LocalMobileTexts.current
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -157,13 +137,26 @@ fun SyncHistoryItem(item: SyncMetadataEntity, sdf: SimpleDateFormat) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (item.syncDirection == "FROM_HC") texts.SYNC_TYPE_IMPORT else texts.SYNC_TYPE_EXPORT,
+                    text = when (item.syncDirection) {
+                        "FROM_HC" -> texts.SYNC_TYPE_IMPORT
+                        "TO_HC" -> texts.SYNC_TYPE_EXPORT
+                        "TO_STRAVA" -> "Strava Export"
+                        else -> item.syncDirection
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Text(item.recordType, style = MaterialTheme.typography.bodySmall)
+                if (item.activityName != null) {
+                    Text(item.activityName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    item.startTime?.let {
+                        val activitySdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                        Text(activitySdf.format(Date(it)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    Text(item.recordType, style = MaterialTheme.typography.bodySmall)
+                }
             }
             Text(
                 text = sdf.format(Date(item.lastSyncTime)),

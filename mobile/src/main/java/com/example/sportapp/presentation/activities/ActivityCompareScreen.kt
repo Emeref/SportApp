@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,6 +39,8 @@ import com.example.sportapp.R
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
+import com.example.sportapp.presentation.settings.AppMapType
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.stats.CommonChartSection
@@ -74,6 +77,7 @@ fun ActivityCompareScreen(
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
     var isHrZonesExpanded by remember { mutableStateOf(false) }
     var isMapFullScreen by remember { mutableStateOf(false) }
+    var showMapTypeDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -86,14 +90,23 @@ fun ActivityCompareScreen(
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
+    if (showMapTypeDialog) {
+        MapTypeSelectionDialog(
+            currentMapType = mobileSettings.mapType,
+            onDismiss = { showMapTypeDialog = false },
+            onSelect = { viewModel.setMapType(it) }
+        )
+    }
+
     if (isMapFullScreen && session1 != null && session2 != null) {
         BackHandler { isMapFullScreen = false }
         FullScreenCompareMap(
             s1 = session1!!,
             s2 = session2!!,
-            isDarkTheme = isDarkTheme,
+            mobileSettings = mobileSettings,
             selectedIndex = selectedIndex,
-            onClose = { isMapFullScreen = false }
+            onClose = { isMapFullScreen = false },
+            onMapTypeClick = { showMapTypeDialog = true }
         )
     } else {
         Scaffold(
@@ -148,9 +161,10 @@ fun ActivityCompareScreen(
                                     CompareMaps(
                                         s1 = s1, 
                                         s2 = s2, 
-                                        isDarkTheme = isDarkTheme, 
+                                        mobileSettings = mobileSettings,
                                         selectedIndex = selectedIndex,
-                                        onExpandClick = { isMapFullScreen = true }
+                                        onExpandClick = { isMapFullScreen = true },
+                                        onMapTypeClick = { showMapTypeDialog = true }
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
@@ -204,6 +218,45 @@ fun ActivityCompareScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MapTypeSelectionDialog(
+    currentMapType: AppMapType,
+    onDismiss: () -> Unit,
+    onSelect: (AppMapType) -> Unit
+) {
+    val texts = LocalMobileTexts.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(texts.MAP_TYPE_TITLE) },
+        text = {
+            Column {
+                MapTypeOption(texts.MAP_TYPE_NORMAL, AppMapType.NORMAL, currentMapType == AppMapType.NORMAL) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_SATELLITE, AppMapType.SATELLITE, currentMapType == AppMapType.SATELLITE) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_HYBRID, AppMapType.HYBRID, currentMapType == AppMapType.HYBRID) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_TERRAIN, AppMapType.TERRAIN, currentMapType == AppMapType.TERRAIN) { onSelect(it); onDismiss() }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(texts.SETTINGS_CLOSE) }
+        }
+    )
+}
+
+@Composable
+fun MapTypeOption(label: String, type: AppMapType, selected: Boolean, onClick: (AppMapType) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick(type) }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = { onClick(type) })
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(label)
     }
 }
 
@@ -441,13 +494,26 @@ fun CompareZoneRow(stat1: ZoneStat, stat2: ZoneStat, textColor: Color) {
 fun CompareMaps(
     s1: SessionData, 
     s2: SessionData, 
-    isDarkTheme: Boolean, 
+    mobileSettings: MobileSettingsState,
     selectedIndex: Int? = null,
-    onExpandClick: () -> Unit = {}
+    onExpandClick: () -> Unit = {},
+    onMapTypeClick: () -> Unit = {}
 ) {
     val texts = LocalMobileTexts.current
     val context = LocalContext.current
-    val mapStyle = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
+    val isDarkTheme = when (mobileSettings.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+    val mapStyle = if (isDarkTheme && mobileSettings.mapType == AppMapType.NORMAL) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
+    val mapType = when(mobileSettings.mapType) {
+        AppMapType.NORMAL -> MapType.NORMAL
+        AppMapType.SATELLITE -> MapType.SATELLITE
+        AppMapType.HYBRID -> MapType.HYBRID
+        AppMapType.TERRAIN -> MapType.TERRAIN
+    }
+    
     val routesAreClose = areRoutesClose(s1.route, s2.route, AppConstants.MAP_COMPARISON_RADIUS_KM)
     if (routesAreClose) {
         val cameraPositionState = rememberCameraPositionState()
@@ -483,7 +549,7 @@ fun CompareMaps(
         Box(modifier = Modifier.fillMaxWidth().height(300.dp).padding(16.dp).clip(RoundedCornerShape(12.dp))) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(), 
-                properties = MapProperties(mapStyleOptions = mapStyle), 
+                properties = MapProperties(mapStyleOptions = mapStyle, mapType = mapType), 
                 cameraPositionState = cameraPositionState,
                 onMapLoaded = { isMapLoaded = true }
             ) {
@@ -518,17 +584,25 @@ fun CompareMaps(
                 }
             }
             
-            IconButton(
-                onClick = onExpandClick,
-                modifier = Modifier.padding(8.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
-            ) {
-                Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND)
+            Row(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IconButton(
+                    onClick = onMapTypeClick,
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+                ) {
+                    Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
+                }
+                IconButton(
+                    onClick = onExpandClick,
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+                ) {
+                    Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND)
+                }
             }
         }
     } else {
         Row(modifier = Modifier.fillMaxWidth().height(200.dp).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MapSmall(s1.route, Color1, mapStyle, Modifier.weight(1f), selectedIndex, onExpandClick)
-            MapSmall(s2.route, Color2, mapStyle, Modifier.weight(1f), selectedIndex, onExpandClick)
+            MapSmall(s1.route, Color1, mobileSettings, Modifier.weight(1f), selectedIndex, onExpandClick, onMapTypeClick)
+            MapSmall(s2.route, Color2, mobileSettings, Modifier.weight(1f), selectedIndex, onExpandClick, onMapTypeClick)
         }
     }
 }
@@ -537,13 +611,26 @@ fun CompareMaps(
 fun FullScreenCompareMap(
     s1: SessionData,
     s2: SessionData,
-    isDarkTheme: Boolean,
+    mobileSettings: MobileSettingsState,
     selectedIndex: Int?,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onMapTypeClick: () -> Unit = {}
 ) {
     val texts = LocalMobileTexts.current
     val context = LocalContext.current
-    val mapStyle = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
+    val isDarkTheme = when (mobileSettings.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+    val mapStyle = if (isDarkTheme && mobileSettings.mapType == AppMapType.NORMAL) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
+    val mapType = when(mobileSettings.mapType) {
+        AppMapType.NORMAL -> MapType.NORMAL
+        AppMapType.SATELLITE -> MapType.SATELLITE
+        AppMapType.HYBRID -> MapType.HYBRID
+        AppMapType.TERRAIN -> MapType.TERRAIN
+    }
+    
     val cameraPositionState = rememberCameraPositionState()
     var isMapLoaded by remember { mutableStateOf(false) }
 
@@ -578,7 +665,7 @@ fun FullScreenCompareMap(
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
-            properties = MapProperties(mapStyleOptions = mapStyle),
+            properties = MapProperties(mapStyleOptions = mapStyle, mapType = mapType),
             cameraPositionState = cameraPositionState,
             onMapLoaded = { isMapLoaded = true }
         ) {
@@ -613,11 +700,19 @@ fun FullScreenCompareMap(
             }
         }
         
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
-        ) {
-            Icon(Icons.Default.FullscreenExit, contentDescription = texts.DETAIL_MAP_COLLAPSE)
+        Column(modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            IconButton(
+                onClick = onMapTypeClick,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
+            }
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.FullscreenExit, contentDescription = texts.DETAIL_MAP_COLLAPSE)
+            }
         }
     }
 }
@@ -626,14 +721,28 @@ fun FullScreenCompareMap(
 fun MapSmall(
     route: List<LatLng>, 
     color: Color, 
-    style: MapStyleOptions?, 
+    mobileSettings: MobileSettingsState, 
     modifier: Modifier, 
     selectedIndex: Int? = null,
-    onExpandClick: () -> Unit = {}
+    onExpandClick: () -> Unit = {},
+    onMapTypeClick: () -> Unit = {}
 ) {
     val texts = LocalMobileTexts.current
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
+    val isDarkTheme = when (mobileSettings.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+    val mapStyle = if (isDarkTheme && mobileSettings.mapType == AppMapType.NORMAL) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null
+    val mapType = when(mobileSettings.mapType) {
+        AppMapType.NORMAL -> MapType.NORMAL
+        AppMapType.SATELLITE -> MapType.SATELLITE
+        AppMapType.HYBRID -> MapType.HYBRID
+        AppMapType.TERRAIN -> MapType.TERRAIN
+    }
+    
     var isMapLoaded by remember { mutableStateOf(false) }
     val bounds = remember(route) {
         val filtered = route.filter { it.latitude != 0.0 && it.longitude != 0.0 }
@@ -666,7 +775,7 @@ fun MapSmall(
     Box(modifier = modifier.clip(RoundedCornerShape(8.dp))) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(), 
-            properties = MapProperties(mapStyleOptions = style), 
+            properties = MapProperties(mapStyleOptions = mapStyle, mapType = mapType), 
             uiSettings = MapUiSettings(zoomControlsEnabled = false, scrollGesturesEnabled = false), 
             cameraPositionState = cameraPositionState,
             onMapLoaded = { isMapLoaded = true }
@@ -692,11 +801,19 @@ fun MapSmall(
             }
         }
         
-        IconButton(
-            onClick = onExpandClick,
-            modifier = Modifier.padding(4.dp).size(32.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
-        ) {
-            Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND, modifier = Modifier.size(20.dp))
+        Row(modifier = Modifier.align(Alignment.TopEnd).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            IconButton(
+                onClick = onMapTypeClick,
+                modifier = Modifier.size(24.dp).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE, modifier = Modifier.size(16.dp))
+            }
+            IconButton(
+                onClick = onExpandClick,
+                modifier = Modifier.size(24.dp).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND, modifier = Modifier.size(16.dp))
+            }
         }
     }
 }

@@ -79,6 +79,7 @@ class StravaSyncWorker @AssistedInject constructor(
                     stravaSyncStatus = "SUCCESS"
                 )
                 syncMetadataDao.insert(metadata)
+                workoutDao.updateStravaExportStatus(workoutId, true)
                 
                 tempFile.delete()
                 return Result.success()
@@ -109,6 +110,7 @@ class StravaSyncWorker @AssistedInject constructor(
             stravaSyncStatus = "FAILED"
         )
         syncMetadataDao.insert(metadata)
+        workoutDao.updateStravaExportStatus(workoutId, false)
     }
 
     private fun mapToBaseStravaType(baseType: String): String {

@@ -40,6 +40,8 @@ data class WorkoutEntity(
     val isSynced: Boolean = false,
     @ColumnInfo(name = "hc_session_id")
     val hcSessionId: String? = null,
+    @ColumnInfo(defaultValue = "0")
+    val isExportedToStrava: Boolean = false,
     @ColumnInfo(defaultValue = "1")
     val isFinished: Boolean = true, // Nowe pole dla kontroli synchronizacji
     

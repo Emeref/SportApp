@@ -47,7 +47,7 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_LANGUAGE_TITLE = "Seleccionar idioma"
     override val SETTINGS_HEALTH_DATA = "Datos de salud y FC"
     override val SETTINGS_HEALTH_DATA_DESC = "Edad, peso, FC Máx y zonas"
-    override val SETTINGS_DEFINITIONS = "Definiciones de actividad"
+    override val SETTINGS_DEFINITIONS = "Definicione de actividad"
     override val SETTINGS_DEFINITIONS_DESC = "Gestionar lista de deportes y sensores"
     override val SETTINGS_WIDGETS_HOME = "Widgets de la pantalla de inicio"
     override val SETTINGS_WIDGETS_HOME_TITLE = "Vista de inicio"
@@ -65,7 +65,7 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Número de días"
     override val SETTINGS_CUSTOM_DAYS_DESC = "Número de días para el periodo 'Otro'"
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Número de días para las estadísticas del reloj"
-    override val SETTINGS_INTEGRATION = "Integración"
+    override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_SYNC = "Sincronización"
     override val SETTINGS_STRAVA = "Strava"
     override val SETTINGS_STRAVA_DESC = "Sincroniza tus entrenamientos con Strava"
@@ -91,6 +91,7 @@ object TextsMobileES : MobileTexts {
     override val HC_SYNC_SUCCESS = "Sincronización realizada correctamente"
     override val HC_SYNC_ERROR = "Error de sincronización"
     override val HC_SYNC_NO_DATA = "No se han encontrado datos nuevos"
+    override val HC_IMPORT_SELECT_FIELDS_TITLE = "Wybierz dane do zaimportowania"
     override fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String {
         val parts = mutableListOf<String>()
         weight?.let { parts.add("peso $it kg") }
@@ -183,11 +184,23 @@ object TextsMobileES : MobileTexts {
     override val ACTIVITY_IMPORT_CONTINUE = "Continuar"
     override val ACTIVITY_IMPORT_PROGRESS = "Importando datos..."
     override val ACTIVITY_EXPORT_ERROR = "Error de exportación"
+    override val ACTIVITY_EXPORT_DIALOG_TITLE = "Exportar actividad"
+    override val STR_STRAVA = "Strava"
+    override val STR_HEALTH_CONNECT = "Health Connect"
+    override val ACTIVITY_ALREADY_SYNCED = "Sincronizado"
+    override val ACTIVITY_EXPORT = "Exportar"
     override val ACTIVITY_SHARE_TITLE = "Compartir entrenamiento(s)"
     override val ACTIVITY_OK = "Aceptar"
     override val ACTIVITY_CONFIRM_DELETE_TITLE = "Eliminar actividades"
     override val ACTIVITY_ALL = "Todas"
     override val ACTIVITY_NONE = "Ninguna"
+
+    // New Export/Import SAE
+    override val ACTIVITY_EXPORT_SAE = "Exportar SAE"
+    override val ACTIVITY_IMPORT_SAE = "Importar SAE"
+    override val ACTIVITY_EXPORT_FORMAT_SELECT = "Seleccionar formato de exportación"
+    override val ACTIVITY_EXPORT_SAE_DESC = "El formato SAE (.sae) permite realizar una copia de seguridad completa de todos los datos del entrenamiento, incluidos los entrenamientos en interiores (sin GPS)."
+    override val ACTIVITY_EXPORT_INCOMPATIBLE_GPX = "Algunas actividades seleccionadas no tienen datos de GPS y no se pueden exportar a GPX."
 
     // Activity Detail
     override val DETAIL_TITLE = "Detalles de la actividad"
@@ -236,12 +249,12 @@ object TextsMobileES : MobileTexts {
     override val STATS_SECTION_CHARTS = "Sección: Gráficos de tendencias"
     override val STATS_MOVE_UP = "Mover hacia arriba"
     override val STATS_MOVE_DOWN = "Mover hacia abajo"
-    override fun chartDistanceGps(km: Boolean) = if (km) "Distancia (GPS) en km" else "Distancia (GPS) en m"
-    override fun chartDistanceSteps(km: Boolean) = if (km) "Distancia (pasos) en km" else "Distancia (pasos) en m"
+    override fun chartDistanceGps(km: Boolean) = if (km) "Distancia (GPS) en km" else "Distancia (GPS) in m"
+    override fun chartDistanceSteps(km: Boolean) = if (km) "Distancia (pasos) en km" else "Distancia (pasos) in m"
     override val CHART_STEPS = "Pasos"
 
     // Definitions
-    override val DEF_TITLE = "Definiciones de actividad"
+    override val DEF_TITLE = "Definicione de entrenamiento"
     override val DEF_ADD = "Añadir definición"
     override val DEF_EDIT = "Editar definición"
     override val DEF_DELETE = "Eliminar definición"
@@ -344,12 +357,6 @@ object TextsMobileES : MobileTexts {
     override val ZONE_Z4 = "Difícil"
     override val ZONE_Z5 = "Máximo"
 
-    // Compare Screen
-    override val COMPARE_TITLE = "Comparación de actividad"
-    override val COMPARE_VS = "Comparación:"
-    override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
-    override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
-
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Inicializando exportación..."
     override fun vmExportGenerating(name: String, current: Int, total: Int) = "Generando: $name ($current/$total)"
@@ -405,16 +412,16 @@ object TextsMobileES : MobileTexts {
     override val WIDGET_TOTAL_ASCENT = "Suma de subidas"
     override val WIDGET_TOTAL_DESCENT = "Suma de bajadas"
     override val WIDGET_AVG_STEP_LENGTH = "Longitud de paso media"
-    override val WIDGET_AVG_CADENCE_DESC = "Cadencia media"
+    override val WIDGET_AVG_CADENCE_DESC = "Cadenza media"
     override val WIDGET_MAX_CADENCE = "Cadencia máxima"
     override val WIDGET_TOTAL_STEPS = "Número de pasos"
     override val WIDGET_PRESSURE_START = "Presión atm. (inicio)"
     override val WIDGET_PRESSURE_END = "Presión atm. (final)"
     override val WIDGET_MAX_PRESSURE = "Presión atm. máxima"
     override val WIDGET_MIN_PRESSURE = "Presión atm. mínima"
-    override val WIDGET_BEST_PACE_1KM = "Mejor ritmo de 1 km"
-    override val WIDGET_WATCH_ASCENT = "Subida acumulada"
-    override val WIDGET_WATCH_DESCENT = "Bajada acumulada"
+    override val WIDGET_BEST_PACE_1KM = "Mejor ritmo (1km)"
+    override val WIDGET_WATCH_ASCENT = "Ascenso acumulado"
+    override val WIDGET_WATCH_DESCENT = "Descenso acumulado"
 
     // Sensors
     override val SENSOR_HEART_RATE = "Frecuencia cardíaca"
@@ -433,21 +440,11 @@ object TextsMobileES : MobileTexts {
     override val SENSOR_MAP = "Datos de ubicación"
     override val SENSOR_AVG_STEP_LENGTH = "Longitud de paso media"
 
-    // Trim Screen
-    override val TRIM_TITLE = "Editar entrenamiento (Recorte)"
-    override val TRIM_CONFIRM_TITLE = "Confirmar recorte"
-    override val TRIM_CONFIRM_DESC = "¿Está seguro de que desea eliminar los datos fuera del rango seleccionado? Estos datos se eliminarán permanentemente."
-    override val TRIM_SAVE_BTN = "Recortar y guardar"
-    override val TRIM_CHART_HR = "Gráfico de frecuencia cardíaca"
-    override val TRIM_RANGE_TITLE = "Seleccionar rango de entrenamiento"
-    override val TRIM_PREVIEW_TITLE = "Vista previa de las nuevas estadísticas"
-    override val TRIM_NEW_DURATION = "Nueva duración:"
-    override val TRIM_DISTANCE_GPS = "Distancia (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Distancia (pasos):"
-    override val TRIM_CALORIES = "Calorías quemadas:"
-    override val TRIM_AVG_BPM = "FC media:"
-    override val TRIM_START = "Inicio"
-    override val TRIM_END = "Final"
+    // Compare Screen
+    override val COMPARE_TITLE = "Comparación de actividad"
+    override val COMPARE_VS = "Comparación:"
+    override val COMPARE_HIGHER_IS_BETTER = "Un resultado mayor es mejor"
+    override val COMPARE_LOWER_IS_BETTER = "Un resultado menor es mejor"
 
     // Units
     override val UNIT_KCAL = "kcal"
@@ -497,6 +494,13 @@ object TextsMobileES : MobileTexts {
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "La API Wearable no está disponible en este dispositivo"
     override val ERROR_NO_WATCH_CONNECTED = "No hay ningún reloj conectado"
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Tipo de mapa"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satélite"
+    override val MAP_TYPE_HYBRID = "Híbrido"
+    override val MAP_TYPE_TERRAIN = "Terreno"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -575,9 +579,24 @@ object TextsMobileES : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
-            "avg_cadence" -> WIDGET_AVG_CADENCE
+            "avg_cadence" -> WIDGET_AVG_BPM
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> id
         }
     }
+
+    override val TRIM_TITLE = "Editar entrenamiento (Recorte)"
+    override val TRIM_CONFIRM_TITLE = "Confirmar recorte"
+    override val TRIM_CONFIRM_DESC = "¿Está seguro de que desea eliminar los datos fuera del rango seleccionado? Estos datos se eliminarán permanentemente."
+    override val TRIM_SAVE_BTN = "Recortar y guardar"
+    override val TRIM_CHART_HR = "Gráfico de frecuencia cardíaca"
+    override val TRIM_RANGE_TITLE = "Seleccionar rango de entrenamiento"
+    override val TRIM_PREVIEW_TITLE = "Vista previa de las nuevas estadísticas"
+    override val TRIM_NEW_DURATION = "Nueva duración:"
+    override val TRIM_DISTANCE_GPS = "Distancia (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Distancia (pasos):"
+    override val TRIM_CALORIES = "Calorías quemadas:"
+    override val TRIM_AVG_BPM = "FC media:"
+    override val TRIM_START = "Inicio"
+    override val TRIM_END = "Final"
 }

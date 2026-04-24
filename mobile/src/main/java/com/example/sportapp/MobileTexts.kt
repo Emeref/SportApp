@@ -86,6 +86,7 @@ interface MobileTexts {
     val HC_SYNC_SUCCESS: String
     val HC_SYNC_ERROR: String
     val HC_SYNC_NO_DATA: String
+    val HC_IMPORT_SELECT_FIELDS_TITLE: String
     fun hcSyncPreview(weight: String?, height: String?, vo2max: String?): String
     
     // Stage 3 - Import Workouts
@@ -172,11 +173,23 @@ interface MobileTexts {
     val ACTIVITY_IMPORT_CONTINUE: String
     val ACTIVITY_IMPORT_PROGRESS: String
     val ACTIVITY_EXPORT_ERROR: String
+    val ACTIVITY_EXPORT_DIALOG_TITLE: String
+    val STR_STRAVA: String
+    val STR_HEALTH_CONNECT: String
+    val ACTIVITY_ALREADY_SYNCED: String
+    val ACTIVITY_EXPORT: String
     val ACTIVITY_SHARE_TITLE: String
     val ACTIVITY_OK: String
     val ACTIVITY_CONFIRM_DELETE_TITLE: String
     val ACTIVITY_ALL: String
     val ACTIVITY_NONE: String
+
+    // New Export/Import SAE
+    val ACTIVITY_EXPORT_SAE: String
+    val ACTIVITY_IMPORT_SAE: String
+    val ACTIVITY_EXPORT_FORMAT_SELECT: String
+    val ACTIVITY_EXPORT_SAE_DESC: String
+    val ACTIVITY_EXPORT_INCOMPATIBLE_GPX: String
 
     // Activity Detail
     val DETAIL_TITLE: String
@@ -491,6 +504,13 @@ interface MobileTexts {
     // Errors
     val ERROR_WEARABLE_NOT_AVAILABLE: String
     val ERROR_NO_WATCH_CONNECTED: String
+
+    // Map Types
+    val MAP_TYPE_TITLE: String
+    val MAP_TYPE_NORMAL: String
+    val MAP_TYPE_SATELLITE: String
+    val MAP_TYPE_HYBRID: String
+    val MAP_TYPE_TERRAIN: String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

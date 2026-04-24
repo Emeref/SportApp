@@ -6,6 +6,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.MobileTexts
+import com.example.sportapp.data.ExportImportManager
 import com.example.sportapp.data.GpxGenerator
 import com.example.sportapp.data.GpxImporter
 import com.example.sportapp.data.IWorkoutRepository
@@ -33,13 +34,6 @@ enum class SortColumn {
     TYPE, DATE, DURATION, CALORIES, DISTANCE_GPS, DISTANCE_STEPS
 }
 
-sealed class ExportState {
-    object Idle : ExportState()
-    data class Exporting(val progress: Float, val message: String) : ExportState()
-    data class Success(val uri: Uri, val isZip: Boolean) : ExportState()
-    data class Error(val message: String) : ExportState()
-}
-
 sealed class ImportState {
     object Idle : ImportState()
     object Loading : ImportState()
@@ -53,6 +47,7 @@ class ActivityListViewModel @Inject constructor(
     private val repository: IWorkoutRepository,
     private val gpxImporter: GpxImporter,
     private val settingsManager: MobileSettingsManager,
+    private val exportImportManager: ExportImportManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -241,7 +236,7 @@ class ActivityListViewModel @Inject constructor(
         }
     }
 
-    fun exportSelected() {
+    fun exportSelected(useSae: Boolean = false) {
         val ids = _selectedIds.value.toList()
         if (ids.isEmpty()) return
 
@@ -262,24 +257,30 @@ class ActivityListViewModel @Inject constructor(
                 ids.forEachIndexed { index, idString ->
                     val id = idString.toLongOrNull() ?: return@forEachIndexed
                     val workout = repository.getWorkoutById(id) ?: return@forEachIndexed
-                    val points = repository.getPointsForWorkout(id)
                     
                     _exportState.value = ExportState.Exporting(
                         (index.toFloat() / ids.size), 
                         texts.vmExportGenerating(workout.activityName, index + 1, ids.size)
                     )
 
-                    val gpxContent = gpxGenerator.generateGpx(workout, points)
                     val baseName = "${workout.activityName}_${sdf.format(Date(workout.startTime))}"
                         .replace(" ", "_")
                         .replace(":", "")
                     
                     val count = usedFileNames.getOrDefault(baseName, 0)
-                    val fileName = if (count == 0) "$baseName.gpx" else "${baseName}_${count + 1}.gpx"
+                    val extension = if (useSae) "sae" else "gpx"
+                    val fileName = if (count == 0) "$baseName.$extension" else "${baseName}_${count + 1}.$extension"
                     usedFileNames[baseName] = count + 1
                     
                     val file = File(exportDir, fileName)
-                    file.writeText(gpxContent)
+                    if (useSae) {
+                        val saeContent = exportImportManager.exportToSae(id)
+                        file.writeText(saeContent)
+                    } else {
+                        val points = repository.getPointsForWorkout(id)
+                        val gpxContent = gpxGenerator.generateGpx(workout, points)
+                        file.writeText(gpxContent)
+                    }
                     generatedFiles.add(file)
                 }
 
@@ -338,6 +339,20 @@ class ActivityListViewModel @Inject constructor(
                 } else {
                     saveImportedWorkout(result)
                 }
+            } catch (e: Exception) {
+                _importState.value = ImportState.Error(texts.vmImportError(e.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    fun importSae(uri: Uri) {
+        viewModelScope.launch {
+            _importState.value = ImportState.Loading
+            val texts = getTexts()
+            try {
+                val workoutId = exportImportManager.importFromSae(uri)
+                _importState.value = ImportState.Success(texts.VM_IMPORT_SUCCESS)
+                refreshActivityTypes()
             } catch (e: Exception) {
                 _importState.value = ImportState.Error(texts.vmImportError(e.message ?: "Unknown error"))
             }

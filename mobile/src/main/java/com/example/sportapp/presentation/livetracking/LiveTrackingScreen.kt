@@ -9,8 +9,10 @@ import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.sportapp.LocalMobileTexts
+import com.example.sportapp.presentation.settings.AppMapType
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
@@ -56,9 +59,11 @@ fun LiveTrackingScreen(
     val activeDefinition by viewModel.activeDefinition.collectAsState()
     val isFinished by viewModel.isFinished.collectAsState()
     val formattedDuration by viewModel.formattedDuration.collectAsState()
+    val mobileSettings by viewModel.mobileSettings.collectAsState()
 
     val cameraPositionState = rememberCameraPositionState()
     var isFullScreenMap by remember { mutableStateOf(false) }
+    var showMapTypeDialog by remember { mutableStateOf(false) }
 
     // Keep Screen On
     val activity = context as? Activity
@@ -122,6 +127,14 @@ fun LiveTrackingScreen(
                     Text(texts.LIVE_TRACKING_BTN_VIEW_MAP)
                 }
             }
+        )
+    }
+
+    if (showMapTypeDialog) {
+        MapTypeSelectionDialog(
+            currentMapType = mobileSettings.mapType,
+            onDismiss = { showMapTypeDialog = false },
+            onSelect = { viewModel.setMapType(it) }
         )
     }
 
@@ -198,7 +211,13 @@ fun LiveTrackingScreen(
                             myLocationButtonEnabled = false
                         ),
                         properties = MapProperties(
-                            isMyLocationEnabled = hasLocationPermission
+                            isMyLocationEnabled = hasLocationPermission,
+                            mapType = when(mobileSettings.mapType) {
+                                AppMapType.NORMAL -> MapType.NORMAL
+                                AppMapType.SATELLITE -> MapType.SATELLITE
+                                AppMapType.HYBRID -> MapType.HYBRID
+                                AppMapType.TERRAIN -> MapType.TERRAIN
+                            }
                         )
                     ) {
                         if (routePoints.isNotEmpty()) {
@@ -217,6 +236,15 @@ fun LiveTrackingScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // Map Type Toggle
+                        FloatingActionButton(
+                            onClick = { showMapTypeDialog = true },
+                            modifier = Modifier.size(48.dp),
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ) {
+                            Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
+                        }
+
                         // Orientation Toggle
                         FloatingActionButton(
                             onClick = { viewModel.toggleOrientation() },
@@ -438,6 +466,45 @@ fun LiveTrackingScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MapTypeSelectionDialog(
+    currentMapType: AppMapType,
+    onDismiss: () -> Unit,
+    onSelect: (AppMapType) -> Unit
+) {
+    val texts = LocalMobileTexts.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(texts.MAP_TYPE_TITLE) },
+        text = {
+            Column {
+                MapTypeOption(texts.MAP_TYPE_NORMAL, AppMapType.NORMAL, currentMapType == AppMapType.NORMAL) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_SATELLITE, AppMapType.SATELLITE, currentMapType == AppMapType.SATELLITE) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_HYBRID, AppMapType.HYBRID, currentMapType == AppMapType.HYBRID) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_TERRAIN, AppMapType.TERRAIN, currentMapType == AppMapType.TERRAIN) { onSelect(it); onDismiss() }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(texts.SETTINGS_CLOSE) }
+        }
+    )
+}
+
+@Composable
+fun MapTypeOption(label: String, type: AppMapType, selected: Boolean, onClick: (AppMapType) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick(type) }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(label)
     }
 }
 

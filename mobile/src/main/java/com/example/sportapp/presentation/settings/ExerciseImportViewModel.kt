@@ -46,7 +46,7 @@ class ExerciseImportViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val rawSessions = exerciseSyncUseCase.readExerciseSessions(daysBack = 30)
+                val rawSessions = exerciseSyncUseCase.readExerciseSessions(daysBack = 7)
                 val definitions = workoutRepository.getAllDefinitions().first()
                 
                 val sessions = rawSessions.map { session ->

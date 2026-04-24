@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.stats
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.widget.Toast
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,16 +39,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.healthconnect.ExportResult
+import com.example.sportapp.presentation.activities.ExportState
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
+import com.example.sportapp.presentation.settings.AppMapType
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -75,7 +82,9 @@ fun ActivityDetailScreen(
     val autoLapDistance by viewModel.autoLapDistance.collectAsStateWithLifecycle()
     val isExporting by viewModel.isExporting.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
+    val fileExportState by viewModel.fileExportState.collectAsStateWithLifecycle()
     val hcSessionId by viewModel.hcSessionId.collectAsStateWithLifecycle(null)
+    val isExportedToStrava by viewModel.isExportedToStrava.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     var isIntervalsExpanded by remember { mutableStateOf(false) }
@@ -84,6 +93,8 @@ fun ActivityDetailScreen(
     var isMapFullScreen by remember { mutableStateOf(false) }
     var showPermissionRationale by remember { mutableStateOf(false) }
     var showExportedText by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showMapTypeDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -95,7 +106,7 @@ fun ActivityDetailScreen(
     ) { granted ->
         if (granted.containsAll(viewModel.healthConnectManager.writePermissions)) {
             viewModel.resetHcDeniedCount()
-            viewModel.exportToHC()
+            viewModel.exportActivity(viewModel.activityId, toStrava = false, toHealthConnect = true)
         } else {
             viewModel.incrementHcDeniedCount()
             Toast.makeText(context, texts.HC_EXPORT_PERMISSION_DENIED, Toast.LENGTH_SHORT).show()
@@ -117,6 +128,20 @@ fun ActivityDetailScreen(
                 }
             }
             viewModel.clearExportResult()
+        }
+    }
+
+    LaunchedEffect(fileExportState) {
+        if (fileExportState is ExportState.Success) {
+            val state = fileExportState as ExportState.Success
+            val mimeType = if (state.uri.toString().endsWith(".sae")) "application/json" else "application/gpx+xml"
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = mimeType
+                putExtra(Intent.EXTRA_STREAM, state.uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, texts.ACTIVITY_SHARE_TITLE))
+            viewModel.resetFileExportState()
         }
     }
 
@@ -163,15 +188,92 @@ fun ActivityDetailScreen(
         )
     }
 
+    if (showExportDialog) {
+        ExportSelectionDialog(
+            isExportedToHC = hcSessionId != null,
+            isExportedToStrava = isExportedToStrava,
+            supportsGpx = (sessionData?.totalDistanceGps ?: 0.0) > 0,
+            onDismiss = { showExportDialog = false },
+            onExport = { toStrava, toHC, toGpx, toSae ->
+                showExportDialog = false
+                if (toGpx) {
+                    viewModel.exportToFile(useSae = false)
+                } else if (toSae) {
+                    viewModel.exportToFile(useSae = true)
+                } else {
+                    scope.launch {
+                        if (toHC) {
+                            if (viewModel.healthConnectManager.hasPermissions(viewModel.healthConnectManager.writePermissions)) {
+                                viewModel.exportActivity(viewModel.activityId, toStrava = toStrava, toHealthConnect = true)
+                            } else {
+                                if (mobileSettings.hcPermissionsDeniedCount >= 2) {
+                                    showPermissionRationale = true
+                                } else {
+                                    permissionLauncher.launch(viewModel.healthConnectManager.writePermissions)
+                                }
+                                if (toStrava) {
+                                    viewModel.exportActivity(viewModel.activityId, toStrava = true, toHealthConnect = false)
+                                }
+                            }
+                        } else if (toStrava) {
+                            viewModel.exportActivity(viewModel.activityId, toStrava = true, toHealthConnect = false)
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    if (fileExportState is ExportState.Exporting) {
+        val state = fileExportState as ExportState.Exporting
+        Dialog(onDismissRequest = {}) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(progress = { state.progress })
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(state.message, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+
+    if (fileExportState is ExportState.Error) {
+        AlertDialog(
+            onDismissRequest = { viewModel.resetFileExportState() },
+            title = { Text(texts.ACTIVITY_EXPORT_ERROR) },
+            text = { Text((fileExportState as ExportState.Error).message) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.resetFileExportState() }) {
+                    Text(texts.ACTIVITY_OK)
+                }
+            }
+        )
+    }
+
+    if (showMapTypeDialog) {
+        MapTypeSelectionDialog(
+            currentMapType = mobileSettings.mapType,
+            onDismiss = { showMapTypeDialog = false },
+            onSelect = { viewModel.setMapType(it) }
+        )
+    }
+
     if (isMapFullScreen && sessionData != null) {
         BackHandler { isMapFullScreen = false }
         FullScreenMap(
             data = sessionData!!,
             settings = settings,
-            isDarkTheme = isDarkTheme,
+            mobileSettings = mobileSettings,
             selectedLap = selectedLap,
             selectedIndex = selectedIndex,
-            onClose = { isMapFullScreen = false }
+            onClose = { isMapFullScreen = false },
+            onMapTypeClick = { showMapTypeDialog = true }
         )
     } else {
         Scaffold(
@@ -180,9 +282,10 @@ fun ActivityDetailScreen(
                     title = { Text(texts.DETAIL_TITLE) },
                     navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE) } },
                     actions = {
-                        if (hcSessionId != null) {
+                        val isFullyExported = hcSessionId != null && isExportedToStrava
+                        if (isFullyExported) {
                             Surface(
-                                onClick = { showExportedText = true },
+                                onClick = { showExportDialog = true },
                                 shape = RoundedCornerShape(16.dp),
                                 color = Color.Transparent,
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
@@ -200,7 +303,7 @@ fun ActivityDetailScreen(
                                     )
                                     AnimatedVisibility(visible = showExportedText) {
                                         Text(
-                                            text = texts.HC_EXPORTED_ON,
+                                            text = texts.ACTIVITY_ALREADY_SYNCED,
                                             style = MaterialTheme.typography.labelMedium,
                                             color = Color(0xFF4CAF50),
                                             modifier = Modifier.padding(start = 4.dp)
@@ -212,20 +315,8 @@ fun ActivityDetailScreen(
                             if (isExporting) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 16.dp), strokeWidth = 2.dp)
                             } else {
-                                IconButton(onClick = {
-                                    scope.launch {
-                                        if (viewModel.healthConnectManager.hasPermissions(viewModel.healthConnectManager.writePermissions)) {
-                                            viewModel.exportToHC()
-                                        } else {
-                                            if (mobileSettings.hcPermissionsDeniedCount >= 2) {
-                                                showPermissionRationale = true
-                                            } else {
-                                                permissionLauncher.launch(viewModel.healthConnectManager.writePermissions)
-                                            }
-                                        }
-                                    }
-                                }) {
-                                    Icon(Icons.Default.CloudUpload, contentDescription = texts.HC_EXPORT_TO)
+                                IconButton(onClick = { showExportDialog = true }) {
+                                    Icon(Icons.Default.CloudUpload, contentDescription = texts.ACTIVITY_EXPORT)
                                 }
                             }
                         }
@@ -260,11 +351,12 @@ fun ActivityDetailScreen(
                                     MapSection(
                                         data = data, 
                                         settings = settings, 
-                                        isDarkTheme = isDarkTheme, 
+                                        mobileSettings = mobileSettings,
                                         selectedLap = selectedLap, 
                                         onMapClick = { viewModel.selectLap(null) }, 
                                         selectedIndex = selectedIndex,
-                                        onExpandClick = { isMapFullScreen = true }
+                                        onExpandClick = { isMapFullScreen = true },
+                                        onMapTypeClick = { showMapTypeDialog = true }
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
@@ -322,18 +414,167 @@ fun ActivityDetailScreen(
 }
 
 @Composable
+fun MapTypeSelectionDialog(
+    currentMapType: AppMapType,
+    onDismiss: () -> Unit,
+    onSelect: (AppMapType) -> Unit
+) {
+    val texts = LocalMobileTexts.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(texts.MAP_TYPE_TITLE) },
+        text = {
+            Column {
+                MapTypeOption(texts.MAP_TYPE_NORMAL, AppMapType.NORMAL, currentMapType == AppMapType.NORMAL) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_SATELLITE, AppMapType.SATELLITE, currentMapType == AppMapType.SATELLITE) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_HYBRID, AppMapType.HYBRID, currentMapType == AppMapType.HYBRID) { onSelect(it); onDismiss() }
+                MapTypeOption(texts.MAP_TYPE_TERRAIN, AppMapType.TERRAIN, currentMapType == AppMapType.TERRAIN) { onSelect(it); onDismiss() }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(texts.SETTINGS_CLOSE) }
+        }
+    )
+}
+
+@Composable
+fun MapTypeOption(label: String, type: AppMapType, selected: Boolean, onClick: (AppMapType) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick(type) }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = { onClick(type) })
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(label)
+    }
+}
+
+@Composable
+fun ExportSelectionDialog(
+    isExportedToHC: Boolean,
+    isExportedToStrava: Boolean,
+    supportsGpx: Boolean,
+    onDismiss: () -> Unit,
+    onExport: (toStrava: Boolean, toHC: Boolean, toGpx: Boolean, toSae: Boolean) -> Unit
+) {
+    val texts = LocalMobileTexts.current
+    var exportStrava by remember { mutableStateOf(!isExportedToStrava) }
+    var exportHC by remember { mutableStateOf(!isExportedToHC) }
+    var exportGpx by remember { mutableStateOf(false) }
+    var exportSae by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(texts.ACTIVITY_EXPORT_DIALOG_TITLE) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(texts.SETTINGS_SYNC, style = MaterialTheme.typography.titleSmall)
+                ExportOptionRow(
+                    label = texts.STR_HEALTH_CONNECT,
+                    isExported = isExportedToHC,
+                    checked = exportHC,
+                    onCheckedChange = { exportHC = it; if (it) { exportGpx = false; exportSae = false } }
+                )
+                ExportOptionRow(
+                    label = texts.STR_STRAVA,
+                    isExported = isExportedToStrava,
+                    checked = exportStrava,
+                    onCheckedChange = { exportStrava = it; if (it) { exportGpx = false; exportSae = false } }
+                )
+                
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Text(texts.ACTIVITY_EXPORT, style = MaterialTheme.typography.titleSmall)
+                
+                ExportOptionRow(
+                    label = "GPX (.gpx)",
+                    isExported = false,
+                    enabled = supportsGpx,
+                    checked = exportGpx,
+                    onCheckedChange = { exportGpx = it; if (it) { exportSae = false; exportStrava = false; exportHC = false } }
+                )
+                if (!supportsGpx) {
+                    Text(texts.ACTIVITY_EXPORT_INCOMPATIBLE_GPX, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+                
+                ExportOptionRow(
+                    label = "SAE (.sae)",
+                    isExported = false,
+                    checked = exportSae,
+                    onCheckedChange = { exportSae = it; if (it) { exportGpx = false; exportStrava = false; exportHC = false } }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onExport(exportStrava, exportHC, exportGpx, exportSae) },
+                enabled = (exportStrava && !isExportedToStrava) || (exportHC && !isExportedToHC) || exportGpx || exportSae
+            ) {
+                Text(texts.ACTIVITY_EXPORT)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(texts.SETTINGS_CANCEL)
+            }
+        }
+    )
+}
+
+@Composable
+fun ExportOptionRow(
+    label: String,
+    isExported: Boolean,
+    enabled: Boolean = true,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isExported && enabled) { onCheckedChange(!checked) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = isExported || checked,
+            onCheckedChange = if (isExported || !enabled) null else onCheckedChange,
+            enabled = !isExported && enabled
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = label, modifier = Modifier.weight(1f), color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+        if (isExported) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
 fun MapSection(
-    data: com.example.sportapp.data.SessionData,
+    data: SessionData,
     settings: ActivityDetailSettings,
-    isDarkTheme: Boolean,
+    mobileSettings: MobileSettingsState,
     selectedLap: WorkoutLap?,
     onMapClick: () -> Unit,
     selectedIndex: Int? = null,
-    onExpandClick: () -> Unit = {}
+    onExpandClick: () -> Unit = {},
+    onMapTypeClick: () -> Unit = {}
 ) {
     val texts = LocalMobileTexts.current
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
+    val isDarkTheme = when (mobileSettings.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
 
     LaunchedEffect(selectedLap, data.route) {
         val pointsToShow = if (selectedLap != null) {
@@ -360,7 +601,15 @@ fun MapSection(
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
+            properties = MapProperties(
+                mapStyleOptions = if (isDarkTheme && mobileSettings.mapType == AppMapType.NORMAL) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null,
+                mapType = when(mobileSettings.mapType) {
+                    AppMapType.NORMAL -> MapType.NORMAL
+                    AppMapType.SATELLITE -> MapType.SATELLITE
+                    AppMapType.HYBRID -> MapType.HYBRID
+                    AppMapType.TERRAIN -> MapType.TERRAIN
+                }
+            ),
             onMapClick = { onMapClick() }
         ) {
             val startIcon = remember { BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) }
@@ -406,27 +655,41 @@ fun MapSection(
             }
         }
         
-        IconButton(
-            onClick = onExpandClick,
-            modifier = Modifier.padding(8.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
-        ) {
-            Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND)
+        Row(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            IconButton(
+                onClick = onMapTypeClick,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
+            }
+            IconButton(
+                onClick = onExpandClick,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Fullscreen, contentDescription = texts.DETAIL_MAP_EXPAND)
+            }
         }
     }
 }
 
 @Composable
 fun FullScreenMap(
-    data: com.example.sportapp.data.SessionData,
+    data: SessionData,
     settings: ActivityDetailSettings,
-    isDarkTheme: Boolean,
+    mobileSettings: MobileSettingsState,
     selectedLap: WorkoutLap?,
     selectedIndex: Int?,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onMapTypeClick: () -> Unit = {}
 ) {
     val texts = LocalMobileTexts.current
     val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
+    val isDarkTheme = when (mobileSettings.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
 
     LaunchedEffect(selectedLap, data.route) {
         val pointsToShow = if (selectedLap != null) {
@@ -453,7 +716,15 @@ fun FullScreenMap(
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(mapStyleOptions = if (isDarkTheme) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null),
+            properties = MapProperties(
+                mapStyleOptions = if (isDarkTheme && mobileSettings.mapType == AppMapType.NORMAL) MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark) else null,
+                mapType = when(mobileSettings.mapType) {
+                    AppMapType.NORMAL -> MapType.NORMAL
+                    AppMapType.SATELLITE -> MapType.SATELLITE
+                    AppMapType.HYBRID -> MapType.HYBRID
+                    AppMapType.TERRAIN -> MapType.TERRAIN
+                }
+            ),
         ) {
             val startIcon = remember { BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN) }
             val finishIcon = remember {
@@ -498,11 +769,19 @@ fun FullScreenMap(
             }
         }
         
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
-        ) {
-            Icon(Icons.Default.FullscreenExit, contentDescription = texts.DETAIL_MAP_COLLAPSE)
+        Column(modifier = Modifier.padding(top = 50.dp, end = 16.dp).align(Alignment.TopEnd), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            IconButton(
+                onClick = onMapTypeClick,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
+            }
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+            ) {
+                Icon(Icons.Default.FullscreenExit, contentDescription = texts.DETAIL_MAP_COLLAPSE)
+            }
         }
     }
 }
@@ -776,14 +1055,14 @@ private fun formatPaceFromSeconds(totalSeconds: Int): String {
 }
 
 @Composable
-fun SummaryWidgetsGrid(data: com.example.sportapp.data.SessionData, visibleWidgets: List<WidgetItem>) {
+fun SummaryWidgetsGrid(data: SessionData, visibleWidgets: List<WidgetItem>) {
     val texts = LocalMobileTexts.current
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
     
     val avgSpeedGps = if (data.durationSeconds > 0) (data.totalDistanceGps / 1000.0) / (data.durationSeconds / 3600.0) else 0.0
     val avgSpeedSteps = if (data.durationSeconds > 0) (data.totalDistanceSteps / 1000.0) / (data.durationSeconds / 3600.0) else 0.0
 
-    val widgetValues = mapOf(
+    val widgetValues: Map<String, Pair<String, String>> = mapOf(
         "duration" to (texts.WIDGET_DURATION to data.duration),
         "max_bpm" to (texts.WIDGET_MAX_BPM to "${data.maxBpm} ${texts.UNIT_BPM}"),
         "avg_bpm" to (texts.WIDGET_AVG_BPM to "${data.avgBpm} ${texts.UNIT_BPM}"),

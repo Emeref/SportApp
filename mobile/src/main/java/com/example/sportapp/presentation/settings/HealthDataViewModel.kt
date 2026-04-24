@@ -1,6 +1,8 @@
 package com.example.sportapp.presentation.settings
 
 import android.util.Log
+import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IUserHealthRepository
@@ -13,6 +15,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+enum class HealthField {
+    WEIGHT, HEIGHT, RESTING_HR, MAX_HR, VO2_MAX
+}
 
 @HiltViewModel
 class HealthDataViewModel @Inject constructor(
@@ -40,45 +46,95 @@ class HealthDataViewModel @Inject constructor(
     fun onSyncClick(onPermissionRequired: (Set<String>) -> Unit) {
         viewModelScope.launch {
             val permissions = healthConnectManager.profilePermissions
-            Log.d("HealthDataVM", "Checking permissions: $permissions")
             if (healthConnectManager.hasPermissions(permissions)) {
-                Log.d("HealthDataVM", "Permissions granted, starting sync")
-                syncHealthData()
+                prepareFieldSelection()
             } else {
-                Log.d("HealthDataVM", "Permissions required")
                 onPermissionRequired(permissions)
             }
         }
     }
 
-    fun syncHealthData() {
+    private suspend fun prepareFieldSelection() {
+        val availableFields = mutableListOf<HealthField>()
+        
+        if (healthConnectManager.hasPermissions(setOf(HealthPermission.getReadPermission(WeightRecord::class)))) {
+            availableFields.add(HealthField.WEIGHT)
+        }
+        if (healthConnectManager.hasPermissions(setOf(HealthPermission.getReadPermission(HeightRecord::class)))) {
+            availableFields.add(HealthField.HEIGHT)
+        }
+        if (healthConnectManager.hasPermissions(setOf(HealthPermission.getReadPermission(RestingHeartRateRecord::class)))) {
+            availableFields.add(HealthField.RESTING_HR)
+        }
+        if (healthConnectManager.hasPermissions(setOf(HealthPermission.getReadPermission(HeartRateRecord::class)))) {
+            availableFields.add(HealthField.MAX_HR)
+        }
+        if (healthConnectManager.hasPermissions(setOf(HealthPermission.getReadPermission(Vo2MaxRecord::class)))) {
+            availableFields.add(HealthField.VO2_MAX)
+        }
+
+        _uiState.update { 
+            it.copy(
+                showFieldSelectionDialog = true,
+                availableFields = availableFields,
+                selectedFields = availableFields.toSet()
+            ) 
+        }
+    }
+
+    fun toggleField(field: HealthField) {
+        _uiState.update { state ->
+            val newSelected = if (state.selectedFields.contains(field)) {
+                state.selectedFields - field
+            } else {
+                state.selectedFields + field
+            }
+            state.copy(selectedFields = newSelected)
+        }
+    }
+
+    fun onCancelFieldSelection() {
+        _uiState.update { it.copy(showFieldSelectionDialog = false) }
+    }
+
+    fun onConfirmFieldSelection() {
+        val selected = _uiState.value.selectedFields
+        if (selected.isEmpty()) {
+            _uiState.update { it.copy(showFieldSelectionDialog = false) }
+            return
+        }
+        _uiState.update { it.copy(showFieldSelectionDialog = false) }
+        syncHealthData(selected)
+    }
+
+    fun syncHealthData(fieldsToSync: Set<HealthField>? = null) {
         viewModelScope.launch {
-            Log.d("HealthDataVM", "syncHealthData started")
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val result = syncUseCase.readHealthDataFromHC()
-                Log.d("HealthDataVM", "Sync result: $result")
                 when (result) {
                     is HealthDataSyncResult.Success -> {
-                        if (result.weightKg != null || result.heightCm != null || result.restingHeartRate != null || 
-                            result.maxHeartRate != null || result.vo2max != null) {
+                        val preview = PreviewHealthData(
+                            weight = if (fieldsToSync?.contains(HealthField.WEIGHT) != false) result.weightKg else null,
+                            height = if (fieldsToSync?.contains(HealthField.HEIGHT) != false) result.heightCm else null,
+                            restingHR = if (fieldsToSync?.contains(HealthField.RESTING_HR) != false) result.restingHeartRate else null,
+                            maxHR = if (fieldsToSync?.contains(HealthField.MAX_HR) != false) result.maxHeartRate else null,
+                            vo2Max = if (fieldsToSync?.contains(HealthField.VO2_MAX) != false) result.vo2max else null,
+                            age = result.age,
+                            sex = result.sex
+                        )
+
+                        if (preview.weight != null || preview.height != null || preview.restingHR != null || 
+                            preview.maxHR != null || preview.vo2Max != null) {
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
                                     showPreviewDialog = true,
-                                    previewData = PreviewHealthData(
-                                        weight = result.weightKg,
-                                        height = result.heightCm,
-                                        restingHR = result.restingHeartRate,
-                                        maxHR = result.maxHeartRate,
-                                        vo2Max = result.vo2max,
-                                        age = result.age,
-                                        sex = result.sex
-                                    )
+                                    previewData = preview
                                 )
                             }
                         } else {
-                            _uiState.update { it.copy(isLoading = false, error = "Brak nowych danych w Health Connect") }
+                            _uiState.update { it.copy(isLoading = false, error = "Brak nowych danych dla wybranych pól") }
                         }
                     }
                     is HealthDataSyncResult.PermissionDenied -> {
@@ -89,7 +145,6 @@ class HealthDataViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Log.e("HealthDataVM", "Sync error", e)
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Błąd synchronizacji") }
             }
         }
@@ -135,6 +190,9 @@ data class HealthDataSyncState(
     val isAvailable: Boolean = false,
     val isLoading: Boolean = false,
     val showPreviewDialog: Boolean = false,
+    val showFieldSelectionDialog: Boolean = false,
+    val availableFields: List<HealthField> = emptyList(),
+    val selectedFields: Set<HealthField> = emptySet(),
     val previewData: PreviewHealthData? = null,
     val syncConfirmed: Boolean = false,
     val error: String? = null
