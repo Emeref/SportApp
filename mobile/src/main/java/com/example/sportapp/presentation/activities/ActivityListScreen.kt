@@ -63,6 +63,7 @@ fun ActivityListScreen(
     var showTypeMenu by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showImportTypeDialog by remember { mutableStateOf<Uri?>(null) }
+    var showExportFormatDialog by remember { mutableStateOf(false) }
     
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -85,10 +86,72 @@ fun ActivityListScreen(
         else -> ToggleableState.Indeterminate
     }
 
-    val gpxLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { showImportTypeDialog = it }
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        uris.forEach { uri ->
+            val fileName = getFileName(context, uri).lowercase()
+            if (fileName.endsWith(".sae")) {
+                viewModel.importSae(uri)
+            } else {
+                showImportTypeDialog = uri
+            }
+        }
+    }
+
+    // Export Format Dialog
+    if (showExportFormatDialog) {
+        val selectedItems = activities.filter { it.id in selectedIds }
+        val allSupportGpx = selectedItems.all { it.rawDistanceGps > 0 }
+
+        AlertDialog(
+            onDismissRequest = { showExportFormatDialog = false },
+            title = { Text(texts.ACTIVITY_EXPORT_FORMAT_SELECT) },
+            text = {
+                Column {
+                    Text(texts.ACTIVITY_EXPORT_SAE_DESC)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Button(
+                        onClick = {
+                            viewModel.exportSelected(useSae = true)
+                            showExportFormatDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("SAE (.sae)")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Button(
+                        onClick = {
+                            viewModel.exportSelected(useSae = false)
+                            showExportFormatDialog = false
+                        },
+                        enabled = allSupportGpx,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("GPX (.gpx)")
+                    }
+                    
+                    if (!allSupportGpx) {
+                        Text(
+                            texts.ACTIVITY_EXPORT_INCOMPATIBLE_GPX,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showExportFormatDialog = false }) {
+                    Text(texts.SETTINGS_CANCEL)
+                }
+            }
+        )
     }
 
     // Import Type Selection Dialog
@@ -188,8 +251,9 @@ fun ActivityListScreen(
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             } else {
+                val mimeType = if (state.uri.toString().endsWith(".sae")) "application/json" else "application/gpx+xml"
                 Intent(Intent.ACTION_SEND).apply {
-                    type = "application/gpx+xml"
+                    type = mimeType
                     putExtra(Intent.EXTRA_STREAM, state.uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
@@ -274,12 +338,12 @@ fun ActivityListScreen(
                 },
                 actions = {
                     if (selectedIds.isEmpty()) {
-                        IconButton(onClick = { gpxLauncher.launch("application/gpx+xml") }) {
+                        IconButton(onClick = { importLauncher.launch("*/*") }) {
                             Icon(Icons.Default.UploadFile, contentDescription = texts.ACTIVITY_IMPORT_GPX)
                         }
                     } else {
-                        IconButton(onClick = { viewModel.exportSelected() }) {
-                            Icon(Icons.Default.Share, contentDescription = texts.ACTIVITY_EXPORT_GPX)
+                        IconButton(onClick = { showExportFormatDialog = true }) {
+                            Icon(Icons.Default.Share, contentDescription = texts.ACTIVITY_EXPORT)
                         }
                     }
                     IconButton(onClick = onNavigateToSettings) {
@@ -509,6 +573,31 @@ fun ActivityListScreen(
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
+}
+
+private fun getFileName(context: android.content.Context, uri: Uri): String {
+    var result: String? = null
+    if (uri.scheme == "content") {
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (index != -1) {
+                    result = cursor.getString(index)
+                }
+            }
+        } finally {
+            cursor?.close()
+        }
+    }
+    if (result == null) {
+        result = uri.path
+        val cut = result?.lastIndexOf('/') ?: -1
+        if (cut != -1) {
+            result = result?.substring(cut + 1)
+        }
+    }
+    return result ?: ""
 }
 
 @Composable

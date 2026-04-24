@@ -195,6 +195,13 @@ object TextsMobileIT : MobileTexts {
     override val ACTIVITY_ALL = "Tutto"
     override val ACTIVITY_NONE = "Nessuno"
 
+    // New Export/Import SAE
+    override val ACTIVITY_EXPORT_SAE = "Exportar SAE"
+    override val ACTIVITY_IMPORT_SAE = "Importar SAE"
+    override val ACTIVITY_EXPORT_FORMAT_SELECT = "Seleccionar formato de exportación"
+    override val ACTIVITY_EXPORT_SAE_DESC = "El formato SAE (.sae) permite realizar una copia de seguridad completa de todos los datos del entrenamiento, incluidos los entrenamientos en interiores (sin GPS)."
+    override val ACTIVITY_EXPORT_INCOMPATIBLE_GPX = "Algunas actividades seleccionadas no tienen datos de GPS y no se pueden exportar a GPX."
+
     // Activity Detail
     override val DETAIL_TITLE = "Dettagli attività"
     override val DETAIL_MAP = "Mappa"

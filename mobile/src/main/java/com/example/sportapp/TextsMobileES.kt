@@ -65,7 +65,7 @@ object TextsMobileES : MobileTexts {
     override val SETTINGS_WATCH_STATS_DAYS_LABEL = "Número de días"
     override val SETTINGS_CUSTOM_DAYS_DESC = "Número de días para el periodo 'Otro'"
     override val SETTINGS_WATCH_STATS_DAYS_DESC = "Número de días para las estadísticas del reloj"
-    override val SETTINGS_INTEGRATION = "Integración"
+    override val SETTINGS_INTEGRATION = "Integration"
     override val SETTINGS_SYNC = "Sincronización"
     override val SETTINGS_STRAVA = "Strava"
     override val SETTINGS_STRAVA_DESC = "Sincroniza tus entrenamientos con Strava"
@@ -195,6 +195,13 @@ object TextsMobileES : MobileTexts {
     override val ACTIVITY_ALL = "Todas"
     override val ACTIVITY_NONE = "Ninguna"
 
+    // New Export/Import SAE
+    override val ACTIVITY_EXPORT_SAE = "Exportar SAE"
+    override val ACTIVITY_IMPORT_SAE = "Importar SAE"
+    override val ACTIVITY_EXPORT_FORMAT_SELECT = "Seleccionar formato de exportación"
+    override val ACTIVITY_EXPORT_SAE_DESC = "El formato SAE (.sae) permite realizar una copia de seguridad completa de todos los datos del entrenamiento, incluidos los entrenamientos en interiores (sin GPS)."
+    override val ACTIVITY_EXPORT_INCOMPATIBLE_GPX = "Algunas actividades seleccionadas no tienen datos de GPS y no se pueden exportar a GPX."
+
     // Activity Detail
     override val DETAIL_TITLE = "Detalles de la actividad"
     override val DETAIL_MAP = "Mapa"
@@ -242,8 +249,8 @@ object TextsMobileES : MobileTexts {
     override val STATS_SECTION_CHARTS = "Sección: Gráficos de tendencias"
     override val STATS_MOVE_UP = "Mover hacia arriba"
     override val STATS_MOVE_DOWN = "Mover hacia abajo"
-    override fun chartDistanceGps(km: Boolean) = if (km) "Distancia (GPS) en km" else "Distancia (GPS) en m"
-    override fun chartDistanceSteps(km: Boolean) = if (km) "Distancia (pasos) en km" else "Distancia (pasos) en m"
+    override fun chartDistanceGps(km: Boolean) = if (km) "Distancia (GPS) en km" else "Distancia (GPS) in m"
+    override fun chartDistanceSteps(km: Boolean) = if (km) "Distancia (pasos) en km" else "Distancia (pasos) in m"
     override val CHART_STEPS = "Pasos"
 
     // Definitions

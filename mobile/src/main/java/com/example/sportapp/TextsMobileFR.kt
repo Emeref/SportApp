@@ -195,6 +195,13 @@ object TextsMobileFR : MobileTexts {
     override val ACTIVITY_ALL = "Tout"
     override val ACTIVITY_NONE = "Aucun"
 
+    // New Export/Import SAE
+    override val ACTIVITY_EXPORT_SAE = "Exporter SAE"
+    override val ACTIVITY_IMPORT_SAE = "Importer SAE"
+    override val ACTIVITY_EXPORT_FORMAT_SELECT = "Choisir le format d'exportation"
+    override val ACTIVITY_EXPORT_SAE_DESC = "Le format SAE (.sae) permet une sauvegarde complète de toutes les données de l'entraînement, y compris les entraînements en intérieur (sans GPS)."
+    override val ACTIVITY_EXPORT_INCOMPATIBLE_GPX = "Certaines activités sélectionnées n'ont pas de données GPS et ne peuvent pas être exportées en GPX."
+
     // Activity Detail
     override val DETAIL_TITLE = "Détails de l'activité"
     override val DETAIL_MAP = "Carte"
@@ -506,11 +513,11 @@ object TextsMobileFR : MobileTexts {
 
 
     // Map Types
-    override val MAP_TYPE_TITLE = "Tipo de mapa"
+    override val MAP_TYPE_TITLE = "Type de carte"
     override val MAP_TYPE_NORMAL = "Normal"
-    override val MAP_TYPE_SATELLITE = "Satélite"
-    override val MAP_TYPE_HYBRID = "Híbrido"
-    override val MAP_TYPE_TERRAIN = "Terreno"
+    override val MAP_TYPE_SATELLITE = "Satellite"
+    override val MAP_TYPE_HYBRID = "Hybride"
+    override val MAP_TYPE_TERRAIN = "Terrain"
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {

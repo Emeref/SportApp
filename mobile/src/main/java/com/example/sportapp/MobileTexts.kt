@@ -184,6 +184,13 @@ interface MobileTexts {
     val ACTIVITY_ALL: String
     val ACTIVITY_NONE: String
 
+    // New Export/Import SAE
+    val ACTIVITY_EXPORT_SAE: String
+    val ACTIVITY_IMPORT_SAE: String
+    val ACTIVITY_EXPORT_FORMAT_SELECT: String
+    val ACTIVITY_EXPORT_SAE_DESC: String
+    val ACTIVITY_EXPORT_INCOMPATIBLE_GPX: String
+
     // Activity Detail
     val DETAIL_TITLE: String
     val DETAIL_MAP: String

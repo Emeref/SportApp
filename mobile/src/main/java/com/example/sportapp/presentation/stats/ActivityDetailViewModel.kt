@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.stats
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,10 +13,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.workDataOf
-import com.example.sportapp.data.IWorkoutRepository
-import com.example.sportapp.data.LapManager
-import com.example.sportapp.data.SessionData
-import com.example.sportapp.data.SessionRepository
+import com.example.sportapp.data.*
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
@@ -23,6 +21,7 @@ import com.example.sportapp.data.strava.StravaSyncWorker
 import com.example.sportapp.healthconnect.ExerciseExportUseCase
 import com.example.sportapp.healthconnect.ExportResult
 import com.example.sportapp.healthconnect.HealthConnectManager
+import com.example.sportapp.presentation.activities.ExportState
 import com.example.sportapp.presentation.settings.AppMapType
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
@@ -35,6 +34,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -48,6 +50,7 @@ class ActivityDetailViewModel @Inject constructor(
     private val lapManager: LapManager,
     private val mobileSettingsManager: MobileSettingsManager,
     private val exerciseExportUseCase: ExerciseExportUseCase,
+    private val exportImportManager: ExportImportManager,
     val healthConnectManager: HealthConnectManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -77,6 +80,9 @@ class ActivityDetailViewModel @Inject constructor(
 
     private val _exportResult = MutableStateFlow<ExportResult?>(null)
     val exportResult = _exportResult.asStateFlow()
+
+    private val _fileExportState = MutableStateFlow<ExportState>(ExportState.Idle)
+    val fileExportState = _fileExportState.asStateFlow()
 
     val hcSessionId: StateFlow<String?> = workoutDao.getWorkoutFlowById(activityId)
         .map { it?.hcSessionId }
@@ -271,6 +277,48 @@ class ActivityDetailViewModel @Inject constructor(
             
             _isExporting.value = false
         }
+    }
+
+    fun exportToFile(useSae: Boolean) {
+        if (activityId == -1L) return
+        viewModelScope.launch {
+            val texts = mobileSettings.value.language.texts
+            _fileExportState.value = ExportState.Exporting(0f, texts.VM_EXPORT_INITIALIZING)
+            try {
+                val workout = repository.getWorkoutById(activityId) ?: throw Exception("Workout not found")
+                val exportDir = File(context.cacheDir, "exports")
+                if (exportDir.exists()) exportDir.deleteRecursively()
+                exportDir.mkdirs()
+
+                val sdf = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US)
+                val baseName = "${workout.activityName}_${sdf.format(Date(workout.startTime))}"
+                    .replace(" ", "_")
+                    .replace(":", "")
+                
+                val extension = if (useSae) "sae" else "gpx"
+                val fileName = "$baseName.$extension"
+                val file = File(exportDir, fileName)
+
+                if (useSae) {
+                    val saeContent = exportImportManager.exportToSae(activityId)
+                    file.writeText(saeContent)
+                } else {
+                    val gpxGenerator = GpxGenerator()
+                    val points = repository.getPointsForWorkout(activityId)
+                    val gpxContent = gpxGenerator.generateGpx(workout, points)
+                    file.writeText(gpxContent)
+                }
+
+                val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", file)
+                _fileExportState.value = ExportState.Success(uri, false)
+            } catch (e: Exception) {
+                _fileExportState.value = ExportState.Error(texts.vmExportError(e.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    fun resetFileExportState() {
+        _fileExportState.value = ExportState.Idle
     }
 
     private fun enqueueStravaSync(workoutId: Long) {

@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.stats
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.widget.Toast
@@ -38,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.LocalMobileTexts
@@ -47,6 +49,7 @@ import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.healthconnect.ExportResult
+import com.example.sportapp.presentation.activities.ExportState
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.ThemeMode
 import com.example.sportapp.presentation.settings.AppMapType
@@ -79,6 +82,7 @@ fun ActivityDetailScreen(
     val autoLapDistance by viewModel.autoLapDistance.collectAsStateWithLifecycle()
     val isExporting by viewModel.isExporting.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
+    val fileExportState by viewModel.fileExportState.collectAsStateWithLifecycle()
     val hcSessionId by viewModel.hcSessionId.collectAsStateWithLifecycle(null)
     val isExportedToStrava by viewModel.isExportedToStrava.collectAsStateWithLifecycle()
 
@@ -124,6 +128,20 @@ fun ActivityDetailScreen(
                 }
             }
             viewModel.clearExportResult()
+        }
+    }
+
+    LaunchedEffect(fileExportState) {
+        if (fileExportState is ExportState.Success) {
+            val state = fileExportState as ExportState.Success
+            val mimeType = if (state.uri.toString().endsWith(".sae")) "application/json" else "application/gpx+xml"
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = mimeType
+                putExtra(Intent.EXTRA_STREAM, state.uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, texts.ACTIVITY_SHARE_TITLE))
+            viewModel.resetFileExportState()
         }
     }
 
@@ -174,26 +192,65 @@ fun ActivityDetailScreen(
         ExportSelectionDialog(
             isExportedToHC = hcSessionId != null,
             isExportedToStrava = isExportedToStrava,
+            supportsGpx = (sessionData?.totalDistanceGps ?: 0.0) > 0,
             onDismiss = { showExportDialog = false },
-            onExport = { toStrava, toHC ->
+            onExport = { toStrava, toHC, toGpx, toSae ->
                 showExportDialog = false
-                scope.launch {
-                    if (toHC) {
-                        if (viewModel.healthConnectManager.hasPermissions(viewModel.healthConnectManager.writePermissions)) {
-                            viewModel.exportActivity(viewModel.activityId, toStrava = toStrava, toHealthConnect = true)
-                        } else {
-                            if (mobileSettings.hcPermissionsDeniedCount >= 2) {
-                                showPermissionRationale = true
+                if (toGpx) {
+                    viewModel.exportToFile(useSae = false)
+                } else if (toSae) {
+                    viewModel.exportToFile(useSae = true)
+                } else {
+                    scope.launch {
+                        if (toHC) {
+                            if (viewModel.healthConnectManager.hasPermissions(viewModel.healthConnectManager.writePermissions)) {
+                                viewModel.exportActivity(viewModel.activityId, toStrava = toStrava, toHealthConnect = true)
                             } else {
-                                permissionLauncher.launch(viewModel.healthConnectManager.writePermissions)
+                                if (mobileSettings.hcPermissionsDeniedCount >= 2) {
+                                    showPermissionRationale = true
+                                } else {
+                                    permissionLauncher.launch(viewModel.healthConnectManager.writePermissions)
+                                }
+                                if (toStrava) {
+                                    viewModel.exportActivity(viewModel.activityId, toStrava = true, toHealthConnect = false)
+                                }
                             }
-                            if (toStrava) {
-                                viewModel.exportActivity(viewModel.activityId, toStrava = true, toHealthConnect = false)
-                            }
+                        } else if (toStrava) {
+                            viewModel.exportActivity(viewModel.activityId, toStrava = true, toHealthConnect = false)
                         }
-                    } else if (toStrava) {
-                        viewModel.exportActivity(viewModel.activityId, toStrava = true, toHealthConnect = false)
                     }
+                }
+            }
+        )
+    }
+
+    if (fileExportState is ExportState.Exporting) {
+        val state = fileExportState as ExportState.Exporting
+        Dialog(onDismissRequest = {}) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(progress = { state.progress })
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(state.message, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+
+    if (fileExportState is ExportState.Error) {
+        AlertDialog(
+            onDismissRequest = { viewModel.resetFileExportState() },
+            title = { Text(texts.ACTIVITY_EXPORT_ERROR) },
+            text = { Text((fileExportState as ExportState.Error).message) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.resetFileExportState() }) {
+                    Text(texts.ACTIVITY_OK)
                 }
             }
         )
@@ -228,7 +285,7 @@ fun ActivityDetailScreen(
                         val isFullyExported = hcSessionId != null && isExportedToStrava
                         if (isFullyExported) {
                             Surface(
-                                onClick = { showExportedText = true },
+                                onClick = { showExportDialog = true },
                                 shape = RoundedCornerShape(16.dp),
                                 color = Color.Transparent,
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
@@ -399,36 +456,61 @@ fun MapTypeOption(label: String, type: AppMapType, selected: Boolean, onClick: (
 fun ExportSelectionDialog(
     isExportedToHC: Boolean,
     isExportedToStrava: Boolean,
+    supportsGpx: Boolean,
     onDismiss: () -> Unit,
-    onExport: (toStrava: Boolean, toHC: Boolean) -> Unit
+    onExport: (toStrava: Boolean, toHC: Boolean, toGpx: Boolean, toSae: Boolean) -> Unit
 ) {
     val texts = LocalMobileTexts.current
     var exportStrava by remember { mutableStateOf(!isExportedToStrava) }
     var exportHC by remember { mutableStateOf(!isExportedToHC) }
+    var exportGpx by remember { mutableStateOf(false) }
+    var exportSae by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(texts.ACTIVITY_EXPORT_DIALOG_TITLE) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(texts.SETTINGS_SYNC, style = MaterialTheme.typography.titleSmall)
                 ExportOptionRow(
                     label = texts.STR_HEALTH_CONNECT,
                     isExported = isExportedToHC,
                     checked = exportHC,
-                    onCheckedChange = { exportHC = it }
+                    onCheckedChange = { exportHC = it; if (it) { exportGpx = false; exportSae = false } }
                 )
                 ExportOptionRow(
                     label = texts.STR_STRAVA,
                     isExported = isExportedToStrava,
                     checked = exportStrava,
-                    onCheckedChange = { exportStrava = it }
+                    onCheckedChange = { exportStrava = it; if (it) { exportGpx = false; exportSae = false } }
+                )
+                
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Text(texts.ACTIVITY_EXPORT, style = MaterialTheme.typography.titleSmall)
+                
+                ExportOptionRow(
+                    label = "GPX (.gpx)",
+                    isExported = false,
+                    enabled = supportsGpx,
+                    checked = exportGpx,
+                    onCheckedChange = { exportGpx = it; if (it) { exportSae = false; exportStrava = false; exportHC = false } }
+                )
+                if (!supportsGpx) {
+                    Text(texts.ACTIVITY_EXPORT_INCOMPATIBLE_GPX, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+                
+                ExportOptionRow(
+                    label = "SAE (.sae)",
+                    isExported = false,
+                    checked = exportSae,
+                    onCheckedChange = { exportSae = it; if (it) { exportGpx = false; exportStrava = false; exportHC = false } }
                 )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onExport(exportStrava, exportHC) },
-                enabled = (exportStrava && !isExportedToStrava) || (exportHC && !isExportedToHC)
+                onClick = { onExport(exportStrava, exportHC, exportGpx, exportSae) },
+                enabled = (exportStrava && !isExportedToStrava) || (exportHC && !isExportedToHC) || exportGpx || exportSae
             ) {
                 Text(texts.ACTIVITY_EXPORT)
             }
@@ -445,23 +527,24 @@ fun ExportSelectionDialog(
 fun ExportOptionRow(
     label: String,
     isExported: Boolean,
+    enabled: Boolean = true,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = !isExported) { onCheckedChange(!checked) }
+            .clickable(enabled = !isExported && enabled) { onCheckedChange(!checked) }
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
             checked = isExported || checked,
-            onCheckedChange = if (isExported) null else onCheckedChange,
-            enabled = !isExported
+            onCheckedChange = if (isExported || !enabled) null else onCheckedChange,
+            enabled = !isExported && enabled
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = label, modifier = Modifier.weight(1f))
+        Text(text = label, modifier = Modifier.weight(1f), color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
         if (isExported) {
             Icon(
                 imageVector = Icons.Default.Check,

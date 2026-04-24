@@ -195,6 +195,13 @@ object TextsMobileEN : MobileTexts {
     override val ACTIVITY_ALL = "All"
     override val ACTIVITY_NONE = "None"
 
+    // New Export/Import SAE
+    override val ACTIVITY_EXPORT_SAE = "Export SAE"
+    override val ACTIVITY_IMPORT_SAE = "Import SAE"
+    override val ACTIVITY_EXPORT_FORMAT_SELECT = "Select export format"
+    override val ACTIVITY_EXPORT_SAE_DESC = "SAE format (.sae) allows full backup of all workout data, including indoor workouts (no GPS)."
+    override val ACTIVITY_EXPORT_INCOMPATIBLE_GPX = "Some selected activities do not have GPS data and cannot be exported to GPX."
+
     // Activity Detail
     override val DETAIL_TITLE = "Activity Details"
     override val DETAIL_MAP = "Map"
@@ -351,12 +358,6 @@ object TextsMobileEN : MobileTexts {
     override val ZONE_Z4 = "Hard"
     override val ZONE_Z5 = "Maximum"
 
-    // Compare Screen
-    override val COMPARE_TITLE = "Activity Comparison"
-    override val COMPARE_VS = "Comparison:"
-    override val COMPARE_HIGHER_IS_BETTER = "Higher score is better"
-    override val COMPARE_LOWER_IS_BETTER = "Lower score is better"
-
     // ViewModels Messages
     override val VM_EXPORT_INITIALIZING = "Initializing export..."
     override fun vmExportGenerating(name: String, current: Int, total: Int) = "Generating: $name ($current/$total)"
@@ -439,6 +440,28 @@ object TextsMobileEN : MobileTexts {
     override val SENSOR_PRESSURE = "Atm. pressure"
     override val SENSOR_MAP = "Location data"
     override val SENSOR_AVG_STEP_LENGTH = "Average step length"
+
+    // Trim Screen
+    override val TRIM_TITLE = "Edit Workout (Trimming)"
+    override val TRIM_CONFIRM_TITLE = "Confirm trimming"
+    override val TRIM_CONFIRM_DESC = "Are you sure you want to delete data outside selected range? This data will be permanently removed."
+    override val TRIM_SAVE_BTN = "Trim and save"
+    override val TRIM_CHART_HR = "Heart rate chart"
+    override val TRIM_RANGE_TITLE = "Select workout range"
+    override val TRIM_PREVIEW_TITLE = "New statistics preview"
+    override val TRIM_NEW_DURATION = "New duration:"
+    override val TRIM_DISTANCE_GPS = "Distance (GPS):"
+    override val TRIM_DISTANCE_STEPS = "Distance (Steps):"
+    override val TRIM_CALORIES = "Calories burned:"
+    override val TRIM_AVG_BPM = "Average HR:"
+    override val TRIM_START = "Start"
+    override val TRIM_END = "Finish"
+
+    // Compare Screen
+    override val COMPARE_TITLE = "Activity Comparison"
+    override val COMPARE_VS = "Comparison:"
+    override val COMPARE_HIGHER_IS_BETTER = "Higher score is better"
+    override val COMPARE_LOWER_IS_BETTER = "Lower score is better"
 
     // Units
     override val UNIT_KCAL = "kcal"
@@ -571,22 +594,6 @@ object TextsMobileEN : MobileTexts {
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable API is not available on this device"
     override val ERROR_NO_WATCH_CONNECTED = "No watch connected"
-
-    // Trim Screen
-    override val TRIM_TITLE = "Edit Workout (Trimming)"
-    override val TRIM_CONFIRM_TITLE = "Confirm trimming"
-    override val TRIM_CONFIRM_DESC = "Are you sure you want to delete data outside selected range? This data will be permanently removed."
-    override val TRIM_SAVE_BTN = "Trim and save"
-    override val TRIM_CHART_HR = "Heart rate chart"
-    override val TRIM_RANGE_TITLE = "Select workout range"
-    override val TRIM_PREVIEW_TITLE = "New statistics preview"
-    override val TRIM_NEW_DURATION = "New duration:"
-    override val TRIM_DISTANCE_GPS = "Distance (GPS):"
-    override val TRIM_DISTANCE_STEPS = "Distance (Steps):"
-    override val TRIM_CALORIES = "Calories burned:"
-    override val TRIM_AVG_BPM = "Average HR:"
-    override val TRIM_START = "Start"
-    override val TRIM_END = "Finish"
 
     // Map Types
     override val MAP_TYPE_TITLE = "Map Type"
