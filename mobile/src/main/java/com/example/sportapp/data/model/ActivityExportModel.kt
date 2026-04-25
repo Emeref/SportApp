@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class ActivityExportModel(
     val workout: WorkoutExportDto,
     val points: List<WorkoutPointExportDto>,
-    val laps: List<WorkoutLapExportDto>
+    val laps: List<WorkoutLapExportDto> = emptyList()
 )
 
 @Serializable
@@ -45,21 +45,21 @@ data class WorkoutExportDto(
 @Serializable
 data class WorkoutPointExportDto(
     val time: String,
-    val latitude: Double?,
-    val longitude: Double?,
-    val bpm: Int?,
-    val steps: Int?,
-    val stepsMin: Double?,
-    val distanceSteps: Int?,
-    val distanceGps: Int?,
-    val speedGps: Double?,
-    val speedSteps: Double?,
-    val altitude: Double?,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val bpm: Int? = null,
+    val steps: Int? = null,
+    val stepsMin: Double? = null,
+    val distanceSteps: Int? = null,
+    val distanceGps: Int? = null,
+    val speedGps: Double? = null,
+    val speedSteps: Double? = null,
+    val altitude: Double? = null,
     val horizontalAccuracy: Double? = null,
-    val totalAscent: Double?,
-    val totalDescent: Double?,
-    val calorieMin: Double?,
-    val calorieSum: Double?,
+    val totalAscent: Double? = null,
+    val totalDescent: Double? = null,
+    val calorieMin: Double? = null,
+    val calorieSum: Double? = null,
     val pressure: Double? = null
 )
 
