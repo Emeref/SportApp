@@ -9,12 +9,14 @@ import com.example.sportapp.data.model.*
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.InputStreamReader
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalSerializationApi::class)
 @Singleton
 class ExportImportManager @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -24,6 +26,7 @@ class ExportImportManager @Inject constructor(
     private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
+        explicitNulls = false
     }
 
     suspend fun exportToSae(workoutId: Long): String = withContext(Dispatchers.IO) {
