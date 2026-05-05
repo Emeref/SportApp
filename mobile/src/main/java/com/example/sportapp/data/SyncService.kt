@@ -19,6 +19,7 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import com.google.gson.Gson
@@ -102,25 +103,41 @@ class SyncService : WearableListenerService() {
             val points: List<WorkoutPointEntity> = gson.fromJson(pointsJson, object : TypeToken<List<WorkoutPointEntity>>() {}.type)
 
             val existingWorkouts = workoutDao.getWorkoutsSince(workout.startTime - 1000)
-            val alreadyExists = existingWorkouts.find { it.startTime == workout.startTime && it.activityName == workout.activityName }
+            val alreadyExistsByContent = existingWorkouts.find { it.startTime == workout.startTime && it.activityName == workout.activityName }
 
-            val localId = if (alreadyExists != null) {
-                val updatedWorkout = workout.copy(id = alreadyExists.id)
-                workoutDao.updateWorkout(updatedWorkout)
-                alreadyExists.id
+            val localId: Long
+            val wearId = workout.id
+            
+            val finalWorkout: WorkoutEntity
+            
+            if (alreadyExistsByContent != null) {
+                localId = alreadyExistsByContent.id
+                finalWorkout = workout.copy(id = localId, isSynced = true)
+                
+                if (wearId != localId) {
+                    notifyWatchIdUpdate(wearId, localId)
+                }
             } else {
-                workoutDao.insertWorkout(workout.copy(id = 0))
+                val isIdTaken = workoutDao.existsById(wearId)
+                
+                if (!isIdTaken && wearId > 0) {
+                    localId = wearId
+                    finalWorkout = workout.copy(isSynced = true)
+                } else {
+                    val maxId = workoutDao.getMaxId() ?: 0L
+                    localId = maxId + 1
+                    finalWorkout = workout.copy(id = localId, isSynced = true)
+                    notifyWatchIdUpdate(wearId, localId)
+                }
             }
             
+            // Używamy transakcji do jednoczesnej aktualizacji treningu i punktów
             val updatedPoints = points.map { it.copy(id = 0, workoutId = localId) }
-            workoutDao.deletePointsForWorkout(localId)
-            workoutDao.insertPoints(updatedPoints)
+            workoutDao.updateWorkoutWithPoints(finalWorkout, updatedPoints)
 
-            Log.d("SyncService", "Successfully synced workout: ${workout.activityName} (ID: $localId, finished: ${workout.isFinished})")
+            Log.d("SyncService", "Successfully synced workout: ${workout.activityName} (ID: $localId, wearId: $wearId)")
 
-            // Auto-eksport do Health Connect i Stravy tylko jeśli trening jest ZAKOŃCZONY
             if (workout.isFinished) {
-                // Walidacja: Czas trwania > 60s i Dystans GPS > 10m
                 val durationOk = workout.durationSeconds >= 60
                 val distanceGpsOk = (workout.distanceGps ?: 0.0) >= 10.0
                 
@@ -128,23 +145,40 @@ class SyncService : WearableListenerService() {
                     val settings = mobileSettingsManager.settingsFlow.first()
                     
                     if (settings.autoExportToHC) {
-                        Log.d("SyncService", "Auto-exporting finished workout $localId to Health Connect")
                         exerciseExportUseCase.exportActivityToHC(localId)
                     }
                     
                     if (settings.autoExportToStrava) {
-                        Log.d("SyncService", "Auto-exporting finished workout $localId to Strava")
                         enqueueStravaSync(localId)
                     }
-                } else {
-                    Log.d("SyncService", "Skipping auto-export for workout $localId: Too short or no distance (Duration: ${workout.durationSeconds}s, Dist: ${workout.distanceGps}m)")
                 }
-            } else {
-                Log.d("SyncService", "Workout $localId is not finished yet, skipping auto-export")
             }
 
         } catch (e: Exception) {
             Log.e("SyncService", "Error processing workout asset", e)
+        }
+    }
+
+    private suspend fun notifyWatchIdUpdate(oldId: Long, newId: Long) {
+        try {
+            val messageClient = Wearable.getMessageClient(this)
+            val nodes = Wearable.getNodeClient(this).connectedNodes.await()
+            val payload = "$oldId:$newId".toByteArray()
+            nodes.forEach { node ->
+                messageClient.sendMessage(node.id, "/update_workout_id", payload).await()
+            }
+            
+            val dataClient = Wearable.getDataClient(this)
+            val request = PutDataMapRequest.create("/id_updates/$oldId").apply {
+                dataMap.putLong("oldId", oldId)
+                dataMap.putLong("newId", newId)
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }.asPutDataRequest().setUrgent()
+            dataClient.putDataItem(request).await()
+            
+            Log.d("SyncService", "Sent ID update to watch: $oldId -> $newId")
+        } catch (e: Exception) {
+            Log.e("SyncService", "Failed to send ID update to watch", e)
         }
     }
 
@@ -165,6 +199,5 @@ class SyncService : WearableListenerService() {
             .build()
 
         WorkManager.getInstance(this).enqueue(syncRequest)
-        Log.d("SyncService", "Enqueued StravaSyncWorker for workout $workoutId")
     }
 }

@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.workout
 
 import android.content.Intent
 import android.util.Log
+import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.presentation.MainActivity
@@ -35,21 +36,56 @@ class WearSyncService : WearableListenerService() {
     lateinit var workoutDefinitionDao: WorkoutDefinitionDao
     
     @Inject
+    lateinit var workoutDao: WorkoutDao
+    
+    @Inject
     lateinit var settingsManager: SettingsManager
 
     private val gson = Gson()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
+        Log.d("WearSyncService", "onMessageReceived: path=${messageEvent.path}")
         when (messageEvent.path) {
             "/request_sync" -> {
-                Log.d("WearSyncService", "Sync request received from mobile")
                 scope.launch {
                     dataLayerManager.syncAll()
                 }
             }
+            "/update_workout_id" -> {
+                try {
+                    val data = String(messageEvent.data).split(":")
+                    if (data.size == 2) {
+                        val oldId = data[0].toLong()
+                        val newId = data[1].toLong()
+                        scope.launch {
+                            workoutDao.updateWorkoutId(oldId, newId)
+                            Log.d("WearSyncService", "Updated workout ID (msg): $oldId -> $newId")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("WearSyncService", "Failed to parse update_workout_id message", e)
+                }
+            }
+            "/delete_workout" -> {
+                try {
+                    val payload = String(messageEvent.data)
+                    Log.d("WearSyncService", "Received delete request with payload: $payload")
+                    
+                    // Obsługujemy oba formaty: sam ID lub id:startTime
+                    val parts = payload.split(":")
+                    val workoutId = parts[0].toLong()
+                    
+                    scope.launch {
+                        workoutDao.deleteWorkoutWithPoints(workoutId)
+                        Log.d("WearSyncService", "Deleted workout ID (msg): $workoutId")
+                    }
+                } catch (e: Exception) {
+                    Log.e("WearSyncService", "Failed to parse delete_workout message", e)
+                }
+            }
             "/start_activity" -> {
-                val definitionId = String(messageEvent.data).toLong()
+                val definitionId = String(messageEvent.data).toLongOrNull() ?: return
                 Log.d("WearSyncService", "Start activity request received: $definitionId")
                 
                 scope.launch {
@@ -63,14 +99,12 @@ class WearSyncService : WearableListenerService() {
                         }
                         startForegroundService(intent)
                         
-                        // Otwórz interfejs treningu na zegarku
                         val activityIntent = Intent(this@WearSyncService, MainActivity::class.java).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                             putExtra("EXTRA_DEFINITION_ID", definitionId)
                         }
                         startActivity(activityIntent)
                         
-                        // Send confirmation back
                         val nodeClient = Wearable.getNodeClient(this@WearSyncService)
                         val messageClient = Wearable.getMessageClient(this@WearSyncService)
                         val nodes = nodeClient.connectedNodes.await()
@@ -87,10 +121,12 @@ class WearSyncService : WearableListenerService() {
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         dataEvents.forEach { event ->
+            val path = event.dataItem.uri.path ?: return@forEach
+            Log.d("WearSyncService", "onDataChanged: path=$path, type=${event.type}")
+            
             if (event.type == DataEvent.TYPE_CHANGED) {
-                val path = event.dataItem.uri.path ?: return@forEach
-                when (path) {
-                    "/workout_definitions" -> {
+                when {
+                    path == "/workout_definitions" -> {
                         val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
                         val json = dataMapItem.dataMap.getString("definitions_json") ?: return@forEach
                         
@@ -105,7 +141,7 @@ class WearSyncService : WearableListenerService() {
                             }
                         }
                     }
-                    "/watch_stats_settings" -> {
+                    path == "/watch_stats_settings" -> {
                         val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
                         val widgetsJson = dataMapItem.dataMap.getString("widgets_json") ?: return@forEach
                         val periodName = dataMapItem.dataMap.getString("period") ?: return@forEach
@@ -121,6 +157,23 @@ class WearSyncService : WearableListenerService() {
                             } catch (e: Exception) {
                                 Log.e("WearSyncService", "Failed to process watch stats settings", e)
                             }
+                        }
+                    }
+                    path.startsWith("/deleted_workouts/") -> {
+                        val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
+                        val workoutId = dataMapItem.dataMap.getLong("workoutId")
+                        scope.launch {
+                            workoutDao.deleteWorkoutWithPoints(workoutId)
+                            Log.d("WearSyncService", "Deleted workout ID (data): $workoutId")
+                        }
+                    }
+                    path.startsWith("/id_updates/") -> {
+                        val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
+                        val oldId = dataMapItem.dataMap.getLong("oldId")
+                        val newId = dataMapItem.dataMap.getLong("newId")
+                        scope.launch {
+                            workoutDao.updateWorkoutId(oldId, newId)
+                            Log.d("WearSyncService", "Updated workout ID (data): $oldId -> $newId")
                         }
                     }
                 }
