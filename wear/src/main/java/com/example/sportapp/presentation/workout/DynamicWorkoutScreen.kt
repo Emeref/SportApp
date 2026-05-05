@@ -115,6 +115,7 @@ fun DynamicWorkoutScreen(
                 )
             } else {
                 ActiveWorkoutUI(
+                    activityName = sportDef.name,
                     session = session,
                     dataSensors = dataSensors,
                     clockColor = clockColor
@@ -127,6 +128,7 @@ fun DynamicWorkoutScreen(
 @OptIn(ExperimentalWearFoundationApi::class)
 @Composable
 private fun ActiveWorkoutUI(
+    activityName: String,
     session: WorkoutSessionState,
     dataSensors: List<SensorConfig>,
     clockColor: Color?
@@ -171,7 +173,7 @@ private fun ActiveWorkoutUI(
                     autoCentering = null
                 ) {
                     item {
-                        WorkoutTimerHeader(session.workoutTimerState.formattedTime)
+                        WorkoutTimerHeader(activityName, session.workoutTimerState.formattedTime)
                     }
 
                     if (dataSensors.size <= 3) {
@@ -213,10 +215,9 @@ private fun ActiveWorkoutUI(
 }
 
 @Composable
-private fun WorkoutTimerHeader(formattedTime: String) {
-    val texts = LocalWearTexts.current
+private fun WorkoutTimerHeader(activityName: String, formattedTime: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 20.dp, start = 8.dp, end = 8.dp)) {
-        Text(texts.WORKOUT_LABEL_TIMER, style = MaterialTheme.typography.caption2, color = Color.Gray)
+        Text(activityName.uppercase(Locale.getDefault()), style = MaterialTheme.typography.caption2, color = Color.Gray)
         Text(formattedTime, style = MaterialTheme.typography.title1, fontSize = 28.sp)
     }
 }

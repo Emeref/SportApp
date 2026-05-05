@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.db.WorkoutEntity
+import com.example.sportapp.presentation.settings.MobileSettingsManager
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntry
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -22,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class OverallStatsViewModel @Inject constructor(
     @ApplicationContext context: Context,
-    private val repository: IWorkoutRepository
+    private val repository: IWorkoutRepository,
+    private val mobileSettingsManager: MobileSettingsManager
 ) : ViewModel() {
     private val settingsManager = OverallStatsSettingsManager(context)
 
@@ -36,6 +39,12 @@ class OverallStatsViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
+    )
+
+    val mobileSettings = mobileSettingsManager.settingsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = MobileSettingsState()
     )
 
     private val _activityTypes = MutableStateFlow<List<String>>(emptyList())

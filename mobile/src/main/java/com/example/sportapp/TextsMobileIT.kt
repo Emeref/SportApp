@@ -259,7 +259,7 @@ object TextsMobileIT : MobileTexts {
     override val DEF_EDIT = "Modifica definizione"
     override val DEF_DELETE = "Elimina definizione"
     override val DEF_NAME = "Nome"
-    override val DEF_ICON = "Icona"
+    override val DEF_ICON = "Ikona"
     override val DEF_SENSORS = "Sensori"
     override val DEF_LIST_TITLE = "Definizioni attività"
     override val DEF_SENSORS_DESC = "Gestisci elenco sport e sensori"
@@ -368,7 +368,7 @@ object TextsMobileIT : MobileTexts {
     override val TRIM_NEW_DURATION = "Nuova durata:"
     override val TRIM_DISTANCE_GPS = "Distanza (GPS):"
     override val TRIM_DISTANCE_STEPS = "Distanza (Passi):"
-    override val TRIM_CALORIES = "Calorie bruciate:"
+    override val TRIM_CALORIES = " calorie bruciate:"
     override val TRIM_AVG_BPM = "FC media:"
     override val TRIM_START = "Inizio"
     override val TRIM_END = "Fine"
@@ -454,7 +454,7 @@ object TextsMobileIT : MobileTexts {
     override val SENSOR_DISTANCE_STEPS = "Distanza (passi)"
     override val SENSOR_SPEED_GPS = "Velocità"
     override val SENSOR_SPEED_STEPS = "Velocità (passi)"
-    override val SENSOR_DISTANCE_GPS = "Distanza"
+    override val SENSOR_DISTANCE_GPS = "Dystans"
     override val SENSOR_ALTITUDE = "Altitudine"
     override val SENSOR_TOTAL_ASCENT = "Ascesa totale"
     override val SENSOR_TOTAL_DESCENT = "Discesa totale"
@@ -511,13 +511,19 @@ object TextsMobileIT : MobileTexts {
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Le API Wearable non sono disponibili su questo dispositivo"
     override val ERROR_NO_WATCH_CONNECTED = "Nessun orologio collegato"
 
-
     // Map Types
     override val MAP_TYPE_TITLE = "Tipo de mapa"
     override val MAP_TYPE_NORMAL = "Normal"
     override val MAP_TYPE_SATELLITE = "Satélite"
     override val MAP_TYPE_HYBRID = "Híbrido"
     override val MAP_TYPE_TERRAIN = "Terreno"
+
+    // Support System
+    override val SUPPORT_TITLE = "Sostieni l'autore"
+    override val SUPPORT_DISCLAIMER = "Tutte le funzioni dell'app sono gratuite. La scelta di un livello è un sostegno volontario all'autore. Il cambio dell'icona è l'unico beneficio digitale."
+    override val SUPPORT_LIFETIME_BUY = "A vita"
+    override val SUPPORT_MONTHLY_SUB = "Mensile"
+    override val SUPPORT_ICON_CHANGE_NOTICE = "Il cambio dell'icona può richiedere alcuni secondi o il riavvio del launcher."
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {

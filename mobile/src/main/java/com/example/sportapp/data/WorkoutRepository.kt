@@ -1,5 +1,7 @@
 package com.example.sportapp.data
 
+import android.content.Context
+import android.util.Log
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.db.WorkoutEntity
@@ -10,9 +12,13 @@ import com.example.sportapp.healthconnect.model.ExerciseSessionSyncDto
 import com.example.sportapp.healthconnect.model.SessionTimeSeries
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.time.Duration
@@ -23,6 +29,7 @@ import javax.inject.Singleton
 
 @Singleton
 class WorkoutRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val workoutDao: WorkoutDao,
     private val workoutDefinitionDao: WorkoutDefinitionDao
 ) : IWorkoutRepository {
@@ -42,9 +49,42 @@ class WorkoutRepository @Inject constructor(
     }
 
     override suspend fun deleteWorkout(workout: WorkoutEntity) = withContext(Dispatchers.IO) {
-        workoutDao.deletePointsForWorkout(workout.id)
-        workoutDao.deleteLapsForWorkout(workout.id)
-        workoutDao.deleteWorkout(workout)
+        val workoutId = workout.id
+        val startTime = workout.startTime
+        
+        // Usuwamy wszystko w jednej transakcji, aby uniknąć niespójności
+        workoutDao.deleteWorkoutWithAllData(workout)
+        
+        // Synchronizacja usuwania z zegarkiem
+        syncDeletionWithWatch(workoutId, startTime)
+    }
+
+    private suspend fun syncDeletionWithWatch(workoutId: Long, startTime: Long) {
+        try {
+            val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+            Log.d("WorkoutRepository", "Syncing deletion of ID: $workoutId, StartTime: $startTime to ${nodes.size} nodes")
+            
+            val payload = "$workoutId:$startTime".toByteArray(Charsets.UTF_8)
+            
+            nodes.forEach { node ->
+                val requestId = Wearable.getMessageClient(context).sendMessage(node.id, "/delete_workout", payload).await()
+                Log.d("WorkoutRepository", "Sent delete message to ${node.displayName} (Request ID: $requestId)")
+            }
+
+            // 2. Dodaj wpis do DataLayer dla synchronizacji offline
+            val dataClient = Wearable.getDataClient(context)
+            val request = PutDataMapRequest.create("/deleted_workouts/$workoutId").apply {
+                dataMap.putLong("workoutId", workoutId)
+                dataMap.putLong("startTime", startTime)
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }.asPutDataRequest().setUrgent()
+            
+            dataClient.putDataItem(request).await()
+            
+            Log.d("WorkoutRepository", "Synced deletion entry in DataLayer for workout $workoutId")
+        } catch (e: Exception) {
+            Log.e("WorkoutRepository", "Failed to sync deletion with watch", e)
+        }
     }
 
     override suspend fun insertPoints(points: List<WorkoutPointEntity>) = withContext(Dispatchers.IO) {

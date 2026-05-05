@@ -599,4 +599,11 @@ object TextsMobilePT : MobileTexts {
     override val MAP_TYPE_SATELLITE = "Satélite"
     override val MAP_TYPE_HYBRID = "Híbrido"
     override val MAP_TYPE_TERRAIN = "Relevo"
+
+    // Support System
+    override val SUPPORT_TITLE = "Apoiar o Autor"
+    override val SUPPORT_DISCLAIMER = "Todas as funções da aplicação são gratuitas. A escolha do nível é um apoio voluntário ao autor. A alteração do ícone é o único benefício digital."
+    override val SUPPORT_LIFETIME_BUY = "Vitalício"
+    override val SUPPORT_MONTHLY_SUB = "Mensal"
+    override val SUPPORT_ICON_CHANGE_NOTICE = "A alteração do ícone pode demorar alguns segundos ou exigir o reinício do launcher."
 }

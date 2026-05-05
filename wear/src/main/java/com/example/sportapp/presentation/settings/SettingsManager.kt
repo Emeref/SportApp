@@ -48,7 +48,8 @@ enum class AppLanguage(val code: String, val label: String, val texts: WearTexts
 @Singleton
 class SettingsManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val dataLayerManagerProvider: Provider<DataLayerManager>
+    private val dataLayerManagerProvider: Provider<DataLayerManager>,
+    private val iconManager: IconManager
 ) {
     private val gson = Gson()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -62,6 +63,7 @@ class SettingsManager @Inject constructor(
         private val WATCH_STATS_WIDGETS_KEY = stringPreferencesKey("watch_stats_widgets")
         private val WATCH_STATS_PERIOD_KEY = stringPreferencesKey("watch_stats_period")
         private val WATCH_STATS_CUSTOM_DAYS_KEY = intPreferencesKey("watch_stats_custom_days")
+        private val ACTIVE_ICON_TIER_KEY = intPreferencesKey("active_icon_tier")
         
         val Orange = Color(0xFFFFA500)
     }
@@ -117,10 +119,12 @@ class SettingsManager @Inject constructor(
             }
             val watchStatsPeriod = preferences[WATCH_STATS_PERIOD_KEY]?.let { ReportingPeriod.valueOf(it) } ?: ReportingPeriod.WEEK
             val watchStatsCustomDays = preferences[WATCH_STATS_CUSTOM_DAYS_KEY] ?: 7
+            val activeIconTier = preferences[ACTIVE_ICON_TIER_KEY] ?: 0
 
             UserSettings(
                 clockColor, healthData, screenBehavior, language,
-                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays
+                watchStatsWidgets, watchStatsPeriod, watchStatsCustomDays,
+                activeIconTier
             )
         }
 
@@ -180,6 +184,13 @@ class SettingsManager @Inject constructor(
         }
         triggerSync()
     }
+
+    suspend fun saveActiveIconTier(tier: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[ACTIVE_ICON_TIER_KEY] = tier
+        }
+        iconManager.setActiveTier(tier)
+    }
 }
 
 data class UserSettings(
@@ -189,5 +200,6 @@ data class UserSettings(
     val language: AppLanguage,
     val watchStatsWidgets: List<WidgetItem>,
     val watchStatsPeriod: ReportingPeriod,
-    val watchStatsCustomDays: Int
+    val watchStatsCustomDays: Int,
+    val activeIconTier: Int = 0
 )

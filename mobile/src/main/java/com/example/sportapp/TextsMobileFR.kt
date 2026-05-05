@@ -519,6 +519,13 @@ object TextsMobileFR : MobileTexts {
     override val MAP_TYPE_HYBRID = "Hybride"
     override val MAP_TYPE_TERRAIN = "Terrain"
 
+    // Support System
+    override val SUPPORT_TITLE = "Sostieni l'autore"
+    override val SUPPORT_DISCLAIMER = "Tutte le funzioni dell'app sono gratuite. La scelta di un livello è un sostegno volontario all'autore. Il cambio dell'icona è l'unico beneficio digitale."
+    override val SUPPORT_LIFETIME_BUY = "A vita"
+    override val SUPPORT_MONTHLY_SUB = "Mensile"
+    override val SUPPORT_ICON_CHANGE_NOTICE = "Il cambio dell'icona può richiedere alcuni secondi o il riavvio del launcher."
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT

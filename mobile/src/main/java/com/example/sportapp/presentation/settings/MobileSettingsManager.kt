@@ -12,6 +12,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -43,6 +44,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         private val AUTO_EXPORT_STRAVA = booleanPreferencesKey("auto_export_strava")
         private val HC_PERMISSIONS_DENIED_COUNT = intPreferencesKey("hc_permissions_denied_count")
         private val CONFLICT_POLICY = stringPreferencesKey("conflict_policy")
+        private val ACTIVE_ICON_TIER = intPreferencesKey("active_icon_tier")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -84,7 +86,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         }
 
         val langCode = preferences[LANGUAGE]
-        val language = AppLanguage.values().find { it.code == langCode } ?: defaultState.language
+        val language = AppLanguage.entries.find { it.code == langCode } ?: defaultState.language
 
         MobileSettingsState(
             widgets = widgets,
@@ -102,7 +104,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             hcPermissionsDeniedCount = preferences[HC_PERMISSIONS_DENIED_COUNT] ?: defaultState.hcPermissionsDeniedCount,
             conflictResolutionPolicy = ConflictResolutionPolicy.valueOf(
                 preferences[CONFLICT_POLICY] ?: defaultState.conflictResolutionPolicy.name
-            )
+            ),
+            activeIconTier = preferences[ACTIVE_ICON_TIER] ?: defaultState.activeIconTier
         )
     }
 
@@ -124,9 +127,9 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[AUTO_EXPORT_STRAVA] = state.autoExportToStrava
             preferences[HC_PERMISSIONS_DENIED_COUNT] = state.hcPermissionsDeniedCount
             preferences[CONFLICT_POLICY] = state.conflictResolutionPolicy.name
+            preferences[ACTIVE_ICON_TIER] = state.activeIconTier
         }
-        syncWatchStatsSettings(state)
-        syncHealthData(state.healthData)
+        syncAllToWatch(state)
         requestFullSyncFromWatch()
     }
 
@@ -167,6 +170,14 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         }
     }
 
+    suspend fun updateActiveIconTier(tier: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[ACTIVE_ICON_TIER] = tier
+        }
+        val currentState = settingsFlow.first()
+        syncAllToWatch(currentState.copy(activeIconTier = tier))
+    }
+
     private suspend fun requestFullSyncFromWatch() {
         try {
             val nodes = nodeClient.connectedNodes.await()
@@ -179,31 +190,30 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         }
     }
 
-    private suspend fun syncWatchStatsSettings(state: MobileSettingsState) {
+    private suspend fun syncAllToWatch(state: MobileSettingsState) {
         try {
-            val request = PutDataMapRequest.create("/watch_stats_settings").apply {
-                dataMap.putString("widgets_json", gson.toJson(state.watchStatsWidgets))
-                dataMap.putString("period", state.watchStatsPeriod.name)
-                dataMap.putInt("custom_days", state.watchStatsCustomDays)
+            val request = PutDataMapRequest.create("/mobile_settings").apply {
+                dataMap.putString("watch_widgets_json", gson.toJson(state.watchStatsWidgets))
+                dataMap.putString("watch_period", state.watchStatsPeriod.name)
+                dataMap.putInt("watch_custom_days", state.watchStatsCustomDays)
+                dataMap.putString("health_data_json", gson.toJson(state.healthData))
+                dataMap.putInt("active_icon_tier", state.activeIconTier)
                 dataMap.putLong("timestamp", System.currentTimeMillis())
             }
             dataClient.putDataItem(request.asPutDataRequest().setUrgent()).await()
-            Log.d("SettingsSync", "Synced watch stats settings")
+            Log.d("SettingsSync", "Synced all settings to watch via /mobile_settings (tier: ${state.activeIconTier})")
         } catch (e: Exception) {
-            Log.e("SettingsSync", "Failed to sync watch stats settings", e)
+            Log.e("SettingsSync", "Failed to sync settings to watch", e)
         }
     }
 
+    @Deprecated("Use syncAllToWatch", ReplaceWith("syncAllToWatch(state)"))
+    private suspend fun syncWatchStatsSettings(state: MobileSettingsState) {
+        // No longer used, handled by syncAllToWatch
+    }
+
+    @Deprecated("Use syncAllToWatch", ReplaceWith("syncAllToWatch(state)"))
     private suspend fun syncHealthData(healthData: HealthData) {
-        try {
-            val request = PutDataMapRequest.create("/health_data").apply {
-                dataMap.putString("health_data_json", gson.toJson(healthData))
-                dataMap.putLong("timestamp", System.currentTimeMillis())
-            }
-            dataClient.putDataItem(request.asPutDataRequest().setUrgent()).await()
-            Log.d("SettingsSync", "Synced health data to wear")
-        } catch (e: Exception) {
-            Log.e("SettingsSync", "Failed to sync health data", e)
-        }
+        // No longer used, handled by syncAllToWatch
     }
 }

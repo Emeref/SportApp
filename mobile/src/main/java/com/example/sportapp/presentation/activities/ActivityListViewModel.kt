@@ -14,6 +14,7 @@ import com.example.sportapp.data.ZipManager
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.presentation.settings.AppLanguage
 import com.example.sportapp.presentation.settings.MobileSettingsManager
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -80,6 +81,12 @@ class ActivityListViewModel @Inject constructor(
 
     private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
     val importState = _importState.asStateFlow()
+
+    val settings = settingsManager.settingsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = MobileSettingsState()
+    )
 
     val activities: StateFlow<List<ActivityItem>> = repository.getActivityItemsFlow()
         .combine(_selectedTypes) { all, types ->

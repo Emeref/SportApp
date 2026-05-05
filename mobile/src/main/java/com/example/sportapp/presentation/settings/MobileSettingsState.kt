@@ -46,18 +46,10 @@ data class MobileSettingsState(
         WidgetItem("distanceSteps", TextsMobilePL.WIDGET_DISTANCE_STEPS),
         WidgetItem("ascent", TextsMobilePL.WIDGET_ASCENT),
         WidgetItem("descent", TextsMobilePL.WIDGET_DESCENT),
-        WidgetItem("steps", TextsMobilePL.WIDGET_STEPS),
-        WidgetItem("max_speed", TextsMobilePL.WIDGET_MAX_SPEED),
-        WidgetItem("max_altitude", TextsMobilePL.WIDGET_MAX_ALTITUDE),
-        WidgetItem("max_elevation_gain", TextsMobilePL.WIDGET_MAX_ELEVATION_GAIN),
-        WidgetItem("max_distance", TextsMobilePL.WIDGET_MAX_DISTANCE),
-        WidgetItem("max_duration", TextsMobilePL.WIDGET_MAX_DURATION),
-        WidgetItem("max_calories", TextsMobilePL.WIDGET_MAX_CALORIES),
-        WidgetItem("max_avg_cadence", TextsMobilePL.WIDGET_MAX_AVG_CADENCE),
-        WidgetItem("max_avg_speed", TextsMobilePL.WIDGET_MAX_AVG_SPEED)
+        WidgetItem("steps", TextsMobilePL.WIDGET_STEPS)
     ),
     val period: ReportingPeriod = ReportingPeriod.WEEK,
-    val customDays: Int = 7,
+    val customDays: Int = 14,
     // Sekcja: Statystyki na zegarku
     val watchStatsWidgets: List<WidgetItem> = listOf(
         WidgetItem("count", TextsMobilePL.WIDGET_COUNT),
@@ -77,5 +69,6 @@ data class MobileSettingsState(
     val autoExportToHC: Boolean = false,
     val autoExportToStrava: Boolean = false,
     val hcPermissionsDeniedCount: Int = 0,
-    val conflictResolutionPolicy: ConflictResolutionPolicy = ConflictResolutionPolicy.NEWER_WINS
+    val conflictResolutionPolicy: ConflictResolutionPolicy = ConflictResolutionPolicy.NEWER_WINS,
+    val activeIconTier: Int = 0
 )

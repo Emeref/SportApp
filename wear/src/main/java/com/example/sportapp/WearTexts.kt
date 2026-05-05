@@ -73,16 +73,18 @@ interface WearTexts {
     val HEALTH_STEP_LENGTH: String
     val HEALTH_RESTING_HR: String
     val HEALTH_MAX_HR: String
+    val HEALTH_VO2_MAX: String
     val HEALTH_SAVE: String
     val HEALTH_CHOOSE_GENDER: String
     val GENDER_MALE: String
     val GENDER_FEMALE: String
     
     fun healthAgeValue(age: Int): String
-    fun healthWeightValue(weight: Int): String
-    fun healthHeightValue(height: Int): String
+    fun healthWeightValue(weight: Double): String
+    fun healthHeightValue(height: Double): String
     fun healthStepLengthValue(length: Int): String
     fun healthHRValue(hr: Int): String
+    fun healthVO2MaxValue(vo2: Double?): String
 
     // Units
     val UNIT_YEARS: String
@@ -94,6 +96,7 @@ interface WearTexts {
     val UNIT_KMH: String
     val UNIT_KCAL: String
     val UNIT_HPA: String
+    val UNIT_VO2_MAX: String
 
     // Workout Data / Labels
     val WORKOUT_ERROR_CONFIG: String

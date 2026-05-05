@@ -28,6 +28,7 @@ import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.MobileTexts
 import com.example.sportapp.R
 import com.example.sportapp.presentation.definitions.getIconForName
+import com.example.sportapp.presentation.getAppLogoRes
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -148,7 +149,7 @@ fun HomeScreen(
                 title = { 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
-                            painter = painterResource(id = R.drawable.logo_apki_biale),
+                            painter = painterResource(id = getAppLogoRes(settings.activeIconTier)),
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
@@ -245,7 +246,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.weight(1f))
             
             Image(
-                painter = painterResource(id = R.drawable.logo_apki_biale),
+                painter = painterResource(id = getAppLogoRes(settings.activeIconTier)),
                 contentDescription = texts.HOME_LOGO_DESC,
                 modifier = Modifier
                     .height(40.dp)

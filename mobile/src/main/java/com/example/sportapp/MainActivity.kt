@@ -42,6 +42,7 @@ import com.example.sportapp.presentation.activities.*
 import com.example.sportapp.data.strava.StravaStorage
 import com.example.sportapp.data.strava.api.StravaAuthApi
 import com.example.sportapp.data.db.SyncMetadataDao
+import com.example.sportapp.presentation.support.SupportScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -188,6 +189,20 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToStrava = { 
                                         if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
                                             navController.navigate("strava_settings") 
+                                        }
+                                    },
+                                    onNavigateToSupport = {
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.navigate("support") 
+                                        }
+                                    }
+                                )
+                            }
+                            composable("support") { backStackEntry ->
+                                SupportScreen(
+                                    onBack = {
+                                        if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
+                                            navController.popBackStack()
                                         }
                                     }
                                 )

@@ -101,4 +101,24 @@ interface WorkoutDao {
         AND isExportedToStrava = 0
     """)
     suspend fun getWorkoutsToStravaSync(): List<WorkoutEntity>
+
+    @Query("SELECT MAX(id) FROM workouts")
+    suspend fun getMaxId(): Long?
+
+    @Query("SELECT EXISTS(SELECT 1 FROM workouts WHERE id = :id LIMIT 1)")
+    suspend fun existsById(id: Long): Boolean
+
+    @Transaction
+    suspend fun deleteWorkoutWithAllData(workout: WorkoutEntity) {
+        deletePointsForWorkout(workout.id)
+        deleteLapsForWorkout(workout.id)
+        deleteWorkout(workout)
+    }
+
+    @Transaction
+    suspend fun updateWorkoutWithPoints(workout: WorkoutEntity, points: List<WorkoutPointEntity>) {
+        insertWorkout(workout) // OnConflictStrategy.REPLACE zajmie się aktualizacją
+        deletePointsForWorkout(workout.id)
+        insertPoints(points)
+    }
 }

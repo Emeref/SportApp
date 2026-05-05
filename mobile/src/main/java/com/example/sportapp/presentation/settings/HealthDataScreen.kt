@@ -30,6 +30,22 @@ fun HealthDataScreen(
 ) {
     val texts = LocalMobileTexts.current
     var data by remember(initialData) { mutableStateOf(initialData) }
+
+    // Helper for formatting decimals without unnecessary .0
+    fun formatDecimal(value: Double): String = if (value == value.toInt().toDouble()) value.toInt().toString() else value.toString()
+    
+    // Helper to validate decimal input (digits and at most one dot or comma)
+    fun isValidDecimalInput(input: String): Boolean = 
+        input.count { it == '.' || it == ',' } <= 1 && input.all { it.isDigit() || it == '.' || it == ',' }
+
+    var ageText by remember(initialData) { mutableStateOf(data.age.toString()) }
+    var weightText by remember(initialData) { mutableStateOf(formatDecimal(data.weight)) }
+    var heightText by remember(initialData) { mutableStateOf(formatDecimal(data.height)) }
+    var restingHRText by remember(initialData) { mutableStateOf(data.restingHR.toString()) }
+    var maxHRText by remember(initialData) { mutableStateOf(data.maxHR.toString()) }
+    var vo2MaxText by remember(initialData) { mutableStateOf(data.vo2Max?.let { formatDecimal(it) } ?: "") }
+    var stepLengthText by remember(initialData) { mutableStateOf(data.stepLength.toString()) }
+
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsState()
 
@@ -117,6 +133,14 @@ fun HealthDataScreen(
                 TextButton(onClick = {
                     viewModel.onConfirmSync(data) { updated ->
                         data = updated
+                        // Update string states with new synced values
+                        ageText = updated.age.toString()
+                        weightText = formatDecimal(updated.weight)
+                        heightText = formatDecimal(updated.height)
+                        restingHRText = updated.restingHR.toString()
+                        maxHRText = updated.maxHR.toString()
+                        vo2MaxText = updated.vo2Max?.let { formatDecimal(it) } ?: ""
+                        stepLengthText = updated.stepLength.toString()
                     }
                 }) {
                     Text(texts.ACTIVITY_OK)
@@ -216,40 +240,40 @@ fun HealthDataScreen(
             }
 
             OutlinedTextField(
-                value = data.age.toString(),
-                onValueChange = { data = data.copy(age = it.toIntOrNull() ?: data.age) },
+                value = ageText,
+                onValueChange = { if (it.all { c -> c.isDigit() }) ageText = it },
                 label = { Text(texts.HEALTH_AGE) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
-                value = data.weight.toString(),
-                onValueChange = { data = data.copy(weight = it.toDoubleOrNull() ?: data.weight) },
+                value = weightText,
+                onValueChange = { if (isValidDecimalInput(it)) weightText = it },
                 label = { Text(texts.HEALTH_WEIGHT_KG) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
-                value = data.height.toString(),
-                onValueChange = { data = data.copy(height = it.toDoubleOrNull() ?: data.height) },
+                value = heightText,
+                onValueChange = { if (isValidDecimalInput(it)) heightText = it },
                 label = { Text(texts.HEALTH_HEIGHT_CM) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
-                value = data.restingHR.toString(),
-                onValueChange = { data = data.copy(restingHR = it.toIntOrNull() ?: data.restingHR) },
+                value = restingHRText,
+                onValueChange = { if (it.all { c -> c.isDigit() }) restingHRText = it },
                 label = { Text(texts.HEALTH_RESTING_HR) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
-                value = data.maxHR.toString(),
-                onValueChange = { data = data.copy(maxHR = it.toIntOrNull() ?: data.maxHR) },
+                value = maxHRText,
+                onValueChange = { if (it.all { c -> c.isDigit() }) maxHRText = it },
                 label = { Text(texts.HEALTH_MAX_HR) },
                 supportingText = { Text(texts.HEALTH_MAX_HR_DESC) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -257,13 +281,8 @@ fun HealthDataScreen(
             )
 
             OutlinedTextField(
-                value = data.vo2Max?.let { String.format(Locale.US, "%.2f", it) } ?: "",
-                onValueChange = { 
-                    val newValue = it.toDoubleOrNull()
-                    if (newValue != null || it.isEmpty()) {
-                        data = data.copy(vo2Max = newValue)
-                    }
-                },
+                value = vo2MaxText,
+                onValueChange = { if (isValidDecimalInput(it)) vo2MaxText = it },
                 label = { Text(texts.HEALTH_VO2_MAX) },
                 suffix = { Text(texts.UNIT_VO2_MAX) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -271,15 +290,29 @@ fun HealthDataScreen(
             )
 
             OutlinedTextField(
-                value = data.stepLength.toString(),
-                onValueChange = { data = data.copy(stepLength = it.toIntOrNull() ?: data.stepLength) },
+                value = stepLengthText,
+                onValueChange = { if (it.all { c -> c.isDigit() }) stepLengthText = it },
                 label = { Text(texts.HEALTH_STEP_LENGTH_CM) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
             Button(
-                onClick = { onSave(data) },
+                onClick = {
+                    val parseDouble = { s: String, default: Double -> s.replace(',', '.').toDoubleOrNull() ?: default }
+                    val parseInt = { s: String, default: Int -> s.toIntOrNull() ?: default }
+
+                    val finalData = data.copy(
+                        age = parseInt(ageText, data.age),
+                        weight = parseDouble(weightText, data.weight),
+                        height = parseDouble(heightText, data.height),
+                        restingHR = parseInt(restingHRText, data.restingHR),
+                        maxHR = parseInt(maxHRText, data.maxHR),
+                        vo2Max = vo2MaxText.replace(',', '.').toDoubleOrNull(),
+                        stepLength = parseInt(stepLengthText, data.stepLength)
+                    )
+                    onSave(finalData)
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(texts.SETTINGS_SAVE)
