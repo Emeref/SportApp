@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
 import com.example.sportapp.healthconnect.ConflictResolutionPolicy
+import com.example.sportapp.presentation.getAppLogoRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +48,7 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.logo_apki_biale),
+                            painter = painterResource(id = getAppLogoRes(state.activeIconTier)),
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )

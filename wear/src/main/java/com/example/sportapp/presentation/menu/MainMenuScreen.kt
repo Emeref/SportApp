@@ -20,9 +20,10 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import com.example.sportapp.LocalWearTexts
 import com.example.sportapp.R
+import com.example.sportapp.presentation.getAppLogoRes
 
 @Composable
-fun MainMenuScreen(navController: NavHostController) {
+fun MainMenuScreen(navController: NavHostController, activeIconTier: Int) {
     val texts = LocalWearTexts.current
     val listState = rememberScalingLazyListState()
     ScalingLazyColumn(
@@ -34,7 +35,7 @@ fun MainMenuScreen(navController: NavHostController) {
         // Logo na górze menu
         item {
             Image(
-                painter = painterResource(id = R.drawable.logo_apki_biale),
+                painter = painterResource(id = getAppLogoRes(activeIconTier)),
                 contentDescription = texts.APP_LOGO_DESC,
                 modifier = Modifier
                     .size(48.dp)

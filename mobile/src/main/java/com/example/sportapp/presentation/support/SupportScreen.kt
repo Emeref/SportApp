@@ -1,8 +1,10 @@
 package com.example.sportapp.presentation.support
 
 import android.app.Activity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,7 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SupportScreen(
     onBack: () -> Unit,
@@ -41,7 +43,15 @@ fun SupportScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(texts.SUPPORT_TITLE) },
+                title = {
+                    Text(
+                        text = texts.SUPPORT_TITLE,
+                        modifier = Modifier.combinedClickable(
+                            onClick = {},
+                            onLongClick = { viewModel.debugUnlockAll() }
+                        )
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)

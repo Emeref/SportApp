@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.sportapp"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="com.android.vending.BILLING" />
@@ -12,7 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Uprawnienia systemowe Health Connect (Android 14+, API 34+) -->
+    <!-- Uprawnienia systemowe Health Connect -->
     <uses-permission android:name="android.permission.health.READ_HEIGHT"/>
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
     <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE"/>
@@ -26,7 +27,6 @@
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED"/>
 
-    <!-- Uprawnienia do zapisu (wysyłania) treningów -->
     <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
     <uses-permission android:name="android.permission.health.WRITE_DISTANCE" />
     <uses-permission android:name="android.permission.health.WRITE_STEPS" />
@@ -38,23 +38,7 @@
     <uses-permission android:name="android.permission.health.WRITE_SPEED" />
     <uses-permission android:name="android.permission.health.WRITE_ELEVATION_GAINED" />
 
-    <!-- Uprawnienie do odczytu danych starszych niż 30 dni -->
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
-
-    <!-- Uprawnienia wstecznej kompatybilności (Android 11-13) -->
-    <uses-permission android:name="androidx.health.permission.HEIGHT.READ"/>
-    <uses-permission android:name="androidx.health.permission.WEIGHT.READ"/>
-    <uses-permission android:name="androidx.health.permission.RESTING_HEART_RATE.READ"/>
-    <uses-permission android:name="androidx.health.permission.HEART_RATE.READ"/>
-    <uses-permission android:name="androidx.health.permission.VO2_MAX.READ"/>
-    <uses-permission android:name="androidx.health.permission.EXERCISE.READ"/>
-    <uses-permission android:name="androidx.health.permission.DISTANCE.READ"/>
-    <uses-permission android:name="androidx.health.permission.STEPS.READ"/>
-    <uses-permission android:name="androidx.health.permission.SPEED.READ"/>
-    <uses-permission android:name="androidx.health.permission.ACTIVE_CALORIES_BURNED.READ"/>
-    <uses-permission android:name="androidx.health.permission.ACTIVE_CALORIES_BURNED.WRITE"/>
-    <uses-permission android:name="androidx.health.permission.TOTAL_CALORIES_BURNED.READ"/>
-    <uses-permission android:name="androidx.health.permission.ELEVATION_GAINED.READ"/>
 
     <queries>
         <package android:name="com.google.android.apps.healthdata"/>
@@ -84,6 +68,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:enabled="true"
             android:launchMode="singleTop">
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -246,9 +231,6 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PATHS"
-                android:resource="@xml/file_paths" />
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
     </application>

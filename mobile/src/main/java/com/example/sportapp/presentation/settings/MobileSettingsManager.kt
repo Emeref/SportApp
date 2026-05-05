@@ -12,6 +12,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -85,7 +86,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         }
 
         val langCode = preferences[LANGUAGE]
-        val language = AppLanguage.values().find { it.code == langCode } ?: defaultState.language
+        val language = AppLanguage.entries.find { it.code == langCode } ?: defaultState.language
 
         MobileSettingsState(
             widgets = widgets,
@@ -173,6 +174,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         context.dataStore.edit { preferences ->
             preferences[ACTIVE_ICON_TIER] = tier
         }
+        val currentState = settingsFlow.first()
+        syncAllToWatch(currentState.copy(activeIconTier = tier))
     }
 
     private suspend fun requestFullSyncFromWatch() {
@@ -194,10 +197,11 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
                 dataMap.putString("watch_period", state.watchStatsPeriod.name)
                 dataMap.putInt("watch_custom_days", state.watchStatsCustomDays)
                 dataMap.putString("health_data_json", gson.toJson(state.healthData))
+                dataMap.putInt("active_icon_tier", state.activeIconTier)
                 dataMap.putLong("timestamp", System.currentTimeMillis())
             }
             dataClient.putDataItem(request.asPutDataRequest().setUrgent()).await()
-            Log.d("SettingsSync", "Synced all settings to watch via /mobile_settings")
+            Log.d("SettingsSync", "Synced all settings to watch via /mobile_settings (tier: ${state.activeIconTier})")
         } catch (e: Exception) {
             Log.e("SettingsSync", "Failed to sync settings to watch", e)
         }

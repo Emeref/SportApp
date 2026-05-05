@@ -1,9 +1,12 @@
 package com.example.sportapp.presentation
 
 import android.Manifest
+import android.app.ActivityManager
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -28,6 +31,7 @@ import com.example.sportapp.presentation.workout.DynamicWorkoutScreen
 import com.example.sportapp.presentation.workout.WorkoutSummaryScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,6 +40,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var settingsManager: SettingsManager
+
+    @Inject
+    lateinit var iconManager: IconManager
 
     private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
         override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
@@ -77,19 +84,43 @@ class MainActivity : ComponentActivity() {
                 language = AppLanguage.POLISH,
                 watchStatsWidgets = emptyList(),
                 watchStatsPeriod = ReportingPeriod.WEEK,
-                watchStatsCustomDays = 7
+                watchStatsCustomDays = 7,
+                activeIconTier = 0
             ))
             
             var selectedClockColor by remember { mutableStateOf<Color?>(Color.Red) }
             var healthData by remember { mutableStateOf(HealthData()) }
             var screenBehavior by remember { mutableStateOf(ScreenBehavior.KEEP_SCREEN_ON) }
             var currentLanguage by remember { mutableStateOf(AppLanguage.POLISH) }
+            var activeIconTier by remember { mutableIntStateOf(-1) } // Start with -1 to trigger initial sync
+
+            LaunchedEffect(settingsState.activeIconTier) {
+                if (activeIconTier != settingsState.activeIconTier) {
+                    val isInitial = activeIconTier == -1
+                    activeIconTier = settingsState.activeIconTier
+                    
+                    // Update system-level icon settings
+                    updateTaskDescription(activeIconTier)
+                    
+                    if (!isInitial) {
+                        // If it's a change during runtime, we might want to be more aggressive
+                        iconManager.setActiveTier(activeIconTier)
+                    }
+                }
+            }
 
             LaunchedEffect(settingsState) {
                 selectedClockColor = settingsState.clockColor
                 healthData = settingsState.healthData
                 screenBehavior = settingsState.screenBehavior
                 currentLanguage = settingsState.language
+            }
+
+            // Ensure correct alias on startup
+            LaunchedEffect(Unit) {
+                val currentSettings = settingsManager.settingsFlow.first()
+                iconManager.setActiveTier(currentSettings.activeIconTier)
+                updateTaskDescription(currentSettings.activeIconTier)
             }
 
             val targetWorkoutId by navigationIntentId.collectAsState()
@@ -147,7 +178,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             startDestination = "main_menu"
                         ) {
-                            composable("main_menu") { MainMenuScreen(navController) }
+                            composable("main_menu") { MainMenuScreen(navController, activeIconTier) }
                             composable("choose_sport") { ChooseSportScreen(navController) }
                             composable(
                                 "workout_ready/{definitionId}",
@@ -165,21 +196,19 @@ class MainActivity : ComponentActivity() {
                                     currentLanguage = currentLanguage
                                 ) 
                             }
-
+                            // ... reszta composables pozostaje bez zmian ...
                             composable("screen_behavior_selection") {
                                 ScreenBehaviorSelectionScreen(screenBehavior) {
                                     screenBehavior = it
                                     scope.launch { settingsManager.saveScreenBehavior(it) }
                                 }
                             }
-                            
                             composable("clock_color_selection") {
                                 ClockColorSelectionScreen(selectedClockColor) { 
                                     selectedClockColor = it
                                     scope.launch { settingsManager.saveClockColor(it) }
                                 }
                             }
-
                             composable("language_selection") {
                                 LanguageSelectionScreen(currentLanguage) {
                                     currentLanguage = it
@@ -187,7 +216,6 @@ class MainActivity : ComponentActivity() {
                                     navController.popBackStack()
                                 }
                             }
-                            
                             composable("health_data") { 
                                 HealthDataScreen(
                                     data = healthData,
@@ -298,44 +326,54 @@ class MainActivity : ComponentActivity() {
                                     onDone = { navController.popBackStack() }
                                 )
                             }
-
-                            composable(
-                                "dynamic_workout/{definitionId}",
-                                arguments = listOf(navArgument("definitionId") { type = NavType.LongType })
-                            ) { backStackEntry ->
+                            composable("dynamic_workout/{definitionId}", arguments = listOf(navArgument("definitionId") { type = NavType.LongType })) { backStackEntry ->
                                 val definitionId = backStackEntry.arguments?.getLong("definitionId") ?: 0L
-                                DynamicWorkoutScreen(
-                                    definitionId = definitionId,
-                                    clockColor = selectedClockColor,
-                                    healthData = healthData,
-                                    screenBehavior = screenBehavior,
-                                    isAmbient = isAmbient,
-                                    onEndWorkout = { name, summary ->
-                                        currentSummaryData = name to summary
-                                        navController.navigate("workout_summary") {
-                                            popUpTo("main_menu") { inclusive = false }
-                                        }
-                                    }
-                                )
+                                DynamicWorkoutScreen(definitionId = definitionId, clockColor = selectedClockColor, healthData = healthData, screenBehavior = screenBehavior, isAmbient = isAmbient, onEndWorkout = { name, summary ->
+                                    currentSummaryData = name to summary
+                                    navController.navigate("workout_summary") { popUpTo("main_menu") { inclusive = false } }
+                                })
                             }
-
                             composable("workout_summary") {
                                 val data = currentSummaryData
                                 if (data != null) {
-                                    WorkoutSummaryScreen(
-                                        title = data.first,
-                                        summaryData = data.second,
-                                        onConfirm = {
-                                            currentSummaryData = null
-                                            navController.popBackStack("main_menu", inclusive = false)
-                                        }
-                                    )
+                                    WorkoutSummaryScreen(title = data.first, summaryData = data.second, onConfirm = {
+                                        currentSummaryData = null
+                                        navController.popBackStack("main_menu", inclusive = false)
+                                    })
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private fun updateTaskDescription(tier: Int) {
+        try {
+            val iconRes = iconManager.getIconResourceForTier(tier)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                setTaskDescription(
+                    ActivityManager.TaskDescription.Builder()
+                        .setLabel(getString(com.example.sportapp.R.string.app_name))
+                        .setIcon(iconRes)
+                        .build()
+                )
+            } else {
+                val bitmap = BitmapFactory.decodeResource(resources, iconRes)
+                if (bitmap != null) {
+                    @Suppress("DEPRECATION")
+                    setTaskDescription(
+                        ActivityManager.TaskDescription(
+                            getString(com.example.sportapp.R.string.app_name),
+                            bitmap
+                        )
+                    )
+                }
+            }
+            Log.d("MainActivity", "TaskDescription updated for tier $tier")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to update task description", e)
         }
     }
 

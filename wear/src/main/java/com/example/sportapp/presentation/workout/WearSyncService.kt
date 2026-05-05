@@ -10,6 +10,7 @@ import com.example.sportapp.presentation.settings.HealthData
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.settings.SettingsManager
 import com.example.sportapp.presentation.settings.WidgetItem
+import com.example.sportapp.presentation.settings.IconManager
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
@@ -41,6 +42,9 @@ class WearSyncService : WearableListenerService() {
     
     @Inject
     lateinit var settingsManager: SettingsManager
+
+    @Inject
+    lateinit var iconManager: IconManager
 
     private val gson = Gson()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -148,6 +152,7 @@ class WearSyncService : WearableListenerService() {
                         val periodName = dataMapItem.dataMap.getString("watch_period")
                         val customDays = dataMapItem.dataMap.getInt("watch_custom_days")
                         val healthDataJson = dataMapItem.dataMap.getString("health_data_json")
+                        val activeIconTier = dataMapItem.dataMap.getInt("active_icon_tier", 0)
                         
                         scope.launch {
                             try {
@@ -162,7 +167,10 @@ class WearSyncService : WearableListenerService() {
                                     val healthData = gson.fromJson(healthDataJson, HealthData::class.java)
                                     settingsManager.saveHealthData(healthData)
                                 }
-                                Log.d("WearSyncService", "Successfully synced all mobile settings")
+
+                                settingsManager.saveActiveIconTier(activeIconTier)
+                                iconManager.setActiveTier(activeIconTier)
+                                Log.d("WearSyncService", "Successfully synced all mobile settings (tier: $activeIconTier)")
                             } catch (e: Exception) {
                                 Log.e("WearSyncService", "Failed to process mobile settings sync", e)
                             }

@@ -160,4 +160,8 @@ class BillingRepository @Inject constructor(
 
         billingClient.launchBillingFlow(activity, billingFlowParams)
     }
+
+    fun debugUnlockAllTiers() {
+        _purchasedTiers.value = (1..6).toSet()
+    }
 }

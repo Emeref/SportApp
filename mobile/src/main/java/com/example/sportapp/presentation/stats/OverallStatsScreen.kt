@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.presentation.getAppLogoRes
 import com.example.sportapp.presentation.home.WidgetFactory
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
@@ -41,6 +42,7 @@ fun OverallStatsScreen(
     val startDate by viewModel.startDate.collectAsStateWithLifecycle()
     val endDate by viewModel.endDate.collectAsStateWithLifecycle()
     val chartMaxValues by viewModel.chartMaxValues.collectAsStateWithLifecycle()
+    val mobileSettings by viewModel.mobileSettings.collectAsStateWithLifecycle()
 
     OverallStatsContent(
         stats = stats,
@@ -52,6 +54,7 @@ fun OverallStatsScreen(
         endDate = endDate,
         chartProducers = viewModel.chartProducers,
         chartMaxValues = chartMaxValues,
+        activeIconTier = mobileSettings.activeIconTier,
         onTypeToggle = { viewModel.toggleTypeSelection(it) },
         onToggleAllTypes = { viewModel.toggleAllTypes() },
         onDateRangeSelected = { start, end -> viewModel.onDateRangeSelected(start, end) },
@@ -72,6 +75,7 @@ fun OverallStatsContent(
     endDate: Date?,
     chartProducers: Map<String, ChartEntryModelProducer>,
     chartMaxValues: Map<String, Double>,
+    activeIconTier: Int,
     onTypeToggle: (String) -> Unit,
     onToggleAllTypes: () -> Unit,
     onDateRangeSelected: (Date?, Date?) -> Unit,
@@ -89,7 +93,7 @@ fun OverallStatsContent(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
-                            painter = painterResource(id = R.drawable.logo_apki_biale),
+                            painter = painterResource(id = getAppLogoRes(activeIconTier)),
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
@@ -294,7 +298,7 @@ fun OverallStatsContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             Image(
-                painter = painterResource(id = R.drawable.logo_apki_biale),
+                painter = painterResource(id = getAppLogoRes(activeIconTier)),
                 contentDescription = texts.HOME_LOGO_DESC,
                 modifier = Modifier.height(40.dp).padding(vertical = 8.dp)
             )

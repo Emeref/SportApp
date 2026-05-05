@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.sportapp">
+    package="com.example.sportapp"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <attribution
         android:label="@string/workout_attribution_label"
@@ -132,11 +133,105 @@
             android:turnScreenOn="true"
             android:theme="@style/MainActivityTheme.Starting"
             android:name=".presentation.MainActivity">
+        </activity>
+
+        <activity-alias
+            android:name=".DefaultAlias"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@drawable/logo_apki_biale"
+            android:roundIcon="@drawable/logo_apki_biale"
+            android:label="@string/app_name"
+            android:targetActivity="com.example.sportapp.presentation.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Tier1Alias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/logo_apki_niebieskie"
+            android:roundIcon="@drawable/logo_apki_niebieskie"
+            android:label="@string/app_name"
+            android:targetActivity="com.example.sportapp.presentation.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Tier2Alias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/logo_apki_zielone"
+            android:roundIcon="@drawable/logo_apki_zielone"
+            android:label="@string/app_name"
+            android:targetActivity="com.example.sportapp.presentation.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Tier3Alias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/logo_apki_zolte"
+            android:roundIcon="@drawable/logo_apki_zolte"
+            android:label="@string/app_name"
+            android:targetActivity="com.example.sportapp.presentation.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Tier4Alias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/logo_apki_fioletowe"
+            android:roundIcon="@drawable/logo_apki_fioletowe"
+            android:label="@string/app_name"
+            android:targetActivity="com.example.sportapp.presentation.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Tier5Alias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/logo_apki_czerwone"
+            android:roundIcon="@drawable/logo_apki_czerwone"
+            android:label="@string/app_name"
+            android:targetActivity="com.example.sportapp.presentation.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Tier6Alias"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/logo_apki_czarne"
+            android:roundIcon="@drawable/logo_apki_czarne"
+            android:label="@string/app_name"
+            android:targetActivity="com.example.sportapp.presentation.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
     </application>
 
 </manifest>

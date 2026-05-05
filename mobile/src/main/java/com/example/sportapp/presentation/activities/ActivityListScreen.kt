@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.presentation.getAppLogoRes
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -59,6 +60,7 @@ fun ActivityListScreen(
     val selectedIds by viewModel.selectedIds.collectAsState()
     val exportState by viewModel.exportState.collectAsState()
     val importState by viewModel.importState.collectAsState()
+    val settings by viewModel.settings.collectAsState()
     
     var showTypeMenu by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -324,7 +326,7 @@ fun ActivityListScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
-                            painter = painterResource(id = R.drawable.logo_apki_biale),
+                            painter = painterResource(id = getAppLogoRes(settings.activeIconTier)),
                             contentDescription = null,
                             modifier = Modifier.size(32.dp).padding(end = 8.dp)
                         )
@@ -571,6 +573,14 @@ fun ActivityListScreen(
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
+
+            Image(
+                painter = painterResource(id = getAppLogoRes(settings.activeIconTier)),
+                contentDescription = texts.HOME_LOGO_DESC,
+                modifier = Modifier
+                    .height(40.dp)
+                    .padding(vertical = 8.dp)
+            )
         }
     }
 }
@@ -614,8 +624,7 @@ fun HeaderCell(
             .width(width)
             .clickable { onClick() }
             .padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+        verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = text,
             modifier = Modifier.weight(1f, fill = false),

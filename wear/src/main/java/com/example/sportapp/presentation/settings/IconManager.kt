@@ -3,6 +3,8 @@ package com.example.sportapp.presentation.settings
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
+import com.example.sportapp.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,8 +26,21 @@ class IconManager @Inject constructor(
         "$packageName.Tier6Alias"
     )
 
+    fun getIconResourceForTier(tier: Int): Int {
+        return when (tier.coerceIn(0, 6)) {
+            1 -> R.drawable.logo_apki_niebieskie
+            2 -> R.drawable.logo_apki_zielone
+            3 -> R.drawable.logo_apki_zolte
+            4 -> R.drawable.logo_apki_fioletowe
+            5 -> R.drawable.logo_apki_czerwone
+            6 -> R.drawable.logo_apki_czarne
+            else -> R.drawable.logo_apki_biale
+        }
+    }
+
     fun setActiveTier(tier: Int) {
         val targetIndex = tier.coerceIn(0, 6)
+        Log.d("IconManager", "Setting active tier to $tier (target index: $targetIndex)")
         
         aliases.forEachIndexed { index, aliasName ->
             val state = if (index == targetIndex) {
@@ -35,13 +50,17 @@ class IconManager @Inject constructor(
             }
             
             try {
-                packageManager.setComponentEnabledSetting(
-                    ComponentName(context, aliasName),
-                    state,
-                    PackageManager.DONT_KILL_APP
-                )
+                val currentConfig = packageManager.getComponentEnabledSetting(ComponentName(context, aliasName))
+                if (currentConfig != state) {
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(context, aliasName),
+                        state,
+                        PackageManager.DONT_KILL_APP
+                    )
+                    Log.d("IconManager", "Alias $aliasName changed to state: $state")
+                }
             } catch (e: Exception) {
-                // Log or handle error if an alias is missing in manifest
+                Log.e("IconManager", "Failed to set alias $aliasName", e)
             }
         }
     }

@@ -73,4 +73,8 @@ class SupportViewModel @Inject constructor(
             iconManager.setActiveTier(tierLevel)
         }
     }
+
+    fun debugUnlockAll() {
+        billingRepository.debugUnlockAllTiers()
+    }
 }
