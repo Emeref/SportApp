@@ -115,7 +115,7 @@ fun DynamicWorkoutScreen(
                 )
             } else {
                 ActiveWorkoutUI(
-ee                    activityName = sportDef.name,
+                    activityName = sportDef.name,
                     session = session,
                     dataSensors = dataSensors,
                     clockColor = clockColor

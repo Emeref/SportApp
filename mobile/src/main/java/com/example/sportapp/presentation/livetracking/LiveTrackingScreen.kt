@@ -12,7 +12,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -67,6 +69,8 @@ fun LiveTrackingScreen(
     val cameraPositionState = rememberCameraPositionState()
     var isFullScreenMap by remember { mutableStateOf(false) }
     var showMapTypeDialog by remember { mutableStateOf(false) }
+
+    val showMap = activeDefinition?.sensors?.find { it.sensorId == "map" }?.isRecording != false
 
     // Keep Screen On
     val activity = context as? Activity
@@ -126,8 +130,10 @@ fun LiveTrackingScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { isFullScreenMap = true }) {
-                    Text(texts.LIVE_TRACKING_BTN_VIEW_MAP)
+                if (showMap) {
+                    TextButton(onClick = { isFullScreenMap = true }) {
+                        Text(texts.LIVE_TRACKING_BTN_VIEW_MAP)
+                    }
                 }
             }
         )
@@ -160,7 +166,7 @@ fun LiveTrackingScreen(
                                 overflow = TextOverflow.Clip
                             )
                             
-                            if (isFullScreenMap) {
+                            if (isFullScreenMap && showMap) {
                                 val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
                                 Text(
                                     text = sdf.format(Date()),
@@ -205,132 +211,134 @@ fun LiveTrackingScreen(
                     .padding(padding)
             ) {
                 // Map Section
-                Box(modifier = Modifier.weight(if (isFullScreenMap) 1f else 3f)) {
-                    GoogleMap(
-                        modifier = Modifier.fillMaxSize(),
-                        cameraPositionState = cameraPositionState,
-                        uiSettings = MapUiSettings(
-                            zoomControlsEnabled = false,
-                            myLocationButtonEnabled = false
-                        ),
-                        properties = MapProperties(
-                            isMyLocationEnabled = hasLocationPermission,
-                            mapType = when(mobileSettings.mapType) {
-                                AppMapType.NORMAL -> MapType.NORMAL
-                                AppMapType.SATELLITE -> MapType.SATELLITE
-                                AppMapType.HYBRID -> MapType.HYBRID
-                                AppMapType.TERRAIN -> MapType.TERRAIN
+                if (showMap) {
+                    Box(modifier = Modifier.weight(if (isFullScreenMap) 1f else 3f)) {
+                        GoogleMap(
+                            modifier = Modifier.fillMaxSize(),
+                            cameraPositionState = cameraPositionState,
+                            uiSettings = MapUiSettings(
+                                zoomControlsEnabled = false,
+                                myLocationButtonEnabled = false
+                            ),
+                            properties = MapProperties(
+                                isMyLocationEnabled = hasLocationPermission,
+                                mapType = when(mobileSettings.mapType) {
+                                    AppMapType.NORMAL -> MapType.NORMAL
+                                    AppMapType.SATELLITE -> MapType.SATELLITE
+                                    AppMapType.HYBRID -> MapType.HYBRID
+                                    AppMapType.TERRAIN -> MapType.TERRAIN
+                                }
+                            )
+                        ) {
+                            if (routePoints.isNotEmpty()) {
+                                Polyline(
+                                    points = routePoints.map { LatLng(it.latitude, it.longitude) },
+                                    color = Color.Blue,
+                                    width = 10f
+                                )
                             }
-                        )
-                    ) {
-                        if (routePoints.isNotEmpty()) {
-                            Polyline(
-                                points = routePoints.map { LatLng(it.latitude, it.longitude) },
-                                color = Color.Blue,
-                                width = 10f
-                            )
                         }
-                    }
 
-                    // Map Controls - Top
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Map Type Toggle
-                        FloatingActionButton(
-                            onClick = { showMapTypeDialog = true },
-                            modifier = Modifier.size(48.dp),
-                            containerColor = MaterialTheme.colorScheme.surface
+                        // Map Controls - Top
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
-                        }
-
-                        // Orientation Toggle
-                        FloatingActionButton(
-                            onClick = { viewModel.toggleOrientation() },
-                            modifier = Modifier.size(48.dp),
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ) {
-                            Icon(
-                                imageVector = if (isNorthOriented) Icons.Default.North else Icons.Default.Explore,
-                                contentDescription = if (isNorthOriented) texts.LIVE_TRACKING_MAP_NORTH else texts.LIVE_TRACKING_MAP_DIRECTION
-                            )
-                        }
-
-                        // Re-center button
-                        if (!autoCenter) {
+                            // Map Type Toggle
                             FloatingActionButton(
-                                onClick = { viewModel.setAutoCenter(true) },
+                                onClick = { showMapTypeDialog = true },
                                 modifier = Modifier.size(48.dp),
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                                containerColor = MaterialTheme.colorScheme.surface
                             ) {
-                                Icon(Icons.Default.MyLocation, contentDescription = null)
+                                Icon(Icons.Default.Layers, contentDescription = texts.MAP_TYPE_TITLE)
+                            }
+
+                            // Orientation Toggle
+                            FloatingActionButton(
+                                onClick = { viewModel.toggleOrientation() },
+                                modifier = Modifier.size(48.dp),
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ) {
+                                Icon(
+                                    imageVector = if (isNorthOriented) Icons.Default.North else Icons.Default.Explore,
+                                    contentDescription = if (isNorthOriented) texts.LIVE_TRACKING_MAP_NORTH else texts.LIVE_TRACKING_MAP_DIRECTION
+                                )
+                            }
+
+                            // Re-center button
+                            if (!autoCenter) {
+                                FloatingActionButton(
+                                    onClick = { viewModel.setAutoCenter(true) },
+                                    modifier = Modifier.size(48.dp),
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                ) {
+                                    Icon(Icons.Default.MyLocation, contentDescription = null)
+                                }
                             }
                         }
-                    }
 
-                    // Heart Rate Overlay - Bottom Left
-                    val hrValue = sensorData["bpm"]
-                    val isHrAvailable = !hrValue.isNullOrBlank() && hrValue != "--"
-                    
-                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                    val alpha by infiniteTransition.animateFloat(
-                        initialValue = 1f,
-                        targetValue = 0.3f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "alpha"
-                    )
-                    
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(16.dp)
-                            .then(if (isHrAvailable) Modifier.alpha(alpha) else Modifier),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (isHrAvailable) hrValue!! else "---",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Red
+                        // Heart Rate Overlay - Bottom Left
+                        val hrValue = sensorData["bpm"]
+                        val isHrAvailable = !hrValue.isNullOrBlank() && hrValue != "--"
+                        
+                        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                        val alpha by infiniteTransition.animateFloat(
+                            initialValue = 1f,
+                            targetValue = 0.3f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(1000),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "alpha"
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = null,
-                            tint = Color.Red,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    // Map Controls - Bottom Right (Zoom)
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FloatingActionButton(
-                            onClick = { viewModel.zoomIn() },
-                            modifier = Modifier.size(40.dp),
-                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                            contentColor = MaterialTheme.colorScheme.primary
+                        
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(16.dp)
+                                .then(if (isHrAvailable) Modifier.alpha(alpha) else Modifier),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "Zoom In")
+                            Text(
+                                text = if (isHrAvailable) hrValue!! else "---",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Red
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = null,
+                                tint = Color.Red,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
-                        FloatingActionButton(
-                            onClick = { viewModel.zoomOut() },
-                            modifier = Modifier.size(40.dp),
-                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                            contentColor = MaterialTheme.colorScheme.primary
+
+                        // Map Controls - Bottom Right (Zoom)
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.Remove, contentDescription = "Zoom Out")
+                            FloatingActionButton(
+                                onClick = { viewModel.zoomIn() },
+                                modifier = Modifier.size(40.dp),
+                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Zoom In")
+                            }
+                            FloatingActionButton(
+                                onClick = { viewModel.zoomOut() },
+                                modifier = Modifier.size(40.dp),
+                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = "Zoom Out")
+                            }
                         }
                     }
                 }
@@ -349,13 +357,24 @@ fun LiveTrackingScreen(
                                 Text(texts.LIVE_TRACKING_WAITING_FOR_WATCH, style = MaterialTheme.typography.bodyMedium)
                             }
                         } else {
-                            val activeWidgets = activeDefinition?.sensors?.filter { it.isVisible && it.sensorId != "bpm" }?.take(4) ?: emptyList()
+                            // BPM is only excluded from widgets if we show it on the map overlay
+                            val activeWidgets = activeDefinition?.sensors?.filter { 
+                                it.isVisible && (it.sensorId != "bpm" || !showMap) && it.sensorId != "map"
+                            } ?: emptyList()
                             
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (activeWidgets.isEmpty() && (activeDefinition?.sensors?.filter { it.isVisible }?.isEmpty() != false)) {
-                                    val keys = sensorData.keys.filter { it !in listOf("duration", "timestamp", "definitionId", "isFinished", "startTime", "status", "bpm") }.take(4)
+                            val displayWidgets = if (showMap) activeWidgets.take(4) else activeWidgets
+                            
+                            Column(
+                                modifier = if (!showMap) Modifier.verticalScroll(rememberScrollState()) else Modifier,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (displayWidgets.isEmpty() && (activeDefinition?.sensors?.filter { it.isVisible }?.isEmpty() != false)) {
+                                    val keys = sensorData.keys.filter { it !in listOf("duration", "timestamp", "definitionId", "isFinished", "startTime", "status", "bpm") }.let { if (showMap) it.take(4) else it }
                                     keys.chunked(2).forEach { rowKeys ->
-                                        Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(
+                                            modifier = if (showMap) Modifier.weight(1f) else Modifier.height(110.dp), 
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
                                             rowKeys.forEach { key ->
                                                 StatWidget(
                                                     label = texts.getSensorLabel(key),
@@ -369,8 +388,11 @@ fun LiveTrackingScreen(
                                         }
                                     }
                                 } else {
-                                    activeWidgets.chunked(2).forEach { rowWidgets ->
-                                        Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    displayWidgets.chunked(2).forEach { rowWidgets ->
+                                        Row(
+                                            modifier = if (showMap) Modifier.weight(1f) else Modifier.height(110.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
                                             rowWidgets.forEach { config ->
                                                 StatWidget(
                                                     label = texts.getSensorLabel(config.sensorId),
