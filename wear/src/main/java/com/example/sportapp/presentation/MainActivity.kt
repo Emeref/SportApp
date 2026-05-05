@@ -197,7 +197,8 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToHeight = { navController.navigate("health_height") },
                                     onNavigateToRestingHR = { navController.navigate("health_resting_hr") },
                                     onNavigateToMaxHR = { navController.navigate("health_max_hr") },
-                                    onNavigateToStepLength = { navController.navigate("health_step_length") }
+                                    onNavigateToStepLength = { navController.navigate("health_step_length") },
+                                    onNavigateToVO2Max = { navController.navigate("health_vo2_max") }
                                 ) 
                             }
                             composable("health_gender") {
@@ -222,11 +223,11 @@ class MainActivity : ComponentActivity() {
                             composable("health_weight") {
                                 NumericInputScreen(
                                     label = texts.HEALTH_WEIGHT,
-                                    value = healthData.weight,
+                                    value = healthData.weight.toInt(),
                                     range = 30..250,
                                     unit = texts.UNIT_KG,
                                     onValueChange = { 
-                                        healthData = healthData.copy(weight = it)
+                                        healthData = healthData.copy(weight = it.toDouble())
                                         scope.launch { settingsManager.saveHealthData(healthData) }
                                     },
                                     onDone = { navController.popBackStack() }
@@ -235,11 +236,11 @@ class MainActivity : ComponentActivity() {
                             composable("health_height") {
                                 NumericInputScreen(
                                     label = texts.HEALTH_HEIGHT,
-                                    value = healthData.height,
+                                    value = healthData.height.toInt(),
                                     range = 100..230,
                                     unit = texts.UNIT_CM,
                                     onValueChange = { 
-                                        healthData = healthData.copy(height = it)
+                                        healthData = healthData.copy(height = it.toDouble())
                                         scope.launch { settingsManager.saveHealthData(healthData) }
                                     },
                                     onDone = { navController.popBackStack() }
@@ -279,6 +280,19 @@ class MainActivity : ComponentActivity() {
                                     unit = texts.UNIT_CM,
                                     onValueChange = { 
                                         healthData = healthData.copy(stepLength = it)
+                                        scope.launch { settingsManager.saveHealthData(healthData) }
+                                    },
+                                    onDone = { navController.popBackStack() }
+                                )
+                            }
+                            composable("health_vo2_max") {
+                                NumericInputScreen(
+                                    label = texts.HEALTH_VO2_MAX,
+                                    value = healthData.vo2Max?.toInt() ?: 40,
+                                    range = 10..90,
+                                    unit = texts.UNIT_VO2_MAX,
+                                    onValueChange = { 
+                                        healthData = healthData.copy(vo2Max = it.toDouble())
                                         scope.launch { settingsManager.saveHealthData(healthData) }
                                     },
                                     onDone = { navController.popBackStack() }

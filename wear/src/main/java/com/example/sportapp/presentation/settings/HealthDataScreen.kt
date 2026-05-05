@@ -25,7 +25,8 @@ fun HealthDataScreen(
     onNavigateToHeight: () -> Unit,
     onNavigateToRestingHR: () -> Unit,
     onNavigateToMaxHR: () -> Unit,
-    onNavigateToStepLength: () -> Unit
+    onNavigateToStepLength: () -> Unit,
+    onNavigateToVO2Max: () -> Unit
 ) {
     val texts = LocalWearTexts.current
     val listState = rememberScalingLazyListState()
@@ -95,6 +96,15 @@ fun HealthDataScreen(
                 label = { Text(texts.HEALTH_MAX_HR) },
                 secondaryLabel = { Text(texts.healthHRValue(data.maxHR)) },
                 onClick = onNavigateToMaxHR,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp)
+            )
+        }
+
+        item {
+            Chip(
+                label = { Text(texts.HEALTH_VO2_MAX) },
+                secondaryLabel = { Text(texts.healthVO2MaxValue(data.vo2Max)) },
+                onClick = onNavigateToVO2Max,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             )
         }
@@ -114,7 +124,7 @@ fun NumericInputScreen(
     val texts = LocalWearTexts.current
     val state = rememberPickerState(
         initialNumberOfOptions = range.last - range.first + 1,
-        initiallySelectedOption = value - range.first
+        initiallySelectedOption = (value - range.first).coerceIn(0, range.last - range.first)
     )
     val focusRequester = remember { FocusRequester() }
 

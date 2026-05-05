@@ -6,6 +6,7 @@ import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.presentation.MainActivity
+import com.example.sportapp.presentation.settings.HealthData
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import com.example.sportapp.presentation.settings.SettingsManager
 import com.example.sportapp.presentation.settings.WidgetItem
@@ -141,6 +142,32 @@ class WearSyncService : WearableListenerService() {
                             }
                         }
                     }
+                    path == "/mobile_settings" -> {
+                        val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
+                        val widgetsJson = dataMapItem.dataMap.getString("watch_widgets_json")
+                        val periodName = dataMapItem.dataMap.getString("watch_period")
+                        val customDays = dataMapItem.dataMap.getInt("watch_custom_days")
+                        val healthDataJson = dataMapItem.dataMap.getString("health_data_json")
+                        
+                        scope.launch {
+                            try {
+                                if (widgetsJson != null && periodName != null) {
+                                    val type = object : TypeToken<List<WidgetItem>>() {}.type
+                                    val widgets: List<WidgetItem> = gson.fromJson(widgetsJson, type)
+                                    val period = ReportingPeriod.valueOf(periodName)
+                                    settingsManager.saveWatchStatsSettings(widgets, period, customDays)
+                                }
+                                
+                                if (healthDataJson != null) {
+                                    val healthData = gson.fromJson(healthDataJson, HealthData::class.java)
+                                    settingsManager.saveHealthData(healthData)
+                                }
+                                Log.d("WearSyncService", "Successfully synced all mobile settings")
+                            } catch (e: Exception) {
+                                Log.e("WearSyncService", "Failed to process mobile settings sync", e)
+                            }
+                        }
+                    }
                     path == "/watch_stats_settings" -> {
                         val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
                         val widgetsJson = dataMapItem.dataMap.getString("widgets_json") ?: return@forEach
@@ -153,9 +180,22 @@ class WearSyncService : WearableListenerService() {
                                 val widgets: List<WidgetItem> = gson.fromJson(widgetsJson, type)
                                 val period = ReportingPeriod.valueOf(periodName)
                                 settingsManager.saveWatchStatsSettings(widgets, period, customDays)
-                                Log.d("WearSyncService", "Successfully synced watch stats settings from mobile")
+                                Log.d("WearSyncService", "Successfully synced watch stats settings (legacy path)")
                             } catch (e: Exception) {
                                 Log.e("WearSyncService", "Failed to process watch stats settings", e)
+                            }
+                        }
+                    }
+                    path == "/health_data" -> {
+                        val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
+                        val json = dataMapItem.dataMap.getString("health_data_json") ?: return@forEach
+                        scope.launch {
+                            try {
+                                val healthData = gson.fromJson(json, HealthData::class.java)
+                                settingsManager.saveHealthData(healthData)
+                                Log.d("WearSyncService", "Successfully synced health data (legacy path)")
+                            } catch (e: Exception) {
+                                Log.e("WearSyncService", "Failed to process health data sync", e)
                             }
                         }
                     }

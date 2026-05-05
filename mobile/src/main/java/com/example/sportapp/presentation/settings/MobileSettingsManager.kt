@@ -128,8 +128,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[CONFLICT_POLICY] = state.conflictResolutionPolicy.name
             preferences[ACTIVE_ICON_TIER] = state.activeIconTier
         }
-        syncWatchStatsSettings(state)
-        syncHealthData(state.healthData)
+        syncAllToWatch(state)
         requestFullSyncFromWatch()
     }
 
@@ -188,31 +187,29 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         }
     }
 
-    private suspend fun syncWatchStatsSettings(state: MobileSettingsState) {
+    private suspend fun syncAllToWatch(state: MobileSettingsState) {
         try {
-            val request = PutDataMapRequest.create("/watch_stats_settings").apply {
-                dataMap.putString("widgets_json", gson.toJson(state.watchStatsWidgets))
-                dataMap.putString("period", state.watchStatsPeriod.name)
-                dataMap.putInt("custom_days", state.watchStatsCustomDays)
+            val request = PutDataMapRequest.create("/mobile_settings").apply {
+                dataMap.putString("watch_widgets_json", gson.toJson(state.watchStatsWidgets))
+                dataMap.putString("watch_period", state.watchStatsPeriod.name)
+                dataMap.putInt("watch_custom_days", state.watchStatsCustomDays)
+                dataMap.putString("health_data_json", gson.toJson(state.healthData))
                 dataMap.putLong("timestamp", System.currentTimeMillis())
             }
             dataClient.putDataItem(request.asPutDataRequest().setUrgent()).await()
-            Log.d("SettingsSync", "Synced watch stats settings")
+            Log.d("SettingsSync", "Synced all settings to watch via /mobile_settings")
         } catch (e: Exception) {
-            Log.e("SettingsSync", "Failed to sync watch stats settings", e)
+            Log.e("SettingsSync", "Failed to sync settings to watch", e)
         }
     }
 
+    @Deprecated("Use syncAllToWatch", ReplaceWith("syncAllToWatch(state)"))
+    private suspend fun syncWatchStatsSettings(state: MobileSettingsState) {
+        // No longer used, handled by syncAllToWatch
+    }
+
+    @Deprecated("Use syncAllToWatch", ReplaceWith("syncAllToWatch(state)"))
     private suspend fun syncHealthData(healthData: HealthData) {
-        try {
-            val request = PutDataMapRequest.create("/health_data").apply {
-                dataMap.putString("health_data_json", gson.toJson(healthData))
-                dataMap.putLong("timestamp", System.currentTimeMillis())
-            }
-            dataClient.putDataItem(request.asPutDataRequest().setUrgent()).await()
-            Log.d("SettingsSync", "Synced health data to wear")
-        } catch (e: Exception) {
-            Log.e("SettingsSync", "Failed to sync health data", e)
-        }
+        // No longer used, handled by syncAllToWatch
     }
 }

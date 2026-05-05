@@ -1,5 +1,7 @@
 package com.example.sportapp
 
+import java.util.Locale
+
 object TextsWearPT : WearTexts {
     // Main Menu
     override val MENU_SPORT = "Esporte"
@@ -71,16 +73,18 @@ object TextsWearPT : WearTexts {
     override val HEALTH_STEP_LENGTH = "Comprimento do passo"
     override val HEALTH_RESTING_HR = "FC em repouso"
     override val HEALTH_MAX_HR = "FC máxima"
+    override val HEALTH_VO2_MAX = "VO2 Max"
     override val HEALTH_SAVE = "Salvar"
     override val HEALTH_CHOOSE_GENDER = "Escolher gênero"
     override val GENDER_MALE = "Masculino"
     override val GENDER_FEMALE = "Feminino"
     
     override fun healthAgeValue(age: Int) = "$age anos"
-    override fun healthWeightValue(weight: Int) = "$weight kg"
-    override fun healthHeightValue(height: Int) = "$height cm"
+    override fun healthWeightValue(weight: Double) = if (weight == weight.toInt().toDouble()) "${weight.toInt()} kg" else String.format(Locale.US, "%.1f kg", weight)
+    override fun healthHeightValue(height: Double) = if (height == height.toInt().toDouble()) "${height.toInt()} cm" else String.format(Locale.US, "%.1f cm", height)
     override fun healthStepLengthValue(length: Int) = "$length cm"
     override fun healthHRValue(hr: Int) = "$hr BPM"
+    override fun healthVO2MaxValue(vo2: Double?) = vo2?.let { String.format(Locale.US, "%.1f", it) } ?: "--"
 
     // Units
     override val UNIT_YEARS = "anos"
@@ -92,6 +96,7 @@ object TextsWearPT : WearTexts {
     override val UNIT_KMH = "km/h"
     override val UNIT_KCAL = "kcal"
     override val UNIT_HPA = "hPa"
+    override val UNIT_VO2_MAX = "ml/kg/min"
 
     // Workout Data / Labels
     override val WORKOUT_ERROR_CONFIG = "Erro de configuração"
@@ -108,7 +113,7 @@ object TextsWearPT : WearTexts {
     override val SENSOR_CALORIES_SUM = "Calorias queimadas"
     override val SENSOR_CALORIES_MIN = "Calorias por minuto"
     override val SENSOR_STEPS = "Passos"
-    override val SENSOR_STEPS_MIN = "Cadência (passos/min)"
+    override val SENSOR_STEPS_MIN = "Cadence (passos/min)"
     override val SENSOR_DISTANCE_STEPS = "Distância (passos)"
     override val SENSOR_SPEED_GPS = "Velocidade"
     override val SENSOR_SPEED_STEPS = "Velocidade (passos)"
@@ -136,7 +141,7 @@ object TextsWearPT : WearTexts {
     override val SUMMARY_AVG_SPEED = "Velocidade média"
     override val SUMMARY_MAX_SPEED = "Velocidade máxima"
     override val SUMMARY_AVG_SPEED_STEPS = "Velocidade média (passos)"
-    override val SUMMARY_MAX_SPEED_STEPS = "Velocidade máxima (passos)"
+    override val SUMMARY_MAX_SPEED_STEPS = "Velocidade máxima (pasos)"
     override val SUMMARY_DISTANCE = "Distância"
     override val SUMMARY_DISTANCE_STEPS = "Distância (passos)"
     override val SUMMARY_STEPS = "Passos"
@@ -166,4 +171,5 @@ object TextsWearPT : WearTexts {
     override val COMP_SUNDAY = "Domingo"
 
     override val TILE_HELLO = "Olá!"
+
 }

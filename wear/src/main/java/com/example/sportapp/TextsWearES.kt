@@ -1,5 +1,7 @@
 package com.example.sportapp
 
+import java.util.Locale
+
 object TextsWearES : WearTexts {
     // Main Menu
     override val MENU_SPORT = "Deporte"
@@ -71,16 +73,18 @@ object TextsWearES : WearTexts {
     override val HEALTH_STEP_LENGTH = "Longitud de paso"
     override val HEALTH_RESTING_HR = "FC en reposo"
     override val HEALTH_MAX_HR = "FC máxima"
+    override val HEALTH_VO2_MAX = "VO2 Max"
     override val HEALTH_SAVE = "Guardar"
     override val HEALTH_CHOOSE_GENDER = "Seleccionar género"
     override val GENDER_MALE = "Hombre"
     override val GENDER_FEMALE = "Mujer"
     
     override fun healthAgeValue(age: Int) = "$age años"
-    override fun healthWeightValue(weight: Int) = "$weight kg"
-    override fun healthHeightValue(height: Int) = "$height cm"
+    override fun healthWeightValue(weight: Double) = if (weight == weight.toInt().toDouble()) "${weight.toInt()} kg" else String.format(Locale.US, "%.1f kg", weight)
+    override fun healthHeightValue(height: Double) = if (height == height.toInt().toDouble()) "${height.toInt()} cm" else String.format(Locale.US, "%.1f cm", height)
     override fun healthStepLengthValue(length: Int) = "$length cm"
     override fun healthHRValue(hr: Int) = "$hr LPM"
+    override fun healthVO2MaxValue(vo2: Double?) = vo2?.let { String.format(Locale.US, "%.1f", it) } ?: "--"
 
     // Units
     override val UNIT_YEARS = "años"
@@ -92,6 +96,7 @@ object TextsWearES : WearTexts {
     override val UNIT_KMH = "km/h"
     override val UNIT_KCAL = "kcal"
     override val UNIT_HPA = "hPa"
+    override val UNIT_VO2_MAX = "ml/kg/min"
 
     // Workout Data / Labels
     override val WORKOUT_ERROR_CONFIG = "Error de configuración"

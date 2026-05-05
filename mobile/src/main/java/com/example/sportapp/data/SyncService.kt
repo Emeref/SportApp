@@ -81,6 +81,27 @@ class SyncService : WearableListenerService() {
                      val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
                      val json = dataMapItem.dataMap.getString("settings_json") ?: return@forEach
                      Log.d("SyncService", "Received wear settings update")
+                     scope.launch {
+                         try {
+                             // Wearable sends UserSettings which contains healthData
+                             val type = object : TypeToken<Map<String, Any>>() {}.type
+                             val wearSettings: Map<String, Any> = gson.fromJson(json, type)
+                             val healthDataMap = wearSettings["healthData"]
+
+                             if (healthDataMap != null) {
+                                 val healthDataJson = gson.toJson(healthDataMap)
+                                 val incomingHealthData = gson.fromJson(healthDataJson, com.example.sportapp.presentation.settings.HealthData::class.java)
+                                 
+                                 val currentSettings = mobileSettingsManager.settingsFlow.first()
+                                 if (currentSettings.healthData != incomingHealthData) {
+                                     mobileSettingsManager.saveSettings(currentSettings.copy(healthData = incomingHealthData))
+                                     Log.d("SyncService", "Updated mobile health data from wear sync")
+                                 }
+                             }
+                         } catch (e: Exception) {
+                             Log.e("SyncService", "Failed to process wear settings sync", e)
+                         }
+                     }
                 }
             }
         }
