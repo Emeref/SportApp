@@ -21,7 +21,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -441,26 +444,31 @@ fun LiveTrackingScreen(
                     modifier = Modifier.padding(end = 4.dp)
                 ) {
                     repeat(5) {
-                        Icon(
+                        OutlinedIcon(
                             imageVector = Icons.Default.KeyboardDoubleArrowUp,
                             contentDescription = null,
-                            tint = Color.Black,
                             modifier = Modifier.size(24.dp)
                         )
                     }
-                    Icon(
+                    OutlinedIcon(
                         Icons.Default.Lock,
                         contentDescription = null,
-                        tint = Color.Black,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        texts.LIVE_TRACKING_UNLOCK_SWIPE,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        textAlign = TextAlign.Center,
+                        text = texts.LIVE_TRACKING_UNLOCK_SWIPE,
+                        style = LocalTextStyle.current.copy(
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center,
+                            shadow = Shadow(
+                                color = Color.White,
+                                offset = Offset(0f, 0f),
+                                blurRadius = 8f
+                            )
+                        ),
                         modifier = Modifier.width(100.dp)
                     )
                 }
@@ -529,5 +537,23 @@ fun StatWidget(label: String, value: String, modifier: Modifier = Modifier) {
                 maxLines = 1
             )
         }
+    }
+}
+
+@Composable
+fun OutlinedIcon(
+    imageVector: ImageVector,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Black,
+    outlineColor: Color = Color.White
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        val outlineOffset = 0.5.dp
+        Icon(imageVector, null, tint = outlineColor, modifier = Modifier.fillMaxSize().offset(outlineOffset, outlineOffset))
+        Icon(imageVector, null, tint = outlineColor, modifier = Modifier.fillMaxSize().offset(-outlineOffset, outlineOffset))
+        Icon(imageVector, null, tint = outlineColor, modifier = Modifier.fillMaxSize().offset(outlineOffset, -outlineOffset))
+        Icon(imageVector, null, tint = outlineColor, modifier = Modifier.fillMaxSize().offset(-outlineOffset, -outlineOffset))
+        Icon(imageVector, contentDescription, tint = tint, modifier = Modifier.fillMaxSize())
     }
 }
