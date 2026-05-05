@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground>
+        <layer-list>
+            <item
+                android:drawable="@drawable/logo_apki_niebieskie"
+                android:bottom="24dp"
+                android:left="24dp"
+                android:right="24dp"
+                android:top="24dp" />
+        </layer-list>
+    </foreground>
+</adaptive-icon>

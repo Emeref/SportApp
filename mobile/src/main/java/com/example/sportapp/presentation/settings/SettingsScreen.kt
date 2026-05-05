@@ -32,7 +32,8 @@ fun SettingsScreen(
     onNavigateToHealthData: () -> Unit,
     onNavigateToLanguageSelection: () -> Unit,
     onNavigateToSync: () -> Unit,
-    onNavigateToStrava: () -> Unit
+    onNavigateToStrava: () -> Unit,
+    onNavigateToSupport: () -> Unit
 ) {
     var state by remember { mutableStateOf(initialState) }
     val scrollState = rememberScrollState()
@@ -129,6 +130,12 @@ fun SettingsScreen(
                     subtitle = texts.SETTINGS_WIDGETS_WATCH_DESC,
                     icon = Icons.Default.Watch,
                     onClick = onNavigateToWatchWidgetSelection
+                )
+
+                SettingsRow(
+                    title = texts.SUPPORT_TITLE,
+                    icon = Icons.Default.VolunteerActivism,
+                    onClick = onNavigateToSupport
                 )
             }
             

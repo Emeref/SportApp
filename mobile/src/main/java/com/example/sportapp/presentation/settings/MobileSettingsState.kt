@@ -77,5 +77,6 @@ data class MobileSettingsState(
     val autoExportToHC: Boolean = false,
     val autoExportToStrava: Boolean = false,
     val hcPermissionsDeniedCount: Int = 0,
-    val conflictResolutionPolicy: ConflictResolutionPolicy = ConflictResolutionPolicy.NEWER_WINS
+    val conflictResolutionPolicy: ConflictResolutionPolicy = ConflictResolutionPolicy.NEWER_WINS,
+    val activeIconTier: Int = 0
 )

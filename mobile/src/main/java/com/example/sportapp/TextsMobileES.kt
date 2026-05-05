@@ -502,6 +502,13 @@ object TextsMobileES : MobileTexts {
     override val MAP_TYPE_HYBRID = "Híbrido"
     override val MAP_TYPE_TERRAIN = "Terreno"
 
+    // Support System
+    override val SUPPORT_TITLE = "Apoyar al autor"
+    override val SUPPORT_DISCLAIMER = "Todas las funciones de la aplicación son gratuitas. La elección de un nivel es un apoyo voluntario al autor. El cambio de icono es el único beneficio digital."
+    override val SUPPORT_LIFETIME_BUY = "De por vida"
+    override val SUPPORT_MONTHLY_SUB = "Mensual"
+    override val SUPPORT_ICON_CHANGE_NOTICE = "El cambio de icono puede tardar unos segundos o requerir el reinicio del launcher."
+
     override fun getWidgetLabel(id: String): String {
         return when (id) {
             "count" -> WIDGET_COUNT
@@ -579,7 +586,7 @@ object TextsMobileES : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
-            "avg_cadence" -> WIDGET_AVG_BPM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> id
         }

@@ -43,6 +43,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         private val AUTO_EXPORT_STRAVA = booleanPreferencesKey("auto_export_strava")
         private val HC_PERMISSIONS_DENIED_COUNT = intPreferencesKey("hc_permissions_denied_count")
         private val CONFLICT_POLICY = stringPreferencesKey("conflict_policy")
+        private val ACTIVE_ICON_TIER = intPreferencesKey("active_icon_tier")
     }
 
     val settingsFlow: Flow<MobileSettingsState> = context.dataStore.data.map { preferences ->
@@ -102,7 +103,8 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             hcPermissionsDeniedCount = preferences[HC_PERMISSIONS_DENIED_COUNT] ?: defaultState.hcPermissionsDeniedCount,
             conflictResolutionPolicy = ConflictResolutionPolicy.valueOf(
                 preferences[CONFLICT_POLICY] ?: defaultState.conflictResolutionPolicy.name
-            )
+            ),
+            activeIconTier = preferences[ACTIVE_ICON_TIER] ?: defaultState.activeIconTier
         )
     }
 
@@ -124,6 +126,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[AUTO_EXPORT_STRAVA] = state.autoExportToStrava
             preferences[HC_PERMISSIONS_DENIED_COUNT] = state.hcPermissionsDeniedCount
             preferences[CONFLICT_POLICY] = state.conflictResolutionPolicy.name
+            preferences[ACTIVE_ICON_TIER] = state.activeIconTier
         }
         syncWatchStatsSettings(state)
         syncHealthData(state.healthData)
@@ -164,6 +167,12 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
     suspend fun resetHcDeniedCount() {
         context.dataStore.edit { preferences ->
             preferences[HC_PERMISSIONS_DENIED_COUNT] = 0
+        }
+    }
+
+    suspend fun updateActiveIconTier(tier: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[ACTIVE_ICON_TIER] = tier
         }
     }
 

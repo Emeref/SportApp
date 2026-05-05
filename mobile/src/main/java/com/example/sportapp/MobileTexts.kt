@@ -511,6 +511,13 @@ interface MobileTexts {
     val MAP_TYPE_SATELLITE: String
     val MAP_TYPE_HYBRID: String
     val MAP_TYPE_TERRAIN: String
+
+    // Support System
+    val SUPPORT_TITLE: String
+    val SUPPORT_DISCLAIMER: String
+    val SUPPORT_LIFETIME_BUY: String
+    val SUPPORT_MONTHLY_SUB: String
+    val SUPPORT_ICON_CHANGE_NOTICE: String
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

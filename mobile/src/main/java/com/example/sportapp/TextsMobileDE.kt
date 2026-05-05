@@ -269,7 +269,7 @@ object TextsMobileDE : MobileTexts {
     override val DEF_MOVE_UP = "Nach oben verschieben"
     override val DEF_MOVE_DOWN = "Nach unten verschieben"
     override val DEF_DELETE_TITLE = "Aktivität löschen"
-    override fun defDeleteConfirm(name: String) = "Sind Sie sicher, dass Sie die Aktivität '$name' löschen möchten?"
+    override fun defDeleteConfirm(name: String) = "Sind Sie sicher, dass Sie die Aktivität '$name' doch löschen möchten?"
     override val DEF_NEW_ACTIVITY = "Neue Aktivität"
     override val DEF_EDIT_ACTIVITY = "Aktivität bearbeiten"
     override val DEF_NAME_LABEL = "Aktivitätsname"
@@ -477,13 +477,6 @@ object TextsMobileDE : MobileTexts {
     override val UNIT_KCAL_MIN = "kcal/Min"
     override val UNIT_VO2_MAX = "ml/kg/Min"
 
-    // Map Types
-    override val MAP_TYPE_TITLE = "Kartentyp"
-    override val MAP_TYPE_NORMAL = "Normal"
-    override val MAP_TYPE_SATELLITE = "Satellit"
-    override val MAP_TYPE_HYBRID = "Hybrid"
-    override val MAP_TYPE_TERRAIN = "Gelände"
-
     // Strava Strings
     override val STRAVA_TITLE = "Strava-Synchronisierung"
     override val STRAVA_CONNECT = "Mit Strava verbinden"
@@ -517,6 +510,20 @@ object TextsMobileDE : MobileTexts {
     // Errors
     override val ERROR_WEARABLE_NOT_AVAILABLE = "Wearable API ist auf diesem Gerät nicht verfügbar"
     override val ERROR_NO_WATCH_CONNECTED = "Keine Uhr verbunden"
+
+    // Map Types
+    override val MAP_TYPE_TITLE = "Kartentyp"
+    override val MAP_TYPE_NORMAL = "Normal"
+    override val MAP_TYPE_SATELLITE = "Satellit"
+    override val MAP_TYPE_HYBRID = "Hybrid"
+    override val MAP_TYPE_TERRAIN = "Gelände"
+
+    // Support System
+    override val SUPPORT_TITLE = "Unterstütze den Autor"
+    override val SUPPORT_DISCLAIMER = "Alle App-Funktionen sind kostenlos. Die Wahl eines Levels ist eine freiwillige Unterstützung für den Autor. Das Ändern des Icons ist der einzige digitale Vorteil."
+    override val SUPPORT_LIFETIME_BUY = "Lebenslang"
+    override val SUPPORT_MONTHLY_SUB = "Monatlich"
+    override val SUPPORT_ICON_CHANGE_NOTICE = "Das Ändern des Icons kann einige Sekunden dauern oder einen Neustart des Launchers erfordern."
 
     override fun getWidgetLabel(id: String): String {
         return when (id) {
@@ -595,7 +602,7 @@ object TextsMobileDE : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
-            "avg_cadence" -> WIDGET_AVG_BPM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> id
         }
