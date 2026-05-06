@@ -23,13 +23,13 @@ enum class AppMapType {
 }
 
 enum class AppLanguage(val code: String, val label: String, val texts: MobileTexts) {
- //   ENGLISH("en", "English", TextsMobileEN),
- //   SPANISH("es", "Español", TextsMobileES),
- //   GERMAN("de", "Deutsch", TextsMobileDE),
-//    FRENCH("fr", "Français", TextsMobileFR),
- //   ITALIAN("it", "Italiano", TextsMobileIT),
+    ENGLISH("en", "English", TextsMobileEN),
+    SPANISH("es", "Español", TextsMobileES),
+    GERMAN("de", "Deutsch", TextsMobileDE),
+    FRENCH("fr", "Français", TextsMobileFR),
+    ITALIAN("it", "Italiano", TextsMobileIT),
     POLISH("pl", "Polski", TextsMobilePL),
-  //  PORTUGUESE("pt", "Português", TextsMobilePT)
+    PORTUGUESE("pt", "Português", TextsMobilePT)
 }
 
 data class WidgetItem(
