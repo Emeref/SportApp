@@ -273,6 +273,7 @@ object TextsMobilePL : MobileTexts {
     override val DEF_NEW_ACTIVITY = "Nowa aktywność"
     override val DEF_EDIT_ACTIVITY = "Edytuj aktywność"
     override val DEF_NAME_LABEL = "Nazwa aktywności"
+    override val DEF_NAME_HINT = "Np. Bieżnia"
     override val DEF_AUTO_LAP_LABEL = "Automatyczne okrążenie (metry, opcjonalnie)"
     override val DEF_WIDGET_IN_ACTIVITY = "Widget in activity"
     override val DEF_VISIBILITY = "Widoczność"

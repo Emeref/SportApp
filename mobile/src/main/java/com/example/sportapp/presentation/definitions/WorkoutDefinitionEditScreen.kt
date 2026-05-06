@@ -97,7 +97,7 @@ fun WorkoutDefinitionEditScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    placeholder = { Text("Np. Bieżnia") },
+                    placeholder = {Text(texts.DEF_NAME_HINT, style = MaterialTheme.typography.labelMedium)},
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true
