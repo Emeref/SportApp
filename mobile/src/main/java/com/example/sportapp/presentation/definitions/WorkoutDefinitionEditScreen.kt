@@ -179,15 +179,23 @@ fun WorkoutDefinitionEditScreen(
                     label = sensor.label(texts),
                     config = sensorConfig,
                     onConfigChange = { updatedConfig ->
+                        val oldConfig = sensors[index]
                         var newConfig = updatedConfig
-                        
-                        // Logic: Visibility implies Recording
-                        if (newConfig.isVisible) {
-                            newConfig = newConfig.copy(isRecording = true)
-                        }
-                        
-                        // Logic: Location data (map) visibility is always disabled
-                        if (newConfig.sensorId == "map") {
+
+                        if (newConfig.sensorId != "map") {
+                            if (newConfig.isRecording != oldConfig.isRecording) {
+                                // Jeśli kliknę 'nagrywaj', zaznaczam/odznaczam oba
+                                newConfig = newConfig.copy(isVisible = newConfig.isRecording)
+                            } else if (newConfig.isVisible != oldConfig.isVisible) {
+                                // Jeśli kliknę 'widoczność'
+                                if (newConfig.isVisible) {
+                                    // Zaznaczenie 'widoczności' zaznacza też 'nagrywaj'
+                                    newConfig = newConfig.copy(isRecording = true)
+                                }
+                                // Odznaczenie 'widoczności' zostawia 'nagrywaj' bez zmian
+                            }
+                        } else {
+                            // Dane lokalizacji: zawsze niewidoczne, logika bez zmian
                             newConfig = newConfig.copy(isVisible = false)
                         }
                         
