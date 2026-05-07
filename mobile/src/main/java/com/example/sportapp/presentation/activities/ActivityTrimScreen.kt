@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.presentation.stats.CommonChartSection
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
@@ -102,7 +103,7 @@ fun ActivityTrimScreen(
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(
-                            text = w.activityName,
+                            text = getLocalizedActivityName(w.activityName, texts),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )

@@ -25,6 +25,7 @@ import com.example.sportapp.data.model.BaseType
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
+import com.example.sportapp.data.model.getLocalizedActivityName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +37,9 @@ fun WorkoutDefinitionEditScreen(
     val texts = LocalMobileTexts.current
     val existingDefinition by viewModel.getDefinition(definitionId ?: -1).collectAsState(initial = null)
     
-    var name by remember(existingDefinition) { mutableStateOf(existingDefinition?.name ?: "") }
+    var name by remember(existingDefinition, texts) { 
+        mutableStateOf(getLocalizedActivityName(existingDefinition?.name, texts)) 
+    }
     var iconName by remember(existingDefinition) { mutableStateOf(existingDefinition?.iconName ?: "DirectionsRun") }
     var baseType by remember(existingDefinition) { mutableStateOf(existingDefinition?.baseType ?: BaseType.OTHER) }
     var autoLapDistance by remember(existingDefinition) { mutableStateOf(existingDefinition?.autoLapDistance?.toString() ?: "") }
@@ -97,7 +100,7 @@ fun WorkoutDefinitionEditScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    placeholder = { Text("Np. Bieżnia") },
+                    placeholder = {Text(texts.DEF_NAME_HINT, style = MaterialTheme.typography.labelMedium)},
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true
@@ -179,15 +182,23 @@ fun WorkoutDefinitionEditScreen(
                     label = sensor.label(texts),
                     config = sensorConfig,
                     onConfigChange = { updatedConfig ->
+                        val oldConfig = sensors[index]
                         var newConfig = updatedConfig
-                        
-                        // Logic: Visibility implies Recording
-                        if (newConfig.isVisible) {
-                            newConfig = newConfig.copy(isRecording = true)
-                        }
-                        
-                        // Logic: Location data (map) visibility is always disabled
-                        if (newConfig.sensorId == "map") {
+
+                        if (newConfig.sensorId != "map") {
+                            if (newConfig.isRecording != oldConfig.isRecording) {
+                                // Jeśli kliknę 'nagrywaj', zaznaczam/odznaczam oba
+                                newConfig = newConfig.copy(isVisible = newConfig.isRecording)
+                            } else if (newConfig.isVisible != oldConfig.isVisible) {
+                                // Jeśli kliknę 'widoczność'
+                                if (newConfig.isVisible) {
+                                    // Zaznaczenie 'widoczności' zaznacza też 'nagrywaj'
+                                    newConfig = newConfig.copy(isRecording = true)
+                                }
+                                // Odznaczenie 'widoczności' zostawia 'nagrywaj' bez zmian
+                            }
+                        } else {
+                            // Dane lokalizacji: zawsze niewidoczne, logika bez zmian
                             newConfig = newConfig.copy(isVisible = false)
                         }
                         

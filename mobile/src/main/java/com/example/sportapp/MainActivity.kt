@@ -46,6 +46,7 @@ import com.example.sportapp.presentation.support.SupportScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import java.util.Locale
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -73,6 +74,15 @@ class MainActivity : ComponentActivity() {
             val settingsState by settingsManager.settingsFlow.collectAsStateWithLifecycle(initialValue = MobileSettingsState())
             val texts = settingsState.language.texts
 
+            // Update default locale to ensure components like DatePickerDialog use correct language
+            LaunchedEffect(settingsState.language) {
+                val locale = settingsState.language.locale
+                Locale.setDefault(locale)
+                val config = resources.configuration
+                config.setLocale(locale)
+                resources.updateConfiguration(config, resources.displayMetrics)
+            }
+
             // Request permissions on startup
             val permissionLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions()
@@ -93,7 +103,10 @@ class MainActivity : ComponentActivity() {
                 permissionLauncher.launch(permissions.toTypedArray())
             }
 
-            CompositionLocalProvider(LocalMobileTexts provides texts) {
+            CompositionLocalProvider(
+                LocalMobileTexts provides texts,
+                LocalAppLanguage provides settingsState.language
+            ) {
                 SportAppTheme(themeMode = settingsState.themeMode) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -252,7 +265,7 @@ class MainActivity : ComponentActivity() {
                                 SyncStatusScreen(
                                     onBack = { 
                                         if (backStackEntry.lifecycle.currentState == Lifecycle.State.RESUMED) {
-                                            navController.popBackStack() 
+                                            navController.popBackStack()
                                         }
                                     }
                                 )

@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.presentation.definitions.WorkoutDefinitionViewModel
 import com.example.sportapp.presentation.definitions.getIconForName
 
@@ -71,7 +72,7 @@ fun ActivityDetailSettingsListScreen(
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
                                 Text(
-                                    text = definition.name,
+                                    text = getLocalizedActivityName(definition.name, texts),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )

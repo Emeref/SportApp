@@ -262,6 +262,7 @@ interface MobileTexts {
     val DEF_NEW_ACTIVITY: String
     val DEF_EDIT_ACTIVITY: String
     val DEF_NAME_LABEL: String
+    val DEF_NAME_HINT: String
     val DEF_AUTO_LAP_LABEL: String
     val DEF_WIDGET_IN_ACTIVITY: String
     val DEF_VISIBILITY: String

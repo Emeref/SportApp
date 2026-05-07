@@ -273,6 +273,7 @@ object TextsMobilePL : MobileTexts {
     override val DEF_NEW_ACTIVITY = "Nowa aktywność"
     override val DEF_EDIT_ACTIVITY = "Edytuj aktywność"
     override val DEF_NAME_LABEL = "Nazwa aktywności"
+    override val DEF_NAME_HINT = "Np. Bieżnia"
     override val DEF_AUTO_LAP_LABEL = "Automatyczne okrążenie (metry, opcjonalnie)"
     override val DEF_WIDGET_IN_ACTIVITY = "Widget in activity"
     override val DEF_VISIBILITY = "Widoczność"
@@ -486,7 +487,7 @@ object TextsMobilePL : MobileTexts {
             "ascent" -> WIDGET_ASCENT
             "descent" -> WIDGET_DESCENT
             "steps" -> WIDGET_STEPS
-            "avg_cadence" -> WIDGET_AVG_BPM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
             "max_speed" -> WIDGET_MAX_SPEED
             "max_altitude" -> WIDGET_MAX_ALTITUDE
             "max_elevation_gain" -> WIDGET_MAX_ELEVATION_GAIN
@@ -554,7 +555,7 @@ object TextsMobilePL : MobileTexts {
             "maxPressure" -> WIDGET_MAX_PRESSURE
             "minPressure" -> WIDGET_MIN_PRESSURE
             "bestPace1km" -> WIDGET_BEST_PACE_1KM
-            "avg_cadence" -> WIDGET_AVG_BPM
+            "avg_cadence" -> WIDGET_AVG_CADENCE
             "avg_step_length_over_time" -> SENSOR_AVG_STEP_LENGTH
             else -> id
         }

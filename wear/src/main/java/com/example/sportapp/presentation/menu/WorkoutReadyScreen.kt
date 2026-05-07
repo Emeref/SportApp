@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import com.example.sportapp.LocalWearTexts
+import com.example.sportapp.data.model.getLocalizedActivityName
 
 @Composable
 fun WorkoutReadyScreen(
@@ -75,7 +76,7 @@ fun WorkoutReadyScreen(
                     )
                     
                     Text(
-                        text = definition.name,
+                        text = getLocalizedActivityName(definition.name, texts),
                         style = MaterialTheme.typography.title2,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 8.dp)

@@ -10,8 +10,8 @@ object TextsWearDE : WearTexts {
     override val APP_LOGO_DESC = "SportApp Logo"
 
     // Choose Sport
-    override val CHOOSE_SPORT_TITLE = "Sportart wählen"
-    override val CHOOSE_SPORT_NO_DEFINITIONS = "Keine Aktivitätsdefinitionen. Definieren Sie diese in der Handy-App."
+    override val CHOOSE_SPORT_TITLE = "Sport wählen"
+    override val CHOOSE_SPORT_NO_DEFINITIONS = "Keine Aktivitätsdefinitionen. Definiere sie in der Smartphone-App."
     override val CHOOSE_SPORT_DEFAULT_NAME = "Standardaktivität"
 
     // Statistics
@@ -23,21 +23,12 @@ object TextsWearDE : WearTexts {
     override fun statsPeriodCustom(days: Int) = "Letzte $days Tage"
 
     override val STATS_WIDGET_COUNT = "Anzahl der Aktivitäten"
-    override val STATS_WIDGET_CALORIES = "Verbrannte Kalorien"
     override val STATS_WIDGET_DISTANCE_GPS = "Distanz (GPS)"
+    override val STATS_WIDGET_STEPS_ALL = "Gesamtschritte"
+    override val STATS_WIDGET_CALORIES = "Verbrannte Kalorien"
     override val STATS_WIDGET_DISTANCE_STEPS = "Distanz (Schritte)"
-    override val STATS_WIDGET_ASCENT = "Gesamtaufstieg"
-    override val STATS_WIDGET_DESCENT = "Gesamtabstieg"
-    override val STATS_WIDGET_STEPS_ALL = "Alle Schritte"
-
-    override val STATS_WIDGET_MAX_SPEED = "Höchstgeschwindigkeit"
-    override val STATS_WIDGET_MAX_ALTITUDE = "Maximale Höhe"
-    override val STATS_WIDGET_MAX_ELEVATION_GAIN = "Maximaler Höhengewinn"
-    override val STATS_WIDGET_MAX_DISTANCE = "Maximale Distanz"
-    override val STATS_WIDGET_MAX_DURATION = "Maximale Dauer"
-    override val STATS_WIDGET_MAX_CALORIES = "Maximaler Kalorienverbrauch"
-    override val STATS_WIDGET_MAX_AVG_CADENCE = "Maximale ø Trittfrequenz"
-    override val STATS_WIDGET_MAX_AVG_SPEED = "Maximale ø Geschwindigkeit"
+    override val STATS_WIDGET_ASCENT = "Höhenmeter aufwärts"
+    override val STATS_WIDGET_DESCENT = "Höhenmeter abwärts"
 
     // Workout Ready
     override val WORKOUT_READY_START = "Start"
@@ -49,12 +40,12 @@ object TextsWearDE : WearTexts {
     override val SETTINGS_SCREEN = "Bildschirm"
     override val SETTINGS_SCREEN_ALWAYS_ON = "Immer an"
     override val SETTINGS_SCREEN_AMBIENT = "Ambient-Modus"
-    override val SETTINGS_SCREEN_AUTO = "Automatischer Modus"
-    override val SETTINGS_CLOCK_COLOR = "Uhrenfarbe"
+    override val SETTINGS_SCREEN_AUTO = "Automatik-Modus"
+    override val SETTINGS_CLOCK_COLOR = "Uhrfarbe"
     override val SETTINGS_SCREEN_BEHAVIOR_TITLE = "Bildschirmverhalten"
     override val SETTINGS_LANGUAGE = "Sprache"
     override val SETTINGS_LANGUAGE_SELECTION_TITLE = "Sprache wählen"
-    
+
     // Colors
     override val COLOR_RED = "Rot"
     override val COLOR_WHITE = "Weiß"
@@ -76,9 +67,9 @@ object TextsWearDE : WearTexts {
     override val HEALTH_VO2_MAX = "VO2 Max"
     override val HEALTH_SAVE = "Speichern"
     override val HEALTH_CHOOSE_GENDER = "Geschlecht wählen"
-    override val GENDER_MALE = "Männlich"
-    override val GENDER_FEMALE = "Weiblich"
-    
+    override val GENDER_MALE = "Mann"
+    override val GENDER_FEMALE = "Frau"
+
     override fun healthAgeValue(age: Int) = "$age Jahre"
     override fun healthWeightValue(weight: Double) = if (weight == weight.toInt().toDouble()) "${weight.toInt()} kg" else String.format(Locale.US, "%.1f kg", weight)
     override fun healthHeightValue(height: Double) = if (height == height.toInt().toDouble()) "${height.toInt()} cm" else String.format(Locale.US, "%.1f cm", height)
@@ -100,17 +91,17 @@ object TextsWearDE : WearTexts {
 
     // Workout Data / Labels
     override val WORKOUT_ERROR_CONFIG = "Konfigurationsfehler"
-    override val WORKOUT_LABEL_TIMER = "AKTIVITÄTSZEIT"
+    override val WORKOUT_LABEL_TIMER = "TRAININGSZEIT"
     override val WORKOUT_LABEL_STEPS = "Schritte"
     override val WORKOUT_LABEL_DISTANCE = "Distanz"
     override val WORKOUT_LABEL_SPEED = "Geschwindigkeit"
-    override val WORKOUT_LABEL_HR = "Herzfrequenz"
+    override val WORKOUT_LABEL_HR = "Puls"
     override val WORKOUT_LABEL_PRESSURE = "Druck"
     override val WORKOUT_LABEL_ALTITUDE = "Höhe"
 
     // Sensors Names (for WorkoutDefinition)
     override val SENSOR_HEART_RATE = "Herzfrequenz"
-    override val SENSOR_CALORIES_SUM = "Verbrannte Kalorie"
+    override val SENSOR_CALORIES_SUM = "Verbrannte Kalorien"
     override val SENSOR_CALORIES_MIN = "Kalorien pro Minute"
     override val SENSOR_STEPS = "Schritte"
     override val SENSOR_STEPS_MIN = "Trittfrequenz (Schritte/Min)"
@@ -136,12 +127,12 @@ object TextsWearDE : WearTexts {
     override val SUMMARY_TITLE = "ZUSAMMENFASSUNG"
     override val SUMMARY_CONFIRM_DESC = "Bestätigen"
     override val SUMMARY_DURATION = "Dauer"
-    override val SUMMARY_AVG_HR = "ø Herzfrequenz"
-    override val SUMMARY_MAX_HR = "Maximale Herzfrequenz"
-    override val SUMMARY_AVG_SPEED = "ø Geschwindigkeit"
-    override val SUMMARY_MAX_SPEED = "Höchstgeschwindigkeit"
-    override val SUMMARY_AVG_SPEED_STEPS = "ø Geschwindigkeit (Schritte)"
-    override val SUMMARY_MAX_SPEED_STEPS = "Höchstgeschwindigkeit (Schritte)"
+    override val SUMMARY_AVG_HR = "Durchschn. Puls"
+    override val SUMMARY_MAX_HR = "Maximalpuls"
+    override val SUMMARY_AVG_SPEED = "Durchschn. Geschw."
+    override val SUMMARY_MAX_SPEED = "Maximalgeschw."
+    override val SUMMARY_AVG_SPEED_STEPS = "Durchschn. Geschw. (Schritte)"
+    override val SUMMARY_MAX_SPEED_STEPS = "Maximalgeschw. (Schritte)"
     override val SUMMARY_DISTANCE = "Distanz"
     override val SUMMARY_DISTANCE_STEPS = "Distanz (Schritte)"
     override val SUMMARY_STEPS = "Schritte"
@@ -161,7 +152,7 @@ object TextsWearDE : WearTexts {
     override val COMP_FRI = "Fr"
     override val COMP_SAT = "Sa"
     override val COMP_SUN = "So"
-    
+
     override val COMP_MONDAY = "Montag"
     override val COMP_TUESDAY = "Dienstag"
     override val COMP_WEDNESDAY = "Mittwoch"
@@ -171,4 +162,14 @@ object TextsWearDE : WearTexts {
     override val COMP_SUNDAY = "Sonntag"
 
     override val TILE_HELLO = "Hallo!"
+
+    //Stats page
+    override val STATS_WIDGET_MAX_SPEED = "Höchstgeschwindigkeit"
+    override val STATS_WIDGET_MAX_ALTITUDE = "Maximale Höhe"
+    override val STATS_WIDGET_MAX_ELEVATION_GAIN = "Höchster Höhengewinn"
+    override val STATS_WIDGET_MAX_DISTANCE = "Größte Distanz"
+    override val STATS_WIDGET_MAX_DURATION = "Längste Dauer"
+    override val STATS_WIDGET_MAX_CALORIES = "Maximaler Kalorienverbrauch"
+    override val STATS_WIDGET_MAX_AVG_CADENCE = "Höchste durchschn. Trittfrequenz"
+    override val STATS_WIDGET_MAX_AVG_SPEED = "Höchste durchschn. Geschw."
 }

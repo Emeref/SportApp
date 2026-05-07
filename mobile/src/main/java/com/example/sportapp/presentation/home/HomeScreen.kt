@@ -27,6 +27,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.MobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.presentation.definitions.getIconForName
 import com.example.sportapp.presentation.getAppLogoRes
 import com.example.sportapp.presentation.settings.ReportingPeriod
@@ -124,7 +125,7 @@ fun HomeScreen(
                 LazyColumn {
                     items(locationDefinitions) { definition ->
                         ListItem(
-                            headlineContent = { Text(definition.name) },
+                            headlineContent = { Text(getLocalizedActivityName(definition.name, texts)) },
                             leadingContent = {
                                 Icon(
                                     imageVector = getIconForName(definition.iconName),
@@ -205,7 +206,7 @@ fun HomeScreen(
                 exit = shrinkOut()
             ) {
                 ActiveWorkoutCard(
-                    definitionName = activeDefinition?.name ?: texts.HOME_ACTIVE_WORKOUT,
+                    definitionName = getLocalizedActivityName(activeDefinition?.name ?: texts.HOME_ACTIVE_WORKOUT, texts),
                     iconName = activeDefinition?.iconName ?: "DirectionsRun",
                     duration = formattedDuration,
                     data = activeWorkoutData ?: emptyMap(),

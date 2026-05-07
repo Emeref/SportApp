@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.presentation.settings.WidgetItem
 import com.example.sportapp.presentation.settings.WidgetSelectionRow
 
@@ -30,7 +31,7 @@ fun ActivityDetailSettingsEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("${texts.AD_SETTINGS_EDIT_TITLE}: ${viewModel.typeName}") },
+                title = { Text("${texts.AD_SETTINGS_EDIT_TITLE}: ${getLocalizedActivityName(viewModel.typeName, texts)}") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = texts.SETTINGS_CLOSE)

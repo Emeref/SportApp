@@ -33,6 +33,7 @@ import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
@@ -406,9 +407,13 @@ fun rememberMarkerCustom(
                         val index = entry.entry.x.toInt()
                         if (index in overallRawData.indices) {
                             when (val data = overallRawData[index]) {
-                                is WorkoutEntity -> "${data.activityName}\n${outputSdf.format(Date(data.startTime))}\n$value $unit"
+                                is WorkoutEntity -> {
+                                    val localizedName = getLocalizedActivityName(data.activityName, texts)
+                                    "$localizedName\n${outputSdf.format(Date(data.startTime))}\n$value $unit"
+                                }
                                 is Map<*, *> -> {
-                                    val name = data["nazwa aktywnosci"]?.toString() ?: texts.DEF_STANDARD_ACTIVITY
+                                    val rawName = data["nazwa aktywnosci"]?.toString() ?: ""
+                                    val name = getLocalizedActivityName(rawName, texts)
                                     val rawDate = data["data"]?.toString() ?: ""
                                     val formattedDate = try { inputSdf.parse(rawDate)?.let { outputSdf.format(it) } ?: rawDate } catch (_: Exception) { rawDate }
                                     "$name\n$formattedDate\n$value $unit"

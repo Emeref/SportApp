@@ -1,5 +1,6 @@
 package com.example.sportapp.presentation.settings
 
+import androidx.compose.runtime.staticCompositionLocalOf
 import com.example.sportapp.MobileTexts
 import com.example.sportapp.TextsMobileEN
 import com.example.sportapp.TextsMobilePL
@@ -9,6 +10,7 @@ import com.example.sportapp.TextsMobileES
 import com.example.sportapp.TextsMobileIT
 import com.example.sportapp.TextsMobilePT
 import com.example.sportapp.healthconnect.ConflictResolutionPolicy
+import java.util.Locale
 
 enum class ReportingPeriod {
     TODAY, WEEK, MONTH, YEAR, CUSTOM
@@ -22,14 +24,18 @@ enum class AppMapType {
     NORMAL, SATELLITE, HYBRID, TERRAIN
 }
 
-enum class AppLanguage(val code: String, val label: String, val texts: MobileTexts) {
- //   ENGLISH("en", "English", TextsMobileEN),
- //   SPANISH("es", "Español", TextsMobileES),
- //   GERMAN("de", "Deutsch", TextsMobileDE),
-//    FRENCH("fr", "Français", TextsMobileFR),
- //   ITALIAN("it", "Italiano", TextsMobileIT),
-    POLISH("pl", "Polski", TextsMobilePL),
-  //  PORTUGUESE("pt", "Português", TextsMobilePT)
+enum class AppLanguage(val code: String, val label: String, val texts: MobileTexts, val locale: Locale) {
+    ENGLISH("en", "English", TextsMobileEN, Locale.ENGLISH),
+    SPANISH("es", "Español", TextsMobileES, Locale.forLanguageTag("es")),
+    GERMAN("de", "Deutsch", TextsMobileDE, Locale.GERMAN),
+    FRENCH("fr", "Français", TextsMobileFR, Locale.FRENCH),
+    ITALIAN("it", "Italiano", TextsMobileIT, Locale.ITALIAN),
+    POLISH("pl", "Polski", TextsMobilePL, Locale.forLanguageTag("pl")),
+    PORTUGUESE("pt", "Português", TextsMobilePT, Locale.forLanguageTag("pt"))
+}
+
+val LocalAppLanguage = staticCompositionLocalOf<AppLanguage> {
+    error("No AppLanguage provided")
 }
 
 data class WidgetItem(
