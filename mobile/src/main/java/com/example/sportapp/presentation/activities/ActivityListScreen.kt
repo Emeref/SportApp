@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.data.model.getLocalizedActivityName
+import com.example.sportapp.presentation.definitions.getIconForName
 import com.example.sportapp.presentation.getAppLogoRes
 import java.text.SimpleDateFormat
 import java.util.*
@@ -168,9 +170,9 @@ fun ActivityListScreen(
                     LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                         items(definitions) { definition ->
                             ListItem(
-                                headlineContent = { Text(definition.name) },
+                                headlineContent = { Text(getLocalizedActivityName(definition.name, texts)) },
                                 leadingContent = { 
-                                    Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null)
+                                    Icon(getIconForName(definition.iconName), contentDescription = null)
                                 },
                                 modifier = Modifier.clickable {
                                     viewModel.importGpx(showImportTypeDialog!!, definition)
@@ -382,7 +384,7 @@ fun ActivityListScreen(
                                 text = when {
                                     selectedTypes == null -> texts.ACTIVITY_ALL_TYPES
                                     selectedTypes!!.isEmpty() -> texts.ACTIVITY_NONE
-                                    selectedTypes!!.size == 1 -> selectedTypes!!.first()
+                                    selectedTypes!!.size == 1 -> getLocalizedActivityName(selectedTypes!!.first(), texts)
                                     else -> "${texts.ACTIVITY_FILTERS}: ${selectedTypes!!.size}"
                                 }
                             )
@@ -409,7 +411,7 @@ fun ActivityListScreen(
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Checkbox(checked = selectedTypes?.contains(type) ?: true, onCheckedChange = null)
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text(type)
+                                            Text(getLocalizedActivityName(type, texts))
                                         }
                                     },
                                     onClick = { viewModel.toggleTypeSelection(type) }
@@ -502,7 +504,7 @@ fun ActivityListScreen(
                                             onCheckedChange = { viewModel.toggleSelection(activity.id) },
                                             modifier = Modifier.width(48.dp)
                                         )
-                                        DataCell(activity.type, 100.dp)
+                                        DataCell(getLocalizedActivityName(activity.type, texts), 100.dp)
                                         DataCell(activity.date, 150.dp)
                                         DataCell(activity.duration, 100.dp)
                                         DataCell(activity.calories, 80.dp)

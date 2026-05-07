@@ -28,6 +28,7 @@ import androidx.wear.compose.material.*
 import com.example.sportapp.LocalWearTexts
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutSensor
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.presentation.components.SportDataRow
 import com.example.sportapp.presentation.settings.HealthData
 import com.example.sportapp.presentation.settings.ScreenBehavior
@@ -47,6 +48,7 @@ fun DynamicWorkoutScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+    val texts = LocalWearTexts.current
 
     var forceActiveUI by remember { mutableStateOf(false) }
 
@@ -86,7 +88,9 @@ fun DynamicWorkoutScreen(
         activityName = sportDef.name,
         healthData = healthData,
         definitionId = definitionId,
-        onEndWorkout = { summary -> onEndWorkout(sportDef.name, summary) }
+        onEndWorkout = { summary -> 
+            onEndWorkout(getLocalizedActivityName(sportDef.name, texts), summary) 
+        }
     )
 
     val swipeToDismissState = rememberSwipeToDismissBoxState(
@@ -115,7 +119,7 @@ fun DynamicWorkoutScreen(
                 )
             } else {
                 ActiveWorkoutUI(
-                    activityName = sportDef.name,
+                    activityName = getLocalizedActivityName(sportDef.name, texts),
                     session = session,
                     dataSensors = dataSensors,
                     clockColor = clockColor

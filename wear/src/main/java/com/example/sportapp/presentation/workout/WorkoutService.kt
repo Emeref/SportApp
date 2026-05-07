@@ -24,8 +24,10 @@ import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.presentation.sensors.*
 import com.example.sportapp.presentation.settings.HealthData
+import com.example.sportapp.presentation.settings.ScreenBehavior
 import com.google.android.gms.location.*
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
@@ -265,7 +267,7 @@ class WorkoutService : Service(), SensorEventListener {
             .setTouchIntent(pendingIntent)
             .setStatus(
                 Status.Builder()
-                    .addPart("name", Status.TextPart(sportDefinition?.name ?: fallbackActivityName))
+                    .addPart("name", Status.TextPart(getLocalizedActivityName(sportDefinition?.name ?: fallbackActivityName, TextsWearPL)))
                     .build()
             )
             .build()
@@ -597,7 +599,7 @@ class WorkoutService : Service(), SensorEventListener {
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("${sportDefinition?.name ?: fallbackActivityName}")
+            .setContentTitle(getLocalizedActivityName(sportDefinition?.name ?: fallbackActivityName, TextsWearPL))
             .setContentText("${TextsWearPL.SUMMARY_DURATION}: ${formatTime(totalSeconds)}")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)

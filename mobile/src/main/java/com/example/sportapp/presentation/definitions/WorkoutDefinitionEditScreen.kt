@@ -25,6 +25,7 @@ import com.example.sportapp.data.model.BaseType
 import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutSensor
+import com.example.sportapp.data.model.getLocalizedActivityName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +37,9 @@ fun WorkoutDefinitionEditScreen(
     val texts = LocalMobileTexts.current
     val existingDefinition by viewModel.getDefinition(definitionId ?: -1).collectAsState(initial = null)
     
-    var name by remember(existingDefinition) { mutableStateOf(existingDefinition?.name ?: "") }
+    var name by remember(existingDefinition, texts) { 
+        mutableStateOf(getLocalizedActivityName(existingDefinition?.name, texts)) 
+    }
     var iconName by remember(existingDefinition) { mutableStateOf(existingDefinition?.iconName ?: "DirectionsRun") }
     var baseType by remember(existingDefinition) { mutableStateOf(existingDefinition?.baseType ?: BaseType.OTHER) }
     var autoLapDistance by remember(existingDefinition) { mutableStateOf(existingDefinition?.autoLapDistance?.toString() ?: "") }

@@ -48,6 +48,7 @@ import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.healthconnect.ExportResult
 import com.example.sportapp.presentation.activities.ExportState
 import com.example.sportapp.presentation.settings.WidgetItem
@@ -334,7 +335,7 @@ fun ActivityDetailScreen(
                 ) {
                     item {
                         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                            Text(text = data.activityName, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                            Text(text = getLocalizedActivityName(data.activityName, texts), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                             Text(text = data.activityDate, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }

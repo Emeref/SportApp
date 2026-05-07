@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.db.SyncMetadataEntity
+import com.example.sportapp.data.model.getLocalizedActivityName
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -102,8 +103,7 @@ fun SyncInfoRow(label: String, value: String, isBadge: Boolean = false) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+        verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         if (isBadge) {
             Surface(
@@ -149,7 +149,7 @@ fun SyncStatusHistoryItem(item: com.example.sportapp.data.db.SyncMetadataEntity,
                     color = MaterialTheme.colorScheme.primary
                 )
                 if (item.activityName != null) {
-                    Text(item.activityName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    Text(getLocalizedActivityName(item.activityName, texts), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                     item.startTime?.let {
                         val activitySdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
                         Text(activitySdf.format(Date(it)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

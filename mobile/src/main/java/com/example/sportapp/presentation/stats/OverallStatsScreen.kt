@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.R
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.presentation.getAppLogoRes
 import com.example.sportapp.presentation.home.WidgetFactory
 import com.example.sportapp.presentation.settings.WidgetItem
@@ -139,8 +140,8 @@ fun OverallStatsContent(
                             Text(
                                 text = when {
                                     selectedTypes == null -> texts.STATS_ALL_TYPES
-                                    selectedTypes.isEmpty() -> texts.STATS_ALL_TYPES // Should not happen with null logic but for safety
-                                    selectedTypes.size == 1 -> selectedTypes.first()
+                                    selectedTypes.isEmpty() -> texts.STATS_ALL_TYPES
+                                    selectedTypes.size == 1 -> getLocalizedActivityName(selectedTypes.first(), texts)
                                     else -> "${texts.ACTIVITY_FILTERS}: ${selectedTypes.size}"
                                 }
                             )
@@ -167,7 +168,7 @@ fun OverallStatsContent(
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Checkbox(checked = selectedTypes?.contains(type) ?: true, onCheckedChange = null)
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text(type)
+                                            Text(getLocalizedActivityName(type, texts))
                                         }
                                     },
                                     onClick = { onTypeToggle(type) }

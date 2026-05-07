@@ -26,6 +26,24 @@ enum class WorkoutSensor(val id: String, val getLabel: (WearTexts) -> String) {
         get() = getLabel(TextsWearPL)
 }
 
+fun isDefaultActivityName(name: String?): Boolean {
+    if (name == null) return false
+    return name in setOf(
+        "Standardowa aktywność",
+        "Standard activity",
+        "Activité standard",
+        "Atividade padrão",
+        "Standardaktivität",
+        "Actividad estándar",
+        "Attività standard"
+    )
+}
+
+fun getLocalizedActivityName(name: String?, texts: WearTexts): String {
+    if (name == null) return ""
+    return if (isDefaultActivityName(name)) texts.CHOOSE_SPORT_DEFAULT_NAME else name
+}
+
 data class SensorConfig(
     val sensorId: String,
     val isVisible: Boolean,

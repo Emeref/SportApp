@@ -21,6 +21,7 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import com.example.sportapp.LocalWearTexts
+import com.example.sportapp.data.model.getLocalizedActivityName
 
 @Composable
 fun ChooseSportScreen(
@@ -59,7 +60,7 @@ fun ChooseSportScreen(
 
             items(currentDefinitions) { definition ->
                 Chip(
-                    label = { Text(definition.name) },
+                    label = { Text(getLocalizedActivityName(definition.name, texts)) },
                     onClick = { navController.navigate("workout_ready/${definition.id}") },
                     icon = { 
                         Icon(

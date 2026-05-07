@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.getLocalizedActivityName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +68,7 @@ fun WorkoutDefinitionListScreen(
             AlertDialog(
                 onDismissRequest = { definitionToDelete = null },
                 title = { Text(texts.DEF_DELETE_TITLE) },
-                text = { Text(texts.defDeleteConfirm(definitionToDelete?.name ?: "")) },
+                text = { Text(texts.defDeleteConfirm(getLocalizedActivityName(definitionToDelete?.name ?: "", texts))) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -123,7 +124,7 @@ fun WorkoutDefinitionItem(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = definition.name,
+                        text = getLocalizedActivityName(definition.name, texts),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

@@ -39,6 +39,7 @@ import com.example.sportapp.R
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
+import com.example.sportapp.data.model.getLocalizedActivityName
 import com.example.sportapp.presentation.settings.AppMapType
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.example.sportapp.presentation.settings.ThemeMode
@@ -114,7 +115,7 @@ fun ActivityCompareScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = session1?.let { "${texts.COMPARE_VS} ${it.activityName}" } ?: texts.COMPARE_TITLE,
+                            text = session1?.let { "${texts.COMPARE_VS} ${getLocalizedActivityName(it.activityName, texts)}" } ?: texts.COMPARE_TITLE,
                             style = MaterialTheme.typography.titleMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
