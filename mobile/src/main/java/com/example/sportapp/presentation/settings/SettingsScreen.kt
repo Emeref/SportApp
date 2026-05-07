@@ -2,6 +2,7 @@ package com.example.sportapp.presentation.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -156,7 +157,39 @@ fun SettingsScreen(
                 Text(texts.SETTINGS_CANCEL)
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            val isDark = when (state.themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(
+                        id = if (isDark) R.drawable.logo_mrf_dark_mode else R.drawable.logo_mrf
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 12.dp)
+                )
+                Image(
+                    painter = painterResource(
+                        id = if (isDark) R.drawable.logo_emeref_dark_mode else R.drawable.logo_emeref
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 12.dp)
+                )
+            }
+
         }
     }
 }
