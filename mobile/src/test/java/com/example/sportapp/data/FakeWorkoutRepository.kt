@@ -4,12 +4,15 @@ import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutDefinition
 import com.example.sportapp.data.model.WorkoutLap
+import com.example.sportapp.healthconnect.model.ExerciseSessionSyncDto
+import com.example.sportapp.healthconnect.model.SessionTimeSeries
 import com.example.sportapp.presentation.activities.ActivityItem
 import com.example.sportapp.presentation.settings.ReportingPeriod
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import java.time.Duration
 import java.util.*
 
 class FakeWorkoutRepository : IWorkoutRepository {
@@ -17,6 +20,7 @@ class FakeWorkoutRepository : IWorkoutRepository {
     var points = mutableMapOf<Long, List<WorkoutPointEntity>>()
     var definitions = MutableStateFlow<List<WorkoutDefinition>>(emptyList())
     var laps = mutableMapOf<Long, List<WorkoutLap>>()
+    private val exportedToHC = mutableSetOf<Long>()
 
     override fun getAllWorkouts(): Flow<List<WorkoutEntity>> = workouts
 
@@ -43,29 +47,29 @@ class FakeWorkoutRepository : IWorkoutRepository {
     }
 
     override fun getFilteredStatsFlow(
-        activityType: String?,
+        activityTypes: List<String>?,
         startDate: Date?,
         endDate: Date?
     ): Flow<Map<String, Any>> = workouts.map { list ->
-        calculateStats(list, activityType, startDate, endDate)
+        calculateStats(list, activityTypes, startDate, endDate)
     }
 
     override suspend fun getFilteredStats(
-        activityType: String?,
+        activityTypes: List<String>?,
         startDate: Date?,
         endDate: Date?
     ): Map<String, Any> {
-        return calculateStats(workouts.value, activityType, startDate, endDate)
+        return calculateStats(workouts.value, activityTypes, startDate, endDate)
     }
 
     private fun calculateStats(
         list: List<WorkoutEntity>,
-        activityType: String?,
+        activityTypes: List<String>?,
         startDate: Date?,
         endDate: Date?
     ): Map<String, Any> {
         val filtered = list.filter { workout ->
-            val typeMatch = activityType == null || workout.activityName == activityType
+            val typeMatch = activityTypes == null || activityTypes.contains(workout.activityName)
             val startMatch = startDate == null || workout.startTime >= startDate.time
             val endMatch = endDate == null || workout.startTime <= endDate.time
             typeMatch && startMatch && endMatch
@@ -113,6 +117,8 @@ class FakeWorkoutRepository : IWorkoutRepository {
     }
 
     override fun getAllDefinitions(): Flow<List<WorkoutDefinition>> = definitions
+    
+    override suspend fun getDefinitionById(id: Long): WorkoutDefinition? = definitions.value.find { it.id == id }
 
     override suspend fun insertWorkout(workout: WorkoutEntity): Long {
         val id = (workouts.value.maxOfOrNull { it.id } ?: 0L) + 1L
@@ -132,4 +138,59 @@ class FakeWorkoutRepository : IWorkoutRepository {
         val workoutId = laps.first().workoutId
         this.laps[workoutId] = (this.laps[workoutId] ?: emptyList()) + laps
     }
+
+    override suspend fun existsByHCSessionId(hcSessionId: String): Boolean = workouts.value.any { it.hcSessionId == hcSessionId }
+
+    override suspend fun saveImportedSession(session: ExerciseSessionSyncDto, timeSeries: SessionTimeSeries?): Long {
+        val durationSeconds = Duration.between(session.startTime, session.endTime).seconds
+        val id = insertWorkout(WorkoutEntity(
+            activityName = session.title,
+            startTime = session.startTime.toEpochMilli(),
+            durationFormatted = "${durationSeconds / 60}:${durationSeconds % 60}",
+            durationSeconds = durationSeconds,
+            hcSessionId = session.hcSessionId
+        ))
+        return id
+    }
+
+    override suspend fun saveImportedGpx(
+        definitionId: Long,
+        name: String,
+        startTime: Long,
+        endTime: Long,
+        durationSeconds: Long,
+        distanceGps: Double,
+        calories: Double,
+        avgBpm: Double?,
+        maxBpm: Int?,
+        totalAscent: Double,
+        totalDescent: Double,
+        points: List<WorkoutPointEntity>,
+        laps: List<WorkoutLap>
+    ): Long {
+        val id = insertWorkout(WorkoutEntity(
+            activityName = name,
+            startTime = startTime,
+            durationFormatted = "${durationSeconds / 60}:${durationSeconds % 60}",
+            durationSeconds = durationSeconds,
+            distanceGps = distanceGps,
+            totalCalories = calories,
+            avgBpm = avgBpm,
+            maxBpm = maxBpm,
+            totalAscent = totalAscent,
+            totalDescent = totalDescent
+        ))
+        insertPoints(points.map { it.copy(workoutId = id) })
+        insertLaps(laps.map { it.copy(workoutId = id) })
+        return id
+    }
+
+    override suspend fun updateHCSessionId(activityId: Long, hcSessionId: String) {
+        workouts.value = workouts.value.map { 
+            if (it.id == activityId) it.copy(hcSessionId = hcSessionId) else it 
+        }
+        exportedToHC.add(activityId)
+    }
+
+    override suspend fun isExportedToHC(activityId: Long): Boolean = exportedToHC.contains(activityId)
 }
