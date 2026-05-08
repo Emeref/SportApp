@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.db.WorkoutEntity
+import com.example.sportapp.data.model.HeartRateZone
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.model.ZoneStat
 import com.example.sportapp.data.model.getLocalizedActivityName
@@ -493,6 +494,16 @@ fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
         }
 
         selectedZone?.let { stat ->
+            val texts = LocalMobileTexts.current
+            val (zoneName, zoneDesc) = when (stat.zone) {
+                com.example.sportapp.data.model.HeartRateZone.Z0 -> texts.ZONE_Z0 to texts.HR_EFFECT_Z0
+                com.example.sportapp.data.model.HeartRateZone.Z1 -> texts.ZONE_Z1 to texts.HR_EFFECT_Z1
+                com.example.sportapp.data.model.HeartRateZone.Z2 -> texts.ZONE_Z2 to texts.HR_EFFECT_Z2
+                com.example.sportapp.data.model.HeartRateZone.Z3 -> texts.ZONE_Z3 to texts.HR_EFFECT_Z3
+                com.example.sportapp.data.model.HeartRateZone.Z4 -> texts.ZONE_Z4 to texts.HR_EFFECT_Z4
+                com.example.sportapp.data.model.HeartRateZone.Z5 -> texts.ZONE_Z5 to texts.HR_EFFECT_Z5
+            }
+
             val yOffset = with(density) { -70.dp.roundToPx() }
             Popup(
                 alignment = Alignment.TopCenter,
@@ -507,13 +518,13 @@ fun DonutChart(stats: List<ZoneStat>, modifier: Modifier = Modifier) {
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
                         Text(
-                            text = stat.zone.displayName,
+                            text = zoneName,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = stat.zone.color
                         )
                         Text(
-                            text = "${formatDuration(stat.durationSeconds)}: ${stat.zone.description}",
+                            text = "${formatDuration(stat.durationSeconds)}: $zoneDesc",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
                         )
