@@ -34,14 +34,30 @@ jobs:
       - name: Prepare Reports for Deployment
         if: always()
         run: |
-          # Tworzymy strukturę folderów: reports/<run_id>
+          # Tworzymy strukturę folderów
           mkdir -p public/reports/${{ github.run_id }}
-          # Kopiujemy wygenerowany raport HTML (upewnij się, że ścieżka jest poprawna)
+          
+          # Kopiujemy raporty z testów
           if [ -d "mobile/build/reports/tests/testDebugUnitTest" ]; then
             cp -r mobile/build/reports/tests/testDebugUnitTest/* public/reports/${{ github.run_id }}/
           fi
-          # Tworzymy prosty index.html w katalogu głównym public (opcjonalne, ułatwia nawigację)
-          echo "<html><body><h1>Test Reports History</h1><p>Latest: <a href='./reports/${{ github.run_id }}/index.html'>Run ${{ github.run_id }}</a></p></body></html>" > public/index.html
+          
+          # Kopiujemy Privacy Policy
+          if [ -f "web/privacy.html" ]; then
+            cp web/privacy.html public/privacy.html
+          fi
+          
+          # Tworzymy index.html
+          echo "<html>
+          <head><title>SportApp Project Pages</title></head>
+          <body>
+            <h1>SportApp Project Pages</h1>
+            <ul>
+              <li><a href='privacy.html'>Privacy Policy</a></li>
+              <li>Latest Test Report: <a href='./reports/${{ github.run_id }}/index.html'>Run ${{ github.run_id }}</a></li>
+            </ul>
+          </body>
+          </html>" > public/index.html
 
       - name: Deploy to GitHub Pages
         if: always()
@@ -49,11 +65,14 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          keep_files: true # WAŻNE: to zapobiega usuwaniu starych raportów
+          keep_files: true
 
       - name: Add Link to Job Summary
         if: always()
         run: |
-          REPORT_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/${{ github.run_id }}/index.html"
-          echo "### ✅ Unit Test Report" >> $GITHUB_STEP_SUMMARY
-          echo "Raport z testów jest dostępny tutaj: [Otwórz raport]($REPORT_URL)" >> $GITHUB_STEP_SUMMARY
+          BASE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          REPORT_URL="$BASE_URL/reports/${{ github.run_id }}/index.html"
+          PRIVACY_URL="$BASE_URL/privacy.html"
+          echo "### ✅ Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 [Privacy Policy]($PRIVACY_URL)" >> $GITHUB_STEP_SUMMARY
+          echo "📊 [Unit Test Report]($REPORT_URL)" >> $GITHUB_STEP_SUMMARY
