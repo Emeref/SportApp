@@ -132,7 +132,7 @@ Co ma się dziać:
 - Odpalenie sportu bedzie pokazywać widgety (te same które sa juz zdefiniowane dla aktywnosci i pokazywane przy odpalaniu aktywnosci z poziomu wear)
 - Jeśli jest na aktywnosci dostepna 'Mapa' to mapa ma się odpalać jako podstawowy ekran.
 - pod mapa wyswietlac sie beda dwa pierwsze widgety, pozostałe widgety (jeśli jakies sa) to beda wyswietlac sie na kolejnej stronie
-- Przy krawedzi ekranu mamy przycisk hamburger menu, ktory wysuwac bedzie boczne menu gdzie mozemy 'zakonczyc trening', 'zapauzowac trening', 'ustawic ekran komorki na niegasnacy'. 'ustawic ekran na przechodzacy w mode ambientu, gdzie pokazuja sie tylko szesc pierwszych widgetow
+- Przy krawedzi ekranu mamy przycisk hamburger menu, ktory wysuwac bedzie boczne menu gdzie mozemy 'zakonczyc trening', 'zapauzowac trening', 'ustawic ekran komorki na niegasnacy'. 'ustawic ekran na przechodzacy w mode ambientu, gdzie pokazuja sie tylko szesc premierowych widgetow
 - Jesli aplikacja jest odpalona z komorki to chhce aby tetno bylo pobierane z zegarka,
 - Wszystkie pozostale dane byly pobierane z komórki (chyba ze komorka nie ma takiego czujnika, wtedy z zegarka)
 - Chce aby trasa na mapie pokazywała trase przebyta w ciagu ostatnich 60 sekund (60 rekordow z bazy)
@@ -146,29 +146,29 @@ Co ma się dziać:
   - [x] Pobieranie tętna z zegarka podczas treningu na telefonie.
   - [x] Pobieranie pozostałych danych (GPS, kroki) z telefonu (fallback na zegarek).
   - [x] Mapa jako główny ekran, jeśli sport ją obsługuje.
-  - [x] Wyświetlanie dwóch pierwszych widgetów pod mapą, reszta na kolejnej stronie.
-
-  - [X] Wyświetlanie całej trasy z ostatnich  na mapie.
+  - [x] Wyświetlanie dwóch pierwszych widgetów pod mapą (obecnie do 4 na nakładce mapy).
+  - [ ] Boczny pasek (Hamburger) z opcjami: Zakończ, Pauza, Ekran zawsze włączony, Tryb Ambient.
+  - [ ] Wyświetlanie trasy z ostatnich 60 sekund na mapie (obecnie cała trasa).
   - [x] Synchronizacja statusu treningu na zegarek (info o trwającym treningu).
-
+  - [ ] Możliwość startu bez zegarka (wykorzystanie tylko czujników telefonu).
   - [ ] Wybór celu na mapie i estymacja czasu dotarcia.
 - [ ] po wybtraniu aktywnosci powinien odpalic sie ekran z mapa i widgetami, ale nie wystartowac aktywnosci.
   - Na tym ekranie powinny byc przeniesione przyciski: na poczatku widoczny zielony 'start' jak sie go kliknie to wyswietla sie duzy 'stop' na srodku i mniejsze 'pauza' i 'zablokuj' po bokacz
   - Przyciski powinny byc widoczne na dole jesli jest mapa to miedzy mapa a widgetami, jesli sa same widgety to pod widgetami
   - Przycisk stop przenosi na ekran podsumowania aktywnosci z wynikami stworzonymi na logice takiej samej jak mamy na zegarku w podsumowaniu tam
-  - [x] Przycisk 'zablokuj' blokuje dotyk na ekranie, aby nie kliknelo sie przypadkiem
-  - [x] po kliknieciu 'zablokuj' pojawia sie przycisk 'odblokuj' w jego miejscu, pozostale przyciski sa wyszarzone
-  - [x] klikniecie 'odblokuj' odblokowuje pozostale przyciski i aplikacje
-  - [x] Podczas zablokowania ciagle widac zmiany na mapie i w widgetach
-- [x] Ekran mapy sie ma generowac tylko tam gdzie mapa wystepuje, a nie w kazdym
-- [x]  przycisk '+/-' na mapie pozwala przyblizac i oddalac, nie ma automatycznego powrotu. Zostawiamy zblizenie wybrane przez uzytkownika
-- [x] Jak sie przesunie mape w jakikolwiek sposob to pojawia sie przycisk aktualizacji lokalizacji na lokalna
-- [x] Po kliknieciu w aktualizacje lokalizacji wracamy do wyswietlania obecnej lokalizacji i wracamy do automatycznego odswiezanai lokalizacji aby zawsze byc w centrum mapy (do momentu fizycznego przesuniecia oczywiscie)
-- [ ] Jak wejdziemy w tryb ambient to wyswietlamy w tym trybie do momentu odznaczenia w opcjach
-- [ ] tryb ambient ma w opcjach miec checkbox pokazujacy czy jest wlaczony czy nie
-- [x] dane ze sportu maja sie zapisywac w bazie
-- [x] upewnic se ze puls jest sczytywany
-- [ ] wybór celu na mapie z pokazywaniem czasu dojazdu
+  - [x] Przycisk 'zablokuj' blokuje dotyk na ekranie, aby nie kliknelo sie przypadkiem.
+  - [x] po kliknieciu 'zablokuj' pojawia sie przycisk 'odblokuj' w jego miejscu, pozostale przyciski sa wyszarzone.
+  - [x] klikniecie 'odblokuj' odblokowuje pozostale przyciski i aplikacje.
+  - [x] Podczas zablokowania ciagle widac zmiany na mapie i w widgetach.
+- [x] Ekran mapy sie ma generowac tylko tam gdzie mapa wystepuje, a nie w kazdym.
+- [x] Przycisk '+/-' na mapie pozwala przyblizac i oddalac, nie ma automatycznego powrotu. Zostawiamy zblizenie wybrane przez uzytkownika.
+- [x] Jak sie przesunie mape w jakikolwiek sposob to pojawia sie przycisk aktualizacji lokalizacji na lokalna.
+- [x] Po kliknieciu w aktualizacje lokalizacji wracamy do wyswietlania obecnej lokalizacji i wracamy do automatycznego odswiezanai lokalizacji aby zawsze byc w centrum mapy (do momentu fizycznego przesuniecia oczywiscie).
+- [ ] Jak wejdziemy w tryb ambient to wyswietlamy w tym trybie do momentu odznaczenia w opcjach.
+- [ ] tryb ambient ma w opcjach miec checkbox pokazujacy czy jest wlaczony czy nie.
+- [x] Dane ze sportu maja sie zapisywac w bazie.
+- [x] Upewnic se ze puls jest sczytywany.
+- [ ] Wybór celu na mapie z pokazywaniem czasu dojazdu.
 
 
 ## PRIORYTETY
@@ -179,5 +179,5 @@ Co ma się dziać:
 5. **Widgety na ekranie głównym (Glance)** - PRIORYTET: NISKI - Dodanie wsparcia dla widgetów systemowych Androida.
 
 ### ZREALIZOWANE PRIORYTETY
-- [x] **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km in sesji.
+- [x] **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
 - [x] **Integracja z Health Connect / Strava** - Synchronizacja danych z ekosystemem Google i serwisem Strava.
