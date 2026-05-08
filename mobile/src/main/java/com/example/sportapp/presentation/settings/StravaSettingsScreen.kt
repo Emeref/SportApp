@@ -3,6 +3,8 @@ package com.example.sportapp.presentation.settings
 import android.content.Intent
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,6 +26,7 @@ import com.example.sportapp.LocalMobileTexts
 import com.example.sportapp.data.strava.StravaStorage
 import kotlinx.coroutines.launch
 import com.example.sportapp.BuildConfig
+import com.example.sportapp.R
 import com.example.sportapp.data.db.SyncMetadataDao
 import com.example.sportapp.data.db.SyncMetadataEntity
 import java.text.SimpleDateFormat
@@ -100,27 +104,29 @@ fun StravaSettingsScreen(
 
             if (!isConnected) {
                 item {
-                    Button(
-                        onClick = {
-                            val clientId = BuildConfig.STRAVA_CLIENT_ID
-                            val redirectUri = "sportapp://strava"
-                            
-                            val authUrl = Uri.parse("https://www.strava.com/oauth/authorize")
-                                .buildUpon()
-                                .appendQueryParameter("client_id", clientId)
-                                .appendQueryParameter("redirect_uri", redirectUri)
-                                .appendQueryParameter("response_type", "code")
-                                .appendQueryParameter("approval_prompt", "auto")
-                                .appendQueryParameter("scope", "activity:write,activity:read_all")
-                                .build()
-                            
-                            val intent = CustomTabsIntent.Builder().build()
-                            intent.launchUrl(context, authUrl)
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(texts.STRAVA_CONNECT)
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.btn_strava_connect_with_orange),
+                        contentDescription = texts.STRAVA_CONNECT,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .clickable {
+                                val clientId = BuildConfig.STRAVA_CLIENT_ID
+                                val redirectUri = "sportapp://strava"
+                                
+                                val authUrl = Uri.parse("https://www.strava.com/oauth/authorize")
+                                    .buildUpon()
+                                    .appendQueryParameter("client_id", clientId)
+                                    .appendQueryParameter("redirect_uri", redirectUri)
+                                    .appendQueryParameter("response_type", "code")
+                                    .appendQueryParameter("approval_prompt", "auto")
+                                    .appendQueryParameter("scope", "activity:write,activity:read_all")
+                                    .build()
+                                
+                                val intent = CustomTabsIntent.Builder().build()
+                                intent.launchUrl(context, authUrl)
+                            }
+                    )
                 }
             } else {
                 item {
