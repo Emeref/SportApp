@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.workDataOf
-import com.example.sportapp.data.GpxGenerator
 import com.example.sportapp.data.db.SyncMetadataDao
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutEntity
@@ -14,15 +13,16 @@ import com.example.sportapp.data.strava.api.StravaUploadResponse
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import retrofit2.Response
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
 class StravaSyncWorkerTest {
     private lateinit var context: Context
     private val workoutDao = mockk<WorkoutDao>()
@@ -54,6 +54,7 @@ class StravaSyncWorkerTest {
         )
         coEvery { syncMetadataDao.getByLocalId(workoutId, "EXERCISE") } returns null
         coEvery { syncMetadataDao.insert(any()) } returns Unit
+        coEvery { workoutDao.updateStravaExportStatus(any(), any()) } returns Unit
 
         val worker = TestListenableWorkerBuilder<StravaSyncWorker>(context)
             .setInputData(workDataOf(StravaSyncWorker.EXTRA_WORKOUT_ID to workoutId))

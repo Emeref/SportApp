@@ -3,12 +3,15 @@ package com.example.sportapp.presentation.stats
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.example.sportapp.data.ExportImportManager
 import com.example.sportapp.data.IWorkoutRepository
 import com.example.sportapp.data.LapManager
 import com.example.sportapp.data.SessionData
 import com.example.sportapp.data.SessionRepository
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.model.WorkoutLap
+import com.example.sportapp.healthconnect.ExerciseExportUseCase
+import com.example.sportapp.healthconnect.HealthConnectManager
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import io.mockk.*
@@ -36,6 +39,9 @@ class ActivityDetailViewModelTest {
     private val workoutDao = mockk<WorkoutDao>(relaxed = true)
     private val lapManager = mockk<LapManager>()
     private val mobileSettingsManager = mockk<MobileSettingsManager>()
+    private val exerciseExportUseCase = mockk<ExerciseExportUseCase>()
+    private val exportImportManager = mockk<ExportImportManager>()
+    private val healthConnectManager = mockk<HealthConnectManager>()
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -62,7 +68,16 @@ class ActivityDetailViewModelTest {
 
         val savedStateHandle = SavedStateHandle(mapOf("activityId" to activityId.toString()))
         val viewModel = ActivityDetailViewModel(
-            context, repository, sessionRepository, workoutDao, lapManager, mobileSettingsManager, savedStateHandle
+            context, 
+            repository, 
+            sessionRepository, 
+            workoutDao, 
+            lapManager, 
+            mobileSettingsManager, 
+            exerciseExportUseCase,
+            exportImportManager,
+            healthConnectManager,
+            savedStateHandle
         )
         
         advanceUntilIdle()

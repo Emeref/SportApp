@@ -1,12 +1,25 @@
 package com.example.sportapp.presentation.stats
 
+import com.example.sportapp.MobileTexts
 import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.HeartRateZone
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Before
 import org.junit.Test
 
 class HeartRateMathTest {
+
+    private val texts = mockk<MobileTexts>(relaxed = true)
+
+    @Before
+    fun setup() {
+        every { texts.HR_NO_DATA } returns "Brak danych tętna"
+        every { texts.HR_TOO_LITTLE_DATA } returns "Za mało danych"
+        every { texts.HR_BELOW_ZONES } returns "Tętno poniżej stref"
+    }
 
     private fun createPoint(bpm: Int?) = WorkoutPointEntity(
         id = 0, workoutId = 0, time = "", latitude = 0.0, longitude = 0.0,
@@ -22,7 +35,7 @@ class HeartRateMathTest {
         val maxHr = 190
 
         // When
-        val result = HeartRateMath.calculateZones(points, maxHr)
+        val result = HeartRateMath.calculateZones(points, maxHr, texts)
 
         // Then
         assertEquals("Brak danych tętna", result.trainingEffect)
@@ -36,7 +49,7 @@ class HeartRateMathTest {
         val maxHr = 0
 
         // When
-        val result = HeartRateMath.calculateZones(points, maxHr)
+        val result = HeartRateMath.calculateZones(points, maxHr, texts)
 
         // Then
         assertEquals("Brak danych tętna", result.trainingEffect)
@@ -54,7 +67,7 @@ class HeartRateMathTest {
         val maxHr = 200
 
         // When
-        val result = HeartRateMath.calculateZones(points, maxHr)
+        val result = HeartRateMath.calculateZones(points, maxHr, texts)
 
         // Then
         // Total points processed by windowed(3,1) is 2.
@@ -73,7 +86,7 @@ class HeartRateMathTest {
         val maxHr = 200
 
         // When
-        val result = HeartRateMath.calculateZones(points, maxHr)
+        val result = HeartRateMath.calculateZones(points, maxHr, texts)
 
         // Then
         assertEquals(HeartRateZone.Z2, result.dominantZone)

@@ -10,8 +10,8 @@ class CalorieCalculatorTest {
     private val testHealthData = HealthData(
         gender = Gender.MALE,
         age = 30,
-        height = 180,
-        weight = 80,
+        height = 180.0,
+        weight = 80.0,
         restingHR = 60,
         maxHR = 190
     )
@@ -39,7 +39,7 @@ class CalorieCalculatorTest {
 
     @Test
     fun `calculateHRR returns 0 when weight is 0`() {
-        val zeroWeightData = testHealthData.copy(weight = 0)
+        val zeroWeightData = testHealthData.copy(weight = 0.0)
         val result = CalorieCalculator.calculateHRR(150f, zeroWeightData)
         assertEquals(0.0, result, 0.001)
     }

@@ -34,7 +34,7 @@ class WorkoutRepositoryTest {
             .build()
         workoutDao = db.workoutDao()
         workoutDefinitionDao = db.workoutDefinitionDao()
-        repository = WorkoutRepository(workoutDao, workoutDefinitionDao)
+        repository = WorkoutRepository(context, workoutDao, workoutDefinitionDao)
     }
 
     @After
