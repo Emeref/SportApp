@@ -68,6 +68,10 @@
     - [x] **Nawigacja**: Dodanie przycisku powrotu w TopAppBar na ekranach opcji i definie aktywności.
     - [x] **Odświeżenie UI**: Zmiana wyglądu tabel/list (dodano paski przewijania) oraz wdrożenie sliderów do regulacji parametrów.
     - [x] **Branding**: Dodanie oficjalnego logo aplikacji (wewnątrz apki oraz ikony systemowe Adaptive Icons).
+    - [x] **System Wsparcia (Support Tiers)**: Implementacja 6 poziomów wsparcia z integracją Google Play Billing API.
+    - [x] **Personalizacja Ikon**: Możliwość zmiany ikony aplikacji (IconManager) odblokowywana przez progi wsparcia.
+    - [x] **Wielojęzyczność**: Pełne wsparcie dla języków: Polski, Angielski, Niemiecki, Francuski, Hiszpański, Włoski i Portugalski.
+    - [x] **Polityka konfliktów Health Connect**: Dodanie ustawienia `ConflictResolutionPolicy` dla synchronizacji danych.
     - [ ] **Więcej widgetów**: Dodanie dodatkowych typów widgetów do wyboru w ustawieniach strony głównej.
 
 ## 4. Funkcje Wear OS (Zegarek)
@@ -93,7 +97,7 @@
     - [x] Definicja palet `lightColorScheme` i `darkColorScheme` (AMOLED-friendly)
     - [x] Reaktywność UI na zmianę motywu (`collectAsStateWithLifecycle`)
     - [x] Dostosowanie wykresów trendów i szczegółów aktywności (Vico Charts)
-    - [x] Dodanie opcji wyboru motywu w `SettingsScreen`
+    - [x] Dodanie opcji wyboru motywu in `SettingsScreen`
 - [x] Implementacja Google Maps Dark Mode (MapStyleOptions)
 - [ ] Widgety na ekranie głównym (Glance)
 - [ ] Personalizacja jednostek (Metric/Imperial)
@@ -137,33 +141,33 @@ Co ma się dziać:
 - chce aby dalo sie wystartowac na komorce bez podpietego zegarka (i aby taka aktywnosc sie dobrze zapisala, tylko w takim wypadku bez czujnikow ktore sa tylko w zegarku)
 - Dodatkowo chcę aby dało się wybrać na mapie cel, który bedzie zaznaczony na mapie na komorce razem z trasa do przebycia.
 - [ ] **Główne funkcje śledzenia**:
-  - [ ] Przycisk "+" na ekranie głównym otwierający ekran startowy.
-  - [ ] Ekran "Start" z listą zdefiniowanych sportów.
-  - [ ] Pobieranie tętna z zegarka podczas treningu na telefonie.
-  - [ ] Pobieranie pozostałych danych (GPS, kroki) z telefonu (fallback na zegarek).
-  - [ ] Mapa jako główny ekran, jeśli sport ją obsługuje.
-  - [ ] Wyświetlanie dwóch pierwszych widgetów pod mapą, reszta na kolejnej stronie.
-  - [ ] Boczny pasek (Hamburger) z opcjami: Zakończ, Pauza, Ekran zawsze włączony, Tryb Ambient.
-  - [ ] Wyświetlanie trasy z ostatnich 60 sekund na mapie.
-  - [ ] Synchronizacja statusu treningu na zegarek (info o trwającym treningu).
-  - [ ] Możliwość startu bez zegarka (wykorzystanie tylko czujników telefonu).
+  - [x] Przycisk "+" na ekranie głównym otwierający ekran startowy.
+  - [x] Ekran "Start" z listą zdefiniowanych sportów.
+  - [x] Pobieranie tętna z zegarka podczas treningu na telefonie.
+  - [x] Pobieranie pozostałych danych (GPS, kroki) z telefonu (fallback na zegarek).
+  - [x] Mapa jako główny ekran, jeśli sport ją obsługuje.
+  - [x] Wyświetlanie dwóch pierwszych widgetów pod mapą, reszta na kolejnej stronie.
+
+  - [X] Wyświetlanie całej trasy z ostatnich  na mapie.
+  - [x] Synchronizacja statusu treningu na zegarek (info o trwającym treningu).
+
   - [ ] Wybór celu na mapie i estymacja czasu dotarcia.
 - [ ] po wybtraniu aktywnosci powinien odpalic sie ekran z mapa i widgetami, ale nie wystartowac aktywnosci.
   - Na tym ekranie powinny byc przeniesione przyciski: na poczatku widoczny zielony 'start' jak sie go kliknie to wyswietla sie duzy 'stop' na srodku i mniejsze 'pauza' i 'zablokuj' po bokacz
   - Przyciski powinny byc widoczne na dole jesli jest mapa to miedzy mapa a widgetami, jesli sa same widgety to pod widgetami
   - Przycisk stop przenosi na ekran podsumowania aktywnosci z wynikami stworzonymi na logice takiej samej jak mamy na zegarku w podsumowaniu tam
-  - Przycisk 'zablokuj' blokuje dotyk na ekranie, aby nie kliknelo sie przypadkiem
-  - po kliknieciu 'zablokuj' pojawia sie przycisk 'odblokuj' w jego miejscu, pozostale przyciski sa wyszarzone
-  - klikniecie 'odblokuj' odblokowuje pozostale przyciski i aplikacje
-  - Podczas zablokowania ciagle widac zmiany na mapie i w widgetach
-- [ ] Ekran mapy sie ma generowac tylko tam gdzie mapa wystepuje, a nie w kazdym
-- [ ]  przycisk '+/-' na mapie pozwala przyblizac i oddalac, nie ma automatycznego powrotu. Zostawiamy zblizenie wybrane przez uzytkownika
-- [ ] Jak sie przesunie mape w jakikolwiek sposob to pojawia sie przycisk aktualizacji lokalizacji na lokalna
-- [ ] Po kliknieciu w aktualizacje lokalizacji wracamy do wyswietlania obecnej lokalizacji i wracamy do automatycznego odswiezanai lokalizacji aby zawsze byc w centrum mapy (do momentu fizycznego przesuniecia oczywiscie)
+  - [x] Przycisk 'zablokuj' blokuje dotyk na ekranie, aby nie kliknelo sie przypadkiem
+  - [x] po kliknieciu 'zablokuj' pojawia sie przycisk 'odblokuj' w jego miejscu, pozostale przyciski sa wyszarzone
+  - [x] klikniecie 'odblokuj' odblokowuje pozostale przyciski i aplikacje
+  - [x] Podczas zablokowania ciagle widac zmiany na mapie i w widgetach
+- [x] Ekran mapy sie ma generowac tylko tam gdzie mapa wystepuje, a nie w kazdym
+- [x]  przycisk '+/-' na mapie pozwala przyblizac i oddalac, nie ma automatycznego powrotu. Zostawiamy zblizenie wybrane przez uzytkownika
+- [x] Jak sie przesunie mape w jakikolwiek sposob to pojawia sie przycisk aktualizacji lokalizacji na lokalna
+- [x] Po kliknieciu w aktualizacje lokalizacji wracamy do wyswietlania obecnej lokalizacji i wracamy do automatycznego odswiezanai lokalizacji aby zawsze byc w centrum mapy (do momentu fizycznego przesuniecia oczywiscie)
 - [ ] Jak wejdziemy w tryb ambient to wyswietlamy w tym trybie do momentu odznaczenia w opcjach
 - [ ] tryb ambient ma w opcjach miec checkbox pokazujacy czy jest wlaczony czy nie
-- [ ] dane ze sportu maja sie zapisywac w bazie
-- [ ] upewnic se ze puls jest sczytywany
+- [x] dane ze sportu maja sie zapisywac w bazie
+- [x] upewnic se ze puls jest sczytywany
 - [ ] wybór celu na mapie z pokazywaniem czasu dojazdu
 
 
@@ -175,5 +179,5 @@ Co ma się dziać:
 5. **Widgety na ekranie głównym (Glance)** - PRIORYTET: NISKI - Dodanie wsparcia dla widgetów systemowych Androida.
 
 ### ZREALIZOWANE PRIORYTETY
-- [x] **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km w sesji.
+- [x] **Najlepsze tempo na km (Best Split)** - Automatyczne wykrywanie najszybszego odcinka 1km in sesji.
 - [x] **Integracja z Health Connect / Strava** - Synchronizacja danych z ekosystemem Google i serwisem Strava.
