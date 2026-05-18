@@ -58,6 +58,7 @@ import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
@@ -86,6 +87,9 @@ fun ActivityDetailScreen(
     val fileExportState by viewModel.fileExportState.collectAsStateWithLifecycle()
     val hcSessionId by viewModel.hcSessionId.collectAsStateWithLifecycle(null)
     val isExportedToStrava by viewModel.isExportedToStrava.collectAsStateWithLifecycle()
+    val selectedWidgetId by viewModel.selectedWidgetId.collectAsStateWithLifecycle()
+    val highlightedPoint by viewModel.highlightedPoint.collectAsStateWithLifecycle()
+    val highlightedSegment by viewModel.highlightedSegment.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     var isIntervalsExpanded by remember { mutableStateOf(false) }
@@ -273,6 +277,8 @@ fun ActivityDetailScreen(
             mobileSettings = mobileSettings,
             selectedLap = selectedLap,
             selectedIndex = selectedIndex,
+            highlightedPoint = highlightedPoint,
+            highlightedSegment = highlightedSegment,
             onClose = { isMapFullScreen = false },
             onMapTypeClick = { showMapTypeDialog = true }
         )
@@ -341,7 +347,12 @@ fun ActivityDetailScreen(
                     }
 
                     item {
-                        SummaryWidgetsGrid(data, settings.visibleWidgets)
+                        SummaryWidgetsGrid(
+                            data = data, 
+                            visibleWidgets = settings.visibleWidgets, 
+                            selectedWidgetId = selectedWidgetId,
+                            onWidgetClick = { viewModel.selectWidget(it) }
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
@@ -356,6 +367,8 @@ fun ActivityDetailScreen(
                                         selectedLap = selectedLap, 
                                         onMapClick = { viewModel.selectLap(null) }, 
                                         selectedIndex = selectedIndex,
+                                        highlightedPoint = highlightedPoint,
+                                        highlightedSegment = highlightedSegment,
                                         onExpandClick = { isMapFullScreen = true },
                                         onMapTypeClick = { showMapTypeDialog = true }
                                     )
@@ -565,6 +578,8 @@ fun MapSection(
     selectedLap: WorkoutLap?,
     onMapClick: () -> Unit,
     selectedIndex: Int? = null,
+    highlightedPoint: LatLng? = null,
+    highlightedSegment: List<LatLng> = emptyList(),
     onExpandClick: () -> Unit = {},
     onMapTypeClick: () -> Unit = {}
 ) {
@@ -577,24 +592,41 @@ fun MapSection(
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
-    LaunchedEffect(selectedLap, data.route) {
-        val pointsToShow = if (selectedLap != null) {
+    LaunchedEffect(selectedLap, highlightedPoint, highlightedSegment, data.route) {
+        val isAnythingSelected = selectedLap != null || highlightedPoint != null || highlightedSegment.isNotEmpty()
+        
+        if (!isAnythingSelected && data.route.isNotEmpty()) {
+            val n = data.route.maxBy { it.latitude }
+            val s = data.route.minBy { it.latitude }
+            val e = data.route.maxBy { it.longitude }
+            val w = data.route.minBy { it.longitude }
+            val bounds = LatLngBounds.Builder().include(n).include(s).include(e).include(w).build()
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+            return@LaunchedEffect
+        }
+
+        if (selectedLap != null) {
             val start = selectedLap.startLocationIndex.coerceIn(data.route.indices)
             val end = (selectedLap.endLocationIndex + 1).coerceIn(0, data.route.size)
-            if (start < end) data.route.subList(start, end) else emptyList()
-        } else data.route
-
-        if (pointsToShow.isNotEmpty()) {
-            val n = pointsToShow.maxBy { it.latitude }
-            val s = pointsToShow.minBy { it.latitude }
-            val e = pointsToShow.maxBy { it.longitude }
-            val w = pointsToShow.minBy { it.longitude }
-            
-            val bounds = LatLngBounds.Builder()
-                .include(n).include(s).include(e).include(w)
-                .build()
-                
-            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
+            val lapPoints = if (start < end) data.route.subList(start, end) else emptyList()
+            if (lapPoints.isNotEmpty()) {
+                val n = lapPoints.maxBy { it.latitude }
+                val s = lapPoints.minBy { it.latitude }
+                val e = lapPoints.maxBy { it.longitude }
+                val w = lapPoints.minBy { it.longitude }
+                val bounds = LatLngBounds.Builder().include(n).include(s).include(e).include(w).build()
+                cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+            }
+        } else if (highlightedSegment.isNotEmpty()) {
+            val n = highlightedSegment.maxBy { it.latitude }
+            val s = highlightedSegment.minBy { it.latitude }
+            val e = highlightedSegment.maxBy { it.longitude }
+            val w = highlightedSegment.minBy { it.longitude }
+            val bounds = LatLngBounds.Builder().include(n).include(s).include(e).include(w).build()
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+        } else if (highlightedPoint != null) {
+            // Centrujemy na punkcie bez zmiany zoomu
+            cameraPositionState.animate(CameraUpdateFactory.newLatLng(highlightedPoint))
         }
     }
 
@@ -642,6 +674,24 @@ fun MapSection(
                 val lapPoints = if (start < end) data.route.subList(start, end) else emptyList()
                 if (lapPoints.isNotEmpty()) Polyline(points = lapPoints, color = MaterialTheme.colorScheme.tertiary, width = 15f, zIndex = 1f)
             }
+
+            if (highlightedSegment.isNotEmpty()) {
+                Polyline(points = highlightedSegment, color = MaterialTheme.colorScheme.primary, width = 15f, zIndex = 2f)
+            }
+
+            if (highlightedPoint != null) {
+                val zoom = cameraPositionState.position.zoom
+                val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
+                Circle(
+                    center = highlightedPoint,
+                    radius = adaptiveRadius,
+                    fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    strokeColor = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 3f,
+                    zIndex = 3f
+                )
+            }
+
             if (selectedIndex != null && selectedIndex in data.route.indices) {
                 val zoom = cameraPositionState.position.zoom
                 val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
@@ -680,6 +730,8 @@ fun FullScreenMap(
     mobileSettings: MobileSettingsState,
     selectedLap: WorkoutLap?,
     selectedIndex: Int?,
+    highlightedPoint: LatLng? = null,
+    highlightedSegment: List<LatLng> = emptyList(),
     onClose: () -> Unit,
     onMapTypeClick: () -> Unit = {}
 ) {
@@ -692,24 +744,40 @@ fun FullScreenMap(
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
-    LaunchedEffect(selectedLap, data.route) {
-        val pointsToShow = if (selectedLap != null) {
+    LaunchedEffect(selectedLap, highlightedPoint, highlightedSegment, data.route) {
+        val isAnythingSelected = selectedLap != null || highlightedPoint != null || highlightedSegment.isNotEmpty()
+        
+        if (!isAnythingSelected && data.route.isNotEmpty()) {
+            val n = data.route.maxBy { it.latitude }
+            val s = data.route.minBy { it.latitude }
+            val e = data.route.maxBy { it.longitude }
+            val w = data.route.minBy { it.longitude }
+            val bounds = LatLngBounds.Builder().include(n).include(s).include(e).include(w).build()
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+            return@LaunchedEffect
+        }
+
+        if (selectedLap != null) {
             val start = selectedLap.startLocationIndex.coerceIn(data.route.indices)
             val end = (selectedLap.endLocationIndex + 1).coerceIn(0, data.route.size)
-            if (start < end) data.route.subList(start, end) else emptyList()
-        } else data.route
-
-        if (pointsToShow.isNotEmpty()) {
-            val n = pointsToShow.maxBy { it.latitude }
-            val s = pointsToShow.minBy { it.latitude }
-            val e = pointsToShow.maxBy { it.longitude }
-            val w = pointsToShow.minBy { it.longitude }
-            
-            val bounds = LatLngBounds.Builder()
-                .include(n).include(s).include(e).include(w)
-                .build()
-                
-            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 80))
+            val lapPoints = if (start < end) data.route.subList(start, end) else emptyList()
+            if (lapPoints.isNotEmpty()) {
+                val n = lapPoints.maxBy { it.latitude }
+                val s = lapPoints.minBy { it.latitude }
+                val e = lapPoints.maxBy { it.longitude }
+                val w = lapPoints.minBy { it.longitude }
+                val bounds = LatLngBounds.Builder().include(n).include(s).include(e).include(w).build()
+                cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+            }
+        } else if (highlightedSegment.isNotEmpty()) {
+            val n = highlightedSegment.maxBy { it.latitude }
+            val s = highlightedSegment.minBy { it.latitude }
+            val e = highlightedSegment.maxBy { it.longitude }
+            val w = highlightedSegment.minBy { it.longitude }
+            val bounds = LatLngBounds.Builder().include(n).include(s).include(e).include(w).build()
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+        } else if (highlightedPoint != null) {
+            cameraPositionState.animate(CameraUpdateFactory.newLatLng(highlightedPoint))
         }
     }
 
@@ -756,6 +824,24 @@ fun FullScreenMap(
                 val lapPoints = if (start < end) data.route.subList(start, end) else emptyList()
                 if (lapPoints.isNotEmpty()) Polyline(points = lapPoints, color = MaterialTheme.colorScheme.tertiary, width = 15f, zIndex = 1f)
             }
+
+            if (highlightedSegment.isNotEmpty()) {
+                Polyline(points = highlightedSegment, color = MaterialTheme.colorScheme.primary, width = 15f, zIndex = 2f)
+            }
+
+            if (highlightedPoint != null) {
+                val zoom = cameraPositionState.position.zoom
+                val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
+                Circle(
+                    center = highlightedPoint,
+                    radius = adaptiveRadius,
+                    fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    strokeColor = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 3f,
+                    zIndex = 3f
+                )
+            }
+
             if (selectedIndex != null && selectedIndex in data.route.indices) {
                 val zoom = cameraPositionState.position.zoom
                 val adaptiveRadius = 20.0 * 2.0.pow((15.0 - zoom))
@@ -1056,7 +1142,12 @@ private fun formatPaceFromSeconds(totalSeconds: Int): String {
 }
 
 @Composable
-fun SummaryWidgetsGrid(data: SessionData, visibleWidgets: List<WidgetItem>) {
+fun SummaryWidgetsGrid(
+    data: SessionData,
+    visibleWidgets: List<WidgetItem>,
+    selectedWidgetId: String?,
+    onWidgetClick: (String) -> Unit
+) {
     val texts = LocalMobileTexts.current
     val enabledWidgets = visibleWidgets.filter { it.isEnabled }
     
@@ -1089,12 +1180,27 @@ fun SummaryWidgetsGrid(data: SessionData, visibleWidgets: List<WidgetItem>) {
         "best_pace_1km" to (texts.WIDGET_BEST_PACE_1KM to formatPace(data.bestPace1km ?: 0.0, texts.UNIT_MIN_KM))
     )
 
+    val interactiveWidgetIds = listOf(
+        "max_bpm", "max_calories_min", "max_speed", "max_altitude", "max_cadence", 
+        "max_pressure", "min_pressure", "best_pace_1km"
+    )
+
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         enabledWidgets.chunked(2).forEachIndexed { index, chunk ->
             if (index > 0) Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 chunk.forEach { widget ->
-                    widgetValues[widget.id]?.let { (label, value) -> SummaryItem(label, value, Modifier.weight(1f)) }
+                    widgetValues[widget.id]?.let { (label, value) -> 
+                        val isInteractive = widget.id in interactiveWidgetIds
+                        SummaryItem(
+                            label = label,
+                            value = value,
+                            modifier = Modifier.weight(1f),
+                            isSelected = selectedWidgetId == widget.id,
+                            isClickable = isInteractive,
+                            onClick = { onWidgetClick(widget.id) }
+                        )
+                    }
                 }
                 if (chunk.size == 1) Spacer(Modifier.weight(1f))
             }
@@ -1112,10 +1218,28 @@ private fun formatDistance(distanceMeters: Double, unitM: String, unitKm: String
 }
 
 @Composable
-fun SummaryItem(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+fun SummaryItem(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    isClickable: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    Card(
+        modifier = modifier.then(if (isClickable) Modifier.clickable { onClick() } else Modifier),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) 
+                             else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+    ) {
         Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.Start) {
-            Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = label, 
+                style = MaterialTheme.typography.labelMedium, 
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
