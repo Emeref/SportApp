@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -279,7 +280,7 @@ fun LiveTrackingScreen(
                             }
                         }
 
-                        // Heart Rate Overlay - Bottom Left
+                        // Heart Rate Overlay - Bottom Center
                         val hrValue = sensorData["bpm"]
                         val isHrAvailable = !hrValue.isNullOrBlank() && hrValue != "--"
                         
@@ -294,26 +295,33 @@ fun LiveTrackingScreen(
                             label = "alpha"
                         )
                         
-                        Row(
+                        Surface(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .padding(16.dp)
-                                .then(if (isHrAvailable) Modifier.alpha(alpha) else Modifier),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(16.dp),
+                            color = Color.White.copy(alpha = 0.9f),
+                            shape = RoundedCornerShape(24.dp)
                         ) {
-                            Text(
-                                text = if (isHrAvailable) hrValue!! else "---",
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Red
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.Default.Favorite,
-                                contentDescription = null,
-                                tint = Color.Red,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    .then(if (isHrAvailable) Modifier.alpha(alpha) else Modifier),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isHrAvailable) hrValue!! else "---",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Red
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = null,
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
 
                         // Map Controls - Bottom Right (Zoom)
