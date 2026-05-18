@@ -15,6 +15,7 @@ import androidx.work.WorkRequest
 import androidx.work.workDataOf
 import com.example.sportapp.data.*
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.strava.StravaSyncWorker
@@ -25,6 +26,7 @@ import com.example.sportapp.presentation.activities.ExportState
 import com.example.sportapp.presentation.settings.AppMapType
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
+import com.google.android.gms.maps.model.LatLng
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -83,6 +85,15 @@ class ActivityDetailViewModel @Inject constructor(
 
     private val _fileExportState = MutableStateFlow<ExportState>(ExportState.Idle)
     val fileExportState = _fileExportState.asStateFlow()
+
+    private val _selectedWidgetId = MutableStateFlow<String?>(null)
+    val selectedWidgetId = _selectedWidgetId.asStateFlow()
+
+    private val _highlightedPoint = MutableStateFlow<LatLng?>(null)
+    val highlightedPoint = _highlightedPoint.asStateFlow()
+
+    private val _highlightedSegment = MutableStateFlow<List<LatLng>>(emptyList())
+    val highlightedSegment = _highlightedSegment.asStateFlow()
 
     val hcSessionId: StateFlow<String?> = workoutDao.getWorkoutFlowById(activityId)
         .map { it?.hcSessionId }
@@ -252,6 +263,126 @@ class ActivityDetailViewModel @Inject constructor(
             _selectedLap.value = null
         } else {
             _selectedLap.value = lap
+            _selectedWidgetId.value = null
+            _highlightedPoint.value = null
+            _highlightedSegment.value = emptyList()
+        }
+    }
+
+    fun selectWidget(widgetId: String) {
+        if (_selectedWidgetId.value == widgetId) {
+            _selectedWidgetId.value = null
+            _highlightedPoint.value = null
+            _highlightedSegment.value = emptyList()
+        } else {
+            _selectedWidgetId.value = widgetId
+            _selectedLap.value = null
+            findMetricLocation(widgetId)
+        }
+    }
+
+    private fun findMetricLocation(widgetId: String) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val points = repository.getPointsForWorkout(activityId)
+            if (points.isEmpty()) return@launch
+
+            when (widgetId) {
+                "max_bpm" -> {
+                    val maxPoint = points.maxByOrNull { it.bpm ?: 0 }
+                    updateHighlight(maxPoint)
+                }
+                "max_calories_min" -> {
+                    val maxPoint = points.maxByOrNull { it.calorieMin ?: 0.0 }
+                    updateHighlight(maxPoint)
+                }
+                "max_speed" -> {
+                    val maxPoint = points.maxByOrNull { maxOf(it.speedGps ?: 0.0, it.speedSteps ?: 0.0) }
+                    updateHighlight(maxPoint)
+                }
+                "max_altitude" -> {
+                    val maxPoint = points.maxByOrNull { it.altitude ?: -10000.0 }
+                    updateHighlight(maxPoint)
+                }
+                "max_cadence" -> {
+                    val maxPoint = points.maxByOrNull { it.stepsMin ?: 0.0 }
+                    updateHighlight(maxPoint)
+                }
+                "max_pressure" -> {
+                    val maxPoint = points.maxByOrNull { it.pressure ?: 0.0 }
+                    updateHighlight(maxPoint)
+                }
+                "min_pressure" -> {
+                    val minPoint = points.minByOrNull { it.pressure ?: 10000.0 }
+                    updateHighlight(minPoint)
+                }
+                "best_pace_1km" -> {
+                    val segment = findBest1kmSegment(points)
+                    withContext(Dispatchers.Main) {
+                        _highlightedPoint.value = null
+                        _highlightedSegment.value = segment
+                    }
+                }
+                else -> {
+                    withContext(Dispatchers.Main) {
+                        _highlightedPoint.value = null
+                        _highlightedSegment.value = emptyList()
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun updateHighlight(point: WorkoutPointEntity?) {
+        withContext(Dispatchers.Main) {
+            if (point?.latitude != null && point.longitude != null) {
+                _highlightedPoint.value = LatLng(point.latitude, point.longitude)
+                _highlightedSegment.value = emptyList()
+            } else {
+                _highlightedPoint.value = null
+                _highlightedSegment.value = emptyList()
+            }
+        }
+    }
+
+    private fun findBest1kmSegment(points: List<WorkoutPointEntity>): List<LatLng> {
+        if (points.size < 2) return emptyList()
+        
+        var bestDuration = Long.MAX_VALUE
+        var bestRange: IntRange? = null
+        
+        for (i in points.indices) {
+            val startDist = points[i].distanceGps ?: points[i].distanceSteps ?: 0
+            for (j in i + 1 until points.size) {
+                val endDist = points[j].distanceGps ?: points[j].distanceSteps ?: 0
+                val deltaDist = endDist - startDist
+                
+                if (deltaDist >= 1000) {
+                    val startTime = parseTime(points[i].time)
+                    val endTime = parseTime(points[j].time)
+                    val duration = endTime - startTime
+                    
+                    if (duration > 0 && duration < bestDuration) {
+                        bestDuration = duration
+                        bestRange = i..j
+                    }
+                    break 
+                }
+            }
+        }
+        
+        return bestRange?.let { range ->
+            points.slice(range).mapNotNull { p ->
+                if (p.latitude != null && p.longitude != null) LatLng(p.latitude, p.longitude) else null
+            }
+        } ?: emptyList()
+    }
+
+    private fun parseTime(timeStr: String): Long {
+        return try {
+            val sdf = SimpleDateFormat("HH:mm:ss", Locale.US)
+            sdf.parse(timeStr)?.time ?: 0L
+        } catch (e: Exception) {
+            0L
         }
     }
 
