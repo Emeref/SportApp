@@ -131,6 +131,9 @@ dependencies {
     // Google Play Billing
     implementation(libs.billing.ktx)
 
+    // FIT SDK
+    implementation(libs.fit.sdk)
+
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation("androidx.test:core:1.5.0")

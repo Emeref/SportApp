@@ -24,6 +24,10 @@ enum class AppMapType {
     NORMAL, SATELLITE, HYBRID, TERRAIN
 }
 
+enum class ExportFormat {
+    GPX, FIT
+}
+
 enum class AppLanguage(val code: String, val label: String, val texts: MobileTexts, val locale: Locale) {
     ENGLISH("en", "English", TextsMobileEN, Locale.ENGLISH),
     SPANISH("es", "Español", TextsMobileES, Locale.forLanguageTag("es")),
@@ -74,6 +78,7 @@ data class MobileSettingsState(
     val mapType: AppMapType = AppMapType.NORMAL,
     val autoExportToHC: Boolean = false,
     val autoExportToStrava: Boolean = false,
+    val defaultExportFormat: ExportFormat = ExportFormat.GPX,
     val hcPermissionsDeniedCount: Int = 0,
     val conflictResolutionPolicy: ConflictResolutionPolicy = ConflictResolutionPolicy.NEWER_WINS,
     val activeIconTier: Int = 0

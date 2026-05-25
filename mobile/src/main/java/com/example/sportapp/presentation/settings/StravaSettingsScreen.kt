@@ -136,32 +136,93 @@ fun StravaSettingsScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         )
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = texts.SETTINGS_STRAVA_AUTO_EXPORT,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                    Text(
+                                        text = texts.SETTINGS_STRAVA_AUTO_EXPORT_DESC,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Switch(
+                                    checked = settingsState.autoExportToStrava,
+                                    onCheckedChange = { checked ->
+                                        scope.launch {
+                                            settingsManager.saveSettings(settingsState.copy(autoExportToStrava = checked))
+                                        }
+                                    }
+                                )
+                            }
+
+                            if (settingsState.autoExportToStrava) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                HorizontalDivider()
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
                                 Text(
-                                    text = texts.SETTINGS_STRAVA_AUTO_EXPORT,
-                                    style = MaterialTheme.typography.bodyLarge
+                                    text = texts.SETTINGS_DEFAULT_EXPORT_FORMAT,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = texts.SETTINGS_STRAVA_AUTO_EXPORT_DESC,
+                                    text = texts.SETTINGS_DEFAULT_EXPORT_FORMAT_DESC,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            }
-                            Switch(
-                                checked = settingsState.autoExportToStrava,
-                                onCheckedChange = { checked ->
-                                    scope.launch {
-                                        settingsManager.saveSettings(settingsState.copy(autoExportToStrava = checked))
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.clickable {
+                                            scope.launch {
+                                                settingsManager.saveSettings(settingsState.copy(defaultExportFormat = ExportFormat.GPX))
+                                            }
+                                        }
+                                    ) {
+                                        RadioButton(
+                                            selected = settingsState.defaultExportFormat == ExportFormat.GPX,
+                                            onClick = {
+                                                scope.launch {
+                                                    settingsManager.saveSettings(settingsState.copy(defaultExportFormat = ExportFormat.GPX))
+                                                }
+                                            }
+                                        )
+                                        Text("GPX")
+                                    }
+                                    
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.clickable {
+                                            scope.launch {
+                                                settingsManager.saveSettings(settingsState.copy(defaultExportFormat = ExportFormat.FIT))
+                                            }
+                                        }
+                                    ) {
+                                        RadioButton(
+                                            selected = settingsState.defaultExportFormat == ExportFormat.FIT,
+                                            onClick = {
+                                                scope.launch {
+                                                    settingsManager.saveSettings(settingsState.copy(defaultExportFormat = ExportFormat.FIT))
+                                                }
+                                            }
+                                        )
+                                        Text("FIT")
                                     }
                                 }
-                            )
+                            }
                         }
                     }
                 }

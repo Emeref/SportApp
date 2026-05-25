@@ -519,6 +519,11 @@ interface MobileTexts {
     val SUPPORT_LIFETIME_BUY: String
     val SUPPORT_MONTHLY_SUB: String
     val SUPPORT_ICON_CHANGE_NOTICE: String
+
+    // FIT / Export
+    val SETTINGS_DEFAULT_EXPORT_FORMAT: String get() = "Default export format"
+    val SETTINGS_DEFAULT_EXPORT_FORMAT_DESC: String get() = "Choose default format for auto-sync"
+    val ACTIVITY_EXPORT_FIT: String get() = "Export to .FIT"
 }
 
 val LocalMobileTexts = staticCompositionLocalOf<MobileTexts> {

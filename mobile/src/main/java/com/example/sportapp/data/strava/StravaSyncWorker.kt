@@ -5,16 +5,19 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.sportapp.data.GpxGenerator
 import com.example.sportapp.data.db.SyncMetadataDao
 import com.example.sportapp.data.db.SyncMetadataEntity
 import com.example.sportapp.data.db.WorkoutDao
+import com.example.sportapp.data.export.FitExporter
+import com.example.sportapp.data.export.GpxExporter
 import com.example.sportapp.data.strava.api.StravaUploadApi
+import com.example.sportapp.presentation.settings.ExportFormat
+import com.example.sportapp.presentation.settings.MobileSettingsManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
@@ -25,7 +28,8 @@ class StravaSyncWorker @AssistedInject constructor(
     private val workoutDao: WorkoutDao,
     private val syncMetadataDao: SyncMetadataDao,
     private val stravaUploadApi: StravaUploadApi,
-    private val stravaStorage: StravaStorage
+    private val stravaStorage: StravaStorage,
+    private val settingsManager: MobileSettingsManager
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -38,16 +42,24 @@ class StravaSyncWorker @AssistedInject constructor(
 
         try {
             val points = workoutDao.getPointsForWorkout(workoutId)
+            val laps = workoutDao.getLapsForWorkout(workoutId)
             
-            val gpxGenerator = GpxGenerator()
-            val gpxString = gpxGenerator.generateGpx(workout, points)
+            val settings = settingsManager.settingsFlow.first()
+            val exporter = if (settings.defaultExportFormat == ExportFormat.FIT) {
+                FitExporter()
+            } else {
+                GpxExporter()
+            }
             
-            val tempFile = File(context.cacheDir, "workout_${workoutId}.gpx")
-            tempFile.writeText(gpxString)
+            val exportData = exporter.generateExport(workout, points, laps)
+            val extension = exporter.getExtension()
+            
+            val tempFile = File(context.cacheDir, "workout_${workoutId}.$extension")
+            tempFile.writeBytes(exportData)
 
-            val requestFile = tempFile.asRequestBody("application/gpx+xml".toMediaTypeOrNull())
+            val requestFile = exportData.toRequestBody(exporter.getMimeType().toMediaTypeOrNull())
             val body = MultipartBody.Part.createFormData("file", tempFile.name, requestFile)
-            val dataType = "gpx".toRequestBody("text/plain".toMediaTypeOrNull())
+            val dataType = exporter.getExtension().toRequestBody("text/plain".toMediaTypeOrNull())
             val activityType = mapToBaseStravaType(workout.baseType).toRequestBody("text/plain".toMediaTypeOrNull())
             val name = workout.activityName.toRequestBody("text/plain".toMediaTypeOrNull())
 
@@ -62,7 +74,6 @@ class StravaSyncWorker @AssistedInject constructor(
                 val uploadResponse = response.body()!!
                 Log.d("StravaSyncWorker", "Upload successful, uploadId: ${uploadResponse.id}")
                 
-                // Klucz główny dla Stravy musi być unikalny i nie kolidować z Health Connect
                 val stravaMetadataId = "strava_${uploadResponse.id}"
                 
                 val metadata = SyncMetadataEntity(

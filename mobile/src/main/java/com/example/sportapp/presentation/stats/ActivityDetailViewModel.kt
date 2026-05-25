@@ -16,6 +16,8 @@ import androidx.work.workDataOf
 import com.example.sportapp.data.*
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutPointEntity
+import com.example.sportapp.data.export.FitExporter
+import com.example.sportapp.data.export.GpxExporter
 import com.example.sportapp.data.model.WorkoutLap
 import com.example.sportapp.data.model.HeartRateZoneResult
 import com.example.sportapp.data.strava.StravaSyncWorker
@@ -24,6 +26,7 @@ import com.example.sportapp.healthconnect.ExportResult
 import com.example.sportapp.healthconnect.HealthConnectManager
 import com.example.sportapp.presentation.activities.ExportState
 import com.example.sportapp.presentation.settings.AppMapType
+import com.example.sportapp.presentation.settings.ExportFormat
 import com.example.sportapp.presentation.settings.MobileSettingsManager
 import com.example.sportapp.presentation.settings.MobileSettingsState
 import com.google.android.gms.maps.model.LatLng
@@ -353,8 +356,8 @@ class ActivityDetailViewModel @Inject constructor(
         for (i in points.indices) {
             val startDist = points[i].distanceGps ?: points[i].distanceSteps ?: 0
             for (j in i + 1 until points.size) {
-                val endDist = points[j].distanceGps ?: points[j].distanceSteps ?: 0
-                val deltaDist = endDist - startDist
+                val MathDist = points[j].distanceGps ?: points[j].distanceSteps ?: 0
+                val deltaDist = MathDist - startDist
                 
                 if (deltaDist >= 1000) {
                     val startTime = parseTime(points[i].time)
@@ -434,10 +437,11 @@ class ActivityDetailViewModel @Inject constructor(
                     val saeContent = exportImportManager.exportToSae(activityId)
                     file.writeText(saeContent)
                 } else {
-                    val gpxGenerator = GpxGenerator()
+                    val gpxExporter = GpxExporter()
                     val points = repository.getPointsForWorkout(activityId)
-                    val gpxContent = gpxGenerator.generateGpx(workout, points)
-                    file.writeText(gpxContent)
+                    val laps = workoutDao.getLapsForWorkout(activityId)
+                    val gpxContent = gpxExporter.generateExport(workout, points, laps)
+                    file.writeBytes(gpxContent)
                 }
 
                 val uri = FileProvider.getUriForFile(context, "com.example.sportapp.fileprovider", file)
@@ -446,6 +450,43 @@ class ActivityDetailViewModel @Inject constructor(
                 _fileExportState.value = ExportState.Error(texts.vmExportError(e.message ?: "Unknown error"))
             }
         }
+    }
+
+    fun exportUriToFormat(uri: android.net.Uri, format: ExportFormat) {
+        if (activityId == -1L) return
+        viewModelScope.launch {
+            val texts = mobileSettings.value.language.texts
+            _fileExportState.value = ExportState.Exporting(0f, texts.VM_EXPORT_INITIALIZING)
+            try {
+                withContext(Dispatchers.IO) {
+                    val workout = repository.getWorkoutById(activityId) ?: throw Exception("Workout not found")
+                    val points = repository.getPointsForWorkout(activityId)
+                    val laps = workoutDao.getLapsForWorkout(activityId)
+                    
+                    val exporter = when (format) {
+                        ExportFormat.GPX -> GpxExporter()
+                        ExportFormat.FIT -> FitExporter()
+                    }
+                    val data = exporter.generateExport(workout, points, laps)
+                    
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(data)
+                    } ?: throw Exception("Cannot open output stream")
+                }
+                _fileExportState.value = ExportState.Success(uri, true)
+            } catch (e: Exception) {
+                _fileExportState.value = ExportState.Error(texts.vmExportError(e.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    suspend fun getExportFileName(format: ExportFormat): String = withContext(Dispatchers.IO) {
+        val workout = repository.getWorkoutById(activityId) ?: throw Exception("Workout not found")
+        val sdf = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US)
+        val baseName = "${workout.activityName}_${sdf.format(Date(workout.startTime))}"
+            .replace(" ", "_")
+            .replace(":", "")
+        "$baseName.${format.name.lowercase()}"
     }
 
     fun resetFileExportState() {
