@@ -608,4 +608,9 @@ object TextsMobilePL : MobileTexts {
     override val SUPPORT_LIFETIME_BUY = "Lifetime"
     override val SUPPORT_MONTHLY_SUB = "Miesięcznie"
     override val SUPPORT_ICON_CHANGE_NOTICE = "Zmiana ikony może zająć kilka sekund lub wymagać restartu launchera."
+
+    // FIT / Export
+    override val SETTINGS_DEFAULT_EXPORT_FORMAT = "Domyślny format eksportu"
+    override val SETTINGS_DEFAULT_EXPORT_FORMAT_DESC = "Wybierz format pliku dla automatycznej synchronizacji ze Stravą"
+    override val ACTIVITY_EXPORT_FIT = "Eksportuj do pliku .FIT"
 }

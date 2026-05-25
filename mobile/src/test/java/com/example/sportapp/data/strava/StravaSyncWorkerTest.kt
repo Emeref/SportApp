@@ -10,8 +10,12 @@ import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutEntity
 import com.example.sportapp.data.strava.api.StravaUploadApi
 import com.example.sportapp.data.strava.api.StravaUploadResponse
+import com.example.sportapp.presentation.settings.MobileSettingsManager
+import com.example.sportapp.presentation.settings.MobileSettingsState
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -29,6 +33,7 @@ class StravaSyncWorkerTest {
     private val syncMetadataDao = mockk<SyncMetadataDao>()
     private val stravaUploadApi = mockk<StravaUploadApi>()
     private val stravaStorage = mockk<StravaStorage>()
+    private val settingsManager = mockk<MobileSettingsManager>()
 
     @Before
     fun setup() {
@@ -49,12 +54,14 @@ class StravaSyncWorkerTest {
 
         coEvery { workoutDao.getWorkoutById(workoutId) } returns workout
         coEvery { workoutDao.getPointsForWorkout(workoutId) } returns emptyList()
+        coEvery { workoutDao.getLapsForWorkout(workoutId) } returns emptyList()
         coEvery { stravaUploadApi.uploadActivity(any(), any(), any(), any(), any()) } returns Response.success(
             StravaUploadResponse(id = 123L, status = "ready", error = null)
         )
         coEvery { syncMetadataDao.getByLocalId(workoutId, "EXERCISE") } returns null
         coEvery { syncMetadataDao.insert(any()) } returns Unit
         coEvery { workoutDao.updateStravaExportStatus(any(), any()) } returns Unit
+        every { settingsManager.settingsFlow } returns flowOf(MobileSettingsState())
 
         val worker = TestListenableWorkerBuilder<StravaSyncWorker>(context)
             .setInputData(workDataOf(StravaSyncWorker.EXTRA_WORKOUT_ID to workoutId))
@@ -70,7 +77,8 @@ class StravaSyncWorkerTest {
                         workoutDao, 
                         syncMetadataDao, 
                         stravaUploadApi, 
-                        stravaStorage
+                        stravaStorage,
+                        settingsManager
                     )
                 }
             })

@@ -118,6 +118,14 @@ fun ActivityDetailScreen(
         }
     }
 
+    val fitExportLauncher = rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/vnd.ant.fit")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportUriToFormat(uri, com.example.sportapp.presentation.settings.ExportFormat.FIT)
+        }
+    }
+
     LaunchedEffect(exportResult) {
         exportResult?.let { result ->
             when (result) {
@@ -139,14 +147,19 @@ fun ActivityDetailScreen(
     LaunchedEffect(fileExportState) {
         if (fileExportState is ExportState.Success) {
             val state = fileExportState as ExportState.Success
-            val mimeType = if (state.uri.toString().endsWith(".sae")) "application/json" else "application/gpx+xml"
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = mimeType
-                putExtra(Intent.EXTRA_STREAM, state.uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            if (state.uri.toString().contains("fileprovider")) {
+                val mimeType = if (state.uri.toString().endsWith(".sae")) "application/json" else "application/gpx+xml"
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = mimeType
+                    putExtra(Intent.EXTRA_STREAM, state.uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(intent, texts.ACTIVITY_SHARE_TITLE))
+                viewModel.resetFileExportState()
+            } else {
+                Toast.makeText(context, texts.HC_EXPORT_SUCCESS, Toast.LENGTH_SHORT).show()
+                viewModel.resetFileExportState()
             }
-            context.startActivity(Intent.createChooser(intent, texts.ACTIVITY_SHARE_TITLE))
-            viewModel.resetFileExportState()
         }
     }
 
@@ -199,9 +212,14 @@ fun ActivityDetailScreen(
             isExportedToStrava = isExportedToStrava,
             supportsGpx = (sessionData?.totalDistanceGps ?: 0.0) > 0,
             onDismiss = { showExportDialog = false },
-            onExport = { toStrava, toHC, toGpx, toSae ->
+            onExport = { toStrava, toHC, toGpx, toSae, toFit ->
                 showExportDialog = false
-                if (toGpx) {
+                if (toFit) {
+                    scope.launch {
+                        val fileName = viewModel.getExportFileName(com.example.sportapp.presentation.settings.ExportFormat.FIT)
+                        fitExportLauncher.launch(fileName)
+                    }
+                } else if (toGpx) {
                     viewModel.exportToFile(useSae = false)
                 } else if (toSae) {
                     viewModel.exportToFile(useSae = true)
@@ -472,13 +490,14 @@ fun ExportSelectionDialog(
     isExportedToStrava: Boolean,
     supportsGpx: Boolean,
     onDismiss: () -> Unit,
-    onExport: (toStrava: Boolean, toHC: Boolean, toGpx: Boolean, toSae: Boolean) -> Unit
+    onExport: (toStrava: Boolean, toHC: Boolean, toGpx: Boolean, toSae: Boolean, toFit: Boolean) -> Unit
 ) {
     val texts = LocalMobileTexts.current
     var exportStrava by remember { mutableStateOf(!isExportedToStrava) }
     var exportHC by remember { mutableStateOf(!isExportedToHC) }
     var exportGpx by remember { mutableStateOf(false) }
     var exportSae by remember { mutableStateOf(false) }
+    var exportFit by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -490,13 +509,13 @@ fun ExportSelectionDialog(
                     label = texts.STR_HEALTH_CONNECT,
                     isExported = isExportedToHC,
                     checked = exportHC,
-                    onCheckedChange = { exportHC = it; if (it) { exportGpx = false; exportSae = false } }
+                    onCheckedChange = { exportHC = it; if (it) { exportGpx = false; exportSae = false; exportFit = false } }
                 )
                 ExportOptionRow(
                     label = texts.STR_STRAVA,
                     isExported = isExportedToStrava,
                     checked = exportStrava,
-                    onCheckedChange = { exportStrava = it; if (it) { exportGpx = false; exportSae = false } }
+                    onCheckedChange = { exportStrava = it; if (it) { exportGpx = false; exportSae = false; exportFit = false } }
                 )
                 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -507,24 +526,31 @@ fun ExportSelectionDialog(
                     isExported = false,
                     enabled = supportsGpx,
                     checked = exportGpx,
-                    onCheckedChange = { exportGpx = it; if (it) { exportSae = false; exportStrava = false; exportHC = false } }
+                    onCheckedChange = { exportGpx = it; if (it) { exportSae = false; exportFit = false; exportStrava = false; exportHC = false } }
                 )
                 if (!supportsGpx) {
                     Text(texts.ACTIVITY_EXPORT_INCOMPATIBLE_GPX, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
+
+                ExportOptionRow(
+                    label = "FIT (.fit)",
+                    isExported = false,
+                    checked = exportFit,
+                    onCheckedChange = { exportFit = it; if (it) { exportGpx = false; exportSae = false; exportStrava = false; exportHC = false } }
+                )
                 
                 ExportOptionRow(
                     label = "SAE (.sae)",
                     isExported = false,
                     checked = exportSae,
-                    onCheckedChange = { exportSae = it; if (it) { exportGpx = false; exportStrava = false; exportHC = false } }
+                    onCheckedChange = { exportSae = it; if (it) { exportGpx = false; exportFit = false; exportStrava = false; exportHC = false } }
                 )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onExport(exportStrava, exportHC, exportGpx, exportSae) },
-                enabled = (exportStrava && !isExportedToStrava) || (exportHC && !isExportedToHC) || exportGpx || exportSae
+                onClick = { onExport(exportStrava, exportHC, exportGpx, exportSae, exportFit) },
+                enabled = (exportStrava && !isExportedToStrava) || (exportHC && !isExportedToHC) || exportGpx || exportSae || exportFit
             ) {
                 Text(texts.ACTIVITY_EXPORT)
             }
@@ -625,7 +651,6 @@ fun MapSection(
             val bounds = LatLngBounds.Builder().include(n).include(s).include(e).include(w).build()
             cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
         } else if (highlightedPoint != null) {
-            // Centrujemy na punkcie bez zmiany zoomu
             cameraPositionState.animate(CameraUpdateFactory.newLatLng(highlightedPoint))
         }
     }

@@ -608,4 +608,9 @@ object TextsMobileEN : MobileTexts {
     override val SUPPORT_LIFETIME_BUY = "Lifetime"
     override val SUPPORT_MONTHLY_SUB = "Monthly"
     override val SUPPORT_ICON_CHANGE_NOTICE = "Icon change may take a few seconds or require a launcher restart."
+
+    // FIT / Export
+    override val SETTINGS_DEFAULT_EXPORT_FORMAT = "Default export format"
+    override val SETTINGS_DEFAULT_EXPORT_FORMAT_DESC = "Choose file format for auto-synchronization with Strava"
+    override val ACTIVITY_EXPORT_FIT = "Export to .FIT file"
 }

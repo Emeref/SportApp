@@ -42,6 +42,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
         private val MAP_TYPE = stringPreferencesKey("map_type")
         private val AUTO_EXPORT_HC = booleanPreferencesKey("auto_export_hc")
         private val AUTO_EXPORT_STRAVA = booleanPreferencesKey("auto_export_strava")
+        private val DEFAULT_EXPORT_FORMAT = stringPreferencesKey("default_export_format")
         private val HC_PERMISSIONS_DENIED_COUNT = intPreferencesKey("hc_permissions_denied_count")
         private val CONFLICT_POLICY = stringPreferencesKey("conflict_policy")
         private val ACTIVE_ICON_TIER = intPreferencesKey("active_icon_tier")
@@ -101,6 +102,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             mapType = AppMapType.valueOf(preferences[MAP_TYPE] ?: defaultState.mapType.name),
             autoExportToHC = preferences[AUTO_EXPORT_HC] ?: defaultState.autoExportToHC,
             autoExportToStrava = preferences[AUTO_EXPORT_STRAVA] ?: defaultState.autoExportToStrava,
+            defaultExportFormat = ExportFormat.valueOf(preferences[DEFAULT_EXPORT_FORMAT] ?: defaultState.defaultExportFormat.name),
             hcPermissionsDeniedCount = preferences[HC_PERMISSIONS_DENIED_COUNT] ?: defaultState.hcPermissionsDeniedCount,
             conflictResolutionPolicy = ConflictResolutionPolicy.valueOf(
                 preferences[CONFLICT_POLICY] ?: defaultState.conflictResolutionPolicy.name
@@ -125,6 +127,7 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
             preferences[MAP_TYPE] = state.mapType.name
             preferences[AUTO_EXPORT_HC] = state.autoExportToHC
             preferences[AUTO_EXPORT_STRAVA] = state.autoExportToStrava
+            preferences[DEFAULT_EXPORT_FORMAT] = state.defaultExportFormat.name
             preferences[HC_PERMISSIONS_DENIED_COUNT] = state.hcPermissionsDeniedCount
             preferences[CONFLICT_POLICY] = state.conflictResolutionPolicy.name
             preferences[ACTIVE_ICON_TIER] = state.activeIconTier
@@ -148,6 +151,12 @@ class MobileSettingsManager @Inject constructor(@ApplicationContext private val 
     suspend fun updateStravaAutoExport(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[AUTO_EXPORT_STRAVA] = enabled
+        }
+    }
+
+    suspend fun updateDefaultExportFormat(format: ExportFormat) {
+        context.dataStore.edit { preferences ->
+            preferences[DEFAULT_EXPORT_FORMAT] = format.name
         }
     }
 
