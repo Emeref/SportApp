@@ -28,4 +28,7 @@ interface LiveLocationDao {
 
     @Query("DELETE FROM live_location_points")
     suspend fun clear()
+
+    @Query("DELETE FROM live_location_points WHERE timestamp < :startTime")
+    suspend fun deleteOlderThan(startTime: Long)
 }

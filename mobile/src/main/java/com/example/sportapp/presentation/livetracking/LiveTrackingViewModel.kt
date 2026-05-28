@@ -230,7 +230,10 @@ class LiveTrackingViewModel @Inject constructor(
             if (_sessionStartTime.value != startTime && startTime != 0L) {
                 _sessionStartTime.value = startTime
                 _isFinished.value = false // Resetujemy stan zakończenia dla nowej sesji
-                Log.d("LiveTrackingVM", "New session started, starting foreground service")
+                Log.d("LiveTrackingVM", "New session started, cleaning up old live location points and starting foreground service")
+                viewModelScope.launch {
+                    liveLocationDao.deleteOlderThan(startTime)
+                }
                 startTrackingService()
             }
         }
