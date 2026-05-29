@@ -23,7 +23,7 @@ import java.io.File
 
 @HiltWorker
 class StravaSyncWorker @AssistedInject constructor(
-    @Assisted private val context: Context,
+    @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val workoutDao: WorkoutDao,
     private val syncMetadataDao: SyncMetadataDao,
@@ -54,7 +54,7 @@ class StravaSyncWorker @AssistedInject constructor(
             val exportData = exporter.generateExport(workout, points, laps)
             val extension = exporter.getExtension()
             
-            val tempFile = File(context.cacheDir, "workout_${workoutId}.$extension")
+            val tempFile = File(applicationContext.cacheDir, "workout_${workoutId}.$extension")
             tempFile.writeBytes(exportData)
 
             val requestFile = exportData.toRequestBody(exporter.getMimeType().toMediaTypeOrNull())
