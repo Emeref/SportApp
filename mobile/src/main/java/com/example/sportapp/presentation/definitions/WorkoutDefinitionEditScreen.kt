@@ -76,6 +76,9 @@ fun WorkoutDefinitionEditScreen(
                             iconName = iconName,
                             sensors = sensors.toList(),
                             baseType = baseType,
+                            isDefault = existingDefinition?.isDefault ?: false,
+                            sortOrder = existingDefinition?.sortOrder ?: 0,
+                            displayOrder = existingDefinition?.displayOrder ?: 0,
                             autoLapDistance = autoLapDistance.toDoubleOrNull()
                         )
                         viewModel.saveDefinition(definition)
@@ -262,7 +265,7 @@ fun SensorEditRow(
             modifier = Modifier.weight(1f)
         )
         
-        // Visibility column
+        // Box for visibility checkbox
         Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.Center) {
             Checkbox(
                 checked = config.isVisible, 
@@ -280,7 +283,7 @@ fun SensorEditRow(
             )
         }
         
-        // Recording column
+        // Box for recording checkbox
         Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.Center) {
             Checkbox(
                 checked = config.isRecording, 
