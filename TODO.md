@@ -164,7 +164,7 @@ Co ma się dziać:
 - [x] Przycisk '+/-' na mapie pozwala przyblizac i oddalac, nie ma automatycznego powrotu. Zostawiamy zblizenie wybrane przez uzytkownika.
 - [x] Jak sie przesunie mape w jakikolwiek sposob to pojawia sie przycisk aktualizacji lokalizacji na lokalna.
 - [x] Po kliknieciu w aktualizacje lokalizacji wracamy do wyswietlania obecnej lokalizacji i wracamy do automatycznego odswiezanai lokalizacji aby zawsze byc w centrum mapy (do momentu fizycznego przesuniecia oczywiscie).
-- [ ] Jak wejdziemy w tryb ambient to wyswietlamy w tym trybie do momentu odznaczenia w opcjach.
+- [x] Jak wejdziemy w tryb ambient to wyswietlamy w tym trybie do momentu odznaczenia w opcjach.
 - [ ] tryb ambient ma w opcjach miec checkbox pokazujacy czy jest wlaczony czy nie.
 - [x] Dane ze sportu maja sie zapisywac w bazie.
 - [x] Upewnic se ze puls jest sczytywany.
