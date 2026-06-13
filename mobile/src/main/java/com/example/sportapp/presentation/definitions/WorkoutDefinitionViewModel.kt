@@ -63,9 +63,8 @@ class WorkoutDefinitionViewModel @Inject constructor(
     private fun observeAndSync() {
         viewModelScope.launch {
             definitions.collectLatest { list ->
-                if (list.isNotEmpty()) {
-                    syncManager.syncDefinitions(list)
-                }
+                // Synchronizujemy zawsze, nawet pustą listę, aby zegarek mógł zareagować
+                syncManager.syncDefinitions(list)
             }
         }
     }

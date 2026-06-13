@@ -21,6 +21,9 @@ interface WorkoutDefinitionDao {
     @Query("SELECT COUNT(*) FROM workout_definitions WHERE isDefault = 1")
     suspend fun getDefaultCount(): Int
 
+    @Query("SELECT COUNT(*) FROM workout_definitions")
+    suspend fun getCount(): Int
+
     @Query("DELETE FROM workout_definitions")
     suspend fun deleteAllDefinitions()
 

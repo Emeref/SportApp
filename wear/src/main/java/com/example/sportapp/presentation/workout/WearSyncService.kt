@@ -5,6 +5,7 @@ import android.util.Log
 import com.example.sportapp.data.db.WorkoutDao
 import com.example.sportapp.data.db.WorkoutDefinitionDao
 import com.example.sportapp.data.model.WorkoutDefinition
+import com.example.sportapp.data.model.createDefaultWorkoutDefinition
 import com.example.sportapp.presentation.MainActivity
 import com.example.sportapp.presentation.settings.HealthData
 import com.example.sportapp.presentation.settings.ReportingPeriod
@@ -77,7 +78,6 @@ class WearSyncService : WearableListenerService() {
                     val payload = String(messageEvent.data)
                     Log.d("WearSyncService", "Received delete request with payload: $payload")
                     
-                    // Obsługujemy oba formaty: sam ID lub id:startTime
                     val parts = payload.split(":")
                     val workoutId = parts[0].toLong()
                     
@@ -139,8 +139,17 @@ class WearSyncService : WearableListenerService() {
                             try {
                                 val type = object : TypeToken<List<WorkoutDefinition>>() {}.type
                                 val definitions: List<WorkoutDefinition> = gson.fromJson(json, type)
-                                workoutDefinitionDao.syncDefinitions(definitions)
-                                Log.d("WearSyncService", "Successfully synced ${definitions.size} definitions from mobile")
+                                
+                                // Cel: Zawsze co najmniej 1 aktywność. Jeśli z telefonu przyszło 0, tworzymy standardową.
+                                // Jeśli przyszło >0, używamy TYLKO tych z telefonu (nie dodajemy lokalnej).
+                                val finalDefinitions = if (definitions.isEmpty()) {
+                                    listOf(createDefaultWorkoutDefinition())
+                                } else {
+                                    definitions
+                                }
+                                
+                                workoutDefinitionDao.syncDefinitions(finalDefinitions)
+                                Log.d("WearSyncService", "Successfully synced ${finalDefinitions.size} definitions from mobile")
                             } catch (e: Exception) {
                                 Log.e("WearSyncService", "Failed to process definitions JSON", e)
                             }
