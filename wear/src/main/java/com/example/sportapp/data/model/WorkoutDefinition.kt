@@ -44,6 +44,20 @@ fun getLocalizedActivityName(name: String?, texts: WearTexts): String {
     return if (isDefaultActivityName(name)) texts.CHOOSE_SPORT_DEFAULT_NAME else name
 }
 
+fun createDefaultWorkoutDefinition(): WorkoutDefinition {
+    val defaultSensors = WorkoutSensor.values().map {
+        SensorConfig(it.id, isVisible = true, isRecording = true)
+    }
+    return WorkoutDefinition(
+        name = "Standardowa aktywność",
+        iconName = "DirectionsRun",
+        sensors = defaultSensors,
+        baseType = "Other",
+        isDefault = true,
+        sortOrder = 0
+    )
+}
+
 data class SensorConfig(
     val sensorId: String,
     val isVisible: Boolean,

@@ -329,7 +329,7 @@ object TextsMobilePL : MobileTexts {
     override val DEF_SKATEBOARDING = "Deskorolka"
     override val DEF_COMPETITION = "Zawody"
     override val DEF_STOPWATCH = "Stoper"
-    override val DEF_OTHER = "Andere"
+    override val DEF_OTHER = "Inne"
     override val DEF_STANDARD_ACTIVITY = "Standardowa aktywność"
 
     // Activity Detail Settings

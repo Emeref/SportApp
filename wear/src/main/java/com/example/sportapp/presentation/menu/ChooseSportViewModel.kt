@@ -2,11 +2,9 @@ package com.example.sportapp.presentation.menu
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sportapp.TextsWearPL
 import com.example.sportapp.data.db.WorkoutDefinitionDao
-import com.example.sportapp.data.model.SensorConfig
 import com.example.sportapp.data.model.WorkoutDefinition
-import com.example.sportapp.data.model.WorkoutSensor
+import com.example.sportapp.data.model.createDefaultWorkoutDefinition
 import com.example.sportapp.presentation.workout.DataLayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,17 +30,9 @@ class ChooseSportViewModel @Inject constructor(
 
     private fun ensureDefaultDefinition() {
         viewModelScope.launch {
-            if (dao.getDefaultCount() == 0) {
-                val defaultSensors = WorkoutSensor.values().map {
-                    SensorConfig(it.id, isVisible = true, isRecording = true)
-                }
-                val defaultDef = WorkoutDefinition(
-                    name = TextsWearPL.CHOOSE_SPORT_DEFAULT_NAME,
-                    iconName = "DirectionsRun",
-                    sensors = defaultSensors,
-                    baseType = "Other",
-                    isDefault = true
-                )
+            // Requirement: Twórz standardową aktywność tylko gdy nie ma żadnej innej dostępnej
+            if (dao.getCount() == 0) {
+                val defaultDef = createDefaultWorkoutDefinition()
                 dao.insertDefinition(defaultDef)
             }
         }
