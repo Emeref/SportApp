@@ -111,7 +111,7 @@ class HealthConnectManager @Inject constructor(
             BaseType.PADDLE_BOARDING -> ExerciseSessionRecord.EXERCISE_TYPE_PADDLING
             BaseType.SURFING -> ExerciseSessionRecord.EXERCISE_TYPE_SURFING
             BaseType.SAILING -> ExerciseSessionRecord.EXERCISE_TYPE_SAILING
-            BaseType.FOOTBALL -> ExerciseSessionRecord.EXERCISE_TYPE_FOOTBALL_AMERICAN
+            BaseType.FOOTBALL -> ExerciseSessionRecord.EXERCISE_TYPE_SOCCER
             BaseType.BASKETBALL -> ExerciseSessionRecord.EXERCISE_TYPE_BASKETBALL
             BaseType.TENNIS -> ExerciseSessionRecord.EXERCISE_TYPE_TENNIS
             BaseType.SQUASH -> ExerciseSessionRecord.EXERCISE_TYPE_SQUASH

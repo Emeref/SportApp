@@ -229,13 +229,6 @@ class LiveTrackingViewModel @Inject constructor(
             val startTime = dataMap.getLong("startTime")
             if (_sessionStartTime.value != startTime && startTime != 0L) {
                 _sessionStartTime.value = startTime
-                
-                // Failsafe: Usuń punkty starsze niż czas rozpoczęcia obecnej aktywności
-                viewModelScope.launch {
-                    Log.d("LiveTrackingVM", "Cleaning up old points before $startTime")
-                    liveLocationDao.deletePointsBefore(startTime)
-                }
-
                 _isFinished.value = false // Resetujemy stan zakończenia dla nowej sesji
                 Log.d("LiveTrackingVM", "New session started, starting foreground service")
                 startTrackingService()
