@@ -1,5 +1,6 @@
 package com.example.sportapp.data
 
+import android.content.Intent
 import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -15,6 +16,7 @@ import com.example.sportapp.data.db.WorkoutPointEntity
 import com.example.sportapp.data.strava.StravaSyncWorker
 import com.example.sportapp.healthconnect.ExerciseExportUseCase
 import com.example.sportapp.presentation.settings.MobileSettingsManager
+import com.example.sportapp.presentation.livetracking.LiveTrackingService
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
@@ -102,6 +104,16 @@ class SyncService : WearableListenerService() {
                              Log.e("SyncService", "Failed to process wear settings sync", e)
                          }
                      }
+                } else if (path == "/workout_data") {
+                    val dataMapItem = DataMapItem.fromDataItem(event.dataItem)
+                    val isFinishedOnWatch = dataMapItem.dataMap.getBoolean("isFinished", false)
+                    if (isFinishedOnWatch) {
+                        Log.d("SyncService", "Detected workout finished on watch via /workout_data in background, stopping LiveTrackingService")
+                        val intent = Intent(this, LiveTrackingService::class.java).apply {
+                            action = LiveTrackingService.ACTION_STOP
+                        }
+                        startService(intent)
+                    }
                 }
             }
         }
