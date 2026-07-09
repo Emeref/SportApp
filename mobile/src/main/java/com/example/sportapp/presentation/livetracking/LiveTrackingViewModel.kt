@@ -94,6 +94,16 @@ class LiveTrackingViewModel @Inject constructor(
 
     init {
         dataClient.addListener(this)
+
+        // Usuwanie starych punktów przy wejściu/startie aktywności
+        viewModelScope.launch {
+            _sessionStartTime.collect { startTime ->
+                if (startTime != 0L) {
+                    Log.d("LiveTrackingVM", "Clearing live location points older than $startTime")
+                    liveLocationDao.deletePointsBefore(startTime)
+                }
+            }
+        }
         
         // Pętla timera lokalnego
         viewModelScope.launch {

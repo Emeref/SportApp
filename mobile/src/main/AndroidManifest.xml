@@ -204,6 +204,13 @@
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/db_workouts/" />
+                <data android:scheme="wear" android:host="*" android:path="/wear_settings" />
+                <data android:scheme="wear" android:host="*" android:path="/workout_data" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:path="/request_definitions" />
+                <data android:scheme="wear" android:host="*" android:path="/sync_status" />
             </intent-filter>
         </service>
 
